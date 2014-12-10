@@ -5,7 +5,7 @@ object SphereLibsBuild extends Build {
 
   lazy val standardSettings = Defaults.defaultSettings ++ Seq(
     organization := "io.sphere",
-    scalaVersion := "2.10.0",
+    scalaVersion := "2.10.4",
     logBuffered := false,
     publishTo <<= (version) { version: String =>
       if(version.trim.endsWith("SNAPSHOT"))
@@ -24,9 +24,9 @@ object SphereLibsBuild extends Build {
       Tests.Argument(TestFrameworks.ScalaTest, "junitxml(directory=\"%s\")" format (target / "test-reports")))
     },
     libraryDependencies ++= Seq(
-      "org.scalatest" % "scalatest_2.10" % "2.0.M5b" % "test",
-      "org.scalacheck" %% "scalacheck" % "1.10.0" % "test",
-      "ch.qos.logback" % "logback-classic" % "0.9.27" % "test"
+      "org.scalatest" %% "scalatest" % "2.2.2" % "test",
+      "org.scalacheck" %% "scalacheck" % "1.12.1" % "test",
+      "ch.qos.logback" % "logback-classic" % "1.0.6" % "test"
     ),
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scalap" % _)
   )

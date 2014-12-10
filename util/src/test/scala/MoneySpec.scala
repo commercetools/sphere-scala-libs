@@ -3,7 +3,7 @@ package io.sphere.util
 import scala.language.postfixOps
 
 import org.scalatest.FunSpec
-import org.scalatest.matchers.MustMatchers
+import org.scalatest.MustMatchers
 
 class MoneySpec extends FunSpec with MustMatchers {
   import Money._
@@ -26,7 +26,9 @@ class MoneySpec extends FunSpec with MustMatchers {
     }
 
     it("should not accept an amount with an invalid scale for the used currency when using the constructor directly.") {
-      evaluating { Money(1.0001, java.util.Currency.getInstance("EUR")) } must produce [IllegalArgumentException]
+      an [IllegalArgumentException] must be thrownBy { 
+        Money(1.0001, java.util.Currency.getInstance("EUR"))
+      }
     }
 
     it("should not be prone to common rounding errors known from floating point numbers.") {

@@ -14,7 +14,7 @@ import net.liftweb.json.JsonParser.ParseException
 import org.joda.time._
 import org.joda.time.format.ISODateTimeFormat
 import org.scalatest._
-import org.scalatest.matchers.MustMatchers
+import org.scalatest.MustMatchers
 
 object JSONSpec {
   case class Project(nr: Int, name: String, version: Int = 1, milestones: List[Milestone] = Nil)
