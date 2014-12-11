@@ -19,7 +19,7 @@ package object json extends Logging {
       case e: JsonParser.ParseException => jsonParseError(e.getMessage)
     }
 
-  def jsonParseError[A](msg: String): Failure[NonEmptyList[JSONError], A] =
+  def jsonParseError[A](msg: String): Failure[NonEmptyList[JSONError]] =
     Failure(NonEmptyList(JSONParseError(msg)))
 
   def fromJSON[A: FromJSON](json: String): JValidation[A] =
