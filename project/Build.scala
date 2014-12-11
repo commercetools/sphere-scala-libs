@@ -1,5 +1,6 @@
 import sbt._
 import Keys._
+import language._
 
 object SphereLibsBuild extends Build {
 
@@ -7,22 +8,14 @@ object SphereLibsBuild extends Build {
     organization := "io.sphere",
     scalaVersion := "2.10.4",
     logBuffered := false,
-    publishTo <<= (version) { version: String =>
-      if(version.trim.endsWith("SNAPSHOT"))
-        Some("ct-snapshots" at "http://repo.ci.cloud.commercetools.de/content/repositories/snapshots")
-      else
-        Some("ct-public-releases" at "http://public-repo.ci.cloud.commercetools.de/content/repositories/releases")
-    },
-    resolvers += "sphere-public" at "http://public-repo.ci.cloud.commercetools.de/content/repositories/releases",
-    credentials ++= Seq(
-      Credentials(Path.userHome / ".ivy2" / ".ct-credentials"),
-      Credentials(Path.userHome / ".ivy2" / ".ct-credentials-public")),
+    publishTo := Some("bintray-public" at "https://api.bintray.com/maven/commercetools/maven/sphere-libs"),
+    resolvers += "sphere-public" at "http://dl.bintray.com/commercetools/maven",
+    credentials ++= Seq(Credentials(Path.userHome / ".bintray-credentials")),
     scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature"),
     javacOptions ++= Seq("-deprecation", "-Xlint:unchecked"),
-    testOptions in Test <<= (target in Test) map { target => Seq(
+    testOptions in Test := Seq(
       Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
-      Tests.Argument(TestFrameworks.ScalaTest, "junitxml(directory=\"%s\")" format (target / "test-reports")))
-    },
+      Tests.Argument(TestFrameworks.ScalaTest, "junitxml(directory=\"%s\")" format ((target in Test).value / "test-reports"))),
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "2.2.2" % "test",
       "org.scalacheck" %% "scalacheck" % "1.12.1" % "test",
@@ -47,8 +40,7 @@ object SphereLibsBuild extends Build {
   lazy val json = Project(
     id = "sphere-json",
     base = file("./json"),
-    //dependencies = Seq(util),
-    settings = standardSettings ++ Fmpp.settings //++ Seq(scalacOptions ++= Seq("-Ymacro-debug-lite"))
+    settings = standardSettings ++ Fmpp.settings
   )
 }
 
