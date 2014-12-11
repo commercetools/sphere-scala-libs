@@ -1,10 +1,11 @@
 import sbt._
 import Keys._
 import language._
+import sbtrelease.ReleasePlugin._
 
 object SphereLibsBuild extends Build {
 
-  lazy val standardSettings = Defaults.defaultSettings ++ Seq(
+  lazy val standardSettings = Defaults.defaultSettings ++ releaseSettings ++ Seq(
     organization := "io.sphere",
     scalaVersion := "2.10.4",
     logBuffered := false,
