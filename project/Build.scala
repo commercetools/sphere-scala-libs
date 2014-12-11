@@ -21,7 +21,7 @@ object SphereLibsBuild extends Build {
     javacOptions ++= Seq("-deprecation", "-Xlint:unchecked"),
     testOptions in Test <<= (target in Test) map { target => Seq(
       Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
-      Tests.Argument(TestFrameworks.ScalaTest, "junitxml(directory=\"%s\")" format (target / "test-reports")))
+      Tests.Argument(TestFrameworks.ScalaTest, "-u", "%s" format (target / "test-reports")))
     },
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "2.2.2" % "test",
