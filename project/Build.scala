@@ -44,6 +44,6 @@ object SphereLibsBuild extends Build {
   lazy val json = Project(
     id = "sphere-json",
     base = file("./json"),
-    settings = standardSettings ++ publishSettings ++ spray.boilerplate.BoilerplatePlugin.Boilerplate.settings ++ Fmpp.settings
+    settings = standardSettings ++ publishSettings ++ spray.boilerplate.BoilerplatePlugin.Boilerplate.settings˚
   )
 }
