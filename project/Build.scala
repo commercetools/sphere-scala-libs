@@ -8,12 +8,11 @@ object SphereLibsBuild extends Build {
 
   lazy val publishSettings = releaseSettings ++ bintraySettings
 
-  lazy val standardSettings = Defaults.defaultSettings ++ bintrayResolverSettings ++ Seq(
+  lazy val standardSettings = Defaults.defaultSettings ++ publishSettings ++ Seq(
     organization := "io.sphere",
     scalaVersion := "2.10.4",
     licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html")),
     logBuffered := false,
-    credentials ++= Seq(Credentials(Path.userHome / ".bintray-credentials")),
     scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature"),
     javacOptions ++= Seq("-deprecation", "-Xlint:unchecked"),
     testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
@@ -35,12 +34,12 @@ object SphereLibsBuild extends Build {
   lazy val util = Project(
     id = "sphere-util",
     base = file("./util"),
-    settings = standardSettings ++ publishSettings
+    settings = standardSettings
   )
 
   lazy val json = Project(
     id = "sphere-json",
     base = file("./json"),
-    settings = standardSettings ++ publishSettings ++ spray.boilerplate.BoilerplatePlugin.Boilerplate.settings
-  )
+    settings = standardSettings ++ spray.boilerplate.BoilerplatePlugin.Boilerplate.settings
+  ).dependsOn(util)
 }
