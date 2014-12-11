@@ -1,53 +1,49 @@
 import sbt._
 import Keys._
+import language._
+import sbtrelease.ReleasePlugin._
+import bintray.Plugin._
 
 object SphereLibsBuild extends Build {
 
-  lazy val standardSettings = Defaults.defaultSettings ++ Seq(
+  lazy val publishSettings = releaseSettings ++ bintraySettings
+
+  lazy val standardSettings = Defaults.defaultSettings ++ bintrayResolverSettings ++ Seq(
     organization := "io.sphere",
-    scalaVersion := "2.10.0",
+    scalaVersion := "2.10.4",
+    licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html")),
     logBuffered := false,
-    publishTo <<= (version) { version: String =>
-      if(version.trim.endsWith("SNAPSHOT"))
-        Some("ct-snapshots" at "http://repo.ci.cloud.commercetools.de/content/repositories/snapshots")
-      else
-        Some("ct-public-releases" at "http://public-repo.ci.cloud.commercetools.de/content/repositories/releases")
-    },
-    resolvers += "sphere-public" at "http://public-repo.ci.cloud.commercetools.de/content/repositories/releases",
-    credentials ++= Seq(
-      Credentials(Path.userHome / ".ivy2" / ".ct-credentials"),
-      Credentials(Path.userHome / ".ivy2" / ".ct-credentials-public")),
+    publishMavenStyle := false,
+    publishTo := Some("bintray-public" at "https://api.bintray.com/maven/commercetools/maven/sphere-libs"),
+    resolvers += "sphere-public" at "http://dl.bintray.com/commercetools/maven",
+    credentials ++= Seq(Credentials(Path.userHome / ".bintray-credentials")),
     scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature"),
     javacOptions ++= Seq("-deprecation", "-Xlint:unchecked"),
-    testOptions in Test <<= (target in Test) map { target => Seq(
-      Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
-      Tests.Argument(TestFrameworks.ScalaTest, "junitxml(directory=\"%s\")" format (target / "test-reports")))
-    },
+    testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
     libraryDependencies ++= Seq(
-      "org.scalatest" % "scalatest_2.10" % "2.0.M5b" % "test",
-      "org.scalacheck" %% "scalacheck" % "1.10.0" % "test",
-      "ch.qos.logback" % "logback-classic" % "0.9.27" % "test"
+      "org.scalatest" %% "scalatest" % "2.2.2" % "test",
+      "org.scalacheck" %% "scalacheck" % "1.12.1" % "test",
+      "ch.qos.logback" % "logback-classic" % "1.0.6" % "test"
     ),
-    libraryDependencies <+= scalaVersion("org.scala-lang" % "scalap" % _)
+    libraryDependencies += "org.scala-lang" % "scalap" % scalaVersion.value
   )
 
   lazy val libs = Project(
     id = "sphere-libs",
     base = file("."),
-    settings = standardSettings,
-    aggregate = Seq(util, json)
+    aggregate = Seq(util, json),
+    settings = standardSettings
   )
 
   lazy val util = Project(
     id = "sphere-util",
     base = file("./util"),
-    settings = standardSettings
+    settings = standardSettings ++ publishSettings
   )
 
   lazy val json = Project(
     id = "sphere-json",
     base = file("./json"),
-    //dependencies = Seq(util),
-    settings = standardSettings ++ spray.boilerplate.BoilerplatePlugin.Boilerplate.settings //++ Seq(scalacOptions ++= Seq("-Ymacro-debug-lite"))
+    settings = standardSettings ++ publishSettings ++ spray.boilerplate.BoilerplatePlugin.Boilerplate.settings ++ Fmpp.settings
   )
 }
