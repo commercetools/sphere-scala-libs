@@ -6,9 +6,15 @@ have been made public in the hope that they might be useful to more people.
 
 [![Build Status](https://travis-ci.org/commercetools/sphere-scala-libs.png)](https://travis-ci.org/commercetools/sphere-scala-libs)
 
+## Download
+
+sphere-json: [ ![Download](https://api.bintray.com/packages/commercetools/maven/sphere-json/images/download.svg) ](https://bintray.com/commercetools/maven/sphere-json/_latestVersion)
+
+sphere-util: [ ![Download](https://api.bintray.com/packages/commercetools/maven/sphere-util/images/download.svg) ](https://bintray.com/commercetools/maven/sphere-util/_latestVersion)
+
 ## Including in the build
 
-The library is published on the [Bintray](https://bintray.com/commercetools/maven):
+The library is published to the [Bintray](https://bintray.com/commercetools/maven):
 
     resolvers += Resolver.bintrayRepo("commercetools", "maven")
     
