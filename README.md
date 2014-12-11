@@ -10,7 +10,7 @@ have been made public in the hope that they might be useful to more people.
 
 The library is published on the [Bintray](https://bintray.com/commercetools/maven):
 
-    resolvers += Resolver.url("commercetools bintray", url("http://dl.bintray.com/commercetools/maven"))
+    resolvers += Resolver.bintrayRepo("commercetools", "maven")
     
     libraryDependencies += "io.sphere" %% "sphere-util" % "0.5.1"
     libraryDependencies += "io.sphere" %% "sphere-json" % "0.5.1"
