@@ -3,7 +3,6 @@ package io.sphere.json
 import scalaz.{ ValidationNel, Success, NonEmptyList }
 import scalaz.syntax.std.option._
 import scalaz.syntax.applicative._
-import scalaz.syntax.id._
 
 import scala.annotation.target.getter
 import scala.collection.mutable.ListBuffer
@@ -78,9 +77,12 @@ package object generic {
     }
   }
 
-  [#/** Creates a `JSON[T]` instance for a product type (case class) `T` of arity 1. */
-  def jsonProduct[T <: Product: ClassTag, [#A1 : FromJSON : ToJSON#]](
-    construct: [#A1# => ] => T
+  <#list 1..22 as i>
+  <#assign typeParams><#list 1..i as j>A${j}<#if i !=j>,</#if></#list></#assign>
+  <#assign implTypeParams><#list 1..i as j>A${j} : FromJSON : ToJSON<#if i !=j>,</#if></#list></#assign>
+  /** Creates a `JSON[T]` instance for a product type (case class) `T` of arity ${i}. */
+  def jsonProduct[T <: Product: ClassTag, ${implTypeParams}](
+    construct: <#list 1..i as j>A${j}<#if i !=j> => </#if></#list> => T
   ): JSON[T] = {
     val jsonClass = getJSONClass(classTag[T].runtimeClass)
     val fields = jsonClass.fields
@@ -88,19 +90,24 @@ package object generic {
       def write(r: T): JValue = {
         val buf = new ListBuffer[JField]
         if (jsonClass.typeHint.isDefined) writeTypeField(jsonClass, buf)
-        [#writeField[A1](buf, fields(0), r.productElement(0).asInstanceOf[A1])#
-        ]
+        <#list 1..i as j>
+        writeField[A${j}](buf, fields(${j-1}), r.productElement(${j-1}).asInstanceOf[A${j}])
+        </#list>
         JObject(buf.toList)
       }
       def read(jval: JValue): ValidationNel[JSONError, T] = jval match {
         case o: JObject =>
-          construct.pure[JSONParseResult] |> [#(x1 => readField[A1](fields(0), o) <*> x1)# |> ]
+          <#if i!=1>
+            <#list i..2 as j>
+            (readField[A${j}](fields(${j-1}), o) <*>
+            </#list>
+          </#if>
+            readField[A1](fields(0), o).map(construct)<#list 1..i as j><#if i!=j>)</#if></#list>
         case _ => jsonParseError("JSON object expected.")
       }
     }
-  }#
-
-  ]
+  }
+  </#list>
 
   /** Creates a `JSON[T]` instance for some supertype `T`. The instance acts as a type-switch
     * for the subtypes `A1` and `A2`, delegating to their respective JSON instances based
@@ -144,15 +151,11 @@ package object generic {
     }
   }
 
-  [#def jsonTypeSwitch[
-        T: ClassTag,
-        AF <: T : FromJSON : ToJSON : ClassTag,
-        [#A1 <: T : FromJSON : ToJSON : ClassTag#],
-        AL <: T : FromJSON : ToJSON : ClassTag](selectors: List[TypeSelector[_]]): JSON[T] =
-      jsonTypeSwitch[T, AF, [#A1#]](typeSelector[AL] :: selectors)#
-
-  ]
-
+  <#list 3..35 as i>
+  <#assign typeParams><#list 1..i-1 as j>A${j}<#if i-1 != j>,</#if></#list></#assign>
+  <#assign implTypeParams><#list 1..i as j>A${j} <: T : FromJSON : ToJSON : ClassTag<#if i !=j>,</#if></#list></#assign>
+  def jsonTypeSwitch[T: ClassTag, ${implTypeParams}](selectors: List[TypeSelector[_]]): JSON[T] = jsonTypeSwitch[T, ${typeParams}](typeSelector[A${i}] :: selectors)
+  </#list>
 
   final class TypeSelector[A: FromJSON: ToJSON] private[generic](val typeField: String, val typeValue: String, val clazz: Class[_]) {
     def read(o: JObject): ValidationNel[JSONError, A] = fromJValue[A](o)
