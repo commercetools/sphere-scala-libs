@@ -17,7 +17,7 @@ object SphereLibsBuild extends Build {
     javacOptions ++= Seq("-deprecation", "-Xlint:unchecked"),
     testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % "2.2.2" % "test",
+      "org.scalatest" %% "scalatest" % "2.2.3" % "test",
       "org.scalacheck" %% "scalacheck" % "1.12.1" % "test",
       "ch.qos.logback" % "logback-classic" % "1.0.6" % "test"
     ),
@@ -55,7 +55,7 @@ object Fmpp {
   private lazy val fmppConfig = config("fmpp") hide
 
   lazy val settings = fmppConfig(Compile) ++ Seq(
-    libraryDependencies += "net.sourceforge.fmpp" % "fmpp" % "0.9.14" % fmppConfig.name,
+    libraryDependencies += "net.sourceforge.fmpp" % "fmpp" % "0.9.15" % fmppConfig.name,
     ivyConfigurations += fmppConfig,
     fmppOptions := "--ignore-temporary-files" :: Nil,
     fullClasspath in fmppConfig <<= update map { _ select configurationFilter(fmppConfig.name) map Attributed.blank }
