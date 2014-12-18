@@ -6,6 +6,8 @@ import scalaz.std.list._
 import scalaz.std.vector._
 import scalaz.syntax.applicative._
 import scalaz.syntax.traverse._
+import scalaz.Validation.FlatMap._
+
 import scala.collection.breakOut
 import scala.util.control.NonFatal
 

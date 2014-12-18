@@ -1,6 +1,7 @@
 package io.sphere
 
 import scalaz.{ NonEmptyList, Failure, Success, ValidationNel }
+import scalaz.Validation.FlatMap._
 
 import io.sphere.util.Logging
 
