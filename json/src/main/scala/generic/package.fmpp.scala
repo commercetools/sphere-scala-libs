@@ -113,13 +113,20 @@ package object generic {
     * for the subtypes `A1` and `A2`, delegating to their respective JSON instances based
     * on a field that acts as a type hint. */
   def jsonTypeSwitch[T: ClassTag, A1 <: T: ClassTag: FromJSON: ToJSON, A2 <: T: ClassTag: FromJSON: ToJSON](selectors: List[TypeSelector[_]]): JSON[T] = {
-    val allSelectors = typeSelector[A1] :: typeSelector[A2] :: selectors
+    val inSelectors = typeSelector[A1] :: typeSelector[A2] :: selectors
+    val allSelectors = inSelectors.flatMap(s => s.serializer match {
+      case container: TypeSelectorContainer => container.typeSelectors :+ s
+      case _ => s :: Nil
+    })
+
     val readMapBuilder = Map.newBuilder[String, TypeSelector[_]]
     val writeMapBuilder = Map.newBuilder[Class[_], TypeSelector[_]]
+
     allSelectors.foreach { s =>
       readMapBuilder += (s.typeValue -> s)
       writeMapBuilder += (s.clazz -> s)
     }
+
     val readMap = readMapBuilder.result
     val writeMap = writeMapBuilder.result
     val clazz = classTag[T].runtimeClass
@@ -129,7 +136,9 @@ package object generic {
       case None => defaultTypeFieldName
     }
 
-    new JSON[T] {
+    new JSON[T] with TypeSelectorContainer {
+      override def typeSelectors: List[TypeSelector[_]] = allSelectors
+
       def read(jval: JValue): ValidationNel[JSONError, T] = jval match {
         case o: JObject =>
           findTypeValue(o, typeField) match {
@@ -141,12 +150,15 @@ package object generic {
           }
         case _ => jsonParseError("JSON object expected.")
       }
+
       def write(t: T): JValue = writeMap.get(t.getClass) match {
         case Some(ts) => ts.write(t) match {
           case o @ JObject(f :: fs) if f.name == ts.typeField => o
           case j => JField(ts.typeField, JString(ts.typeValue)) ++ j
         }
-        case None => JObject(JField(defaultTypeFieldName, JString(defaultTypeValue(t.getClass))) :: Nil)
+        case None =>
+          // It's better to throw an exception than give back an empty JSON object
+          throw new IllegalStateException("Can't find a serializer for a class " + t.getClass)
       }
     }
   }
@@ -157,9 +169,14 @@ package object generic {
   def jsonTypeSwitch[T: ClassTag, ${implTypeParams}](selectors: List[TypeSelector[_]]): JSON[T] = jsonTypeSwitch[T, ${typeParams}](typeSelector[A${i}] :: selectors)
   </#list>
 
+  trait TypeSelectorContainer {
+    def typeSelectors: List[TypeSelector[_]]
+  }
+
   final class TypeSelector[A: FromJSON: ToJSON] private[generic](val typeField: String, val typeValue: String, val clazz: Class[_]) {
     def read(o: JObject): ValidationNel[JSONError, A] = fromJValue[A](o)
     def write(a: Any): JValue = toJValue(a.asInstanceOf[A])
+    def serializer = implicitly[ToJSON[A]]
   }
 
   private def typeSelector[A: ClassTag: FromJSON: ToJSON](): TypeSelector[_] = {

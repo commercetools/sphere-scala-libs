@@ -163,6 +163,19 @@ class JSONSpec extends FunSpec with MustMatchers {
       }
     }
 
+    it("must handle subclasses correctly in `jsonTypeSwitch`") {
+        val testSubjects = List[TestSubjectBase](
+          TestSubjectConcrete1("testSubject1"),
+          TestSubjectConcrete2("testSubject2"),
+          TestSubjectConcrete3("testSubject3"),
+          TestSubjectConcrete4("testSubject4")
+        )
+
+        testSubjects foreach (testSubject =>
+          fromJSON[TestSubjectBase](toJSON(testSubject)) must equal (Success(testSubject)))
+
+    }
+
     // TODO
     // it("must provide derived instances for sum types with type parameters") {
     //   implicit def aJSON[A: FromJSON: ToJSON]: JSON[GenericA[A]] = deriveJSON[GenericA[A]]
@@ -184,4 +197,29 @@ class JSONSpec extends FunSpec with MustMatchers {
     //   }
     // }
   }
+}
+
+abstract class TestSubjectBase
+
+sealed abstract class TestSubjectCategoryA extends TestSubjectBase
+sealed abstract class TestSubjectCategoryB extends TestSubjectBase
+
+@JSONTypeHint("foo")
+case class TestSubjectConcrete1(c1: String) extends TestSubjectCategoryA
+case class TestSubjectConcrete2(c2: String) extends TestSubjectCategoryA
+
+case class TestSubjectConcrete3(c3: String) extends TestSubjectCategoryB
+case class TestSubjectConcrete4(c4: String) extends TestSubjectCategoryB
+
+object TestSubjectCategoryA {
+  implicit val json: JSON[TestSubjectCategoryA] = deriveJSON[TestSubjectCategoryA]
+}
+
+object TestSubjectCategoryB {
+  implicit val json: JSON[TestSubjectCategoryB] = deriveJSON[TestSubjectCategoryB]
+}
+
+object TestSubjectBase {
+  implicit val json: JSON[TestSubjectBase] =
+    jsonTypeSwitch[TestSubjectBase, TestSubjectCategoryA, TestSubjectCategoryB](Nil)
 }
