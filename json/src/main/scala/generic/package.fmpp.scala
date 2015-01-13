@@ -156,9 +156,8 @@ package object generic {
           case o @ JObject(f :: fs) if f.name == ts.typeField => o
           case j => JField(ts.typeField, JString(ts.typeValue)) ++ j
         }
-        case None =>
-          // It's better to throw an exception than give back an empty JSON object
-          throw new IllegalStateException("Can't find a serializer for a class " + t.getClass)
+
+        case None => throw new IllegalStateException("Can't find a serializer for a class " + t.getClass)
       }
     }
   }
