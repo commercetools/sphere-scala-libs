@@ -141,6 +141,11 @@ object Money {
 
   implicit def moneyMonoid(implicit c: Currency): Monoid[Money] = new Monoid[Money] {
     def append(x: Money, y: => Money): Money = x + y
-    val zero = Money(0, c)
+    val zero = Money.make(0, c)
+  }
+
+  implicit def moneyMonoid(implicit c: Currency, mode: RoundingMode): Monoid[Money] = new Monoid[Money] {
+    def append(x: Money, y: => Money): Money = x + y
+    val zero = Money.make(0, c, mode)
   }
 }
