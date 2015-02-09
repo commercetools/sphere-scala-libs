@@ -13,8 +13,9 @@ import scala.util.control.NonFatal
 
 import io.sphere.util.{ Reflect, Memoizer }
 
-import net.liftweb.json.{ compactRender, JsonParser }
-import net.liftweb.json.JsonAST._
+import org.json4s.JsonAST._
+import org.json4s.native.JsonMethods._
+import org.json4s.JsonDSL._
 
 /** The generic package provides generic functions for deriving JSON instances via
   * some runtime & compile-time reflection. */
@@ -68,9 +69,9 @@ package object generic {
         case o: JObject => findTypeValue(o, typeField) match {
           case Some(t) => t match {
             case `typeValue` => Success(singleton)
-            case _ => jsonParseError("Invalid type value '" + t + "' in '%s'".format(compactRender(o)))
+            case _ => jsonParseError("Invalid type value '" + t + "' in '%s'".format(compact(render(o))))
           }
-          case None => jsonParseError("Missing type field '" + typeField + "' in '%s'".format(compactRender(o)))
+          case None => jsonParseError("Missing type field '" + typeField + "' in '%s'".format(compact(render(o))))
         }
         case _ => jsonParseError("JSON object expected.")
       }
@@ -144,18 +145,20 @@ package object generic {
           findTypeValue(o, typeField) match {
             case Some(t) => readMap.get(t) match {
               case Some(ts) => ts.read(o).asInstanceOf[ValidationNel[JSONError, T]]
-              case None => jsonParseError("Invalid type value '" + t + "' in '%s'".format(compactRender(o)))
+              case None => jsonParseError("Invalid type value '" + t + "' in '%s'".format(compact(render(o))))
             }
-            case None => jsonParseError("Missing type field '" + typeField + "' in '%s'".format(compactRender(o)))
+            case None => jsonParseError("Missing type field '" + typeField + "' in '%s'".format(compact(render(o))))
           }
         case _ => jsonParseError("JSON object expected.")
       }
 
       def write(t: T): JValue = writeMap.get(t.getClass) match {
-        case Some(ts) => ts.write(t) match {
-          case o @ JObject(f :: fs) if f.name == ts.typeField => o
-          case j => JField(ts.typeField, JString(ts.typeValue)) ++ j
-        }
+        case Some(ts) =>
+          ts.write(t) match {
+            case o @ JObject(obj) if obj.exists(_._1 == ts.typeField) => o
+            case j: JObject => j ~ JField(ts.typeField, JString(ts.typeValue))
+            case j => throw new IllegalStateException("The json is not an object but a " + j.getClass)
+          }
 
         case None => throw new IllegalStateException("Can't find a serializer for a class " + t.getClass)
       }
@@ -191,7 +194,7 @@ package object generic {
     clazz.getSimpleName.replace("$", "")
 
   private def findTypeValue(o: JObject, typeField: String): Option[String] =
-    o.obj.find(_.name == typeField).flatMap(_.value.extractOpt[String])
+    o.obj.find(_._1 == typeField).flatMap(_._2.extractOpt[String])
 
   /** Extractor for type hints. */
   class TypeHint(field: String) {

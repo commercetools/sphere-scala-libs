@@ -15,7 +15,7 @@ import java.util.{ Locale, Currency, UUID }
 
 import io.sphere.util.Money
 
-import net.liftweb.json.JsonAST._
+import org.json4s.JsonAST._
 import org.joda.time._
 import org.joda.time.format.ISODateTimeFormat
 
@@ -135,7 +135,7 @@ object FromJSON {
     def read(json: JValue) = json match {
       case JObject(fs) =>
         fs.traverse[JValidation, (String, A)] { f =>
-          fromJValue[A](f.value).map(v => (f.name, v))
+          fromJValue[A](f._2).map(v => (f._1, v))
         }.map(_.toMap)
       case x => fail("JSON Object expected")
     }

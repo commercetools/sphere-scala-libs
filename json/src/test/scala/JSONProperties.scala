@@ -12,8 +12,11 @@ import org.joda.time._
 import org.scalacheck._
 
 object JSONProperties extends Properties("JSON") {
-  private def check[A: FromJSON: ToJSON: Equal](a: A): Boolean =
-    fromJSON[A](toJSON(a)).toOption === Some(a)
+  private def check[A: FromJSON: ToJSON: Equal](a: A): Boolean = {
+    val json = s"""[${toJSON(a)}]"""
+    val result = fromJSON[Seq[A]](json).toOption.map(_.apply(0))
+    result === Some(a)
+  }
 
   implicit def arbitraryVector[A: Arbitrary]: Arbitrary[Vector[A]] =
     Arbitrary(Arbitrary.arbitrary[List[A]].map(_.toVector))
