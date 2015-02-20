@@ -18,7 +18,7 @@ object SphereLibsBuild extends Build {
     testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "2.2.4" % "test",
-      "org.scalacheck" %% "scalacheck" % "1.12.1" % "test",
+      "org.scalacheck" %% "scalacheck" % "1.12.2" % "test",
       "ch.qos.logback" % "logback-classic" % "1.0.6" % "test"
     ),
     libraryDependencies += "org.scala-lang" % "scalap" % scalaVersion.value
