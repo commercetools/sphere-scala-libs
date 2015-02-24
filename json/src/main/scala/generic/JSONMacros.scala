@@ -88,7 +88,7 @@ private[generic] object JSONMacros {
       ) else {
         val subtypes = collectKnownSubtypes(symbol)
         val idents = Ident(symbol.name) :: subtypes.map { s =>
-          if (s.isModuleClass) New(s) else Ident(s.name)
+          if (s.isModuleClass) New(TypeTree(s.asClass.toType)) else Ident(s.name)
         }.toList
 
         if (idents.size == 1)
@@ -111,11 +111,12 @@ private[generic] object JSONMacros {
                   jsonProductApply(symbol.asClass)
                 )
               }
-            }.toVector
+            }.toList
 
           c.Expr[JSON[A]](
             Block(
-              (instanceDefs :+ Apply(
+              instanceDefs,
+              Apply(
                 TypeApply(
                   Select(
                     reify(io.sphere.json.generic.`package`).tree,
@@ -124,7 +125,7 @@ private[generic] object JSONMacros {
                   idents
                 ),
                 List(reify(Nil).tree)
-              )):_*
+              )
             )
           )
         }
