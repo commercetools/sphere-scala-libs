@@ -4,7 +4,7 @@ import scalaz.{ ValidationNel, Success, NonEmptyList }
 import scalaz.syntax.std.option._
 import scalaz.syntax.applicative._
 
-import scala.annotation.target.getter
+import scala.annotation.meta.getter
 import scala.collection.mutable.ListBuffer
 import scala.language.experimental.macros
 import scala.reflect.{ ClassTag, classTag }
