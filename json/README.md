@@ -1,6 +1,6 @@
 # sphere-json
 
-Typeclasses & derived instances on top of [lift-json](https://github.com/lift/framework/tree/master/core/json).
+Typeclasses & derived instances on top of [json4s](http://json4s.org/).
 
 ## Motivation
 
@@ -16,7 +16,7 @@ sphere-json was created with the following goals / requirements:
 
 Therefore, you might want to use this library if:
 
-  - You are already using lift-json and intend to keep using it.
+  - You are already using json4s and intend to keep using it.
   - You are almost exclusively using case classes / objects for your serializable data types.
   - You want a typeclass-based approach for JSON serialization.
   - You want to accumulate errors.
@@ -29,7 +29,7 @@ Until the artifacts are released to Maven Central, please use our public repo:
 
     resolvers += "sphere" at "http://public-repo.ci.cloud.commercetools.de/content/repositories/releases"
 
-    libraryDependencies += "io.sphere" %% "sphere-json" % "0.4.0"
+    libraryDependencies += "io.sphere" %% "sphere-json" % "0.5.4"
 
 ## Basic Usage
 
@@ -267,7 +267,7 @@ doing that. Case class constructors should be pure functions.
 
 ## Dependencies
 
- * lift-json
+ * json4s
  * sphere-util
    * scalaz7
    * joda-time
