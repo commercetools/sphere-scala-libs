@@ -5,8 +5,11 @@ import scalaz.Validation.FlatMap._
 
 import io.sphere.util.Logging
 
-import net.liftweb.json.{ DefaultFormats, JsonParser }
-import net.liftweb.json.JsonAST._
+import org.json4s.DefaultFormats
+import org.json4s.JsonAST._
+import org.json4s.ParserUtil.ParseException
+import org.json4s.native.JsonParser
+import org.json4s.native.JsonMethods._
 
 /** Provides functions for reading & writing JSON, via type classes JSON/JSONR/JSONW. */
 package object json extends Logging {
@@ -17,7 +20,7 @@ package object json extends Logging {
 
   def parseJSON(json: String): JValidation[JValue] =
     try Success(JsonParser.parse(json)) catch {
-      case e: JsonParser.ParseException => jsonParseError(e.getMessage)
+      case e: ParseException => jsonParseError(e.getMessage)
     }
 
   def jsonParseError[A](msg: String): Failure[NonEmptyList[JSONError]] =
@@ -28,7 +31,7 @@ package object json extends Logging {
 
   def toJSON[A: ToJSON](a: A): String = toJValue(a) match {
     case JNothing => "{}"
-    case jval => compactRender(jval)
+    case jval => compact(render(jval))
   }
 
   /** Parses a JSON string into a type A.
@@ -62,8 +65,8 @@ package object json extends Logging {
   )(jval: JValue): JValidation[A] = jval match {
     case JObject(fields) =>
       val jsonr = implicitly[FromJSON[A]]
-      fields.find(_.name == name)
-        .map(f => jsonr.read(f.value).fold(
+      fields.find(_._1 == name)
+        .map(f => jsonr.read(f._2).fold(
           errs => Failure(errs map {
             case JSONParseError(msg) => JSONFieldError(List(name), msg)
             case JSONFieldError(path, msg) => JSONFieldError(name :: path, msg)
@@ -71,6 +74,6 @@ package object json extends Logging {
         .orElse(default.map(Success(_)))
         .orElse(jsonr.read(JNothing).fold(_ => None, x => Some(Success(x)))) // orElse(jsonr.default)
         .getOrElse(Failure(NonEmptyList(JSONFieldError(List(name), "Missing required value"))))
-    case x => jsonParseError("Expected JSON object. Got '" + compactRender(x) + "'")
+    case x => jsonParseError("Expected JSON object. Got '" + compact(render(x)) + "'")
   }
 }

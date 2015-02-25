@@ -8,7 +8,7 @@ import java.util.{ Locale, Currency, UUID }
 
 import io.sphere.util.Money
 
-import net.liftweb.json.JsonAST._
+import org.json4s.JsonAST._
 import org.joda.time._
 import org.joda.time.format.ISODateTimeFormat
 
@@ -78,7 +78,7 @@ object ToJSON {
   }
 
   implicit def mapWriter[A: ToJSON]: ToJSON[Map[String, A]] = new ToJSON[Map[String, A]] {
-    def write(m: Map[String, A]) = JObject(m.map { case (k, v) => JField(k, toJValue(v)) }(breakOut))
+    def write(m: Map[String, A]) = JObject(m.map { case (k, v) => JField(k, toJValue(v)) }(breakOut): _*)
   }
 
   implicit val moneyWriter: ToJSON[Money] = new ToJSON[Money] {

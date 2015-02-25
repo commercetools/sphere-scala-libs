@@ -1,18 +1,14 @@
 package io.sphere.json
 
+import org.json4s.JsonAST._
+
 import scalaz._
 import Scalaz._
 
 import io.sphere.json.generic._
 import io.sphere.util.Money
 
-import java.util.{ Locale, Currency }
-
-import net.liftweb.json.JsonAST._
-import net.liftweb.json.JsonParser
-import net.liftweb.json.JsonParser.ParseException
 import org.joda.time._
-import org.joda.time.format.ISODateTimeFormat
 import org.scalatest._
 import org.scalatest.MustMatchers
 
@@ -141,7 +137,10 @@ class JSONSpec extends FunSpec with MustMatchers {
 
     it("must provide derived instances for singleton objects") {
       implicit val singletonJSON = deriveJSON[Singleton.type]
-      fromJSON[Singleton.type](toJSON(Singleton)) must equal (Success(Singleton))
+      val json = s"""[${toJSON(Singleton)}]"""
+      withClue(json) {
+        fromJSON[Seq[Singleton.type]](json) must equal(Success(Seq(Singleton)))
+      }
 
       implicit val singleEnumJSON = deriveJSON[SingletonEnum]
       List(SingletonA, SingletonB, SingletonC) foreach { s: SingletonEnum =>
@@ -159,7 +158,10 @@ class JSONSpec extends FunSpec with MustMatchers {
     it("must provide derived instances for scala.Enumeration") {
       implicit val scalaEnumJSON = deriveJSON[ScalaEnum.Value]
       ScalaEnum.values.foreach { v =>
-        fromJSON[ScalaEnum.Value](toJSON(v)) must equal (Success(v))
+        val json = s"""[${toJSON(v)}]"""
+        withClue(json) {
+          fromJSON[Seq[ScalaEnum.Value]](json) must equal(Success(Seq(v)))
+        }
       }
     }
 
@@ -171,8 +173,12 @@ class JSONSpec extends FunSpec with MustMatchers {
           TestSubjectConcrete4("testSubject4")
         )
 
-        testSubjects foreach (testSubject =>
-          fromJSON[TestSubjectBase](toJSON(testSubject)) must equal (Success(testSubject)))
+        testSubjects foreach (testSubject => {
+          val json = toJSON(testSubject)
+          withClue(json) {
+            fromJSON[TestSubjectBase](json) must equal (Success(testSubject))
+          }
+        })
 
     }
 
