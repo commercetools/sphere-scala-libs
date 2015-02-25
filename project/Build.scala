@@ -29,6 +29,8 @@ object SphereLibsBuild extends Build {
     base = file("."),
     aggregate = Seq(util, json),
     settings = standardSettings
+  ).settings (
+    publishArtifact := false
   )
 
   lazy val util = Project(
