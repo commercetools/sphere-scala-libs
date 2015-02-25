@@ -27,7 +27,7 @@ Therefore, you might want to use this library if:
 
 Until the artifacts are released to Maven Central, please use our public repo:
 
-    resolvers += "sphere" at "http://public-repo.ci.cloud.commercetools.de/content/repositories/releases"
+    resolvers += Resolver.bintrayRepo("commercetools", "maven")
 
     libraryDependencies += "io.sphere" %% "sphere-json" % "0.5.4"
 
