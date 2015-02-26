@@ -6,11 +6,14 @@ import bintray.Plugin._
 
 object SphereLibsBuild extends Build {
 
-  lazy val publishSettings = releaseSettings ++ bintraySettings
+  lazy val publishSettings = releaseSettings ++ bintraySettings ++ Seq(
+    ReleaseKeys.crossBuild := true
+  )
 
   lazy val standardSettings = Defaults.defaultSettings ++ publishSettings ++ Seq(
     organization := "io.sphere",
     scalaVersion := "2.10.4",
+    crossScalaVersions := Seq("2.10.4", "2.11.5"),
     licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html")),
     logBuffered := false,
     scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature"),
