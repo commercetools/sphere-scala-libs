@@ -20,5 +20,7 @@ The library is published to the [Bintray](https://bintray.com/commercetools/mave
     
     libraryDependencies += "io.sphere" %% "sphere-util" % "0.5.6"
     libraryDependencies += "io.sphere" %% "sphere-json" % "0.5.6"
-    
-    
+
+## License
+
+Licensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
