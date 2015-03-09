@@ -1,13 +1,27 @@
 import sbt._
 import Keys._
+import sbtrelease.ReleaseStep
 import language._
 import sbtrelease.ReleasePlugin._
+import sbtrelease.ReleaseStateTransformations._
 import bintray.Plugin._
 
 object SphereLibsBuild extends Build {
 
   lazy val publishSettings = releaseSettings ++ bintraySettings ++ Seq(
     ReleaseKeys.crossBuild := true,
+    ReleaseKeys.releaseProcess := Seq[ReleaseStep](
+      checkSnapshotDependencies,              // : ReleaseStep
+      inquireVersions,                        // : ReleaseStep
+//      runTest,                                // : ReleaseStep
+      setReleaseVersion,                      // : ReleaseStep
+      commitReleaseVersion,                   // : ReleaseStep, performs the initial git checks
+//      tagRelease,                             // : ReleaseStep
+//      publishArtifacts,                       // : ReleaseStep, checks whether `publishTo` is properly set up
+      setNextVersion,                         // : ReleaseStep
+      commitNextVersion                      // : ReleaseStep
+//      pushChanges                             // : ReleaseStep, also checks that an upstream branch is properly configured
+    ),
     UpdateVersionInFiles(file("README.md"), file("json/README.md"))
   )
 
