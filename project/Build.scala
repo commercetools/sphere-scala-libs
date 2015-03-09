@@ -14,7 +14,6 @@ object SphereLibsBuild extends Build {
 
   lazy val standardSettings = Defaults.defaultSettings ++ publishSettings ++ Seq(
     organization := "io.sphere",
-    licenses := Seq("Apache License, ASL Version 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
     scalaVersion := "2.10.5",
     crossScalaVersions := Seq("2.10.5", "2.11.6"),
     licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html")),
