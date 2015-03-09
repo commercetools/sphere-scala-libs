@@ -34,7 +34,7 @@ object UpdateVersionInFiles {
     val replacement = "$1" + version + "$2"
 
     def updateFile(file: File) = {
-      s.log.info(s"Update version occurrences in '${file.getName}' with $pattern")
+      s.log.info(s"Update version occurrences in '${file.getName}' with $replacement")
       val contents = IO.read(file)
       val newContents = contents.replaceAll(pattern, replacement)
       if (contents != newContents)
