@@ -9,14 +9,12 @@ import sbt.Keys._
 
 object UpdateVersionInFiles {
 
-  val namePattern = SettingKey[String]("name-pattern")
+  def apply(namePattern: String, files: File*) =
+    releaseProcess := withUpdatedFiles(namePattern, releaseProcess.value, files)
 
-  def apply(files: File*) =
-    releaseProcess := withUpdatedFiles(releaseProcess.value, files)
-
-  def withUpdatedFiles(steps: Seq[ReleaseStep], files: Seq[File]) =
+  def withUpdatedFiles(namePattern: String, steps: Seq[ReleaseStep], files: Seq[File]) =
     insert(
-      step = updateVersionInFiles(files),
+      step = updateVersionInFiles(namePattern, files),
       before = commitReleaseVersion,
       in = steps)
 
@@ -26,10 +24,10 @@ object UpdateVersionInFiles {
     (beforeStep :+ step) ++ rest
   }
 
-  def updateVersionInFiles(files: Seq[File]): ReleaseStep = { s: State =>
+  def updateVersionInFiles(namePattern: String, files: Seq[File]): ReleaseStep = { s: State =>
     val settings = Project.extract(s)
 
-    val pattern = getPattern(settings)
+    val pattern = getPattern(namePattern, settings)
     val version = settings.get(releaseVersion)(settings.get(Keys.version))
     val replacement = "$1" + version + "$2"
 
@@ -48,10 +46,10 @@ object UpdateVersionInFiles {
     s
   }
 
-  def getPattern(settings:Extracted) = {
+  def getPattern(namePattern: String, settings: Extracted) = {
 
     val organization = settings.get(Keys.organization)
-    val name = settings.getOpt(namePattern).getOrElse(settings.get(Keys.name))
+    val name = namePattern
     val % = "\"\\s+%+\\s+\"" // " %% " or "   % "
     val > = "(\""
     val < = ")"

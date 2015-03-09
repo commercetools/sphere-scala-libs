@@ -22,7 +22,8 @@ object SphereLibsBuild extends Build {
       commitNextVersion                      // : ReleaseStep
 //      pushChanges                             // : ReleaseStep, also checks that an upstream branch is properly configured
     ),
-    UpdateVersionInFiles(file("README.md"), file("json/README.md"))
+    UpdateVersionInFiles("sphere-util", file("README.md"), file("json/README.md")),
+    UpdateVersionInFiles("sphere-json", file("README.md"), file("json/README.md"))
   )
 
   lazy val standardSettings = Defaults.defaultSettings ++ publishSettings ++ Seq(
