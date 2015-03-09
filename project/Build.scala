@@ -8,7 +8,8 @@ object SphereLibsBuild extends Build {
 
   lazy val publishSettings = releaseSettings ++ bintraySettings ++ Seq(
     ReleaseKeys.crossBuild := true,
-    UpdateVersionInFiles(file("README.md"), file("json/README.md"))
+    UpdateVersionInFiles("sphere-util", file("README.md"), file("json/README.md")),
+    UpdateVersionInFiles("sphere-json", file("README.md"), file("json/README.md"))
   )
 
   lazy val standardSettings = Defaults.defaultSettings ++ publishSettings ++ Seq(
