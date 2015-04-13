@@ -22,7 +22,7 @@ private[generic] object JSONMacros {
     }
 
     def jsonProductApply(classSym: ClassSymbol): Tree = {
-      val argList = classSym.toType.member(nme.CONSTRUCTOR).asMethod.paramss(0)
+      val argList = classSym.toType.member(nme.CONSTRUCTOR).asMethod.paramss.head
       val (argDefs, args) = (for ((a, i) <- argList.zipWithIndex) yield {
         val argType = classSym.toType.member(a.name).typeSignatureIn(tpe)
         val argTree = ValDef(Modifiers(Flag.PARAM), newTermName("x" + i), TypeTree(argType), EmptyTree)
@@ -98,7 +98,7 @@ private[generic] object JSONMacros {
         else {
           val instanceDefs = subtypes.zipWithIndex.collect {
             case (symbol, i) if symbol.isClass && symbol.asClass.isCaseClass =>
-              if (!symbol.asClass.typeParams.isEmpty) {
+              if (symbol.asClass.typeParams.nonEmpty) {
                 c.abort(c.enclosingPosition, "Types with type parameters cannot (yet) be derived as part of a sum type")
               } else {
                 ValDef(

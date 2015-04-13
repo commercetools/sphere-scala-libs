@@ -103,7 +103,7 @@ package object generic {
             (readField[A${j}](fields(${j-1}), o) <*>
             </#list>
           </#if>
-            readField[A1](fields(0), o).map(construct)<#list 1..i as j><#if i!=j>)</#if></#list>
+            readField[A1](fields.head, o).map(construct)<#list 1..i as j><#if i!=j>)</#if></#list>
         case _ => jsonParseError("JSON object expected.")
       }
     }
@@ -243,7 +243,7 @@ package object generic {
       val name = Option(m.getAnnotation(classOf[JSONKey])).map(_.value).getOrElse(fm.name)
       val embedded = m.isAnnotationPresent(classOf[JSONEmbedded])
       val ignored = m.isAnnotationPresent(classOf[JSONIgnore])
-      if (ignored && !fm.default.isDefined) {
+      if (ignored && fm.default.isEmpty) {
         // programmer error
         throw new JSONException("Ignored JSON field '%s' must have a default value.".format(fm.name))
       }
