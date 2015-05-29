@@ -14,7 +14,7 @@ import scala.util.control.NonFatal
 import io.sphere.util.{ Reflect, Memoizer }
 
 import org.json4s.JsonAST._
-import org.json4s.native.JsonMethods._
+import org.json4s.jackson.compactJson
 import org.json4s.JsonDSL._
 
 /** The generic package provides generic functions for deriving JSON instances via
@@ -69,9 +69,9 @@ package object generic {
         case o: JObject => findTypeValue(o, typeField) match {
           case Some(t) => t match {
             case `typeValue` => Success(singleton)
-            case _ => jsonParseError("Invalid type value '" + t + "' in '%s'".format(compact(render(o))))
+            case _ => jsonParseError("Invalid type value '" + t + "' in '%s'".format(compactJson(o)))
           }
-          case None => jsonParseError("Missing type field '" + typeField + "' in '%s'".format(compact(render(o))))
+          case None => jsonParseError("Missing type field '" + typeField + "' in '%s'".format(compactJson(o)))
         }
         case _ => jsonParseError("JSON object expected.")
       }
@@ -145,9 +145,9 @@ package object generic {
           findTypeValue(o, typeField) match {
             case Some(t) => readMap.get(t) match {
               case Some(ts) => ts.read(o).asInstanceOf[ValidationNel[JSONError, T]]
-              case None => jsonParseError("Invalid type value '" + t + "' in '%s'".format(compact(render(o))))
+              case None => jsonParseError("Invalid type value '" + t + "' in '%s'".format(compactJson(o)))
             }
-            case None => jsonParseError("Missing type field '" + typeField + "' in '%s'".format(compact(render(o))))
+            case None => jsonParseError("Missing type field '" + typeField + "' in '%s'".format(compactJson(o)))
           }
         case _ => jsonParseError("JSON object expected.")
       }

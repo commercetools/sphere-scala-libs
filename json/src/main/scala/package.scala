@@ -5,11 +5,10 @@ import scalaz.Validation.FlatMap._
 
 import io.sphere.util.Logging
 
-import org.json4s.DefaultFormats
+import org.json4s.{JsonInput, StringInput, DefaultFormats}
 import org.json4s.JsonAST._
 import org.json4s.ParserUtil.ParseException
-import org.json4s.native.JsonParser
-import org.json4s.native.JsonMethods._
+import org.json4s.jackson.{ compactJson, parseJson }
 
 /** Provides functions for reading & writing JSON, via type classes JSON/JSONR/JSONW. */
 package object json extends Logging {
@@ -18,10 +17,13 @@ package object json extends Logging {
 
   type JValidation[A] = ValidationNel[JSONError, A]
 
-  def parseJSON(json: String): JValidation[JValue] =
-    try Success(JsonParser.parse(json)) catch {
+  def parseJSON(json: JsonInput): JValidation[JValue] =
+    try Success(parseJson(json)) catch {
       case e: ParseException => jsonParseError(e.getMessage)
     }
+
+  def parseJSON(json: String): JValidation[JValue] =
+    parseJSON(StringInput(json))
 
   def jsonParseError[A](msg: String): Failure[NonEmptyList[JSONError]] =
     Failure(NonEmptyList(JSONParseError(msg)))
@@ -31,7 +33,7 @@ package object json extends Logging {
 
   def toJSON[A: ToJSON](a: A): String = toJValue(a) match {
     case JNothing => "{}"
-    case jval => compact(render(jval))
+    case jval => compactJson(jval)
   }
 
   /** Parses a JSON string into a type A.
@@ -39,8 +41,11 @@ package object json extends Logging {
    *
    * @param json The JSON string to parse.
    * @return An instance of type A. */
+  def getFromJSON[A: FromJSON](json: JsonInput): A =
+    getFromJValue[A](parseJson(json))
+
   def getFromJSON[A: FromJSON](json: String): A =
-    getFromJValue[A](JsonParser.parse(json))
+    getFromJSON(StringInput(json))
 
   def fromJValue[A: FromJSON](jval: JValue): JValidation[A] =
     implicitly[FromJSON[A]].read(jval)
@@ -74,6 +79,6 @@ package object json extends Logging {
         .orElse(default.map(Success(_)))
         .orElse(jsonr.read(JNothing).fold(_ => None, x => Some(Success(x)))) // orElse(jsonr.default)
         .getOrElse(Failure(NonEmptyList(JSONFieldError(List(name), "Missing required value"))))
-    case x => jsonParseError("Expected JSON object. Got '" + compact(render(x)) + "'")
+    case x => jsonParseError("Expected JSON object. Got '" + compactJson(x) + "'")
   }
 }
