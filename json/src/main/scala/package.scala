@@ -1,5 +1,7 @@
 package io.sphere
 
+import com.fasterxml.jackson.databind.JsonMappingException
+
 import scalaz.{ NonEmptyList, Failure, Success, ValidationNel }
 import scalaz.Validation.FlatMap._
 
@@ -20,6 +22,7 @@ package object json extends Logging {
   def parseJSON(json: JsonInput): JValidation[JValue] =
     try Success(parseJson(json)) catch {
       case e: ParseException => jsonParseError(e.getMessage)
+      case e: JsonMappingException ⇒ jsonParseError(e.getMessage)
     }
 
   def parseJSON(json: String): JValidation[JValue] =
@@ -27,6 +30,9 @@ package object json extends Logging {
 
   def jsonParseError[A](msg: String): Failure[NonEmptyList[JSONError]] =
     Failure(NonEmptyList(JSONParseError(msg)))
+
+  def fromJSON[A: FromJSON](json: JsonInput): JValidation[A] =
+    parseJSON(json).flatMap(fromJValue[A])
 
   def fromJSON[A: FromJSON](json: String): JValidation[A] =
     parseJSON(json).flatMap(fromJValue[A])
