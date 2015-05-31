@@ -121,9 +121,19 @@ class JSONSpec extends FunSpec with MustMatchers {
       err.list.head mustBe a [JSONParseError]
     }
 
+    it("must provide user-friendly error by empty String") {
+      val Failure(err) = fromJSON[Int]("")
+      err.list mustEqual List(JSONParseError("No content to map due to end-of-input"))
+    }
+
     it("must handle incorrect json") {
       val Failure(err) = fromJSON[Int]("""{"key: "value"}""")
       err.list.head mustBe a [JSONParseError]
+    }
+
+    it("must provide user-friendly error by incorrect json") {
+      val Failure(err) = fromJSON[Int]("""{"key: "value"}""")
+      err.list mustEqual List(JSONParseError("Unexpected character ('v' (code 118)): was expecting a colon to separate field name and value"))
     }
 
     it("must provide derived JSON instances for sum types") {

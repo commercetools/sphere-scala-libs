@@ -23,8 +23,8 @@ package object json extends Logging {
   def parseJSON(json: JsonInput): JValidation[JValue] =
     try Success(parseJson(json)) catch {
       case e: ParseException => jsonParseError(e.getMessage)
-      case e: JsonMappingException ⇒ jsonParseError(e.getMessage)
-      case e: JsonParseException ⇒ jsonParseError(e.getMessage)
+      case e: JsonMappingException ⇒ jsonParseError(e.getOriginalMessage)
+      case e: JsonParseException ⇒ jsonParseError(e.getOriginalMessage)
     }
 
   def parseJSON(json: String): JValidation[JValue] =
