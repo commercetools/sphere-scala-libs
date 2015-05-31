@@ -121,6 +121,11 @@ class JSONSpec extends FunSpec with MustMatchers {
       err.list.head mustBe a [JSONParseError]
     }
 
+    it("must handle incorrect json") {
+      val Failure(err) = fromJSON[Int]("""{"key: "value"}""")
+      err.list.head mustBe a [JSONParseError]
+    }
+
     it("must provide derived JSON instances for sum types") {
       implicit val animalJSON = deriveJSON[Animal]
       List(Bird("Peewee"), Dog("Hasso"), Cat("Felidae")) foreach { a: Animal =>
