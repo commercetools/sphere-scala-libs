@@ -19,7 +19,7 @@ object SphereLibsBuild extends Build {
     licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html")),
     logBuffered := false,
     scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature"),
-    javacOptions ++= Seq("-deprecation", "-Xlint:unchecked"),
+    javacOptions ++= Seq("-deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7"),
     testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "2.2.4" % "test",
