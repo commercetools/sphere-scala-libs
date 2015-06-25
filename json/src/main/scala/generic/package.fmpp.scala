@@ -86,13 +86,13 @@ package object generic {
     construct: <#list 1..i as j>A${j}<#if i !=j> => </#if></#list> => T
   ): JSON[T] = {
     val jsonClass = getJSONClass(classTag[T].runtimeClass)
-    val fields = jsonClass.fields
+    val _fields = jsonClass.fields
     new JSON[T] {
       def write(r: T): JValue = {
         val buf = new ListBuffer[JField]
         if (jsonClass.typeHint.isDefined) writeTypeField(jsonClass, buf)
         <#list 1..i as j>
-        writeField[A${j}](buf, fields(${j-1}), r.productElement(${j-1}).asInstanceOf[A${j}])
+        writeField[A${j}](buf, _fields(${j-1}), r.productElement(${j-1}).asInstanceOf[A${j}])
         </#list>
         JObject(buf.toList)
       }
@@ -100,12 +100,13 @@ package object generic {
         case o: JObject =>
           <#if i!=1>
             <#list i..2 as j>
-            (readField[A${j}](fields(${j-1}), o) <*>
+            (readField[A${j}](_fields(${j-1}), o) <*>
             </#list>
           </#if>
-            readField[A1](fields.head, o).map(construct)<#list 1..i as j><#if i!=j>)</#if></#list>
+            readField[A1](_fields.head, o).map(construct)<#list 1..i as j><#if i!=j>)</#if></#list>
         case _ => jsonParseError("JSON object expected.")
       }
+      override val fields = _fields map (_.name)
     }
   }
   </#list>
