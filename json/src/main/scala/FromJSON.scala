@@ -23,7 +23,7 @@ import org.joda.time.format.ISODateTimeFormat
 trait FromJSON[A] {
   def read(jval: JValue): JValidation[A]
   final protected def fail(msg: String) = jsonParseError(msg)
-  // def default: Option[A] = None
+  def fields: Seq[String] = Seq.empty
 }
 
 object FromJSON {
@@ -31,9 +31,10 @@ object FromJSON {
   implicit def optionReader[A](implicit c: FromJSON[A]): FromJSON[Option[A]] = new FromJSON[Option[A]] {
     def read(jval: JValue): JValidation[Option[A]] = jval match {
       case JNothing | JNull | JObject(Nil) => Success(None)
+      case JObject(s) if s.forall(t ⇒ !fields.contains(t._1)) ⇒ Success(None) // if none of the optional fields are in the JSON
       case x => c.read(x).map(some)
     }
-    // override def default: Option[Option[A]] = Some(None)
+    override val fields = c.fields
   }
 
   implicit def listReader[A](implicit r: FromJSON[A]): FromJSON[List[A]] = new FromJSON[List[A]] {
@@ -142,6 +143,7 @@ object FromJSON {
   }
 
   implicit val moneyReader: FromJSON[Money] = new FromJSON[Money] {
+    override def fields = Seq("centAmount", "currencyCode")
     def read(jval: JValue): JValidation[Money] = jval match {
       case o: JObject =>
         (field[Long]("centAmount")(o) <*>
