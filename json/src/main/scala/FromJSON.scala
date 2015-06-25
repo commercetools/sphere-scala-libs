@@ -31,7 +31,7 @@ object FromJSON {
   implicit def optionReader[A](implicit c: FromJSON[A]): FromJSON[Option[A]] = new FromJSON[Option[A]] {
     def read(jval: JValue): JValidation[Option[A]] = jval match {
       case JNothing | JNull | JObject(Nil) => Success(None)
-      case JObject(s) if s.forall(t ⇒ !fields.contains(t._1)) ⇒ Success(None) // if none of the optional fields are in the JSON
+      case JObject(s) if fields.nonEmpty && s.forall(t ⇒ !fields.contains(t._1)) ⇒ Success(None) // if none of the optional fields are in the JSON
       case x => c.read(x).map(some)
     }
     override val fields = c.fields

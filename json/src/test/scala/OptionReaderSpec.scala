@@ -11,6 +11,14 @@ object OptionReaderSpec {
     implicit val json: JSON[SimpleClass] = jsonProduct((apply _).curried)
   }
 
+  case class ComplexClass(
+    name: String,
+    simpleClass: Option[SimpleClass])
+
+  object ComplexClass {
+    implicit val json: JSON[ComplexClass] = jsonProduct((apply _).curried)
+  }
+
 }
 
 
@@ -58,6 +66,38 @@ class OptionReaderSpec extends WordSpec with MustMatchers with OptionValues {
       val json = """{ "value3": "a" }"""
       val result = getFromJSON[Option[SimpleClass]](json)
       result mustEqual None
+    }
+
+    "do not ignore fields if no one is expected" in {
+      val json =
+        """{
+          |  "key1": "value1",
+          |  "key2": "value2"
+          |}
+        """.stripMargin
+      val expected = Map("key1" → "value1", "key2" → "value2")
+      val result = getFromJSON[Map[String, String]](json)
+      result mustEqual expected
+
+      val maybeResult = getFromJSON[Option[Map[String, String]]](json)
+      maybeResult.value mustEqual expected
+    }
+
+    "parse optional element" in {
+      val json =
+        """{
+          |  "name": "ze name",
+          |  "simpleClass": {
+          |    "value1": "value1",
+          |    "value2": 42
+          |  }
+          |}
+        """.stripMargin
+      val result = getFromJSON[ComplexClass](json)
+      result.simpleClass.value.value1 mustEqual "value1"
+      result.simpleClass.value.value2 mustEqual 42
+
+      parseJSON(toJSON(result)) mustEqual parseJSON(json)
     }
   }
 
