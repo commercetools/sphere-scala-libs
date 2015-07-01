@@ -106,7 +106,7 @@ package object generic {
             readField[A1](_fields.head, o).map(construct)<#list 1..i as j><#if i!=j>)</#if></#list>
         case _ => jsonParseError("JSON object expected.")
       }
-      override val fields = _fields map (_.name)
+      override val fields = _fields.map(_.name).toSet
     }
   }
   </#list>
