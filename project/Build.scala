@@ -2,7 +2,7 @@ import sbt._
 import Keys._
 import language._
 import sbtrelease.ReleasePlugin._
-import bintray.Plugin._
+import bintray.BintrayPlugin._
 
 object SphereLibsBuild extends Build {
 
