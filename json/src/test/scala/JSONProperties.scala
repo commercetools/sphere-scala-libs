@@ -34,7 +34,8 @@ object JSONProperties extends Properties("JSON") {
       Currency.getInstance("JPY")))
 
   implicit def arbitraryLocale: Arbitrary[Locale] = {
-    val locales = Locale.getAvailableLocales()
+    // Filter because OS X thinks that 'C' and 'POSIX' are valid locales...
+    val locales = Locale.getAvailableLocales().filter(_.toLanguageTag() != "und")
     Arbitrary(for {
       i <- Gen.choose(0, locales.length-1)
     } yield locales(i))
