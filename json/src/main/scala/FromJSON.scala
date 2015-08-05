@@ -13,7 +13,7 @@ import scala.util.control.NonFatal
 
 import java.util.{ Locale, Currency, UUID }
 
-import io.sphere.util.Money
+import io.sphere.util.{ Money, LangTag }
 
 import org.json4s.JsonAST._
 import org.joda.time._
@@ -247,10 +247,9 @@ object FromJSON {
 
   implicit val localeReader: FromJSON[Locale] = new FromJSON[Locale] {
     def read(jval: JValue): JValidation[Locale] = jval match {
-      case JString(s) => try {
-        Success(Locale.forLanguageTag(s))
-      } catch {
-        case NonFatal(_) => fail("Invalid locale: '%s'".format(s))
+      case JString(s) => s match {
+        case LangTag(langTag) => Success(langTag)
+        case _ => fail(LangTag.invalidLangTagMessage(s))
       }
       case _ => fail("JSON string expected.")
     }
