@@ -1,6 +1,5 @@
 import java.io.File
-import sbtrelease.ReleasePlugin.ReleaseKeys._
-import sbtrelease.ReleaseStep
+import sbtrelease.ReleasePlugin.autoImport._
 import sbtrelease.ReleaseStateTransformations._
 import sbt._
 import sbt.Keys._
@@ -57,7 +56,7 @@ object UpdateVersionInFiles {
     > + organization + % + name + % + < + versionPattern + > + <
   }
 
-  private def vcs(settings:Extracted) =
-    settings.get(versionControlSystem)
+  private def vcs(settings:Extracted): sbtrelease.Vcs =
+    settings.get(releaseVcs)
       .getOrElse(sys.error("Aborting release. Working directory is not a repository of a recognized VCS."))
 }

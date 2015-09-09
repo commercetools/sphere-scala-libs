@@ -1,13 +1,13 @@
 import sbt._
 import Keys._
 import language._
-import sbtrelease.ReleasePlugin._
+import sbtrelease.ReleasePlugin.autoImport._
 import bintray.BintrayPlugin._
 
 object SphereLibsBuild extends Build {
 
-  lazy val publishSettings = releaseSettings ++ bintraySettings ++ Seq(
-    ReleaseKeys.crossBuild := true,
+  lazy val publishSettings = bintraySettings ++ Seq(
+    releaseCrossBuild := true,
     UpdateVersionInFiles("sphere-util", file("README.md"), file("json/README.md")),
     UpdateVersionInFiles("sphere-json", file("README.md"), file("json/README.md"))
   )
