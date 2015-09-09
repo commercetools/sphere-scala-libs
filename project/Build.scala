@@ -36,7 +36,7 @@ object SphereLibsBuild extends Build {
     settings = standardSettings
   ).settings (
     publishArtifact := false
-  )
+  ).disablePlugins(bintray.BintrayPlugin)
 
   lazy val util = Project(
     id = "sphere-util",
