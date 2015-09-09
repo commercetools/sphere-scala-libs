@@ -35,7 +35,8 @@ object SphereLibsBuild extends Build {
     aggregate = Seq(util, json),
     settings = standardSettings
   ).settings (
-    publishArtifact := false
+    publishArtifact := false,
+    publish := {}
   ).disablePlugins(bintray.BintrayPlugin)
 
   lazy val util = Project(
