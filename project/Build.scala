@@ -15,7 +15,7 @@ object SphereLibsBuild extends Build {
   lazy val standardSettings = Defaults.defaultSettings ++ publishSettings ++ Seq(
     organization := "io.sphere",
     scalaVersion := "2.10.5",
-    crossScalaVersions := Seq("2.10.5", "2.11.7"),
+    crossScalaVersions := Seq("2.10.6", "2.11.7"),
     licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html")),
     logBuffered := false,
     scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature"),
