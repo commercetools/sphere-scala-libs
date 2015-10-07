@@ -81,21 +81,13 @@ package object generic {
   <#list 1..22 as i>
   <#assign typeParams><#list 1..i as j>A${j}<#if i !=j>,</#if></#list></#assign>
   <#assign implTypeParams><#list 1..i as j>A${j} : FromJSON : ToJSON<#if i !=j>,</#if></#list></#assign>
-  /** Creates a `JSON[T]` instance for a product type (case class) `T` of arity ${i}. */
-  def jsonProduct[T <: Product: ClassTag, ${implTypeParams}](
+  /** Creates a `FromJSON[T]` instance for a product type (case class) `T` of arity ${i}. */
+  def fromJsonProduct[T <: Product: ClassTag, ${implTypeParams}](
     construct: <#list 1..i as j>A${j}<#if i !=j> => </#if></#list> => T
-  ): JSON[T] = {
+  ): FromJSON[T] = {
     val jsonClass = getJSONClass(classTag[T].runtimeClass)
     val _fields = jsonClass.fields
-    new JSON[T] {
-      def write(r: T): JValue = {
-        val buf = new ListBuffer[JField]
-        if (jsonClass.typeHint.isDefined) writeTypeField(jsonClass, buf)
-        <#list 1..i as j>
-        writeField[A${j}](buf, _fields(${j-1}), r.productElement(${j-1}).asInstanceOf[A${j}])
-        </#list>
-        JObject(buf.toList)
-      }
+    new FromJSON[T] {
       def read(jval: JValue): ValidationNel[JSONError, T] = jval match {
         case o: JObject =>
           <#if i!=1>
@@ -107,6 +99,34 @@ package object generic {
         case _ => jsonParseError("JSON object expected.")
       }
       override val fields = _fields.map(_.name).toSet
+    }
+  }
+  /** Creates a `ToJSON[T]` instance for a product type (case class) `T` of arity ${i}. */
+  def toJsonProduct[T <: Product: ClassTag, ${implTypeParams}](
+    construct: <#list 1..i as j>A${j}<#if i !=j> => </#if></#list> => T
+  ): ToJSON[T] = {
+    val jsonClass = getJSONClass(classTag[T].runtimeClass)
+    val _fields = jsonClass.fields
+    new ToJSON[T] {
+      def write(r: T): JValue = {
+        val buf = new ListBuffer[JField]
+        if (jsonClass.typeHint.isDefined) writeTypeField(jsonClass, buf)
+        <#list 1..i as j>
+        writeField[A${j}](buf, _fields(${j-1}), r.productElement(${j-1}).asInstanceOf[A${j}])
+        </#list>
+        JObject(buf.toList)
+      }
+    }
+  }
+  /** Creates a `JSON[T]` instance for a product type (case class) `T` of arity ${i}. */
+  def jsonProduct[T <: Product: ClassTag, ${implTypeParams}](
+    construct: <#list 1..i as j>A${j}<#if i !=j> => </#if></#list> => T
+  ): JSON[T] = {
+    val jsonClass = getJSONClass(classTag[T].runtimeClass)
+    val _fields = jsonClass.fields
+    new JSON[T] {
+      def write(r: T): JValue = toJsonProduct(construct).write(r)
+      def read(jval: JValue): ValidationNel[JSONError, T] = fromJsonProduct(construct).read(jval)
     }
   }
   </#list>
