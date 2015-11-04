@@ -176,10 +176,9 @@ package object generic {
     def typeSelectors: List[TypeSelector[_]]
   }
 
-  final class TypeSelector[A: FromJSON: ToJSON] private[generic](val typeField: String, val typeValue: String, val clazz: Class[_]) {
+  final class TypeSelector[A] private[generic](val typeField: String, val typeValue: String, val clazz: Class[_])(implicit jsonr: FromJSON[A], val serializer: ToJSON[A]) {
     def read(o: JObject): ValidationNel[JSONError, A] = fromJValue[A](o)
     def write(a: Any): JValue = toJValue(a.asInstanceOf[A])
-    def serializer = implicitly[ToJSON[A]]
   }
 
   private def typeSelector[A: ClassTag: FromJSON: ToJSON](): TypeSelector[_] = {

@@ -55,11 +55,11 @@ package object json extends Logging {
   def getFromJSON[A: FromJSON](json: String): A =
     getFromJSON(StringInput(json))
 
-  def fromJValue[A: FromJSON](jval: JValue): JValidation[A] =
-    implicitly[FromJSON[A]].read(jval)
+  def fromJValue[A](jval: JValue)(implicit json: FromJSON[A]): JValidation[A] =
+    json.read(jval)
 
-  def toJValue[A: ToJSON](a: A): JValue =
-    implicitly[ToJSON[A]].write(a)
+  def toJValue[A](a: A)(implicit json: ToJSON[A]): JValue =
+    json.write(a)
 
   def getFromJValue[A: FromJSON](jval: JValue): A =
     fromJValue[A](jval) match {
@@ -72,12 +72,11 @@ package object json extends Logging {
     * @param name The name of the field.
     * @param jval The JValue from which to extract the field.
     * @return A success with a value of type A or a non-empty list of errors. */
-  def field[A: FromJSON](
+  def field[A](
     name: String,
     default: Option[A] = None
-  )(jval: JValue): JValidation[A] = jval match {
+  )(jval: JValue)(implicit jsonr: FromJSON[A]): JValidation[A] = jval match {
     case JObject(fields) =>
-      val jsonr = implicitly[FromJSON[A]]
       fields.find(_._1 == name)
         .map(f => jsonr.read(f._2).fold(
           errs => Failure(errs map {
