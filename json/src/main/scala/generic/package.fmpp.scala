@@ -247,7 +247,7 @@ package object generic {
         // programmer error
         throw new JSONException("Ignored JSON field '%s' must have a default value.".format(fm.name))
       }
-      JSONFieldMeta(fm.name, fm.default, embedded, ignored)
+      JSONFieldMeta(name, fm.default, embedded, ignored)
     }
   }
 
