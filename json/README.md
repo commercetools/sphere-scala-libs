@@ -29,7 +29,7 @@ Until the artifacts are released to Maven Central, please use our public repo:
 
     resolvers += Resolver.bintrayRepo("commercetools", "maven")
 
-    libraryDependencies += "io.sphere" %% "sphere-json" % "0.5.29"
+    libraryDependencies += "io.sphere" %% "sphere-json" % "0.5.30"
 
 ## Basic Usage
 
