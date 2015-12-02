@@ -1,9 +1,6 @@
 package io.sphere.util
 
-import scala.reflect._
-import scala.tools.scalap.scalax.rules.scalasig._
-
-import java.util.concurrent.ConcurrentHashMap
+import org.json4s.scalap.scalasig._
 
 object Reflect extends Logging {
   case class CaseClassMeta(fields: IndexedSeq[CaseClassFieldMeta])

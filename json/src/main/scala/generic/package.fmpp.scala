@@ -8,8 +8,6 @@ import scala.annotation.meta.getter
 import scala.collection.mutable.ListBuffer
 import scala.language.experimental.macros
 import scala.reflect.{ ClassTag, classTag }
-import scala.tools.scalap.scalax.rules.scalasig._
-import scala.util.control.NonFatal
 
 import io.sphere.util.{ Reflect, Memoizer }
 
