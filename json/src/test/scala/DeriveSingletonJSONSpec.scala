@@ -21,6 +21,17 @@ class DeriveSingletonJSONSpec extends WordSpec with MustMatchers {
       user must be (UserWithPicture("foo-123", Medium, "http://exmple.com"))
     }
 
+    "fail to read if singleton value is unknown" in {
+      a [JSONException] must be thrownBy getFromJSON[UserWithPicture](
+        """
+          {
+            "userId": "foo-123",
+            "pictureSize": "foo",
+            "pictureUrl": "http://exmple.com"
+          }
+        """)
+    }
+
     "write normal singleton values" in {
       val userJson = toJValue(UserWithPicture("foo-123", Medium, "http://exmple.com"))
 
