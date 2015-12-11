@@ -6,13 +6,13 @@ import org.scalatest.{MustMatchers, WordSpec}
 class NullHandlingSpec extends WordSpec with MustMatchers {
   "JSON deserialization" must {
     "should accept undefined fields and use default values for them" in {
-      val user = getFromJSON[Jeans]("{}")
+      val jeans = getFromJSON[Jeans]("{}")
 
-      user must be (Jeans(None, None, Set.empty, "secret"))
+      jeans must be (Jeans(None, None, Set.empty, "secret"))
     }
 
     "should accept null values and use default values for them" in {
-      val user = getFromJSON[Jeans](
+      val jeans = getFromJSON[Jeans](
         """
           {
             "leftPocket": null,
@@ -22,11 +22,11 @@ class NullHandlingSpec extends WordSpec with MustMatchers {
           }
         """)
 
-      user must be (Jeans(None, None, Set.empty, "secret"))
+      jeans must be (Jeans(None, None, Set.empty, "secret"))
     }
 
     "should accept not-null values and use them" in {
-      val user = getFromJSON[Jeans](
+      val jeans = getFromJSON[Jeans](
         """
           {
             "leftPocket": "Axe",
@@ -36,7 +36,7 @@ class NullHandlingSpec extends WordSpec with MustMatchers {
           }
         """)
 
-      user must be (Jeans(
+      jeans must be (Jeans(
         Some("Axe"),
         Some("Magic powder"),
         Set("Magic wand", "Rusty sword"),
