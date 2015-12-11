@@ -28,6 +28,7 @@ package object generic {
   type JSONParseResult[A] = ValidationNel[JSONError, A]
 
   def deriveJSON[A]: JSON[A] = macro JSONMacros.deriveJSON_impl[A]
+  def deriveSingletonJSON[A]: JSON[A] = macro JSONMacros.deriveSingletonJSON_impl[A]
 
   /** Creates a JSON instance for an Enumeration type that encodes the `toString`
     * representations of the enumeration values. */
@@ -109,6 +110,67 @@ package object generic {
   }
   </#list>
 
+  /**
+    * Creates a `JSON[T]` instance for some supertype `T`. The instance acts as a type-switch between implementation which should be
+    * a singleton case objects.
+    *
+    * This can be used as an alternative to an enum.
+    */
+  def jsonSingletonEnumSwitch[T: ClassTag, A <: T : ClassTag : FromJSON : ToJSON](selectors: List[TypeSelector[_]]): JSON[T] = {
+    val inSelectors = typeSelector[A] :: selectors
+    val allSelectors = inSelectors.flatMap(s => s.serializer match {
+      case container: TypeSelectorContainer => container.typeSelectors :+ s
+      case _ => s :: Nil
+    })
+
+    val readMapBuilder = Map.newBuilder[String, TypeSelector[_]]
+    val writeMapBuilder = Map.newBuilder[Class[_], TypeSelector[_]]
+
+    allSelectors.foreach { s =>
+      readMapBuilder += (s.typeValue -> s)
+      writeMapBuilder += (s.clazz -> s)
+    }
+
+    val readMap = readMapBuilder.result
+    val writeMap = writeMapBuilder.result
+    val clazz = classTag[T].runtimeClass
+
+    val typeField = Option(clazz.getAnnotation(classOf[JSONTypeHintField])) match {
+      case Some(a) => a.value
+      case None => defaultTypeFieldName
+    }
+
+    new JSON[T] with TypeSelectorContainer {
+      override def typeSelectors: List[TypeSelector[_]] = allSelectors
+
+      def read(jval: JValue): ValidationNel[JSONError, T] = jval match {
+        case s @ JString(typeName) =>
+          readMap.get(typeName) match {
+            case Some(ts) => ts.read(s).asInstanceOf[ValidationNel[JSONError, T]]
+            case None => jsonParseError("Invalid value '" + typeName + "'.")
+          }
+
+        case _ => jsonParseError("JSON string expected.")
+      }
+
+      def write(t: T): JValue = writeMap.get(t.getClass) match {
+        case Some(ts) =>
+          ts.write(t) match {
+            case s: JString => s
+            case j => throw new IllegalStateException("The json is not a string, but a " + j.getClass)
+          }
+
+        case None => throw new IllegalStateException("Can't find a serializer for a class " + t.getClass)
+      }
+    }
+  }
+
+  <#list 2..20 as i>
+  <#assign typeParams><#list 1..i-1 as j>A${j}<#if i-1 != j>,</#if></#list></#assign>
+  <#assign implTypeParams><#list 1..i as j>A${j} <: T : FromJSON : ToJSON : ClassTag<#if i !=j>,</#if></#list></#assign>
+  def jsonSingletonEnumSwitch[T: ClassTag, ${implTypeParams}](selectors: List[TypeSelector[_]]): JSON[T] = jsonSingletonEnumSwitch[T, ${typeParams}](typeSelector[A${i}] :: selectors)
+  </#list>
+
   /** Creates a `JSON[T]` instance for some supertype `T`. The instance acts as a type-switch
     * for the subtypes `A1` and `A2`, delegating to their respective JSON instances based
     * on a field that acts as a type hint. */
@@ -175,7 +237,7 @@ package object generic {
   }
 
   final class TypeSelector[A] private[generic](val typeField: String, val typeValue: String, val clazz: Class[_])(implicit jsonr: FromJSON[A], val serializer: ToJSON[A]) {
-    def read(o: JObject): ValidationNel[JSONError, A] = fromJValue[A](o)
+    def read(o: JValue): ValidationNel[JSONError, A] = fromJValue[A](o)
     def write(a: Any): JValue = toJValue(a.asInstanceOf[A])
   }
 
