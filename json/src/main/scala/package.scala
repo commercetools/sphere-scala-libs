@@ -77,7 +77,7 @@ package object json extends Logging {
     default: Option[A] = None
   )(jval: JValue)(implicit jsonr: FromJSON[A]): JValidation[A] = jval match {
     case JObject(fields) =>
-      fields.find(_._1 == name)
+      fields.find(_._1 == name).filterNot(_._2 == JNull)
         .map(f => jsonr.read(f._2).fold(
           errs => Failure(errs map {
             case JSONParseError(msg) => JSONFieldError(List(name), msg)
