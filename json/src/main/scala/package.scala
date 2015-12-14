@@ -79,7 +79,7 @@ package object json extends Logging {
     case JObject(fields) =>
       fields.find(_._1 == name).filterNot(_._2 == JNull)
         .map(f => jsonr.read(f._2).fold(
-          errs => Failure(errs map {
+          errs => Failure(errs map[JSONError] {
             case JSONParseError(msg) => JSONFieldError(List(name), msg)
             case JSONFieldError(path, msg) => JSONFieldError(name :: path, msg)
           }), Success(_)))

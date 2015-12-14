@@ -118,7 +118,7 @@ class JSONSpec extends FunSpec with MustMatchers {
 
     it("must handle empty String") {
       val Failure(err) = fromJSON[Int]("")
-      err.list.head mustBe a [JSONParseError]
+      err.head mustBe a [JSONParseError]
     }
 
     it("must provide user-friendly error by empty String") {
@@ -128,7 +128,7 @@ class JSONSpec extends FunSpec with MustMatchers {
 
     it("must handle incorrect json") {
       val Failure(err) = fromJSON[Int]("""{"key: "value"}""")
-      err.list.head mustBe a [JSONParseError]
+      err.head mustBe a [JSONParseError]
     }
 
     it("must provide user-friendly error by incorrect json") {
