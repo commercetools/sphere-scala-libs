@@ -30,7 +30,7 @@ object ToJSON {
   }
 
   implicit def nonEmptyListWriter[A](implicit w: ToJSON[A]): ToJSON[NonEmptyList[A]] = new ToJSON[NonEmptyList[A]] {
-    def write(l: NonEmptyList[A]): JValue = JArray(l.list map w.write)
+    def write(l: NonEmptyList[A]): JValue = JArray(l.list.toList map w.write)
   }
 
   implicit def seqWriter[A](implicit w: ToJSON[A]): ToJSON[Seq[A]] = new ToJSON[Seq[A]] {

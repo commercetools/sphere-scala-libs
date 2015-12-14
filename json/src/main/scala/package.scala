@@ -64,7 +64,7 @@ package object json extends Logging {
   def getFromJValue[A: FromJSON](jval: JValue): A =
     fromJValue[A](jval) match {
       case Success(a) => a
-      case Failure(errs) => throw new JSONException(errs.list.mkString(", "))
+      case Failure(errs) => throw new JSONException(errs.list.toList.mkString(", "))
     }
 
   /** Extracts a JSON value of type A from a named field of a JSON object.
