@@ -46,7 +46,7 @@ object ToJSON {
   }
 
   implicit val intWriter: ToJSON[Int] = new ToJSON[Int] {
-    def write(i: Int): JValue = JInt(i)
+    def write(i: Int): JValue = JLong(i)
   }
 
   implicit val stringWriter: ToJSON[String] = new ToJSON[String] {
@@ -58,11 +58,11 @@ object ToJSON {
   }
 
   implicit val shortWriter: ToJSON[Short] = new ToJSON[Short] {
-    def write(s: Short): JValue = JInt(s)
+    def write(s: Short): JValue = JLong(s)
   }
 
   implicit val longWriter: ToJSON[Long] = new ToJSON[Long] {
-    def write(l: Long): JValue = JInt(l)
+    def write(l: Long): JValue = JLong(l)
   }
 
   implicit val floatWriter: ToJSON[Float] = new ToJSON[Float] {

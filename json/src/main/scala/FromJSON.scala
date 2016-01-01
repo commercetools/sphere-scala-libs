@@ -79,6 +79,7 @@ object FromJSON {
   implicit val intReader: FromJSON[Int] = new FromJSON[Int] {
     def read(jval: JValue): JValidation[Int] = jval match {
       case JInt(i) if i.isValidInt => Success(i.toInt)
+      case JLong(i) if i.isValidInt => Success(i.toInt)
       case _ => fail("JSON Number in the range of an Int expected.")
     }
   }
@@ -93,6 +94,7 @@ object FromJSON {
   implicit val bigIntReader: FromJSON[BigInt] = new FromJSON[BigInt] {
     def read(jval: JValue): JValidation[BigInt] = jval match {
       case JInt(i) => Success(i)
+      case JLong(l) ⇒ Success(l)
       case _ => fail("JSON Number in the range of a BigInt expected.")
     }
   }
@@ -100,6 +102,7 @@ object FromJSON {
   implicit val shortReader: FromJSON[Short] = new FromJSON[Short] {
     def read(jval: JValue): JValidation[Short] = jval match {
       case JInt(i) if i.isValidShort => Success(i.toShort)
+      case JLong(i) if i.isValidShort => Success(i.toShort)
       case _ => fail("JSON Number in the range of a Short expected.")
     }
   }
@@ -107,6 +110,7 @@ object FromJSON {
   implicit val longReader: FromJSON[Long] = new FromJSON[Long] {
     def read(jval: JValue): JValidation[Long] = jval match {
       case JInt(i) => Success(i.toLong)
+      case JLong(i) => Success(i)
       case _ => fail("JSON Number in the range of a Long expected.")
     }
   }
@@ -122,6 +126,7 @@ object FromJSON {
     def read(jval: JValue): JValidation[Double] = jval match {
       case JDouble(d) => Success(d)
       case JInt(i) => Success(i.toDouble)
+      case JLong(i) => Success(i.toDouble)
       case _ => fail("JSON Number in the range of a Double expected.")
     }
   }
