@@ -1,3 +1,10 @@
+## 0.6.2 (2016-01-07)
+
+* update "com.fasterxml.jackson.core" % "jackson-databind" to "2.7.2"
+* update "org.scalaz" %% "scalaz-core" to "7.1.7"
+* update "joda-time" % "joda-time" to "2.9.2"
+* can parse a `JLong`
+
 ## 0.6.0 (2015-12-14)
 
 * `null` is now treated the same way as `undefined` during the case-class serialization
