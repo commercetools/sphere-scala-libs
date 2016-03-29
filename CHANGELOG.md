@@ -1,3 +1,7 @@
+## to be released
+
+* update scala to 2.11.8
+
 ## 0.6.2 (2016-01-07)
 
 * update "com.fasterxml.jackson.core" % "jackson-databind" to "2.7.2"
