@@ -1,6 +1,7 @@
 package io.sphere.json
 
 import io.sphere.json.generic._
+import org.json4s.JsonAST.{JNothing, JObject}
 import org.scalatest.{MustMatchers, WordSpec}
 
 class NullHandlingSpec extends WordSpec with MustMatchers {
@@ -21,6 +22,17 @@ class NullHandlingSpec extends WordSpec with MustMatchers {
             "hiddenPocket": null
           }
         """)
+
+      jeans must be (Jeans(None, None, Set.empty, "secret"))
+    }
+
+    "should accept JNothing values and use default values for them" in {
+      val jeans = getFromJValue[Jeans](
+        JObject(
+          "leftPocket" → JNothing,
+          "rightPocket" → JNothing,
+          "backPocket" → JNothing,
+          "hiddenPocket" → JNothing))
 
       jeans must be (Jeans(None, None, Set.empty, "secret"))
     }
