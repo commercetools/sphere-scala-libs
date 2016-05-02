@@ -89,7 +89,7 @@ case class Money(amount: BigDecimal, currency: Currency) extends Ordered[Money] 
    * <p>Example: (0.05 EUR) partition (3,7) == Seq(0.02 EUR, 0.03 EUR)</p>
    */
   def partition(ratios: Int*): Seq[Money] = {
-    val total = ratios.reduceLeft(_ + _)
+    val total = ratios.sum
     val amountInCents = (this.amount / centFactor).toBigInt
     val amounts = Seq(ratios.map(amountInCents * _ / total):_*)
     var remainder = amounts.foldLeft(amountInCents)(_ - _)

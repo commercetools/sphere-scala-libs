@@ -31,8 +31,8 @@ private[generic] object JSONMacros {
 
     if (classSym.isCaseClass && !classSym.isModuleClass) {
       val applyBlock = Block(List(), Function(
-        argDefs.toList,
-        Apply(Select(Ident(classSym.companionSymbol), newTermName("apply")), args.toList)
+        argDefs,
+        Apply(Select(Ident(classSym.companionSymbol), newTermName("apply")), args)
       ))
       Apply(
         Select(
