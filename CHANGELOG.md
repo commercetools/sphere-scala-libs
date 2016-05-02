@@ -1,3 +1,8 @@
+## upcoming
+
+* update "org.scalaz" %% "scalaz-core" to "7.1.8"
+* update "com.fasterxml.jackson.core" % "jackson-databind" to 2.7.4
+
 ## 0.6.3 (2016-04-04)
 
 * update scala to 2.11.8
