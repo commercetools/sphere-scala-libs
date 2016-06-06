@@ -1,5 +1,6 @@
 import sbt._
 import Keys._
+
 import language._
 import sbtrelease.ReleasePlugin.autoImport._
 import bintray.BintrayPlugin._
@@ -49,6 +50,22 @@ object SphereLibsBuild extends Build {
     //dependencies = Seq(util),
     settings = standardSettings ++ Fmpp.settings //++ Seq(scalacOptions ++= Seq("-Ymacro-debug-lite"))
   ).dependsOn(util)
+
+  // benchmarks
+
+  lazy val benchmarks = {
+    import pl.project13.scala.sbt.JmhPlugin
+    Project(
+      id = "benchmarks",
+      base = file("./benchmarks"),
+      dependencies = Seq(util, json),
+      settings = standardSettings ++ Seq(
+        publishArtifact := false,
+        publish := {}
+      )
+    ).enablePlugins(JmhPlugin).disablePlugins(bintray.BintrayPlugin)
+  }
+
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
