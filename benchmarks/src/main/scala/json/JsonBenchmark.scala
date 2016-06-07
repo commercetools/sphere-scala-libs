@@ -7,13 +7,21 @@ import org.openjdk.jmh.annotations.Benchmark
 class JsonBenchmark {
 
   /* on local mac
-[info] Benchmark                       Mode  Cnt   Score   Error  Units
-[info] JsonBenchmark.parseFromString  thrpt   10  60.260 ± 1.812  ops/s
+[info] Benchmark                           Mode  Cnt   Score   Error  Units
+[info] JsonBenchmark.parseFromString      thrpt   10  60.228 ± 0.672  ops/s
+[info] JsonBenchmark.parseFromStringJawn  thrpt   10  95.485 ± 3.565  ops/s
    */
 
   @Benchmark
   def parseFromString(): Unit = {
     parseJson(StringInput(JsonBenchmark.json))
+  }
+
+  @Benchmark
+  def parseFromStringJawn(): Unit = {
+    import jawn.support.json4s.Parser
+
+    Parser.parseFromString(JsonBenchmark.json).get
   }
 
 }
