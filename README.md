@@ -1,8 +1,7 @@
 sphere-scala-libs
 =================
 
-Just some Scala libraries that started out as internal projects as part of the sphere.io platform and
-have been made public in the hope that they might be useful to more people.
+Just some Scala libraries that started out as internal projects as part of the [commercetools platform](http://dev.commercetools.com/) (that was originally named sphere.io) and have been made public in the hope that they might be useful to more people.
 
 [![Build Status](https://travis-ci.org/sphereio/sphere-scala-libs.png)](https://travis-ci.org/sphereio/sphere-scala-libs)
 
@@ -11,6 +10,10 @@ have been made public in the hope that they might be useful to more people.
 sphere-json: [ ![Download](https://api.bintray.com/packages/commercetools/maven/sphere-json/images/download.svg) ](https://bintray.com/commercetools/maven/sphere-json/_latestVersion)
 
 sphere-util: [ ![Download](https://api.bintray.com/packages/commercetools/maven/sphere-util/images/download.svg) ](https://bintray.com/commercetools/maven/sphere-util/_latestVersion)
+
+## Documentation
+
+[sphere-json](json/README.md)
 
 ## Including in the build
 
