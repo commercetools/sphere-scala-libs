@@ -41,14 +41,16 @@ object SphereLibsBuild extends Build {
   lazy val util = Project(
     id = "sphere-util",
     base = file("./util"),
-    settings = standardSettings
+    settings = standardSettings ++ Seq(
+      homepage := Some(url("https://github.com/sphereio/sphere-scala-libs/README.md")))
   )
 
   lazy val json = Project(
     id = "sphere-json",
     base = file("./json"),
     //dependencies = Seq(util),
-    settings = standardSettings ++ Fmpp.settings //++ Seq(scalacOptions ++= Seq("-Ymacro-debug-lite"))
+    settings = standardSettings ++ Fmpp.settings ++ Seq(
+      homepage := Some(url("https://github.com/sphereio/sphere-scala-libs/blob/master/json/README.md")))//++ Seq(scalacOptions ++= Seq("-Ymacro-debug-lite"))
   ).dependsOn(util)
 
   // benchmarks
