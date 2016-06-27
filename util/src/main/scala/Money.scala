@@ -112,7 +112,8 @@ case class Money(amount: BigDecimal, currency: Currency) extends Ordered[Money] 
     nf.format(this.amount.doubleValue) + " " + this.currency.getSymbol
   }
 
-  private def requireSameCurrency(m: Money): Unit = require(this.currency eq m.currency)
+  private def requireSameCurrency(m: Money): Unit =
+    require(this.currency eq m.currency, s"${this.currency} != ${m.currency}")
 }
 
 object Money {

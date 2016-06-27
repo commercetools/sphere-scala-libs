@@ -45,6 +45,12 @@ class MoneySpec extends FunSpec with MustMatchers {
       (1.42 EUR) + (1.58 EUR) must equal (3.00 EUR)
     }
 
+    it("should support the binary '+' operator on different currencies.") {
+      an [IllegalArgumentException] must be thrownBy {
+        (1.42 EUR) + (1.58 USD)
+      }
+    }
+
     it("should support the binary '-' operator.") {
       (1.33 EUR) - (0.33 EUR) must equal (1.00 EUR)
     }
