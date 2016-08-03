@@ -70,22 +70,22 @@ package object json extends Logging {
   /** Extracts a JSON value of type A from a named field of a JSON object.
     *
     * @param name The name of the field.
-    * @param jval The JValue from which to extract the field.
+    * @param jObject The JObject from which to extract the field.
     * @return A success with a value of type A or a non-empty list of errors. */
   def field[A](
     name: String,
     default: Option[A] = None
-  )(jval: JValue)(implicit jsonr: FromJSON[A]): JValidation[A] = jval match {
-    case JObject(fields) =>
-      fields.find(_._1 == name).filterNot(f ⇒ f._2 == JNull || f._2 == JNothing)
-        .map(f => jsonr.read(f._2).fold(
-          errs => Failure(errs map {
-            case JSONParseError(msg) => JSONFieldError(List(name), msg)
-            case JSONFieldError(path, msg) => JSONFieldError(name :: path, msg)
-          }), Success(_)))
-        .orElse(default.map(Success(_)))
-        .orElse(jsonr.read(JNothing).fold(_ => None, x => Some(Success(x)))) // orElse(jsonr.default)
-        .getOrElse(Failure(NonEmptyList(JSONFieldError(List(name), "Missing required value"))))
-    case x => jsonParseError("Expected JSON object. Got '" + compactJson(x) + "'")
+  )(jObject: JObject)(implicit jsonr: FromJSON[A]): JValidation[A] = {
+    val fields = jObject.obj
+    fields
+      .find(f ⇒ f._1 == name && f._2 != JNull && f._2 != JNothing)
+      .map(f => jsonr.read(f._2).fold(
+        errs => Failure(errs map {
+          case JSONParseError(msg) => JSONFieldError(List(name), msg)
+          case JSONFieldError(path, msg) => JSONFieldError(name :: path, msg)
+        }), Success(_)))
+      .orElse(default.map(Success(_)))
+      .orElse(jsonr.read(JNothing).fold(_ => None, x => Some(Success(x)))) // orElse(jsonr.default)
+      .getOrElse(Failure(NonEmptyList(JSONFieldError(List(name), "Missing required value"))))
   }
 }

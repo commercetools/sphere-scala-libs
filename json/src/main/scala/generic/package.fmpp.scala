@@ -314,10 +314,10 @@ package object generic {
   private def writeField[A: ToJSON](buf: ListBuffer[JField], field: JSONFieldMeta, e: A) {
     if (!field.ignored) {
       if (field.embedded)
-        buf ++= (toJValue(e) match {
-          case o: JObject => o.obj
-          case _ => Nil
-        })
+        toJValue(e) match {
+          case o: JObject => buf ++= o.obj
+          case _ => // no update on buf
+        }
       else
         buf += JField(field.name, toJValue(e))
     }
