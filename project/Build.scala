@@ -83,24 +83,26 @@ object Fmpp {
     libraryDependencies += "net.sourceforge.fmpp" % "fmpp" % "0.9.15" % fmppConfig.name,
     ivyConfigurations += fmppConfig,
     fmppOptions := "--ignore-temporary-files" :: Nil,
-    fullClasspath in fmppConfig <<= update map { _ select configurationFilter(fmppConfig.name) map Attributed.blank }
+    fullClasspath in fmppConfig := update.value select configurationFilter(fmppConfig.name) map Attributed.blank
   )
 
   private def fmppConfig(c: Configuration): Seq[Setting[_]] = inConfig(c)(Seq(
-    sourceGenerators in Compile <+= fmpp,
-    fmpp <<= fmppTask,
-    scalaSource <<= (baseDirectory, configuration) { (base, c) => base / (Defaults.prefix(c.name) + "src") },
-    sources <<= managedSources
+    sourceGenerators in Compile += fmpp.taskValue,
+    fmpp := fmppTask.value,
+    scalaSource := baseDirectory.value / (Defaults.prefix(configuration.value.name) + "src"),
+    sources := managedSources.value
   ))
 
-  private val fmppTask =
-    (fullClasspath in fmppConfig, runner in fmpp, unmanagedSources, scalaSource, sourceManaged, fmppOptions, streams) map {
-      (cp, r, sources, srcRoot, output, args, s) => {
-        IO.delete(output)
-        val arguments = "-U" +: "all" +: "-S" +: srcRoot.getAbsolutePath +: "-O" +: output.getAbsolutePath +:
-          "-M" +: "ignore(test/**,it/**),execute(**/*.fmpp.scala),copy(**/*)" +: Seq.empty
-        toError(r.run("fmpp.tools.CommandLine", cp.files, arguments, s.log))
-        (output ** "*.scala").get ++ (output ** "*.java").get
-      }
-    }
+  private val fmppTask = Def.task {
+    val cp = (fullClasspath in fmppConfig).value
+    val r = (runner in fmpp).value
+    val srcRoot = scalaSource.value
+    val output = sourceManaged.value
+    val s = streams.value
+    IO.delete(output)
+    val arguments = "-U" +: "all" +: "-S" +: srcRoot.getAbsolutePath +: "-O" +: output.getAbsolutePath +:
+      "-M" +: "ignore(test/**,it/**),execute(**/*.fmpp.scala),copy(**/*)" +: Seq.empty
+    toError(r.run("fmpp.tools.CommandLine", cp.files, arguments, s.log))
+    (output ** "*.scala").get ++ (output ** "*.java").get
+  }
 }
