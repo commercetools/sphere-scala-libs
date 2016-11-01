@@ -22,9 +22,9 @@ object SphereLibsBuild extends Build {
     javacOptions ++= Seq("-deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7"),
     testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % "2.2.6" % "test",
-      "org.scalacheck" %% "scalacheck" % "1.12.5" % "test",
-      "ch.qos.logback" % "logback-classic" % "1.1.7" % "test"
+      "org.scalatest" %% "scalatest" % "3.0.0" % Test,
+      "org.scalacheck" %% "scalacheck" % "1.13.3" % Test,
+      "ch.qos.logback" % "logback-classic" % "1.1.7" % Test
     )
   )
 
