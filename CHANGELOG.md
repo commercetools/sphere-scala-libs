@@ -1,20 +1,20 @@
 ## 0.6.7 (2016-11-10)
 
-* update scalaz to 7.1.11: https://github.com/sphereio/sphere-scala-libs/commit/35906dc805b468e5a2230226cda4a0dda44ae09d
-* update json4s to 3.5.0: https://github.com/sphereio/sphere-scala-libs/commit/3cc6389dc252694d8b44f8818f62097ade30f4b4
-* update joda-time to 2.9.5: https://github.com/sphereio/sphere-scala-libs/commit/2eb3b1596a218f7b83bc8ca1c174dd5af1d8d0e6
+* [update scalaz to 7.1.11](https://github.com/sphereio/sphere-scala-libs/commit/35906dc805b468e5a2230226cda4a0dda44ae09d)
+* [update json4s to 3.5.0](https://github.com/sphereio/sphere-scala-libs/commit/3cc6389dc252694d8b44f8818f62097ade30f4b4)
+* [update joda-time to 2.9.5](https://github.com/sphereio/sphere-scala-libs/commit/2eb3b1596a218f7b83bc8ca1c174dd5af1d8d0e6)
 
 
 ## 0.6.6 (2016-11-01)
 
-* Add TypeSelectorContainer to typeswitch return type: https://github.com/sphereio/sphere-scala-libs/pull/20
-* performance micro-optimization: https://github.com/sphereio/sphere-scala-libs/commit/8d02e8ac6ae26b6b20a026817755112fa2f38ac6
-* update json to 3.4.2: https://github.com/sphereio/sphere-scala-libs/commit/29b295c293bba3ba5fbee62efe31b1d0c567c8d5
-* update scala-logging to 3.5.0: https://github.com/sphereio/sphere-scala-libs/commit/264f5cb689ed00a6ca2c23b0ae1f4be6a991aa9b
+* [Add TypeSelectorContainer to typeswitch return type](https://github.com/sphereio/sphere-scala-libs/pull/20)
+* [performance micro-optimization](https://github.com/sphereio/sphere-scala-libs/commit/8d02e8ac6ae26b6b20a026817755112fa2f38ac6)
+* [update json to 3.4.2](https://github.com/sphereio/sphere-scala-libs/commit/29b295c293bba3ba5fbee62efe31b1d0c567c8d5)
+* [update scala-logging to 3.5.0](https://github.com/sphereio/sphere-scala-libs/commit/264f5cb689ed00a6ca2c23b0ae1f4be6a991aa9b)
 
 ## 0.6.5 (2016-06-27)
 
-* more info in case of error with Money: https://github.com/sphereio/sphere-scala-libs/commit/11198ec9286631f1df70e53543487dfed170205d
+* [more info in case of error with Money](https://github.com/sphereio/sphere-scala-libs/commit/11198ec9286631f1df70e53543487dfed170205d)
 
 ## 0.6.4 (2016-05-31)
 
