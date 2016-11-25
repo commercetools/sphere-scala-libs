@@ -1,3 +1,7 @@
+## next version
+
+* [joda-time 2.9.6](http://www.joda.org/joda-time/upgradeto290.html)
+
 ## 0.6.7 (2016-11-10)
 
 * [update scalaz to 7.1.11](https://github.com/sphereio/sphere-scala-libs/commit/35906dc805b468e5a2230226cda4a0dda44ae09d)
