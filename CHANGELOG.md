@@ -1,6 +1,7 @@
 ## next version
 
 * [joda-time 2.9.6](http://www.joda.org/joda-time/upgradeto290.html)
+* [jackson-databind 2.8.5](https://github.com/FasterXML/jackson-databind/commits/jackson-databind-2.8.5)
 
 ## 0.6.7 (2016-11-10)
 
