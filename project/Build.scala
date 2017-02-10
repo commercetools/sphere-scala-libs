@@ -24,7 +24,7 @@ object SphereLibsBuild extends Build {
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "3.0.1" % Test,
       "org.scalacheck" %% "scalacheck" % "1.13.4" % Test,
-      "ch.qos.logback" % "logback-classic" % "1.1.7" % Test
+      "ch.qos.logback" % "logback-classic" % "1.2.1" % Test
     )
   )
 
