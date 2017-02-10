@@ -1,4 +1,4 @@
-## 0.6.9-SNAPSHOT
+## 0.6.9 (2017-02-10)
 
 * [jackson-databind 2.8.6](https://github.com/FasterXML/jackson-databind/blob/master/release-notes/VERSION)
 * [joda-time 2.9.7](http://www.joda.org/joda-time/changes-report.html#a2.9.7)
