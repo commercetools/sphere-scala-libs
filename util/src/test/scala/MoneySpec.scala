@@ -88,5 +88,10 @@ class MoneySpec extends FunSpec with MustMatchers {
     it("should support currencies with a scale of 0 (i.e. Japanese Yen)") {
       (1 JPY) must equal (1 JPY)
     }
+
+    it("should be able to update the centAmount") {
+      (1.10 EUR).withCentAmount(170) must be (1.70 EUR)
+      (1.10 EUR).withCentAmount(1711) must be (17.11 EUR)
+    }
   }
 }
