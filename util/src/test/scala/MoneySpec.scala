@@ -92,6 +92,7 @@ class MoneySpec extends FunSpec with MustMatchers {
     it("should be able to update the centAmount") {
       (1.10 EUR).withCentAmount(170) must be (1.70 EUR)
       (1.10 EUR).withCentAmount(1711) must be (17.11 EUR)
+      (1 JPY).withCentAmount(34) must be (34 JPY)
     }
   }
 }
