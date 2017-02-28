@@ -32,6 +32,11 @@ case class Money(amount: BigDecimal, currency: Currency) extends Ordered[Money] 
 
   lazy val centAmount: Long = (amount / centFactor).toLong
 
+  def withCentAmount(centAmount: Long): Money = {
+    val newAmount = BigDecimal(centAmount) * centFactor
+    copy(amount = newAmount.setScale(currency.getDefaultFractionDigits))
+  }
+
   /**
    * Creates a new Money instance with the same currency and the amount conforming
    * to the given MathContext (scale and rounding mode).

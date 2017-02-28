@@ -1,6 +1,7 @@
 ## 0.6.10-SNAPSHOT
 
 * [jackson-databind 2.8.7](https://github.com/FasterXML/jackson-databind/blob/master/release-notes/VERSION)
+* add Money.withCentAmount to calculate a new money with a new cent amount in the same currency
 
 ## 0.6.9 (2017-02-10)
 
