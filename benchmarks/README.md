@@ -24,3 +24,8 @@ For a real benchmark:
 ```
 jmh:run -i 10 -wi 10 -f1 -t1
 ```
+
+To check how many object are allocated:
+```
+jmh:run -i 10 -wi 10 -f1 -t1 -prof gc
+```
