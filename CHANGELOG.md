@@ -1,4 +1,6 @@
-## 0.6.11-SNAPSHOT
+## 0.6.12-SNAPSHOT
+
+## 0.6.11 (2017-03-29)
 
 * add ToJSONProduct.forProductN to create `ToJSON` without any magic
 
