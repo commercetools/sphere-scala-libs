@@ -1,5 +1,7 @@
 ## 0.6.11-SNAPSHOT
 
+* add ToJSONProduct.forProductN to create `ToJSON` without any magic
+
 ## 0.6.10 (2017-02-28)
 
 * [jackson-databind 2.8.7](https://github.com/FasterXML/jackson-databind/blob/master/release-notes/VERSION)
