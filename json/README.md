@@ -82,7 +82,26 @@ It can be used in an implementation of `read` as follows:
 > prefer the regular applicative syntax, use `<*>` or `ap`. For details on applicative functors
 > and the applicative builders refer to the `scalaz` documentation and source code.
 
-## Deriving Instances
+## forProductN helper methods for `ToJSON`
+
+```
+import java.util.UUID
+
+case class User(id: UUID, firstName: String, age: Int)
+
+import io.sphere.json._
+import io.sphere.json.ToJSONProduct._
+
+implicit val encodeUser: ToJSON[User] = forProduct3(u ⇒ (
+  "id" → u.id,
+  "first_name" → u.firstName,
+  "age" → u.age
+))
+
+val json = toJValue(User(id, "bidule", 109))
+```
+
+## Deriving Instances for `JSON`
 
 sphere-json comes with a few functions that generically derive `JSON` instances.
 These functions employ some reflection to get the field names and their default values,
