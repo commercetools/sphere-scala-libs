@@ -44,6 +44,6 @@ object Fmpp {
         (output ** "*.scala").get.toSet ++ (output ** "*.java").get.toSet
       }
     }
-    cached((srcRoot ** "*.fmpp.*").get.toSet).toSeq
+    cached((srcRoot ** "*.*").get.toSet).toSeq
   }
 }
