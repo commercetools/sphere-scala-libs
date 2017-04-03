@@ -1,6 +1,7 @@
 ## 0.6.12-SNAPSHOT
 
 * update dependencies
+* add `ToJSON.apply`
 
 ## 0.6.11 (2017-03-29)
 

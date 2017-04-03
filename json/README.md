@@ -82,7 +82,7 @@ It can be used in an implementation of `read` as follows:
 > prefer the regular applicative syntax, use `<*>` or `ap`. For details on applicative functors
 > and the applicative builders refer to the `scalaz` documentation and source code.
 
-## forProductN helper methods for `ToJSON`
+## using `ToJSON.apply`
 
 ```
 import java.util.UUID
@@ -90,15 +90,15 @@ import java.util.UUID
 case class User(id: UUID, firstName: String, age: Int)
 
 import io.sphere.json._
-import io.sphere.json.ToJSONProduct._
 
-implicit val encodeUser: ToJSON[User] = forProduct3(u ⇒ (
-  "id" → u.id,
-  "first_name" → u.firstName,
-  "age" → u.age
-))
+implicit val encodeUser: ToJSON[User] = ToJSON[User](u ⇒ JObject(List(
+  "id" → toJValue(u.id),
+  "first_name" → toJValue(u.firstName),
+  "age" → toJValue(u.age)
+)))
 
-val json = toJValue(User(id, "bidule", 109))
+val id = UUID.randomUUID()
+val json = toJValue(User(UUID.randomUUID(), "bidule", 109))
 ```
 
 ## Deriving Instances for `JSON`
