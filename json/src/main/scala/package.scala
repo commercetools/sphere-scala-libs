@@ -3,15 +3,13 @@ package io.sphere
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.JsonMappingException
 
-import scalaz.{ NonEmptyList, Failure, Success, ValidationNel }
+import scalaz.{Failure, NonEmptyList, Success, ValidationNel}
 import scalaz.Validation.FlatMap._
-
 import io.sphere.util.Logging
-
-import org.json4s.{JsonInput, StringInput, DefaultFormats}
+import org.json4s.{DefaultFormats, JsonInput, StringInput}
 import org.json4s.JsonAST._
 import org.json4s.ParserUtil.ParseException
-import org.json4s.jackson.{ compactJson, parseJson }
+import org.json4s.jackson.{JsonMethods, compactJson, parseJson}
 
 /** Provides functions for reading & writing JSON, via type classes JSON/JSONR/JSONW. */
 package object json extends Logging {
@@ -21,7 +19,7 @@ package object json extends Logging {
   type JValidation[A] = ValidationNel[JSONError, A]
 
   def parseJSON(json: JsonInput): JValidation[JValue] =
-    try Success(parseJson(json)) catch {
+    try Success(JsonMethods.parse(json, useBigDecimalForDouble = false, useBigIntForLong = false)) catch {
       case e: ParseException => jsonParseError(e.getMessage)
       case e: JsonMappingException ⇒ jsonParseError(e.getOriginalMessage)
       case e: JsonParseException ⇒ jsonParseError(e.getOriginalMessage)
