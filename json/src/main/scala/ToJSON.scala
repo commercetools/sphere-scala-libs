@@ -20,6 +20,10 @@ class JSONWriteException(msg: String) extends JSONException(msg)
 
 object ToJSON {
 
+  def apply[T](toJson: T ⇒ JValue): ToJSON[T] = new ToJSON[T] {
+    override def write(value: T): JValue = toJson(value)
+  }
+
   implicit def optionWriter[A](implicit c: ToJSON[A]): ToJSON[Option[A]] = new ToJSON[Option[A]] {
     def write(opt: Option[A]): JValue = opt match {
       case Some(a) ⇒ c.write(a)
