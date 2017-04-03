@@ -1,7 +1,6 @@
 package io.sphere.json
 
 import scalaz.NonEmptyList
-import scalaz.syntax.std.option._
 import scala.collection.breakOut
 
 import java.util.{ Locale, Currency, UUID }
@@ -22,7 +21,10 @@ class JSONWriteException(msg: String) extends JSONException(msg)
 object ToJSON {
 
   implicit def optionWriter[A](implicit c: ToJSON[A]): ToJSON[Option[A]] = new ToJSON[Option[A]] {
-    def write(opt: Option[A]): JValue = opt.some(c.write).none(JNothing)
+    def write(opt: Option[A]): JValue = opt match {
+      case Some(a) ⇒ c.write(a)
+      case None ⇒ JNothing
+    }
   }
 
   implicit def listWriter[A](implicit w: ToJSON[A]): ToJSON[List[A]] = new ToJSON[List[A]] {
