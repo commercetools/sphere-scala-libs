@@ -7,6 +7,7 @@ import org.openjdk.jmh.annotations.Benchmark
 class JsonBenchmark {
 
   /* on local mac
+  jmh:run -i 10 -wi 10 -f1 -t1
 [info] Benchmark                       Mode  Cnt   Score   Error  Units
 [info] JsonBenchmark.parseFromString  thrpt   10  60.260 ± 1.812  ops/s
    */
