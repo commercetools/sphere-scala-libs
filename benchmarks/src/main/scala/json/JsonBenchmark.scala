@@ -38,8 +38,8 @@ object JsonBenchmark {
   val variants = for (i ← 1 to 100) yield
     s"""{
         |  "id": $i,
-        |  "prices":[],
-        |  "images": ${prices.mkString("[", ",", "]")},
+        |  "prices": ${prices.mkString("[", ",", "]")},
+        |  "images": [],
         |  "attributes": $customAttributes,
         |  "categories":[]
         |}""".stripMargin
