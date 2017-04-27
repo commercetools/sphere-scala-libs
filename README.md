@@ -3,7 +3,7 @@ sphere-scala-libs
 
 Just some Scala libraries that started out as internal projects as part of the [commercetools platform](http://dev.commercetools.com/) (that was originally named sphere.io) and have been made public in the hope that they might be useful to more people.
 
-[![Build Status](https://travis-ci.org/sphereio/sphere-scala-libs.png)](https://travis-ci.org/sphereio/sphere-scala-libs)
+[![Build Status](https://travis-ci.org/sphereio/sphere-scala-libs.svg)](https://travis-ci.org/sphereio/sphere-scala-libs)
 
 ## Download
 
