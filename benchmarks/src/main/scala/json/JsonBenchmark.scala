@@ -1,5 +1,6 @@
 package json
 
+import io.sphere.json.fromJSON
 import org.json4s.StringInput
 import org.json4s.jackson._
 import org.openjdk.jmh.annotations.Benchmark
@@ -10,6 +11,8 @@ class JsonBenchmark {
   jmh:run -i 10 -wi 10 -f1 -t1
 [info] Benchmark                       Mode  Cnt   Score   Error  Units
 [info] JsonBenchmark.parseFromString  thrpt   10  60.260 ± 1.812  ops/s
+[info] JsonBenchmark.listReader       thrpt   10  11.992 ± 1.499  ops/s
+[info] JsonBenchmark.vectorReader     thrpt   10   9.923 ± 1.029  ops/s
    */
 
   @Benchmark
@@ -17,9 +20,22 @@ class JsonBenchmark {
     parseJson(StringInput(JsonBenchmark.json))
   }
 
+  @Benchmark
+  def vectorReader(): Unit = {
+    fromJSON[Vector[Int]](JsonBenchmark.lotsOfInts)
+  }
+
+  @Benchmark
+  def listReader(): Unit = {
+    fromJSON[List[Int]](JsonBenchmark.lotsOfInts)
+  }
+
 }
 
 object JsonBenchmark {
+
+  val lotsOfInts = Range(1, 100000).mkString("[", ",", "]")
+
   val prices = for (i ← 1 to 200) yield
     s"""
        |{
