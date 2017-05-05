@@ -35,8 +35,9 @@ Until the artifacts are released to Maven Central, please use our public repo:
 
 sphere-json defines three simple type classes in the form of the following traits:
 
+    import cats.data.ValidatedNel
     trait FromJSON[A] {
-      def read(jval: JValue): ValidationNel[JSONError, A]
+      def read(jval: JValue): ValidatedNel[JSONError, A]
     }
     trait ToJSON[A] {
       def write(value: A): JValue
@@ -45,7 +46,8 @@ sphere-json defines three simple type classes in the form of the following trait
 
 The core API are two methods from the `io.sphere.json` package:
 
-    def fromJSON[A: FromJSON](json: String): ValidationNel[JSONError, A]
+    import cats.data.ValidatedNel
+    def fromJSON[A: FromJSON](json: String): ValidatedNel[JSONError, A]
     def toJSON[A: ToJSON](a: A): String
 
 To use your own types with these methods you need to define the corresponding type class instances
@@ -62,12 +64,14 @@ You can implement these instances completely by hand, which provides the most fl
 be a bit tedious and repetitive in standard cases. To help with applicative-style parsing of fields,
 there is another method available from the same package:
 
-    def field[A: FromJSON](name: String, default: Option[A] = None)(jval: JValue): ValidationNel[JSONError, A]
+    def field[A: FromJSON](name: String, default: Option[A] = None)(jval: JValue): ValidatedNel[JSONError, A]
 
 It can be used in an implementation of `read` as follows:
 
+    import cats.data.ValidatedNel
+    import cats.syntax.cartesian._
     implicit val json: JSON[User] = new JSON[User] {
-      def read(jval: JValue): ValidationNel[JSONError, Project] = jval match {
+      def read(jval: JValue): ValidatedNel[JSONError, Project] = jval match {
         case o: JObject =>
           (field[String]("name")(o) |@|
            field[Int]("age")(o) |@|
@@ -76,11 +80,6 @@ It can be used in an implementation of `read` as follows:
       }
       def write(u: User): JValue = ???
     }
-
-> Note: Applicative builders (created through the `|@|` syntax) are only available
-> up to a fixed number of arguments (12 or so). When you hit this limit or just
-> prefer the regular applicative syntax, use `<*>` or `ap`. For details on applicative functors
-> and the applicative builders refer to the `scalaz` documentation and source code.
 
 ## using `ToJSON.apply`
 
@@ -117,8 +116,8 @@ The `deriveJSON` macro expands to a call of one of several underlying generic me
 that can also be used directly and are described further below.
 
 The `read` implementations of derived instances always use applicative-style parsing
-(not using applicative builders via `|@|` but instead `<*>` or `ap`) via the `Validation` type
-provided by scalaz for error accumulation. The `write` implementations take the values
+(be using applicative builders via `|@|`) via the `Validated` type
+provided by cats for error accumulation. The `write` implementations take the values
 out of the case class instances via the compiler-generated `productElement(i)` methods,
 so there is no reflection involved during the actual (de-)serialization process of
 derived instances.
@@ -288,7 +287,7 @@ doing that. Case class constructors should be pure functions.
 
  * json4s
  * sphere-util
-   * scalaz7
+   * cats
    * joda-time
    * slf4j
 

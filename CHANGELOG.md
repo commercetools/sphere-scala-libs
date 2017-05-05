@@ -1,3 +1,7 @@
+## 0.7.0
+
+* use Cats instead of Scalaz.
+
 ## 0.6.13-SNAPSHOT
 
 * update dependencies
