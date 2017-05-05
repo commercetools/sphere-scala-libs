@@ -1,11 +1,10 @@
 package io.sphere.util
 
-import scalaz._
-import Scalaz._
-
 import java.math.MathContext
 import java.text.NumberFormat
 import java.util.Currency
+
+import cats.Monoid
 
 import scala.math._
 import BigDecimal.RoundingMode._
@@ -141,17 +140,13 @@ object Money {
   def make(amount: BigDecimal, currency: Currency): Money =
     make(amount, currency, BigDecimal.RoundingMode.HALF_EVEN)
 
-  implicit def moneyEqual: Equal[Money] = new Equal[Money] {
-    def equal(m1: Money, m2: Money): Boolean = m1 == m2
-  }
-
   implicit def moneyMonoid(implicit c: Currency): Monoid[Money] = new Monoid[Money] {
-    def append(x: Money, y: => Money): Money = x + y
-    val zero = Money.make(0, c)
+    def combine(x: Money, y: Money): Money = x + y
+    val empty: Money = Money.make(0, c)
   }
 
   implicit def moneyMonoid(implicit c: Currency, mode: RoundingMode): Monoid[Money] = new Monoid[Money] {
-    def append(x: Money, y: => Money): Money = x + y
-    val zero = Money.make(0, c, mode)
+    def combine(x: Money, y: Money): Money = x + y
+    val empty: Money = Money.make(0, c, mode)
   }
 }

@@ -1,10 +1,9 @@
+import cats.data.Validated.Valid
 import io.sphere.json.JSON
 import io.sphere.json._
 import io.sphere.json.generic._
 import org.scalatest.{MustMatchers, WordSpec}
 import org.json4s.jackson.JsonMethods._
-
-import scalaz.Success
 
 class DeriveSingletonJSONSpec extends WordSpec with MustMatchers {
   "DeriveSingletonJSON" must {
@@ -35,7 +34,7 @@ class DeriveSingletonJSONSpec extends WordSpec with MustMatchers {
     "write normal singleton values" in {
       val userJson = toJValue(UserWithPicture("foo-123", Medium, "http://exmple.com"))
 
-      val Success(expectedJson) = parseJSON("""
+      val Valid(expectedJson) = parseJSON("""
         {
           "userId": "foo-123",
           "pictureSize": "Medium",
@@ -62,7 +61,7 @@ class DeriveSingletonJSONSpec extends WordSpec with MustMatchers {
     "write custom singleton values" in {
       val userJson = toJValue(UserWithPicture("foo-123", Custom, "http://exmple.com"))
 
-      val Success(expectedJson) = parseJSON("""
+      val Valid(expectedJson) = parseJSON("""
         {
           "userId": "foo-123",
           "pictureSize": "bar",

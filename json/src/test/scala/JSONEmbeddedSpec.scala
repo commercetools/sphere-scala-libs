@@ -8,7 +8,7 @@ object JSONEmbeddedSpec {
   case class Embedded(value1: String, value2: Int)
 
   object Embedded {
-    implicit val json: JSON[Embedded] = jsonProduct((apply _).curried)
+    implicit val json: JSON[Embedded] = jsonProduct(apply _)
   }
 
   case class Test1(
@@ -16,7 +16,7 @@ object JSONEmbeddedSpec {
     @JSONEmbedded embedded: Embedded)
 
   object Test1 {
-    implicit val json: JSON[Test1] = jsonProduct((apply _).curried)
+    implicit val json: JSON[Test1] = jsonProduct(apply _)
   }
 
   case class Test2(
@@ -24,7 +24,7 @@ object JSONEmbeddedSpec {
     @JSONEmbedded embedded: Option[Embedded] = None)
 
   object Test2 {
-    implicit val json: JSON[Test2] = jsonProduct((apply _).curried)
+    implicit val json: JSON[Test2] = jsonProduct(apply _)
   }
 
 }
@@ -57,8 +57,8 @@ class JSONEmbeddedSpec extends WordSpec with MustMatchers with OptionValues {
           |  "value1": "ze value1"
           |}
         """.stripMargin
-      fromJSON[Test1](json).isFailure must be (true)
-      fromJSON[Test1]("""{"name": "a"}""").isFailure must be (true)
+      fromJSON[Test1](json).isInvalid must be (true)
+      fromJSON[Test1]("""{"name": "a"}""").isInvalid must be (true)
     }
 
     "support optional embedded attribute" in {
@@ -102,7 +102,7 @@ class JSONEmbeddedSpec extends WordSpec with MustMatchers with OptionValues {
 
     "validate the absence of some embedded attributes" in {
       val json = """{ "name": "ze name", "value1": "ze value1" }"""
-      fromJSON[Test2](json).isFailure must be (true)
+      fromJSON[Test2](json).isInvalid must be (true)
     }
   }
 

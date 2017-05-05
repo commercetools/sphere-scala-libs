@@ -1,16 +1,16 @@
 package io.sphere.json
 
-import scalaz.{ ValidationNel, Success, NonEmptyList }
-import scalaz.syntax.std.option._
-import scalaz.syntax.applicative._
+
+import cats.data.Validated.Valid
+import cats.data.ValidatedNel
+import cats.syntax.cartesian._
+import cats.syntax.option._
 
 import scala.annotation.meta.getter
 import scala.collection.mutable.ListBuffer
 import scala.language.experimental.macros
-import scala.reflect.{ ClassTag, classTag }
-
-import io.sphere.util.{ Reflect, Memoizer }
-
+import scala.reflect.{ClassTag, classTag}
+import io.sphere.util.{Memoizer, Reflect}
 import org.json4s.JsonAST._
 import org.json4s.jackson.compactJson
 import org.json4s.JsonDSL._
@@ -25,7 +25,7 @@ package object generic {
   type JSONTypeHint = io.sphere.json.annotations.JSONTypeHint
   type JSONTypeHintField = io.sphere.json.annotations.JSONTypeHintField
 
-  type JSONParseResult[A] = ValidationNel[JSONError, A]
+  type JSONParseResult[A] = ValidatedNel[JSONError, A]
 
   def deriveJSON[A]: JSON[A] = macro JSONMacros.deriveJSON_impl[A]
   def deriveSingletonJSON[A]: JSON[A] = macro JSONMacros.deriveSingletonJSON_impl[A]
@@ -34,9 +34,9 @@ package object generic {
     * representations of the enumeration values. */
   def jsonEnum(e: Enumeration): JSON[e.Value] = new JSON[e.Value] {
     def write(a: e.Value): JValue = JString(a.toString)
-    def read(jval: JValue): ValidationNel[JSONError, e.Value] = jval match {
-      case JString(s) => e.values.find(_.toString == s).toSuccess(
-        NonEmptyList(JSONParseError("Invalid enum value: '%s'. Expected one of: %s".format(s, e.values.mkString("','"))))
+    def read(jval: JValue): ValidatedNel[JSONError, e.Value] = jval match {
+      case JString(s) => e.values.find(_.toString == s).toValidNel(
+        JSONParseError("Invalid enum value: '%s'. Expected one of: %s".format(s, e.values.mkString("','")))
       )
       case _ => jsonParseError("JSON String expected.")
     }
@@ -49,8 +49,8 @@ package object generic {
     val typeValue = getJSONClass(clazz).typeHint.map(_.value).getOrElse(defaultTypeValue(clazz))
     new JSON[T] {
       def write(t: T): JValue = JString(typeValue)
-      def read(j: JValue): ValidationNel[JSONError, T] = j match {
-        case JString(`typeValue`) => Success(singleton)
+      def read(j: JValue): ValidatedNel[JSONError, T] = j match {
+        case JString(`typeValue`) => Valid(singleton)
         case _ => jsonParseError("JSON string '" + typeValue + "' expected.")
       }
     }
@@ -64,10 +64,10 @@ package object generic {
     }
     new JSON[T] {
       def write(t: T): JValue = JObject(JField(typeField, JString(typeValue)) :: Nil)
-      def read(j: JValue): ValidationNel[JSONError, T] = j match {
+      def read(j: JValue): ValidatedNel[JSONError, T] = j match {
         case o: JObject => findTypeValue(o, typeField) match {
           case Some(t) => t match {
-            case `typeValue` => Success(singleton)
+            case `typeValue` => Valid(singleton)
             case _ => jsonParseError("Invalid type value '" + t + "' in '%s'".format(compactJson(o)))
           }
           case None => jsonParseError("Missing type field '" + typeField + "' in '%s'".format(compactJson(o)))
@@ -82,7 +82,7 @@ package object generic {
   <#assign implTypeParams><#list 1..i as j>A${j} : FromJSON : ToJSON<#if i !=j>,</#if></#list></#assign>
   /** Creates a `JSON[T]` instance for a product type (case class) `T` of arity ${i}. */
   def jsonProduct[T <: Product: ClassTag, ${implTypeParams}](
-    construct: <#list 1..i as j>A${j}<#if i !=j> => </#if></#list> => T
+    construct: (<#list 1..i as j>A${j}<#if i !=j>, </#if></#list>) => T
   ): JSON[T] = {
     val jsonClass = getJSONClass(classTag[T].runtimeClass)
     val _fields = jsonClass.fields
@@ -95,14 +95,14 @@ package object generic {
         </#list>
         JObject(buf.toList)
       }
-      def read(jval: JValue): ValidationNel[JSONError, T] = jval match {
+      def read(jval: JValue): ValidatedNel[JSONError, T] = jval match {
         case o: JObject =>
-          <#if i!=1>
-            <#list i..2 as j>
-            (readField[A${j}](_fields(${j-1}), o) <*>
+          (readField[A1](_fields.head, o)<#if i!=1>
+            <#list 2..i as j>
+            |@| readField[A${j}](_fields(${j-1}), o)
             </#list>
           </#if>
-            readField[A1](_fields.head, o).map(construct)<#list 1..i as j><#if i!=j>)</#if></#list>
+            ).map(construct)
         case _ => jsonParseError("JSON object expected.")
       }
       override val fields = _fields.map(_.name).toSet
@@ -143,10 +143,10 @@ package object generic {
     new JSON[T] with TypeSelectorContainer {
       override def typeSelectors: List[TypeSelector[_]] = allSelectors
 
-      def read(jval: JValue): ValidationNel[JSONError, T] = jval match {
+      def read(jval: JValue): ValidatedNel[JSONError, T] = jval match {
         case s @ JString(typeName) =>
           readMap.get(typeName) match {
-            case Some(ts) => ts.read(s).asInstanceOf[ValidationNel[JSONError, T]]
+            case Some(ts) => ts.read(s).asInstanceOf[ValidatedNel[JSONError, T]]
             case None => jsonParseError("Invalid value '" + typeName + "'.")
           }
 
@@ -201,11 +201,11 @@ package object generic {
     new JSON[T] with TypeSelectorContainer {
       override def typeSelectors: List[TypeSelector[_]] = allSelectors
 
-      def read(jval: JValue): ValidationNel[JSONError, T] = jval match {
+      def read(jval: JValue): ValidatedNel[JSONError, T] = jval match {
         case o: JObject =>
           findTypeValue(o, typeField) match {
             case Some(t) => readMap.get(t) match {
-              case Some(ts) => ts.read(o).asInstanceOf[ValidationNel[JSONError, T]]
+              case Some(ts) => ts.read(o).asInstanceOf[ValidatedNel[JSONError, T]]
               case None => jsonParseError("Invalid type value '" + t + "' in '%s'".format(compactJson(o)))
             }
             case None => jsonParseError("Missing type field '" + typeField + "' in '%s'".format(compactJson(o)))
@@ -237,7 +237,7 @@ package object generic {
   }
 
   final class TypeSelector[A] private[generic](val typeField: String, val typeValue: String, val clazz: Class[_])(implicit jsonr: FromJSON[A], val serializer: ToJSON[A]) {
-    def read(o: JValue): ValidationNel[JSONError, A] = fromJValue[A](o)
+    def read(o: JValue): ValidatedNel[JSONError, A] = fromJValue[A](o)
     def write(a: Any): JValue = toJValue(a.asInstanceOf[A])
   }
 
@@ -330,7 +330,7 @@ package object generic {
 
   private def readField[A: FromJSON](f: JSONFieldMeta, o: JObject): JSONParseResult[A] = {
     val default = f.default.asInstanceOf[Option[A]]
-    if (f.ignored) default.map(Success(_))/*.orElse(jsonr.default)*/.getOrElse {
+    if (f.ignored) default.map(Valid(_))/*.orElse(jsonr.default)*/.getOrElse {
       // programmer error
       throw new JSONException("Missing default for ignored field.")
     }

@@ -1,27 +1,25 @@
 package io.sphere
 
+import cats.data.Validated.{Invalid, Valid}
+import cats.data.{NonEmptyList, ValidatedNel}
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.JsonMappingException
 
-import scalaz.{ NonEmptyList, Failure, Success, ValidationNel }
-import scalaz.Validation.FlatMap._
-
 import io.sphere.util.Logging
-
-import org.json4s.{JsonInput, StringInput, DefaultFormats}
+import org.json4s.{DefaultFormats, JsonInput, StringInput}
 import org.json4s.JsonAST._
 import org.json4s.ParserUtil.ParseException
-import org.json4s.jackson.{ compactJson, parseJson }
+import org.json4s.jackson.{compactJson, parseJson}
 
 /** Provides functions for reading & writing JSON, via type classes JSON/JSONR/JSONW. */
 package object json extends Logging {
 
   implicit val liftJsonFormats = DefaultFormats
 
-  type JValidation[A] = ValidationNel[JSONError, A]
+  type JValidation[A] = ValidatedNel[JSONError, A]
 
   def parseJSON(json: JsonInput): JValidation[JValue] =
-    try Success(parseJson(json)) catch {
+    try Valid(parseJson(json)) catch {
       case e: ParseException => jsonParseError(e.getMessage)
       case e: JsonMappingException ⇒ jsonParseError(e.getOriginalMessage)
       case e: JsonParseException ⇒ jsonParseError(e.getOriginalMessage)
@@ -30,14 +28,14 @@ package object json extends Logging {
   def parseJSON(json: String): JValidation[JValue] =
     parseJSON(StringInput(json))
 
-  def jsonParseError[A](msg: String): Failure[NonEmptyList[JSONError]] =
-    Failure(NonEmptyList(JSONParseError(msg)))
+  def jsonParseError[A](msg: String): Invalid[NonEmptyList[JSONError]] =
+    Invalid(NonEmptyList.of(JSONParseError(msg)))
 
   def fromJSON[A: FromJSON](json: JsonInput): JValidation[A] =
-    parseJSON(json).flatMap(fromJValue[A])
+    parseJSON(json).andThen(fromJValue[A])
 
   def fromJSON[A: FromJSON](json: String): JValidation[A] =
-    parseJSON(json).flatMap(fromJValue[A])
+    parseJSON(json).andThen(fromJValue[A])
 
   def toJSON[A: ToJSON](a: A): String = toJValue(a) match {
     case JNothing => "{}"
@@ -63,8 +61,8 @@ package object json extends Logging {
 
   def getFromJValue[A: FromJSON](jval: JValue): A =
     fromJValue[A](jval) match {
-      case Success(a) => a
-      case Failure(errs) => throw new JSONException(errs.list.mkString(", "))
+      case Valid(a) => a
+      case Invalid(errs) => throw new JSONException(errs.toList.mkString(", "))
     }
 
   /** Extracts a JSON value of type A from a named field of a JSON object.
@@ -80,12 +78,12 @@ package object json extends Logging {
     fields
       .find(f ⇒ f._1 == name && f._2 != JNull && f._2 != JNothing)
       .map(f => jsonr.read(f._2).fold(
-        errs => Failure(errs map {
+        errs => Invalid(errs map {
           case JSONParseError(msg) => JSONFieldError(List(name), msg)
           case JSONFieldError(path, msg) => JSONFieldError(name :: path, msg)
-        }), Success(_)))
-      .orElse(default.map(Success(_)))
-      .orElse(jsonr.read(JNothing).fold(_ => None, x => Some(Success(x)))) // orElse(jsonr.default)
-      .getOrElse(Failure(NonEmptyList(JSONFieldError(List(name), "Missing required value"))))
+        }), Valid(_)))
+      .orElse(default.map(Valid(_)))
+      .orElse(jsonr.read(JNothing).fold(_ => None, x => Some(Valid(x)))) // orElse(jsonr.default)
+      .getOrElse(Invalid(NonEmptyList.of(JSONFieldError(List(name), "Missing required value"))))
   }
 }

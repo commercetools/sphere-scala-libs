@@ -1,13 +1,11 @@
 package io.sphere.json
 
+import cats.data.Validated.{Invalid, Valid}
+import cats.data.ValidatedNel
+import cats.syntax.cartesian._
 import org.json4s.JsonAST._
-
-import scalaz._
-import Scalaz._
-
 import io.sphere.json.generic._
 import io.sphere.util.Money
-
 import org.joda.time._
 import org.scalatest._
 import org.scalatest.MustMatchers
@@ -55,10 +53,10 @@ class JSONSpec extends FunSpec with MustMatchers {
           JField("name", JString(m.name)) ::
           JField("date", toJValue(m.date)) :: Nil
         )
-        def read(j: JValue): ValidationNel[JSONError, Milestone] = j match {
+        def read(j: JValue): ValidatedNel[JSONError, Milestone] = j match {
           case o: JObject =>
             (field[String]("name")(o) |@|
-             field[Option[DateTime]]("date")(o)) { Milestone }
+             field[Option[DateTime]]("date")(o)).map(Milestone)
           case _ => fail("JSON object expected.")
         }
       }
@@ -69,18 +67,18 @@ class JSONSpec extends FunSpec with MustMatchers {
           JField("version", JInt(p.version)) ::
           JField("milestones", toJValue(p.milestones)) :: Nil
         )
-        def read(jval: JValue): ValidationNel[JSONError, Project] = jval match {
+        def read(jval: JValue): ValidatedNel[JSONError, Project] = jval match {
           case o: JObject =>
             (field[Int]("nr")(o) |@|
             field[String]("name")(o) |@|
             field[Int]("version", Some(1))(o) |@|
-            field[List[Milestone]]("milestones", Some(Nil))(o)) { Project }
+            field[List[Milestone]]("milestones", Some(Nil))(o)).map(Project)
           case _ => fail("JSON object expected.")
         }
       }
 
       val proj = Project(42, "Linux")
-      fromJSON[Project](toJSON(proj)) must equal (Success(proj))
+      fromJSON[Project](toJSON(proj)) must equal (Valid(proj))
 
       // Now some invalid JSON to test the error accumulation
       val wrongTypeJSON = """
@@ -91,8 +89,8 @@ class JSONSpec extends FunSpec with MustMatchers {
         "milestones":[{"name":"Bravo", "date": "xxx"}]
       }
       """
-      val Failure(errs) = fromJSON[Project](wrongTypeJSON)
-      errs.list must equal (List(
+      val Invalid(errs) = fromJSON[Project](wrongTypeJSON)
+      errs.toList must equal (List(
         JSONFieldError(List("nr"), "JSON Number in the range of an Int expected."),
         JSONFieldError(List("name"), "JSON String expected."),
         JSONFieldError(List("milestones", "date"), "Failed to parse date/time: xxx")
@@ -100,12 +98,12 @@ class JSONSpec extends FunSpec with MustMatchers {
 
       // Now without a version value and without a milestones list. Defaults should apply.
       val noVersionJSON = """{"nr":1,"name":"Linux"}"""
-      fromJSON[Project](noVersionJSON) must equal (Success(Project(1, "Linux")))
+      fromJSON[Project](noVersionJSON) must equal (Valid(Project(1, "Linux")))
     }
 
     it ("must fail reading wrong currency code.") {
       val wrongMoney = """{"currencyCode":"WRONG","centAmount":1000}"""
-      fromJSON[Money](wrongMoney).isFailure must be (true)
+      fromJSON[Money](wrongMoney).isInvalid must be (true)
     }
 
     it("must provide derived JSON instances for product types (case classes)") {
@@ -113,65 +111,65 @@ class JSONSpec extends FunSpec with MustMatchers {
       implicit val milestoneJSON = deriveJSON[Milestone]
       implicit val projectJSON = deriveJSON[Project]
       val proj = Project(42, "Linux", 7, Milestone("1.0") :: Milestone("2.0") :: Milestone("3.0") :: Nil)
-      fromJSON[Project](toJSON(proj)) must equal (Success(proj))
+      fromJSON[Project](toJSON(proj)) must equal (Valid(proj))
     }
 
     it("must handle empty String") {
-      val Failure(err) = fromJSON[Int]("")
-      err.list.head mustBe a [JSONParseError]
+      val Invalid(err) = fromJSON[Int]("")
+      err.toList.head mustBe a [JSONParseError]
     }
 
     it("must provide user-friendly error by empty String") {
-      val Failure(err) = fromJSON[Int]("")
-      err.list mustEqual List(JSONParseError("No content to map due to end-of-input"))
+      val Invalid(err) = fromJSON[Int]("")
+      err.toList mustEqual List(JSONParseError("No content to map due to end-of-input"))
     }
 
     it("must handle incorrect json") {
-      val Failure(err) = fromJSON[Int]("""{"key: "value"}""")
-      err.list.head mustBe a [JSONParseError]
+      val Invalid(err) = fromJSON[Int]("""{"key: "value"}""")
+      err.toList.head mustBe a [JSONParseError]
     }
 
     it("must provide user-friendly error by incorrect json") {
-      val Failure(err) = fromJSON[Int]("""{"key: "value"}""")
-      err.list mustEqual List(JSONParseError("Unexpected character ('v' (code 118)): was expecting a colon to separate field name and value"))
+      val Invalid(err) = fromJSON[Int]("""{"key: "value"}""")
+      err.toList mustEqual List(JSONParseError("Unexpected character ('v' (code 118)): was expecting a colon to separate field name and value"))
     }
 
     it("must provide derived JSON instances for sum types") {
       implicit val animalJSON = deriveJSON[Animal]
       List(Bird("Peewee"), Dog("Hasso"), Cat("Felidae")) foreach { a: Animal =>
-        fromJSON[Animal](toJSON(a)) must equal (Success(a))
+        fromJSON[Animal](toJSON(a)) must equal (Valid(a))
       }
     }
 
     it("must provide derived instances for product types with concrete type parameters") {
       implicit val aJSON = deriveJSON[GenericA[String]]
       val a = GenericA("hello")
-      fromJSON[GenericA[String]](toJSON(a)) must equal (Success(a))
+      fromJSON[GenericA[String]](toJSON(a)) must equal (Valid(a))
     }
 
     it("must provide derived instances for product types with generic type parameters") {
       implicit def aJSON[A: FromJSON: ToJSON] = deriveJSON[GenericA[A]]
       val a = GenericA("hello")
-      fromJSON[GenericA[String]](toJSON(a)) must equal (Success(a))
+      fromJSON[GenericA[String]](toJSON(a)) must equal (Valid(a))
     }
 
     it("must provide derived instances for singleton objects") {
       implicit val singletonJSON = deriveJSON[Singleton.type]
       val json = s"""[${toJSON(Singleton)}]"""
       withClue(json) {
-        fromJSON[Seq[Singleton.type]](json) must equal(Success(Seq(Singleton)))
+        fromJSON[Seq[Singleton.type]](json) must equal(Valid(Seq(Singleton)))
       }
 
       implicit val singleEnumJSON = deriveJSON[SingletonEnum]
       List(SingletonA, SingletonB, SingletonC) foreach { s: SingletonEnum =>
-        fromJSON[SingletonEnum](toJSON(s)) must equal (Success(s))
+        fromJSON[SingletonEnum](toJSON(s)) must equal (Valid(s))
       }
     }
 
     it("must provide derived instances for sum types with a mix of case class / object") {
       implicit val mixedJSON = deriveJSON[Mixed]
       List(SingletonMixed, RecordMixed(1)) foreach { m: Mixed =>
-        fromJSON[Mixed](toJSON(m)) must equal (Success(m))
+        fromJSON[Mixed](toJSON(m)) must equal (Valid(m))
       }
     }
 
@@ -180,7 +178,7 @@ class JSONSpec extends FunSpec with MustMatchers {
       ScalaEnum.values.foreach { v =>
         val json = s"""[${toJSON(v)}]"""
         withClue(json) {
-          fromJSON[Seq[ScalaEnum.Value]](json) must equal(Success(Seq(v)))
+          fromJSON[Seq[ScalaEnum.Value]](json) must equal(Valid(Seq(v)))
         }
       }
     }
@@ -196,32 +194,12 @@ class JSONSpec extends FunSpec with MustMatchers {
         testSubjects foreach (testSubject => {
           val json = toJSON(testSubject)
           withClue(json) {
-            fromJSON[TestSubjectBase](json) must equal (Success(testSubject))
+            fromJSON[TestSubjectBase](json) must equal (Valid(testSubject))
           }
         })
 
     }
 
-    // TODO
-    // it("must provide derived instances for sum types with type parameters") {
-    //   implicit def aJSON[A: FromJSON: ToJSON]: JSON[GenericA[A]] = deriveJSON[GenericA[A]]
-    //   implicit def bJSON[B: FromJSON: ToJSON]: JSON[GenericB[B]] = deriveJSON[GenericB[B]]
-    //   // implicit def genJSON[A: FromJSON: ToJSON]: JSON[GenericBase[A]] = {
-    //   //   implicit def json0[A >: Nothing <: Any](implicit jr0: FromJSON[A], jw0: ToJSON[A]): JSON[GenericA[A]] = io.sphere.json.generic.`package`.jsonProduct({
-    //   //     ((x0: A) => GenericA.apply(x0))
-    //   //   });
-    //   //   implicit def json1[A >: Nothing <: Any](implicit jr0: FromJSON[A], jw0: ToJSON[A]): JSON[GenericB[A]] = io.sphere.json.generic.`package`.jsonProduct({
-    //   //     ((x0: A) => GenericB.apply(x0))
-    //   //   });
-    //   //   io.sphere.json.generic.`package`.jsonTypeSwitch[GenericBase[A], GenericA[A], GenericB[A]](Nil)
-    //   // }
-    //   implicit def genJSON[A: FromJSON: ToJSON]: JSON[GenericBase[A]] = // deriveJSON[GenericBase[A]]
-    //     jsonTypeSwitch[GenericBase[A], GenericA[A], GenericB[A]](Nil)
-
-    //   List(GenericA("hello"), GenericB("olleh")) foreach { g: GenericBase[String] =>
-    //     fromJSON[GenericBase[String]](toJSON(g)) must equal (Success(g))
-    //   }
-    // }
   }
 }
 
