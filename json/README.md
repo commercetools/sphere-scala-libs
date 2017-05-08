@@ -138,10 +138,10 @@ an instance defined as
 
 expands to
 
-    implicit val json = jsonProduct((Foo.apply _).curried)
+    implicit val json = jsonProduct(Foo.apply _)
 
-`jsonProduct` is an overloaded method that, when given a (curried) constructor function
-`X1 => ... => XN => X` where `X <: Product` and `X1` to `XN` are the argument types,
+`jsonProduct` is an overloaded method that, when given a constructor function
+`(X1, ..., XN) => X` where `X <: Product` and `X1` to `XN` are the argument types,
 creates a `JSON[X]` instance.
 
 Case classes using such a derived instance are serialized as JSON objects.
@@ -179,8 +179,8 @@ an instance defined as
 Expands to:
 
     implicit val json = {
-      implicit val json0 = jsonProduct(A.apply)
-      implicit val json1 = jsonProduct(B.apply)
+      implicit val json0 = jsonProduct(A.apply _)
+      implicit val json1 = jsonProduct(B.apply _)
       implicit val json2 = jsonProduct0(C)
       jsonTypeSwitch[X, A, B, C.type](Nil)
     }
