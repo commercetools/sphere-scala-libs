@@ -7,12 +7,16 @@ import java.util.{Currency, Locale, UUID}
 import cats.data.NonEmptyList
 import org.joda.time._
 import org.scalacheck._
+import org.scalactic.Equivalence
+
 
 object JSONProperties extends Properties("JSON") {
-  private def check[A: FromJSON: ToJSON](a: A): Boolean = {
+  private def check[A: FromJSON: ToJSON: Equivalence](a: A): Boolean = {
     val json = s"""[${toJSON(a)}]"""
-    val result = fromJSON[Seq[A]](json).toOption.map(_.head)
-    result == Some(a)
+    val result = fromJSON[Seq[A]](json).toOption.map(_.head).get
+    val r = implicitly[Equivalence[A]].areEquivalent(result, a)
+    if (!r) println(s"result: $result - expected: $a")
+    r
   }
 
   implicit def arbitraryVector[A: Arbitrary]: Arbitrary[Vector[A]] =
@@ -70,36 +74,36 @@ object JSONProperties extends Properties("JSON") {
       least <- Arbitrary.arbitrary[Long]
     } yield new UUID(most, least))
 
-//  implicit val currencyEqual = new Equal[Currency] {
-//    def equal(c1: Currency, c2: Currency) = c1.getCurrencyCode == c2.getCurrencyCode
-//  }
-//  implicit val localeEqual = new Equal[Locale] {
-//    def equal(l1: Locale, l2: Locale) = l1.toLanguageTag == l2.toLanguageTag
-//  }
-//  implicit val uuidEqual = new Equal[UUID] {
-//    def equal(u1: UUID, u2: UUID) = u1 == u2
-//  }
-//  implicit val dateTimeEqual = new Equal[DateTime] {
-//    def equal(dt1: DateTime, dt2: DateTime) = dt1 == dt2
-//  }
-//  implicit val localTimeEqual = new Equal[LocalTime] {
-//    def equal(dt1: LocalTime, dt2: LocalTime) = dt1 == dt2
-//  }
-//  implicit val localDateEqual = new Equal[LocalDate] {
-//    def equal(dt1: LocalDate, dt2: LocalDate) = dt1 == dt2
-//  }
-//  implicit val yearMonthEqual = new Equal[YearMonth] {
-//    def equal(dt1: YearMonth, dt2: YearMonth) = dt1 == dt2
-//  }
+  implicit val currencyEqual = new Equivalence[Currency] {
+    def areEquivalent(c1: Currency, c2: Currency) = c1.getCurrencyCode == c2.getCurrencyCode
+  }
+  implicit val localeEqual = new Equivalence[Locale] {
+    def areEquivalent(l1: Locale, l2: Locale) = l1.toLanguageTag == l2.toLanguageTag
+  }
+  implicit val uuidEqual = new Equivalence[UUID] {
+    def areEquivalent(u1: UUID, u2: UUID) = u1 == u2
+  }
+  implicit val dateTimeEqual = new Equivalence[DateTime] {
+    def areEquivalent(dt1: DateTime, dt2: DateTime) = dt1 == dt2
+  }
+  implicit val localTimeEqual = new Equivalence[LocalTime] {
+    def areEquivalent(dt1: LocalTime, dt2: LocalTime) = dt1 == dt2
+  }
+  implicit val localDateEqual = new Equivalence[LocalDate] {
+    def areEquivalent(dt1: LocalDate, dt2: LocalDate) = dt1 == dt2
+  }
+  implicit val yearMonthEqual = new Equivalence[YearMonth] {
+    def areEquivalent(dt1: YearMonth, dt2: YearMonth) = dt1 == dt2
+  }
 
   private def checkC[C[_]](name: String)(implicit
-    jri: FromJSON[C[Int]], jwi: ToJSON[C[Int]], arbi: Arbitrary[C[Int]],
-    jrs: FromJSON[C[Short]], jws: ToJSON[C[Short]], arbs: Arbitrary[C[Short]],
-    jrl: FromJSON[C[Long]], jwl: ToJSON[C[Long]], arbl: Arbitrary[C[Long]],
-    jrss: FromJSON[C[String]], jwss: ToJSON[C[String]], arbss: Arbitrary[C[String]],
-    jrf: FromJSON[C[Float]], jwf: ToJSON[C[Float]], arbf: Arbitrary[C[Float]],
-    jrd: FromJSON[C[Double]], jwd: ToJSON[C[Double]], arbd: Arbitrary[C[Double]],
-    jrb: FromJSON[C[Boolean]], jwb: ToJSON[C[Boolean]], arbb: Arbitrary[C[Boolean]]
+    jri: FromJSON[C[Int]], jwi: ToJSON[C[Int]], arbi: Arbitrary[C[Int]], eqi: Equivalence[C[Int]],
+    jrs: FromJSON[C[Short]], jws: ToJSON[C[Short]], arbs: Arbitrary[C[Short]], eqs: Equivalence[C[Short]],
+    jrl: FromJSON[C[Long]], jwl: ToJSON[C[Long]], arbl: Arbitrary[C[Long]], eql: Equivalence[C[Long]],
+    jrss: FromJSON[C[String]], jwss: ToJSON[C[String]], arbss: Arbitrary[C[String]], eqss: Equivalence[C[String]],
+    jrf: FromJSON[C[Float]], jwf: ToJSON[C[Float]], arbf: Arbitrary[C[Float]], eqf: Equivalence[C[Float]],
+    jrd: FromJSON[C[Double]], jwd: ToJSON[C[Double]], arbd: Arbitrary[C[Double]], eqd: Equivalence[C[Double]],
+    jrb: FromJSON[C[Boolean]], jwb: ToJSON[C[Boolean]], arbb: Arbitrary[C[Boolean]], eqb: Equivalence[C[Boolean]]
   ) = {
     property(s"read/write $name of Ints") = Prop.forAll { (l: C[Int]) => check(l) }
     property(s"read/write $name of Shorts") = Prop.forAll { (l: C[Short]) => check(l) }
