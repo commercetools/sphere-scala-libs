@@ -5,7 +5,6 @@ import io.sphere.util.Money
 import java.util.{Currency, Locale, UUID}
 
 import cats.Eq
-import cats.Eq._
 import cats.instances.all._
 import cats.data.NonEmptyList
 import cats.syntax.eq._
