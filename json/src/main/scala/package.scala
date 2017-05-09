@@ -79,11 +79,11 @@ package object json extends Logging {
     val fields = jObject.obj
     fields
       .find(f ⇒ f._1 == name && f._2 != JNull && f._2 != JNothing)
-      .map(f => jsonr.read(f._2).fold(
-        errs => Failure(errs map {
+      .map(f => jsonr.read(f._2).leftMap(
+        errs => errs map {
           case JSONParseError(msg) => JSONFieldError(List(name), msg)
           case JSONFieldError(path, msg) => JSONFieldError(name :: path, msg)
-        }), Success(_)))
+        }))
       .orElse(default.map(Success(_)))
       .orElse(jsonr.read(JNothing).fold(_ => None, x => Some(Success(x)))) // orElse(jsonr.default)
       .getOrElse(Failure(NonEmptyList(JSONFieldError(List(name), "Missing required value"))))

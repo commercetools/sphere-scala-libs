@@ -10,9 +10,9 @@ class JsonBenchmark {
   /* on local mac
   jmh:run -i 10 -wi 10 -f1 -t1
 [info] Benchmark                       Mode  Cnt   Score   Error  Units
-[info] JsonBenchmark.parseFromString  thrpt   10  60.260 ± 1.812  ops/s
-[info] JsonBenchmark.listReader       thrpt   10  11.992 ± 1.499  ops/s
-[info] JsonBenchmark.vectorReader     thrpt   10   9.923 ± 1.029  ops/s
+[info] JsonBenchmark.listReader       thrpt   10  21.467 ± 1.300  ops/s
+[info] JsonBenchmark.parseFromString  thrpt   10  69.970 ± 3.997  ops/s
+[info] JsonBenchmark.vectorReader     thrpt   10  18.359 ± 2.697  ops/s
    */
 
   @Benchmark
