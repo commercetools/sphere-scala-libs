@@ -1,20 +1,15 @@
 package io.sphere.json
 
-import scalaz.{ ValidationNel, Success, NonEmptyList }
+import scalaz.{Failure, NonEmptyList, Success}
 import scalaz.std.option._
 import scalaz.std.list._
-import scalaz.std.vector._
 import scalaz.syntax.applicative._
 import scalaz.syntax.traverse._
 import scalaz.Validation.FlatMap._
-
-import scala.collection.breakOut
 import scala.util.control.NonFatal
+import java.util.{Currency, Locale, UUID}
 
-import java.util.{ Locale, Currency, UUID }
-
-import io.sphere.util.{ Money, LangTag }
-
+import io.sphere.util.{LangTag, Money}
 import org.json4s.JsonAST._
 import org.joda.time._
 import org.joda.time.format.ISODateTimeFormat
@@ -39,8 +34,20 @@ object FromJSON {
   }
 
   implicit def listReader[A](implicit r: FromJSON[A]): FromJSON[List[A]] = new FromJSON[List[A]] {
+    import scala.collection.mutable.ListBuffer
+
     def read(jval: JValue): JValidation[List[A]] = jval match {
-      case JArray(l) => l.traverse[JValidation, A](r.read)
+      case JArray(l) =>
+        val initial: JValidation[ListBuffer[A]] = Success(new ListBuffer())
+        l.foldLeft(initial) { (acc, jvalue) ⇒
+          val result = r.read(jvalue)
+          (acc, result) match {
+            case (Success(builder), Success(e)) ⇒ Success(builder += e)
+            case (Success(_), i @ Failure(_)) ⇒ i
+            case (Failure(e1), Failure(e2)) ⇒ Failure(e1.append(e2))
+            case (i @ Failure(_), _) ⇒ i
+          }
+        }.map(_.result())
       case _ => fail("JSON Array expected.")
     }
   }
@@ -60,10 +67,20 @@ object FromJSON {
   }
 
   implicit def vectorReader[A](implicit r: FromJSON[A]): FromJSON[Vector[A]] = new FromJSON[Vector[A]] {
+    import scala.collection.immutable.VectorBuilder
+
     def read(jval: JValue): JValidation[Vector[A]] = jval match {
       case JArray(l) =>
-        val v: Vector[JValidation[A]] = l.map(r.read)(breakOut)
-        v.sequence[JValidation, A]
+        val initial: JValidation[VectorBuilder[A]] = Success(new VectorBuilder())
+        l.foldLeft(initial) { (acc, jvalue) ⇒
+          val result = r.read(jvalue)
+          (acc, result) match {
+            case (Success(builder), Success(e)) ⇒ Success(builder += e)
+            case (Success(_), i @ Failure(_)) ⇒ i
+            case (Failure(e1), Failure(e2)) ⇒ Failure(e1.append(e2))
+            case (i @ Failure(_), _) ⇒ i
+          }
+        }.map(_.result())
       case _ => fail("JSON Array expected.")
     }
   }
