@@ -38,6 +38,7 @@ object FromJSON {
 
     def read(jval: JValue): JValidation[List[A]] = jval match {
       case JArray(l) =>
+        // "imperative" style for performances
         val initial: JValidation[ListBuffer[A]] = Success(new ListBuffer())
         l.foldLeft(initial) { (acc, jvalue) ⇒
           val result = r.read(jvalue)
@@ -71,6 +72,7 @@ object FromJSON {
 
     def read(jval: JValue): JValidation[Vector[A]] = jval match {
       case JArray(l) =>
+        // "imperative" style for performances
         val initial: JValidation[VectorBuilder[A]] = Success(new VectorBuilder())
         l.foldLeft(initial) { (acc, jvalue) ⇒
           val result = r.read(jvalue)
