@@ -1,12 +1,11 @@
 package io.sphere.json
 
-
 import scala.collection.breakOut
 import scala.util.control.NonFatal
 import java.util.{Currency, Locale, UUID}
 
 import cats.data.NonEmptyList
-import cats.data.Validated.Valid
+import cats.data.Validated.{Invalid, Valid}
 import cats.instances.list._
 import cats.instances.vector._
 import cats.syntax.cartesian._
@@ -36,8 +35,21 @@ object FromJSON {
   }
 
   implicit def listReader[A](implicit r: FromJSON[A]): FromJSON[List[A]] = new FromJSON[List[A]] {
+    import scala.collection.mutable.ListBuffer
+
     def read(jval: JValue): JValidation[List[A]] = jval match {
-      case JArray(l) => l.traverse[JValidation, A](r.read)
+      case JArray(l) =>
+        // "imperative" style for performances
+        val initial: JValidation[ListBuffer[A]] = Valid(new ListBuffer())
+        l.foldLeft(initial) { (acc, jvalue) ⇒
+          val result = r.read(jvalue)
+          (acc, result) match {
+            case (Valid(builder), Valid(e)) ⇒ Valid(builder += e)
+            case (Valid(_), i @ Invalid(_)) ⇒ i
+            case (Invalid(e1), Invalid(e2)) ⇒ Invalid(e1.concat(e2))
+            case (i @ Invalid(_), _) ⇒ i
+          }
+        }.map(_.result())
       case _ => fail("JSON Array expected.")
     }
   }
@@ -57,10 +69,21 @@ object FromJSON {
   }
 
   implicit def vectorReader[A](implicit r: FromJSON[A]): FromJSON[Vector[A]] = new FromJSON[Vector[A]] {
+    import scala.collection.immutable.VectorBuilder
+
     def read(jval: JValue): JValidation[Vector[A]] = jval match {
       case JArray(l) =>
-        val v: Vector[JValidation[A]] = l.map(r.read)(breakOut)
-        v.sequence[JValidation, A]
+        // "imperative" style for performances
+        val initial: JValidation[VectorBuilder[A]] = Valid(new VectorBuilder())
+        l.foldLeft(initial) { (acc, jvalue) ⇒
+          val result = r.read(jvalue)
+          (acc, result) match {
+            case (Valid(builder), Valid(e)) ⇒ Valid(builder += e)
+            case (Valid(_), i @ Invalid(_)) ⇒ i
+            case (Invalid(e1), Invalid(e2)) ⇒ Invalid(e1.concat(e2))
+            case (i @ Invalid(_), _) ⇒ i
+          }
+        }.map(_.result())
       case _ => fail("JSON Array expected.")
     }
   }
