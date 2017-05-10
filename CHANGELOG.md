@@ -1,6 +1,7 @@
 ## 0.6.13-SNAPSHOT
 
 * update dependencies
+* optimize performance of `FromJSON[List[A]]` and `FromJSON[Vector[A]]`
 
 ## 0.6.12 (2017-04-04)
 
