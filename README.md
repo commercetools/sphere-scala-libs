@@ -21,8 +21,8 @@ The library is published to the [Bintray](https://bintray.com/commercetools/mave
 
     resolvers += Resolver.bintrayRepo("commercetools", "maven")
     
-    libraryDependencies += "io.sphere" %% "sphere-util" % "0.6.13"
-    libraryDependencies += "io.sphere" %% "sphere-json" % "0.6.13"
+    libraryDependencies += "io.sphere" %% "sphere-util" % "0.7.0"
+    libraryDependencies += "io.sphere" %% "sphere-json" % "0.7.0"
 
 ## License
 
