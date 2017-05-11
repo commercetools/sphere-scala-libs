@@ -39,12 +39,7 @@ private[generic] object JSONMacros {
           reify(io.sphere.json.generic.`package`).tree,
           newTermName("jsonProduct")
         ),
-        List(
-          if (argList.size > 1)
-            Select(applyBlock, newTermName("curried"))
-          else
-            applyBlock
-        )
+        List(applyBlock)
       )
     } else if (classSym.isCaseClass && classSym.isModuleClass) {
       Apply(

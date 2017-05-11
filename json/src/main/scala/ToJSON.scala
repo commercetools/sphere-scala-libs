@@ -1,6 +1,6 @@
 package io.sphere.json
 
-import scalaz.NonEmptyList
+import cats.data.NonEmptyList
 import scala.collection.breakOut
 
 import java.util.{ Locale, Currency, UUID }
@@ -36,7 +36,7 @@ object ToJSON {
   }
 
   implicit def nonEmptyListWriter[A](implicit w: ToJSON[A]): ToJSON[NonEmptyList[A]] = new ToJSON[NonEmptyList[A]] {
-    def write(l: NonEmptyList[A]): JValue = JArray(l.list map w.write)
+    def write(l: NonEmptyList[A]): JValue = JArray(l.toList map w.write)
   }
 
   implicit def seqWriter[A](implicit w: ToJSON[A]): ToJSON[Seq[A]] = new ToJSON[Seq[A]] {
