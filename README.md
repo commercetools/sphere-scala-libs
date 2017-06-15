@@ -11,6 +11,8 @@ sphere-json: [ ![Download](https://api.bintray.com/packages/commercetools/maven/
 
 sphere-util: [ ![Download](https://api.bintray.com/packages/commercetools/maven/sphere-util/images/download.svg) ](https://bintray.com/commercetools/maven/sphere-util/_latestVersion)
 
+sphere-mongo: [ ![Download](https://api.bintray.com/packages/commercetools/maven/sphere-mongo/images/download.svg) ](https://bintray.com/commercetools/maven/sphere-mongo/_latestVersion)
+
 ## Documentation
 
 [sphere-json](json/README.md)
@@ -23,6 +25,7 @@ The library is published to the [Bintray](https://bintray.com/commercetools/mave
     
     libraryDependencies += "io.sphere" %% "sphere-util" % "0.7.0"
     libraryDependencies += "io.sphere" %% "sphere-json" % "0.7.0"
+    libraryDependencies += "io.sphere" %% "sphere-mongo" % "0.7.0"
 
 ## License
 
