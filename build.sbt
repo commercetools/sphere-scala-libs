@@ -3,6 +3,7 @@ import pl.project13.scala.sbt.JmhPlugin
 
 lazy val publishSettings = Seq(
   releaseCrossBuild := true,
+  bintrayRepository := "maven",
   UpdateVersionInFiles("sphere-util", file("README.md")),
   UpdateVersionInFiles("sphere-json", file("README.md"), file("json/README.md")),
   UpdateVersionInFiles("sphere-mongo", file("README.md"), file("mongo/README.md"))
