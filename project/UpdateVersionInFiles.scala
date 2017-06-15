@@ -27,7 +27,8 @@ object UpdateVersionInFiles {
     val settings = Project.extract(s)
 
     val pattern = getPattern(namePattern, settings)
-    val version = settings.get(releaseVersion)(settings.get(Keys.version))
+    val (newState, releaseVersionValue) = settings.runTask(releaseVersion, s)
+    val version = releaseVersionValue(settings.get(Keys.version))
     val replacement = "$1" + version + "$2"
 
     def updateFile(file: File) = {
@@ -41,7 +42,7 @@ object UpdateVersionInFiles {
 
     files.foreach(updateFile)
 
-    s
+    newState
   }
 
   def getPattern(name: String, settings:Extracted) = {

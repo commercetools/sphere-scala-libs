@@ -53,6 +53,7 @@ lazy val `sphere-mongo` = project.in(file("./mongo"))
 // benchmarks
 
 lazy val benchmarks = project
+  .settings(standardSettings: _*)
   .settings(
     publishArtifact := false,
     publish := {})
