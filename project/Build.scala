@@ -9,8 +9,9 @@ object SphereLibsBuild extends Build {
 
   lazy val publishSettings = bintraySettings ++ Seq(
     releaseCrossBuild := true,
-    UpdateVersionInFiles("sphere-util", file("README.md"), file("json/README.md")),
-    UpdateVersionInFiles("sphere-json", file("README.md"), file("json/README.md"))
+    UpdateVersionInFiles("sphere-util", file("README.md")),
+    UpdateVersionInFiles("sphere-json", file("README.md"), file("json/README.md")),
+    UpdateVersionInFiles("sphere-mongo", file("README.md"), file("mongo/README.md"))
   )
 
   lazy val standardSettings = Defaults.defaultSettings ++ publishSettings ++ Seq(
@@ -32,7 +33,7 @@ object SphereLibsBuild extends Build {
   lazy val libs = Project(
     id = "sphere-libs",
     base = file("."),
-    aggregate = Seq(util, json),
+    aggregate = Seq(util, json, mongo),
     settings = standardSettings
   ).settings (
     publishArtifact := false,
@@ -49,9 +50,14 @@ object SphereLibsBuild extends Build {
   lazy val json = Project(
     id = "sphere-json",
     base = file("./json"),
-    //dependencies = Seq(util),
     settings = standardSettings ++ Fmpp.settings ++ Seq(
       homepage := Some(url("https://github.com/sphereio/sphere-scala-libs/blob/master/json/README.md")))//++ Seq(scalacOptions ++= Seq("-Ymacro-debug-lite"))
+  ).dependsOn(util)
+
+  lazy val mongo = Project(
+    id = "sphere-mongo",
+    base = file("./mongo"),
+    settings = standardSettings ++ Fmpp.settings
   ).dependsOn(util)
 
   // benchmarks
