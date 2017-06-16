@@ -1,4 +1,15 @@
-## 0.7.0
+## 0.8.2 (2017-06-15)
+
+Please note that v0.8.0 and v0.8.1 represent the same version. They are side-effect of [failed](https://github.com/sbt/sbt-bintray/issues/104) attempt to update the `sbt-bintray` plugin.
+
+* Introduced `sphere-mongo` which provides a set of type classes and macros to help with defining models for MongoDB (it is similar to what `sphere-json` provides for JSON models). You can use it like this:
+  ```scala
+  resolvers += Resolver.bintrayRepo("commercetools", "maven")
+
+  libraryDependencies += "io.sphere" %% "sphere-mongo" % "0.8.2"
+  ``` 
+
+## 0.7.0 (2017-05-11)
 
 * use Cats instead of Scalaz.
 
