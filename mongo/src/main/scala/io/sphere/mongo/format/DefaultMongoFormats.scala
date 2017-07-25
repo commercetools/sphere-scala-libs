@@ -7,6 +7,8 @@ import com.mongodb.BasicDBList
 import org.bson.types.ObjectId
 
 object DefaultMongoFormats extends DefaultMongoFormats
+
+// Represents an absent value for a field that should be not serialized.
 private [mongo] object MongoNothing
 
 /**
