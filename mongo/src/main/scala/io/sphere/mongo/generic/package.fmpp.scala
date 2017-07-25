@@ -166,10 +166,15 @@ package object generic extends Logging {
       if (field.embedded)
         toMongo(e) match {
           case dbo2: DBObject => dbo.putAll(dbo2)
+          case MongoNothing => ()
           case x => dbo.put(field.name, x)
         }
       else
-        dbo.put(field.name, toMongo(e))
+        toMongo(e) match {
+          case MongoNothing => ()
+          case x => dbo.put(field.name, x)
+        }
+
     }
 
   private def readField[A: MongoFormat](f: MongoFieldMeta, dbo: DBObject): A = {

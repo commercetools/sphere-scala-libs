@@ -8,6 +8,9 @@ import org.bson.types.ObjectId
 
 object DefaultMongoFormats extends DefaultMongoFormats
 
+// Represents an absent value for a field that should be not serialized.
+private [mongo] object MongoNothing
+
 /**
   * [[MongoFormat]] for standard scala/mongo types
   */
@@ -43,7 +46,7 @@ trait DefaultMongoFormats {
   implicit def optionFormat[A](implicit f: MongoFormat[A]): MongoFormat[Option[A]] = new MongoFormat[Option[A]] {
     override def toMongoValue(a: Option[A]) = a match {
       case Some(aa) => f.toMongoValue(aa)
-      case None => null
+      case None => MongoNothing
     }
     override def fromMongoValue(any: Any) = {
       Option(any).map(f.fromMongoValue)
