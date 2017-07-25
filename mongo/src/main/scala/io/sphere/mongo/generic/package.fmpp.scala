@@ -166,12 +166,12 @@ package object generic extends Logging {
       if (field.embedded)
         toMongo(e) match {
           case dbo2: DBObject => dbo.putAll(dbo2)
-          case null => ()
+          case MongoNothing => ()
           case x => dbo.put(field.name, x)
         }
       else
         toMongo(e) match {
-          case null => ()
+          case MongoNothing => ()
           case x => dbo.put(field.name, x)
         }
 
