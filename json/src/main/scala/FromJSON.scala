@@ -8,7 +8,7 @@ import cats.data.NonEmptyList
 import cats.data.Validated.{Invalid, Valid}
 import cats.instances.list._
 import cats.instances.vector._
-import cats.syntax.cartesian._
+import cats.syntax.apply._
 import cats.syntax.traverse._
 import io.sphere.util.{LangTag, Money}
 import org.json4s.JsonAST._
@@ -172,8 +172,8 @@ object FromJSON {
     override val fields = Set("centAmount", "currencyCode")
     def read(jval: JValue): JValidation[Money] = jval match {
       case o: JObject =>
-        (field[Currency]("currencyCode")(o) |@|
-        field[Long]("centAmount")(o)).map(mkMoney)
+        (field[Currency]("currencyCode")(o),
+        field[Long]("centAmount")(o)).mapN(mkMoney)
       case _ => fail("JSON object expected.")
     }
 

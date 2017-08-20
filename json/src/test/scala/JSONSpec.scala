@@ -2,7 +2,7 @@ package io.sphere.json
 
 import cats.data.Validated.{Invalid, Valid}
 import cats.data.ValidatedNel
-import cats.syntax.cartesian._
+import cats.syntax.apply._
 import org.json4s.JsonAST._
 import io.sphere.json.generic._
 import io.sphere.util.Money
@@ -55,8 +55,8 @@ class JSONSpec extends FunSpec with MustMatchers {
         )
         def read(j: JValue): ValidatedNel[JSONError, Milestone] = j match {
           case o: JObject =>
-            (field[String]("name")(o) |@|
-             field[Option[DateTime]]("date")(o)).map(Milestone)
+            (field[String]("name")(o),
+             field[Option[DateTime]]("date")(o)).mapN(Milestone)
           case _ => fail("JSON object expected.")
         }
       }
@@ -69,10 +69,10 @@ class JSONSpec extends FunSpec with MustMatchers {
         )
         def read(jval: JValue): ValidatedNel[JSONError, Project] = jval match {
           case o: JObject =>
-            (field[Int]("nr")(o) |@|
-            field[String]("name")(o) |@|
-            field[Int]("version", Some(1))(o) |@|
-            field[List[Milestone]]("milestones", Some(Nil))(o)).map(Project)
+            (field[Int]("nr")(o),
+            field[String]("name")(o),
+            field[Int]("version", Some(1))(o),
+            field[List[Milestone]]("milestones", Some(Nil))(o)).mapN(Project)
           case _ => fail("JSON object expected.")
         }
       }
