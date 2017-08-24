@@ -3,7 +3,7 @@ package io.sphere.json
 
 import cats.data.Validated.Valid
 import cats.data.ValidatedNel
-import cats.syntax.cartesian._
+import cats.syntax.apply._
 import cats.syntax.option._
 
 import scala.annotation.meta.getter
@@ -99,10 +99,10 @@ package object generic {
         case o: JObject =>
           (readField[A1](_fields.head, o)<#if i!=1>
             <#list 2..i as j>
-            |@| readField[A${j}](_fields(${j-1}), o)
+            , readField[A${j}](_fields(${j-1}), o)
             </#list>
           </#if>
-            ).map(construct)
+            ).map<#if i!=1>N</#if>(construct)
         case _ => jsonParseError("JSON object expected.")
       }
       override val fields = _fields.map(_.name).toSet
