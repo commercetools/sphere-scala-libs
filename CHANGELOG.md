@@ -1,3 +1,8 @@
+## 0.9.0 (2017-09-05)
+
+* update Cats dependency to 1.0.0-MF
+* added scalac option "-Ypartial-unification"
+
 ## 0.8.2 (2017-06-15)
 
 Please note that v0.8.0 and v0.8.1 represent the same version. They are side-effect of [failed](https://github.com/sbt/sbt-bintray/issues/104) attempt to update the `sbt-bintray` plugin.
