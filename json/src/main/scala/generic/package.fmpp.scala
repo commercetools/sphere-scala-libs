@@ -40,6 +40,12 @@ package object generic {
       )
       case _ => jsonParseError("JSON String expected.")
     }
+    def getFragment(a: e.Value, fieldNames: Seq[String]): Seq[_] = {
+      fieldNames match {
+        case Nil => Seq(a)
+        case _ => Seq.empty
+      }
+    }
   }
 
   /** Creates a JSON instance for a singleton object that encodes only the type value
@@ -53,6 +59,12 @@ package object generic {
         case JString(`typeValue`) => Valid(singleton)
         case _ => jsonParseError("JSON string '" + typeValue + "' expected.")
       }
+      def getFragment(t: T, fieldNames: Seq[String]): Seq[_] = {
+        fieldNames match {
+          case Nil => Seq(typeValue)
+          case _ => Seq.empty
+        }
+      }
     }
   }
 
@@ -64,6 +76,13 @@ package object generic {
     }
     new JSON[T] {
       def write(t: T): JValue = JObject(JField(typeField, JString(typeValue)) :: Nil)
+      def getFragment(t: T, fieldNames: Seq[String]): Seq[_] = {
+        fieldNames match {
+          case Nil => Seq(t)
+          case fieldName :: Nil if (fieldName == typeField) => Seq(typeValue)
+          case _ => Seq.empty
+        }
+      }
       def read(j: JValue): ValidatedNel[JSONError, T] = j match {
         case o: JObject => findTypeValue(o, typeField) match {
           case Some(t) => t match {
@@ -79,11 +98,14 @@ package object generic {
 
   <#list 1..22 as i>
   <#assign typeParams><#list 1..i as j>A${j}<#if i !=j>,</#if></#list></#assign>
-  <#assign implTypeParams><#list 1..i as j>A${j} : FromJSON : ToJSON<#if i !=j>,</#if></#list></#assign>
+  <#assign implTypeParams><#list 1..i as j>A${j} : FromJSON : ToJSON : Fragment<#if i !=j>,</#if></#list></#assign>
   /** Creates a `JSON[T]` instance for a product type (case class) `T` of arity ${i}. */
   def jsonProduct[T <: Product: ClassTag, ${implTypeParams}](
     construct: (<#list 1..i as j>A${j}<#if i !=j>, </#if></#list>) => T
   ): JSON[T] = {
+    def isFieldEmbedded[A](fieldName: String, runtimeClass: Class[_]): Boolean =
+      getJSONClass(runtimeClass).fields.map(_.name).contains(fieldName)
+
     val jsonClass = getJSONClass(classTag[T].runtimeClass)
     val _fields = jsonClass.fields
     new JSON[T] {
@@ -94,6 +116,25 @@ package object generic {
         writeField[A${j}](buf, _fields(${j-1}), r.productElement(${j-1}).asInstanceOf[A${j}])
         </#list>
         JObject(buf.toList)
+      }
+      def getFragment(r: T, fieldNames: Seq[String]): Seq[_] = {
+        fieldNames match {
+          case Nil => Seq(r)
+          case fieldName :: remainingFieldNames =>
+            fieldName match {
+              <#list 1..i as j>
+              case s: String if s == _fields(${j-1}).name =>
+                  getFragmentFromField(r.productElement(${j-1}).asInstanceOf[A${j}], remainingFieldNames)
+              </#list>
+              <#list 1..i as j>
+              case s: String if _fields(${j-1}).embedded && isFieldEmbedded(s, r.productElement(${j-1}).asInstanceOf[A${j}].getClass) =>
+                val something = r.productElement(${j-1}).asInstanceOf[A${j}]
+                getFragmentFromField(something, fieldNames)
+              </#list>
+              case _ =>
+                Seq.empty
+            }
+        }
       }
       def read(jval: JValue): ValidatedNel[JSONError, T] = jval match {
         case o: JObject =>
@@ -116,7 +157,7 @@ package object generic {
     *
     * This can be used as an alternative to an enum.
     */
-  def jsonSingletonEnumSwitch[T: ClassTag, A <: T : ClassTag : FromJSON : ToJSON](selectors: List[TypeSelector[_]]): JSON[T] with TypeSelectorContainer = {
+  def jsonSingletonEnumSwitch[T: ClassTag, A <: T : ClassTag : FromJSON : ToJSON : Fragment](selectors: List[TypeSelector[_]]): JSON[T] with TypeSelectorContainer = {
     val inSelectors = typeSelector[A] :: selectors
     val allSelectors = inSelectors.flatMap(s => s.serializer match {
       case container: TypeSelectorContainer => container.typeSelectors :+ s
@@ -162,19 +203,28 @@ package object generic {
 
         case None => throw new IllegalStateException("Can't find a serializer for a class " + t.getClass)
       }
+
+      def getFragment(t: T, fieldNames: Seq[String]): Seq[_] = writeMap.get(t.getClass) match {
+        case Some(ts) =>
+          fieldNames match {
+            case Nil => Seq(ts.typeValue)
+            case _ => Seq.empty
+          }
+        case None => throw new IllegalStateException("Can't find a serializer for a class " + t.getClass)
+      }
     }
   }
 
   <#list 2..20 as i>
   <#assign typeParams><#list 1..i-1 as j>A${j}<#if i-1 != j>,</#if></#list></#assign>
-  <#assign implTypeParams><#list 1..i as j>A${j} <: T : FromJSON : ToJSON : ClassTag<#if i !=j>,</#if></#list></#assign>
+  <#assign implTypeParams><#list 1..i as j>A${j} <: T : FromJSON : ToJSON : Fragment : ClassTag<#if i !=j>,</#if></#list></#assign>
   def jsonSingletonEnumSwitch[T: ClassTag, ${implTypeParams}](selectors: List[TypeSelector[_]]): JSON[T] with TypeSelectorContainer = jsonSingletonEnumSwitch[T, ${typeParams}](typeSelector[A${i}] :: selectors)
   </#list>
 
   /** Creates a `JSON[T]` instance for some supertype `T`. The instance acts as a type-switch
     * for the subtypes `A1` and `A2`, delegating to their respective JSON instances based
     * on a field that acts as a type hint. */
-  def jsonTypeSwitch[T: ClassTag, A1 <: T: ClassTag: FromJSON: ToJSON, A2 <: T: ClassTag: FromJSON: ToJSON](selectors: List[TypeSelector[_]]): JSON[T] with TypeSelectorContainer = {
+  def jsonTypeSwitch[T: ClassTag, A1 <: T: ClassTag: FromJSON: ToJSON: Fragment, A2 <: T: ClassTag: FromJSON: ToJSON: Fragment](selectors: List[TypeSelector[_]]): JSON[T] with TypeSelectorContainer = {
     val inSelectors = typeSelector[A1] :: typeSelector[A2] :: selectors
     val allSelectors = inSelectors.flatMap(s => s.serializer match {
       case container: TypeSelectorContainer => container.typeSelectors :+ s
@@ -223,12 +273,22 @@ package object generic {
 
         case None => throw new IllegalStateException("Can't find a serializer for a class " + t.getClass)
       }
+
+      def getFragment(t: T, fieldNames: Seq[String]): Seq[_] = writeMap.get(t.getClass) match {
+        case Some(ts) =>
+          fieldNames match {
+            case Nil => Seq(t)
+            case fieldName :: Nil if (fieldName == ts.typeField) => Seq(ts.typeValue)
+            case _ => ts.getFragment(t, fieldNames)
+          }
+        case None => throw new IllegalStateException("Can't find a serializer for a class " + t.getClass)
+      }
     }
   }
 
   <#list 3..80 as i>
   <#assign typeParams><#list 1..i-1 as j>A${j}<#if i-1 != j>,</#if></#list></#assign>
-  <#assign implTypeParams><#list 1..i as j>A${j} <: T : FromJSON : ToJSON : ClassTag<#if i !=j>,</#if></#list></#assign>
+  <#assign implTypeParams><#list 1..i as j>A${j} <: T : JSON : ClassTag<#if i !=j>,</#if></#list></#assign>
   def jsonTypeSwitch[T: ClassTag, ${implTypeParams}](selectors: List[TypeSelector[_]]): JSON[T] with TypeSelectorContainer = jsonTypeSwitch[T, ${typeParams}](typeSelector[A${i}] :: selectors)
   </#list>
 
@@ -236,12 +296,13 @@ package object generic {
     def typeSelectors: List[TypeSelector[_]]
   }
 
-  final class TypeSelector[A] private[generic](val typeField: String, val typeValue: String, val clazz: Class[_])(implicit jsonr: FromJSON[A], val serializer: ToJSON[A]) {
+  final class TypeSelector[A] private[generic](val typeField: String, val typeValue: String, val clazz: Class[_])(implicit jsonr: FromJSON[A], val serializer: ToJSON[A], val fragment: Fragment[A]) {
     def read(o: JValue): ValidatedNel[JSONError, A] = fromJValue[A](o)
     def write(a: Any): JValue = toJValue(a.asInstanceOf[A])
+    def getFragment(a: Any, fieldNames: Seq[String]): Seq[_] = getFragmentFromField(a.asInstanceOf[A], fieldNames)
   }
 
-  private def typeSelector[A: ClassTag: FromJSON: ToJSON](): TypeSelector[_] = {
+  private def typeSelector[A: ClassTag: FromJSON: ToJSON : Fragment](): TypeSelector[_] = {
     val clazz = classTag[A].runtimeClass
     val (typeField, typeValue) = getJSONClass(clazz).typeHint match {
       case Some(hint) => (hint.field, hint.value)
@@ -337,4 +398,7 @@ package object generic {
     else if (f.embedded) fromJValue[A](o)
     else field[A](f.name, default)(o)
   }
+
+  private def getFragmentFromField[A: Fragment](r: A, fieldNames: Seq[String])(implicit f: Fragment[A]): Seq[_] =
+    f.getFragment(r, fieldNames)
 }

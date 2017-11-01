@@ -1,5 +1,7 @@
 package io.sphere.json
 
+import java.net.URI
+
 import cats.data.Validated.{Invalid, Valid}
 import cats.data.ValidatedNel
 import cats.syntax.apply._
@@ -13,6 +15,9 @@ import org.scalatest.MustMatchers
 object JSONSpec {
   case class Project(nr: Int, name: String, version: Int = 1, milestones: List[Milestone] = Nil)
   case class Milestone(name: String, date: Option[DateTime] = None)
+
+  case class WebsiteInfo(@JSONKey("url") website: String, offersHttps: Boolean = false)
+  case class ProjectInfo(@JSONEmbedded websiteInfo: WebsiteInfo, @JSONEmbedded embedded: Project)
 
   sealed abstract class Animal
   case class Dog(name: String) extends Animal
@@ -59,6 +64,7 @@ class JSONSpec extends FunSpec with MustMatchers {
              field[Option[DateTime]]("date")(o)).mapN(Milestone)
           case _ => fail("JSON object expected.")
         }
+        def getFragment(m: Milestone, fieldNames: Seq[String]): Seq[_] = Seq.empty
       }
       implicit object ProjectJSON extends JSON[Project] {
         def write(p: Project): JValue = JObject(
@@ -75,6 +81,7 @@ class JSONSpec extends FunSpec with MustMatchers {
             field[List[Milestone]]("milestones", Some(Nil))(o)).mapN(Project)
           case _ => fail("JSON object expected.")
         }
+        def getFragment(p: Project, fieldNames: Seq[String]): Seq[_] = Seq.empty
       }
 
       val proj = Project(42, "Linux")
@@ -148,7 +155,7 @@ class JSONSpec extends FunSpec with MustMatchers {
     }
 
     it("must provide derived instances for product types with generic type parameters") {
-      implicit def aJSON[A: FromJSON: ToJSON] = deriveJSON[GenericA[A]]
+      implicit def aJSON[A: FromJSON: ToJSON: Fragment] = deriveJSON[GenericA[A]]
       val a = GenericA("hello")
       fromJSON[GenericA[String]](toJSON(a)) must equal (Valid(a))
     }
@@ -199,7 +206,6 @@ class JSONSpec extends FunSpec with MustMatchers {
         })
 
     }
-
   }
 }
 

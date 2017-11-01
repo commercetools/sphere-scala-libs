@@ -1,6 +1,6 @@
 package io.sphere.json
 
-trait JSON[A] extends FromJSON[A] with ToJSON[A]
+trait JSON[A] extends FromJSON[A] with ToJSON[A] with Fragment[A]
 
 object JSON {
   def apply[A](implicit json: JSON[A]): JSON[A] = json

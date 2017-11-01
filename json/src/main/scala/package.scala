@@ -42,6 +42,9 @@ package object json extends Logging {
     case jval => compactJson(jval)
   }
 
+  def getFragment[A: Fragment](a: A, fieldNames: Seq[String])(implicit fragment: Fragment[A]) =
+    fragment.getFragment(a, fieldNames)
+
   /** Parses a JSON string into a type A.
    *  Throws a [[JSONException]] on failure.
    *

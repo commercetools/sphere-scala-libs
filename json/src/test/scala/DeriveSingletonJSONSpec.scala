@@ -1,6 +1,6 @@
+package io.sphere.json
+
 import cats.data.Validated.Valid
-import io.sphere.json.JSON
-import io.sphere.json._
 import io.sphere.json.generic._
 import org.scalatest.{MustMatchers, WordSpec}
 import org.json4s.jackson.JsonMethods._
