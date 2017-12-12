@@ -1,3 +1,7 @@
+## 0.9.1 (2017-12-12)
+
+* add support for scala enums for MongoDB
+
 ## 0.9.0 (2017-09-05)
 
 * update Cats dependency to 1.0.0-MF
