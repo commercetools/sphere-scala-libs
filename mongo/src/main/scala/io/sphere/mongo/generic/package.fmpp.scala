@@ -27,6 +27,16 @@ package object generic extends Logging {
   /** The default name of the field used for type-hinting, taken from the MongoTypeHintField annotation. */
   val defaultTypeFieldName: String = classOf[MongoTypeHintField].getMethod("value").getDefaultValue.asInstanceOf[String]
 
+  /**
+    * Creates a MongoFormat instance for an Enumeration type that encodes the `toString`
+    * representations of the enumeration values.
+    */
+  def mongoEnum(e: Enumeration): MongoFormat[e.Value] = new MongoFormat[e.Value] {
+    def toMongoValue(a: e.Value): Any = a.toString
+    def fromMongoValue(any: Any): e.Value = e.withName(any.asInstanceOf[String])
+  }
+
+
   <#list 1..22 as i>
   <#assign typeParams><#list 1..i as j>A${j}<#if i !=j>,</#if></#list></#assign>
   <#assign implTypeParams><#list 1..i as j>A${j} : MongoFormat<#if i !=j>,</#if></#list></#assign>

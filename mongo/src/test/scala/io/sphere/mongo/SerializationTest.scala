@@ -7,6 +7,10 @@ import io.sphere.mongo.format.DefaultMongoFormats._
 
 case class Something(a: Option[Int], b: Int)
 
+object Color extends Enumeration {
+  val Blue, Red, Yellow = Value
+}
+
 class SerializationTest extends WordSpec with MustMatchers {
 
   "mongoProduct" must {
@@ -20,6 +24,19 @@ class SerializationTest extends WordSpec with MustMatchers {
       serializedObject.keySet().contains("b") must be(true)
       serializedObject.keySet().contains("a") must be(false)
 
+    }
+  }
+
+  "mongoEnum" must {
+    "serialize and deserialize enums" in {
+      val mongo: MongoFormat[Color.Value] = generic.mongoEnum(Color)
+
+      // mongo java driver knows how to encode/decode Strings
+      val serializedObject = mongo.toMongoValue(Color.Red).asInstanceOf[String]
+      serializedObject must be ("Red")
+
+      val enumValue = mongo.fromMongoValue(serializedObject)
+      enumValue must be (Color.Red)
     }
   }
 
