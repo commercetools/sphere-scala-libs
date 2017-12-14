@@ -1,11 +1,11 @@
 package io.sphere.mongo
 
-import com.mongodb.DBObject
+import com.mongodb.{BasicDBObject, DBObject}
 import org.scalatest.{MustMatchers, WordSpec}
 import io.sphere.mongo.format.MongoFormat
 import io.sphere.mongo.format.DefaultMongoFormats._
 
-case class Something(a: Option[Int], b: Int)
+case class Something(a: Option[Int], b: Int = 2)
 
 object Color extends Enumeration {
   val Blue, Red, Yellow = Value
@@ -14,6 +14,16 @@ object Color extends Enumeration {
 class SerializationTest extends WordSpec with MustMatchers {
 
   "mongoProduct" must {
+    "deserialize mongo object" in {
+      val dbo = new BasicDBObject()
+      dbo.put("a", Integer.valueOf(3))
+      dbo.put("b", Integer.valueOf(4))
+
+      val mongoFormat: MongoFormat[Something] = io.sphere.mongo.generic.deriveMongoFormat
+      val something = mongoFormat.fromMongoValue(dbo)
+      something must be (Something(Some(3), 4))
+    }
+
     "generate a format that serializes optional fields with value None as BSON objects without that field" in {
       val testFormat: MongoFormat[Something] =
         io.sphere.mongo.generic.mongoProduct[Something, Option[Int], Int] {
@@ -23,7 +33,15 @@ class SerializationTest extends WordSpec with MustMatchers {
       val serializedObject = testFormat.toMongoValue(Something(None, 1)).asInstanceOf[DBObject]
       serializedObject.keySet().contains("b") must be(true)
       serializedObject.keySet().contains("a") must be(false)
+    }
 
+    "generate a format that use default values" in {
+      val dbo = new BasicDBObject()
+      dbo.put("a", Integer.valueOf(3))
+
+      val mongoFormat: MongoFormat[Something] = io.sphere.mongo.generic.deriveMongoFormat
+      val something = mongoFormat.fromMongoValue(dbo)
+      something must be (Something(Some(3), 2))
     }
   }
 

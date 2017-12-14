@@ -189,16 +189,19 @@ package object generic extends Logging {
 
   private def readField[A: MongoFormat](f: MongoFieldMeta, dbo: DBObject): A = {
     val mf = MongoFormat[A]
+    def default = f.default.asInstanceOf[Option[A]].orElse(mf.default)
     if (f.ignored)
-      f.default.asInstanceOf[Option[A]].orElse(mf.default).getOrElse {
-        throw new Exception("Missing default for ignored field.")
+      default.getOrElse {
+        throw new Exception("Missing default for ignored field '%s'.".format(f.name))
       }
     else if (f.embedded) mf.fromMongoValue(dbo)
     else {
       val value = dbo.get(f.name)
       if (value != null) mf.fromMongoValue(value)
-      else mf.default.getOrElse {
-        throw new Exception("Missing required field '%s' on deserialization.".format(f.name))
+      else {
+        default.getOrElse {
+          throw new Exception("Missing required field '%s' on deserialization.".format(f.name))
+        }
       }
     }
   }
