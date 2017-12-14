@@ -1,3 +1,7 @@
+## 0.9.2 (2017-12-14)
+
+* `MongoFormat` uses the field default value if the field is absent in the mongo object.
+
 ## 0.9.1 (2017-12-12)
 
 * add support for scala enums for MongoDB
