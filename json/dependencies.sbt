@@ -1,4 +1,4 @@
-val catsVersion = "1.0.0-MF"
+val catsVersion = "1.0.1"
 
 libraryDependencies ++= Seq(
   "org.json4s"                  %% "json4s-jackson"   % "3.5.3",

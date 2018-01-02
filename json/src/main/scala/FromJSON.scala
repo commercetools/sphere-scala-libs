@@ -46,7 +46,7 @@ object FromJSON {
           (acc, result) match {
             case (Valid(builder), Valid(e)) ⇒ Valid(builder += e)
             case (Valid(_), i @ Invalid(_)) ⇒ i
-            case (Invalid(e1), Invalid(e2)) ⇒ Invalid(e1.concat(e2))
+            case (Invalid(e1), Invalid(e2)) ⇒ Invalid(e1.concatNel(e2))
             case (i @ Invalid(_), _) ⇒ i
           }
         }.map(_.result())
@@ -80,7 +80,7 @@ object FromJSON {
           (acc, result) match {
             case (Valid(builder), Valid(e)) ⇒ Valid(builder += e)
             case (Valid(_), i @ Invalid(_)) ⇒ i
-            case (Invalid(e1), Invalid(e2)) ⇒ Invalid(e1.concat(e2))
+            case (Invalid(e1), Invalid(e2)) ⇒ Invalid(e1.concatNel(e2))
             case (i @ Invalid(_), _) ⇒ i
           }
         }.map(_.result())

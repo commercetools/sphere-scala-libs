@@ -3,6 +3,7 @@
 * update `json4s-jackson` to [`3.5.3`](https://github.com/json4s/json4s/compare/v3.5.2...v3.5.3)
 * update `jackson-databind` to `2.9.3`
 * update `joda-convert` to [`1.9.2`](http://www.joda.org/joda-convert/changes-report.html#a1.9.2)
+* update `cats` to [`1.0.1`](https://github.com/typelevel/cats/releases/tag/v1.0.1)
 
 ## 0.9.2 (2017-12-14)
 
