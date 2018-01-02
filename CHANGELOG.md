@@ -1,4 +1,4 @@
-## to come
+## 0.9.3 (2018-01-02)
 
 * update `json4s-jackson` to [`3.5.3`](https://github.com/json4s/json4s/compare/v3.5.2...v3.5.3)
 * update `jackson-databind` to `2.9.3`
