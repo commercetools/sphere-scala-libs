@@ -6,5 +6,5 @@ libraryDependencies ++= Seq(
   "org.joda"                    %  "joda-convert"   % "1.8.2",
   "org.typelevel"               %% "cats-macros"    % catsVersion,
   "org.typelevel"               %% "cats-core"      % catsVersion,
-  "org.json4s"                  %% "json4s-scalap"  % "3.5.2"
+  "org.json4s"                  %% "json4s-scalap"  % "3.5.3"
 )
