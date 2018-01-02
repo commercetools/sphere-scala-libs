@@ -10,8 +10,8 @@ lazy val publishSettings = Seq(
 
 lazy val standardSettings = Defaults.coreDefaultSettings ++ publishSettings ++ Seq(
   organization := "io.sphere",
-  scalaVersion := "2.12.2",
-  crossScalaVersions := Seq("2.11.11", "2.12.2"),
+  scalaVersion := "2.12.4",
+  crossScalaVersions := Seq("2.11.11", "2.12.4"),
   licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html")),
   logBuffered := false,
   scalacOptions ++= Seq(
@@ -23,7 +23,7 @@ lazy val standardSettings = Defaults.coreDefaultSettings ++ publishSettings ++ S
   javacOptions ++= Seq("-deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7"),
   testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
   libraryDependencies ++= Seq(
-    "org.scalatest" %% "scalatest" % "3.0.3" % Test,
+    "org.scalatest" %% "scalatest" % "3.0.4" % Test,
     "org.scalacheck" %% "scalacheck" % "1.13.5" % Test,
     "ch.qos.logback" % "logback-classic" % "1.2.3" % Test
   ),
