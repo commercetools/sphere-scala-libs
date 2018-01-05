@@ -68,18 +68,25 @@ there is another method available from the same package:
 
 It can be used in an implementation of `read` as follows:
 
-    import cats.data.ValidatedNel
-    import cats.syntax.cartesian._
     implicit val json: JSON[User] = new JSON[User] {
-      def read(jval: JValue): ValidatedNel[JSONError, Project] = jval match {
+      import cats.data.ValidatedNel
+      import cats.syntax.apply._
+
+      def read(jval: JValue): ValidatedNel[JSONError, User] = jval match {
         case o: JObject =>
-          (field[String]("name")(o) |@|
-           field[Int]("age")(o) |@|
-           field[String]("location")(o)) { User }
+          (field[String]("name")(o),
+           field[Int]("age")(o),
+           field[String]("location")(o)).mapN(User.apply)
         case _ => fail("JSON object expected.")
       }
-      def write(u: User): JValue = ???
+
+      def write(u: User): JValue = JObject(List(
+        "name" → toJValue(u.name),
+        "age" → toJValue(u.age),
+        "location" → toJValue(u.location)
+      ))
     }
+  }
 
 ## using `ToJSON.apply`
 
