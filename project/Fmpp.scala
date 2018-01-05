@@ -23,14 +23,13 @@ object Fmpp {
   private def fmppConfig(c: Configuration): Seq[Setting[_]] = inConfig(c)(Seq(
     sourceGenerators in Compile += fmpp.taskValue,
     fmpp := fmppTask.value,
-    scalaSource := baseDirectory.value / (Defaults.prefix(configuration.value.name) + "src"),
     sources := managedSources.value
   ))
 
   private val fmppTask = Def.task {
     val cp = (fullClasspath in fmppConfig).value
     val r = (runner in fmpp).value
-    val srcRoot = scalaSource.value
+    val srcRoot = baseDirectory.value / (Defaults.prefix(configuration.value.name) + "src")
     val output = sourceManaged.value
     val s = streams.value
     val cache = s.cacheDirectory
