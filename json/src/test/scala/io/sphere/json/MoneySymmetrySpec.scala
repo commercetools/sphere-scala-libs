@@ -1,5 +1,6 @@
-import _root_.io.sphere.util.Money
-import _root_.io.sphere.json._
+package io.sphere.json
+
+import io.sphere.util.Money
 import cats.data.Validated.Valid
 import org.json4s.jackson.compactJson
 import org.scalatest.{Matchers, WordSpec}
