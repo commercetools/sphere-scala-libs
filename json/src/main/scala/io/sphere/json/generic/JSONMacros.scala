@@ -1,43 +1,43 @@
 package io.sphere.json
 package generic
 
+import io.sphere.json.JSON
+
+import scala.reflect.macros.blackbox
+
 private[generic] object JSONMacros {
-  import scala.reflect.macros.Context
-
-  private def collectKnownSubtypes(c: Context)(s: c.universe.Symbol): Set[c.universe.Symbol] = {
-    import c.universe._
-
+  private def collectKnownSubtypes(c: blackbox.Context)(s: c.universe.Symbol): Set[c.universe.Symbol] = {
     if (s.isModule || s.isModuleClass) Set(s)
     else if (s.isClass) {
       val cs = s.asClass
       if (cs.isCaseClass) Set(cs)
-      else if ((cs.isTrait || cs.isAbstractClass) && cs.isSealed)
+      else if ((cs.isTrait || cs.isAbstract) && cs.isSealed)
         cs.knownDirectSubclasses.flatMap(collectKnownSubtypes(c)(_))
       else Set.empty
     } else Set.empty
   }
 
-  def jsonProductApply(c: Context)(tpe: c.universe.Type, classSym: c.universe.ClassSymbol): c.universe.Tree = {
+  def jsonProductApply(c: blackbox.Context)(tpe: c.universe.Type, classSym: c.universe.ClassSymbol): c.universe.Tree = {
     import c.universe._
 
     val symbol = tpe.typeSymbol
-    val argList = classSym.toType.member(nme.CONSTRUCTOR).asMethod.paramss.head
+    val argList = classSym.toType.member(termNames.CONSTRUCTOR).asMethod.paramLists.head
 
     val (argDefs, args) = (for ((a, i) <- argList.zipWithIndex) yield {
       val argType = classSym.toType.member(a.name).typeSignatureIn(tpe)
-      val argTree = ValDef(Modifiers(Flag.PARAM), newTermName("x" + i), TypeTree(argType), EmptyTree)
-      (argTree, Ident(newTermName("x" + i)))
+      val argTree = ValDef(Modifiers(Flag.PARAM), TermName("x" + i), TypeTree(argType), EmptyTree)
+      (argTree, Ident(TermName("x" + i)))
     }).unzip
 
     if (classSym.isCaseClass && !classSym.isModuleClass) {
       val applyBlock = Block(List(), Function(
         argDefs,
-        Apply(Select(Ident(classSym.companionSymbol), newTermName("apply")), args)
+        Apply(Select(Ident(classSym.companion), TermName("apply")), args)
       ))
       Apply(
         Select(
           reify(io.sphere.json.generic.`package`).tree,
-          newTermName("jsonProduct")
+          TermName("jsonProduct")
         ),
         List(applyBlock)
       )
@@ -45,7 +45,7 @@ private[generic] object JSONMacros {
       Apply(
         Select(
           reify(io.sphere.json.generic.`package`).tree,
-          newTermName("jsonProduct0")
+          TermName("jsonProduct0")
         ),
         List(Ident(classSym.name.toTermName))
       )
@@ -53,14 +53,14 @@ private[generic] object JSONMacros {
       Apply(
         Select(
           reify(io.sphere.json.generic.`package`).tree,
-          newTermName("jsonSingleton")
+          TermName("jsonSingleton")
         ),
         List(Ident(classSym.name.toTermName))
       )
     } else c.abort(c.enclosingPosition, "Not a case class or (case) object")
   }
 
-  def deriveSingletonJSON_impl[A: c.WeakTypeTag](c: Context): c.Expr[JSON[A]] = {
+  def deriveSingletonJSON_impl[A: c.WeakTypeTag](c: blackbox.Context): c.Expr[JSON[A]] = {
     import c.universe._
 
     val tpe = weakTypeOf[A]
@@ -71,7 +71,7 @@ private[generic] object JSONMacros {
         Apply(
           Select(
             reify(io.sphere.json.generic.`package`).tree,
-            newTermName("jsonSingleton")
+            TermName("jsonSingleton")
           ),
           List(Ident(classSym.name.toTermName))
         )
@@ -98,9 +98,9 @@ private[generic] object JSONMacros {
             else {
               ValDef(
                 Modifiers(Flag.IMPLICIT),
-                newTermName("json" + i),
+                TermName("json" + i),
                 AppliedTypeTree(
-                  Ident(newTypeName("JSON")),
+                  Ident(TypeName("JSON")),
                   List(Ident(symbol))
                 ),
                 singletonTree(symbol.asClass)
@@ -115,7 +115,7 @@ private[generic] object JSONMacros {
               TypeApply(
                 Select(
                   reify(io.sphere.json.generic.`package`).tree,
-                  newTermName("jsonSingletonEnumSwitch")
+                  TermName("jsonSingletonEnumSwitch")
                 ),
                 idents
               ),
@@ -127,7 +127,7 @@ private[generic] object JSONMacros {
     }
   }
 
-  def deriveJSON_impl[A: c.WeakTypeTag](c: Context): c.Expr[JSON[A]] = {
+  def deriveJSON_impl[A: c.WeakTypeTag](c: blackbox.Context): c.Expr[JSON[A]] = {
     import c.universe._
 
     val tpe = weakTypeOf[A]
@@ -138,7 +138,7 @@ private[generic] object JSONMacros {
       c.Expr[JSON[A]](Apply(
         Select(
           reify(io.sphere.json.generic.`package`).tree,
-          newTermName("jsonEnum")
+          TermName("jsonEnum")
         ),
         List(Ident(pre.typeSymbol.name.toTermName))
       ))
@@ -171,9 +171,9 @@ private[generic] object JSONMacros {
               } else {
                 ValDef(
                   Modifiers(Flag.IMPLICIT),
-                  newTermName("json" + i),
+                  TermName("json" + i),
                   AppliedTypeTree(
-                    Ident(newTypeName("JSON")),
+                    Ident(TypeName("JSON")),
                     List(Ident(symbol))
                   ),
                   jsonProductApply(c)(tpe, symbol.asClass)
@@ -188,7 +188,7 @@ private[generic] object JSONMacros {
                 TypeApply(
                   Select(
                     reify(io.sphere.json.generic.`package`).tree,
-                    newTermName("jsonTypeSwitch")
+                    TermName("jsonTypeSwitch")
                   ),
                   idents
                 ),
