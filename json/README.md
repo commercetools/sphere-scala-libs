@@ -308,7 +308,10 @@ A lot has happened in the Scala JSON landscape since this project was initially 
 plenty of options to choose from, many of which are very similar. For that reason, it is worth mentioning some
 other projects that you might want to evaluate:
 
- * [lift-json-scalaz](https://github.com/lift/framework/commits/master/core/json-scalaz):
+  * [circe](https://circe.github.io/circe/):
+    Typeclasses and deriving instances with shapeless which are very similar to sphere-json, also based on cats.
+
+  * [lift-json-scalaz](https://github.com/lift/framework/commits/master/core/json-scalaz):
     Typeclasses and some utility functions on top of lift-json that integrate with some parts of scalaz.
 
  * [sjson](https://github.com/debasishg/sjson):
@@ -318,7 +321,7 @@ other projects that you might want to evaluate:
  * [argonaut](http://argonaut.io/):
     Also using typeclasses. Very well integrated with scalaz, includes a zipper, (partial) lenses and much more.
 
- * [play-json](http://www.playframework.com/documentation/2.1.1/ScalaJson):
+ * [play-json](https://github.com/playframework/play-json):
     Since version 2.0/2.1, typeclasses and macros for deriving instances which are very
     similar to sphere-json.
 
