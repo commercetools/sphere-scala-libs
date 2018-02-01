@@ -10,24 +10,24 @@ import java.io.File
 
 object Fmpp {
   private lazy val fmpp = TaskKey[Seq[File]]("fmpp")
-  private lazy val fmppOptions = SettingKey[Seq[String]]("fmpp-options")
-  private lazy val fmppConfig = config("fmpp") hide
+  private lazy val fmppOptions = SettingKey[Seq[String]]("fmppOptions")
+  private lazy val FmppConfig = config("fmpp") hide
 
-  lazy val settings = fmppConfig(Compile) ++ Seq(
-    libraryDependencies += "net.sourceforge.fmpp" % "fmpp" % "0.9.15" % fmppConfig.name,
-    ivyConfigurations += fmppConfig,
+  lazy val settings = fmppConfigSettings(Compile) ++ Seq(
+    libraryDependencies += "net.sourceforge.fmpp" % "fmpp" % "0.9.15" % FmppConfig.name,
+    ivyConfigurations += FmppConfig,
     fmppOptions := "--ignore-temporary-files" :: Nil,
-    fullClasspath in fmppConfig := update.value select configurationFilter(fmppConfig.name) map Attributed.blank
+    fullClasspath in FmppConfig := update.value select configurationFilter(FmppConfig.name) map Attributed.blank
   )
 
-  private def fmppConfig(c: Configuration): Seq[Setting[_]] = inConfig(c)(Seq(
+  private def fmppConfigSettings(c: Configuration): Seq[Setting[_]] = inConfig(c)(Seq(
     sourceGenerators in Compile += fmpp.taskValue,
     fmpp := fmppTask.value,
     sources := managedSources.value
   ))
 
   private val fmppTask = Def.task {
-    val cp = (fullClasspath in fmppConfig).value
+    val cp = (fullClasspath in FmppConfig).value
     val r = (runner in fmpp).value
     val srcRoot = baseDirectory.value / (Defaults.prefix(configuration.value.name) + "src")
     val output = sourceManaged.value
@@ -39,7 +39,7 @@ object Fmpp {
         IO.delete(output)
         val arguments = "-U" +: "all" +: "-S" +: srcRoot.getAbsolutePath +: "-O" +: output.getAbsolutePath +:
           "-M" +: "ignore(test/**,it/**),execute(**/*.fmpp.scala),copy(**/*)" +: Seq.empty
-        toError(r.run("fmpp.tools.CommandLine", cp.files, arguments, s.log))
+        r.run("fmpp.tools.CommandLine", cp.files, arguments, s.log).failed foreach (sys error _.getMessage)
         (output ** "*.scala").get.toSet ++ (output ** "*.java").get.toSet
       }
     }
