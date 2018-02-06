@@ -1,4 +1,6 @@
-## 0.9.4-SNAPSHOT
+## 0.9.5-SNAPSHOT
+
+## 0.9.4 (2018-02-06)
 
 * [add default mongo formats for `List` and `Set`](https://github.com/sphereio/sphere-scala-libs/pull/33)
 * update `jackson-databind` to `2.9.4`
