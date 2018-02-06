@@ -71,4 +71,39 @@ trait DefaultMongoFormats {
       }
     }
   }
+
+  implicit def listFormat[A](implicit f: MongoFormat[A]): MongoFormat[List[A]] = new MongoFormat[List[A]] {
+    import scala.collection.JavaConverters._
+    override def toMongoValue(a: List[A]) = {
+      val m = new BasicDBList()
+      m.addAll(a.map(f.toMongoValue(_).asInstanceOf[AnyRef]).asJavaCollection)
+      m
+    }
+    override def fromMongoValue(any: Any): List[A] = {
+      any match {
+        case l: BasicDBList =>
+          val it = l.asInstanceOf[BasicDBList].iterator()
+          it.asScala.map(f.fromMongoValue).toList
+        case _ => throw new Exception(s"cannot read value from ${any.getClass.getName}")
+      }
+    }
+  }
+
+  implicit def setFormat[A](implicit f: MongoFormat[A]): MongoFormat[Set[A]] = new MongoFormat[Set[A]] {
+    import scala.collection.JavaConverters._
+    override def toMongoValue(a: Set[A]) = {
+      val m = new BasicDBList()
+      m.addAll(a.map(f.toMongoValue(_).asInstanceOf[AnyRef]).asJavaCollection)
+      m
+    }
+    override def fromMongoValue(any: Any): Set[A] = {
+      any match {
+        case l: BasicDBList =>
+          val it = l.asInstanceOf[BasicDBList].iterator()
+          it.asScala.map(f.fromMongoValue).toSet
+        case _ => throw new Exception(s"cannot read value from ${any.getClass.getName}")
+      }
+    }
+  }
+
 }
