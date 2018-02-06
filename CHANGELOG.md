@@ -2,6 +2,7 @@
 
 * [add default mongo formats for `List` and `Set`](https://github.com/sphereio/sphere-scala-libs/pull/33)
 * update `jackson-databind` to `2.9.4`
+* update `mongodb-driver` to [`3.4.3`](https://github.com/mongodb/mongo-java-driver/releases/tag/r3.4.3)
 
 ## 0.9.3 (2018-01-02)
 
