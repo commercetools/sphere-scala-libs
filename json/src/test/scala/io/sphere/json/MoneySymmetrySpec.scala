@@ -23,7 +23,7 @@ class MoneySymmetrySpec extends WordSpec with Matchers {
     "be symetric" in {
       implicit val mode = BigDecimal.RoundingMode.HALF_EVEN
 
-      val money = HighPrecisionMoney.makeWithoutCents(34.123456, 6, Currency.getInstance("EUR"))
+      val money = HighPrecisionMoney.fromDecimalAmount(34.123456, 6, Currency.getInstance("EUR"))
       val jsonAst = toJValue(money)
       val jsonAsString = compactJson(jsonAst)
       val Valid(readAst) = parseJSON(jsonAsString)

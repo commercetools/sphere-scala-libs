@@ -13,12 +13,12 @@ sealed trait BaseMoney {
   def currency: Currency
 
   def toHighPrecisionMoney(fractionDigits: Int)(implicit mode: RoundingMode): HighPrecisionMoney =
-    HighPrecisionMoney.make(this, fractionDigits)
+    HighPrecisionMoney.fromBaseMoney(this, fractionDigits)
 
   def toMoneyWithLostPrecision: Money = this match {
     case m: Money ⇒ m
     case m: HighPrecisionMoney ⇒
-      Money.makeWithCentAmount(m.centAmount, currency)
+      Money.fromCentAmount(m.centAmount, currency)
   }
 }
 
@@ -52,6 +52,8 @@ case class Money(amount: BigDecimal, currency: Currency) extends BaseMoney with 
 
   lazy val centAmount: Long = (amount / centFactor).toLong
 
+  private val backwardsCompatibleRoundingModeForOperations = BigDecimal.RoundingMode.HALF_EVEN
+
   def withCentAmount(centAmount: Long): Money = {
     val newAmount = BigDecimal(centAmount) * centFactor
     copy(amount = newAmount.setScale(currency.getDefaultFractionDigits))
@@ -65,14 +67,15 @@ case class Money(amount: BigDecimal, currency: Currency) extends BaseMoney with 
 
   def + (m: Money): Money = {
     BaseMoney.requireSameCurrency(this, m)
-    make(this.amount + m.amount, this.currency)
+
+    fromDecimalAmount(this.amount + m.amount, this.currency)(backwardsCompatibleRoundingModeForOperations)
   }
 
   def + (m: BigDecimal): Money = this + make(m, this.currency)
 
   def - (m: Money): Money = {
     BaseMoney.requireSameCurrency(this, m)
-    make(this.amount - m.amount, this.currency)
+    fromDecimalAmount(this.amount - m.amount, this.currency)(backwardsCompatibleRoundingModeForOperations)
   }
 
   def - (m: BigDecimal): Money = this - make(m, this.currency)
@@ -83,28 +86,30 @@ case class Money(amount: BigDecimal, currency: Currency) extends BaseMoney with 
   }
 
   def * (m: BigDecimal)(implicit mode: RoundingMode): Money = {
-    make((this.amount * m).setScale(this.amount.scale, mode), this.currency)
+    fromDecimalAmount((this.amount * m).setScale(this.amount.scale, mode), this.currency)
   }
 
   /** Divide to integral value + remainder */
   def /% (m: BigDecimal)(implicit mode: RoundingMode): (Money, Money) = {
     val (result, remainder) = this.amount /% m
 
-    (make(result, this.currency), make(remainder, this.currency))
+    (fromDecimalAmount(result, this.currency), fromDecimalAmount(remainder, this.currency))
   }
 
   def % (m: Money)(implicit mode: RoundingMode): Money = this.remainder(m)
 
-  def % (m: BigDecimal)(implicit mode: RoundingMode): Money = this.remainder(make(m, this.currency))
+  def % (m: BigDecimal)(implicit mode: RoundingMode): Money =
+    this.remainder(fromDecimalAmount(m, this.currency))
 
   def remainder(m: Money)(implicit mode: RoundingMode): Money = {
     BaseMoney.requireSameCurrency(this, m)
-    make(this.amount.remainder(m.amount), this.currency)
+
+    fromDecimalAmount(this.amount.remainder(m.amount), this.currency)
   }
 
   def remainder(m: BigDecimal)(implicit mode: RoundingMode): Money = this.remainder(make(m, this.currency))
 
-  def unary_- = make(-this.amount, this.currency)
+  def unary_- = fromDecimalAmount(-this.amount, this.currency)(BigDecimal.RoundingMode.UNNECESSARY)
 
   /**
    * Partitions this amount of money into several parts where the size of the individual
@@ -120,7 +125,7 @@ case class Money(amount: BigDecimal, currency: Currency) extends BaseMoney with 
     var remainder = amounts.foldLeft(amountInCents)(_ - _)
     amounts.map(amount => {
       remainder -= 1
-      make(BigDecimal(amount + (if (remainder >= 0) 1 else 0)) * centFactor, this.currency)
+      fromDecimalAmount(BigDecimal(amount + (if (remainder >= 0) 1 else 0)) * centFactor, this.currency)(backwardsCompatibleRoundingModeForOperations)
     })
   }
 
@@ -146,38 +151,38 @@ object Money {
     def JPY = Money.JPY(amount)
   }
 
-  def EUR(amount: BigDecimal): Money = makeWithoutCents(amount, Currency.getInstance("EUR"))(BigDecimal.RoundingMode.HALF_EVEN)
-  def USD(amount: BigDecimal): Money = makeWithoutCents(amount, Currency.getInstance("USD"))(BigDecimal.RoundingMode.HALF_EVEN)
-  def GBP(amount: BigDecimal): Money = makeWithoutCents(amount, Currency.getInstance("GBP"))(BigDecimal.RoundingMode.HALF_EVEN)
-  def JPY(amount: BigDecimal): Money = makeWithoutCents(amount, Currency.getInstance("JPY"))(BigDecimal.RoundingMode.HALF_EVEN)
+  def EUR(amount: BigDecimal): Money = fromDecimalAmount(amount, Currency.getInstance("EUR"))(BigDecimal.RoundingMode.HALF_EVEN)
+  def USD(amount: BigDecimal): Money = fromDecimalAmount(amount, Currency.getInstance("USD"))(BigDecimal.RoundingMode.HALF_EVEN)
+  def GBP(amount: BigDecimal): Money = fromDecimalAmount(amount, Currency.getInstance("GBP"))(BigDecimal.RoundingMode.HALF_EVEN)
+  def JPY(amount: BigDecimal): Money = fromDecimalAmount(amount, Currency.getInstance("JPY"))(BigDecimal.RoundingMode.HALF_EVEN)
 
   /** Creates a new Money object, forcing the scale according to the currency. */
-  @deprecated("Please use more explicit factory methods `makeWithoutCents`/`makeWithCentAmount`", "0.9.4")
+  @deprecated("Please use more explicit factory methods `fromDecimalAmount`/`fromCentAmount`", "0.9.4")
   def make(amount: BigDecimal, currency: Currency, mode: RoundingMode): Money =
     Money(amount.setScale(currency.getDefaultFractionDigits, mode), currency)
 
-  @deprecated("Please use more explicit factory methods `makeWithoutCents`/`makeWithCentAmount`", "0.9.4")
+  @deprecated("Please use more explicit factory methods `fromDecimalAmount`/`fromCentAmount`", "0.9.4")
   def make(amount: BigDecimal, currency: Currency): Money =
     make(amount, currency, BigDecimal.RoundingMode.HALF_EVEN)
 
-  def makeWithoutCents(amount: BigDecimal, currency: Currency)(implicit mode: RoundingMode) =
+  def fromDecimalAmount(amount: BigDecimal, currency: Currency)(implicit mode: RoundingMode) =
     Money(amount.setScale(currency.getDefaultFractionDigits, mode), currency)
 
-  def makeWithCentAmount(centAmount: Long, currency: Currency) = {
+  def fromCentAmount(centAmount: Long, currency: Currency) = {
     val centFactor = BigDecimal(1) / BigDecimal(10).pow(currency.getDefaultFractionDigits)
     val amount = BigDecimal(centAmount) * centFactor
 
-    makeWithoutCents(amount, currency)(BigDecimal.RoundingMode.UNNECESSARY)
+    fromDecimalAmount(amount, currency)(BigDecimal.RoundingMode.UNNECESSARY)
   }
 
   implicit def moneyMonoid(implicit c: Currency): Monoid[Money] = new Monoid[Money] {
     def combine(x: Money, y: Money): Money = x + y
-    val empty: Money = Money.make(0, c)
+    val empty: Money = Money.fromCentAmount(0L, c)
   }
 
   implicit def moneyMonoid(implicit c: Currency, mode: RoundingMode): Monoid[Money] = new Monoid[Money] {
     def combine(x: Money, y: Money): Money = x + y
-    val empty: Money = Money.make(0, c, mode)
+    val empty: Money = Money.fromCentAmount(0L, c)
   }
 }
 
@@ -201,41 +206,41 @@ case class HighPrecisionMoney(amount: BigDecimal, fractionDigits: Int, centAmoun
     calc(this, other, _ + _)
 
   def + (other: BigDecimal)(implicit mode: RoundingMode): HighPrecisionMoney =
-    this + makeWithoutCents(other, this.fractionDigits, this.currency)
+    this + fromDecimalAmount(other, this.fractionDigits, this.currency)
 
   def - (other: HighPrecisionMoney): HighPrecisionMoney =
     calc(this, other, _ - _)
 
   def - (other: BigDecimal)(implicit mode: RoundingMode): HighPrecisionMoney =
-    this - makeWithoutCents(other, this.fractionDigits, this.currency)
+    this - fromDecimalAmount(other, this.fractionDigits, this.currency)
 
   def * (other: HighPrecisionMoney)(implicit mode: RoundingMode): HighPrecisionMoney =
     calc(this, other, _ * _)
 
   def * (other: BigDecimal)(implicit mode: RoundingMode): HighPrecisionMoney =
-    this * makeWithoutCents(other, this.fractionDigits, this.currency)
+    this * fromDecimalAmount(other, this.fractionDigits, this.currency)
 
   /** Divide to integral value + remainder */
   def /% (m: BigDecimal)(implicit mode: RoundingMode): (HighPrecisionMoney, HighPrecisionMoney) = {
     val (result, remainder) = this.amount /% m
 
-    makeWithoutCents(result, fractionDigits, this.currency) →
-      makeWithoutCents(remainder, fractionDigits, this.currency)
+    fromDecimalAmount(result, fractionDigits, this.currency) →
+      fromDecimalAmount(remainder, fractionDigits, this.currency)
   }
 
   def % (other: HighPrecisionMoney)(implicit mode: RoundingMode): HighPrecisionMoney =
     this.remainder(other)
 
   def % (other: BigDecimal)(implicit mode: RoundingMode): HighPrecisionMoney =
-    this.remainder(makeWithoutCents(other, this.fractionDigits, this.currency))
+    this.remainder(fromDecimalAmount(other, this.fractionDigits, this.currency))
 
   def remainder(other: HighPrecisionMoney)(implicit mode: RoundingMode): HighPrecisionMoney =
     calc(this, other, _ remainder _)
 
   def remainder(other: BigDecimal)(implicit mode: RoundingMode): HighPrecisionMoney =
-    this.remainder(makeWithoutCents(other, this.fractionDigits, this.currency))
+    this.remainder(fromDecimalAmount(other, this.fractionDigits, this.currency))
 
-  def unary_- = makeWithoutCents(-this.amount, this.fractionDigits, this.currency)(BaseMoney.toScalaRoundingMode(amount.mc.getRoundingMode))
+  def unary_- = fromDecimalAmount(-this.amount, this.fractionDigits, this.currency)(BigDecimal.RoundingMode.UNNECESSARY)
 
   /**
    * Partitions this amount of money into several parts where the size of the individual
@@ -254,7 +259,7 @@ case class HighPrecisionMoney(amount: BigDecimal, fractionDigits: Int, centAmoun
     portionAmounts.map { portionAmount ⇒
       remainder -= 1
 
-      makeWithoutCents(BigDecimal(portionAmount + (if (remainder >= 0) 1 else 0)) * factor, this.fractionDigits, this.currency)
+      fromDecimalAmount(BigDecimal(portionAmount + (if (remainder >= 0) 1 else 0)) * factor, this.fractionDigits, this.currency)
     }
   }
 
@@ -290,7 +295,7 @@ object HighPrecisionMoney {
   private def simpleValueMeantToBeUsedOnlyInTests(amount: BigDecimal, currencyCode: String): HighPrecisionMoney = {
     val currency = Currency.getInstance(currencyCode)
 
-    makeWithoutCents(amount, currency.getDefaultFractionDigits, currency)(BigDecimal.RoundingMode.HALF_EVEN)
+    fromDecimalAmount(amount, currency.getDefaultFractionDigits, currency)(BigDecimal.RoundingMode.HALF_EVEN)
   }
 
   def roundToCents(amount: BigDecimal, currency: Currency)(implicit mode: RoundingMode): Long =
@@ -313,26 +318,26 @@ object HighPrecisionMoney {
     implicit val rm: RoundingMode = BaseMoney.toScalaRoundingMode(m1.amount.mc.getRoundingMode)
     val (a1, a2, fd) = sameScale(m1, m2)
 
-    makeWithoutCents(fn(a1, a2), fd, m1.currency)
+    fromDecimalAmount(fn(a1, a2), fd, m1.currency)
   }
 
   def factor(fractionDigits: Int) = BigDecimal(1) / BigDecimal(10).pow(fractionDigits)
   def centFactor(currency: Currency) = factor(currency.getDefaultFractionDigits)
 
-  def makeWithoutCents(amount: BigDecimal, fractionDigits: Int, currency: Currency)(implicit mode: RoundingMode) = {
+  def fromDecimalAmount(amount: BigDecimal, fractionDigits: Int, currency: Currency)(implicit mode: RoundingMode) = {
     val scaledAmount = amount.setScale(fractionDigits, mode)
 
     HighPrecisionMoney(scaledAmount, fractionDigits, roundToCents(scaledAmount, currency), currency)
   }
 
-  def makeWithCentAmount(centAmount: Long, fractionDigits: Int, currency: Currency) = {
+  def fromCentAmount(centAmount: Long, fractionDigits: Int, currency: Currency) = {
     val amount = BigDecimal(centAmount) * centFactor(currency)
 
     HighPrecisionMoney(amount.setScale(fractionDigits, BigDecimal.RoundingMode.UNNECESSARY), fractionDigits, centAmount, currency)
   }
 
   /* centAmount provides an escape hatch in cases where the default rounding mode is not applicable */
-  def makeWithPreciseAmount(preciseAmount: Long, fractionDigits: Int, currency: Currency, centAmount: Option[Long]) = {
+  def fromPreciseAmount(preciseAmount: Long, fractionDigits: Int, currency: Currency, centAmount: Option[Long]) = {
     val amount = BigDecimal(preciseAmount) * factor(fractionDigits)
     val scaledAmount = amount.setScale(fractionDigits, BigDecimal.RoundingMode.UNNECESSARY)
 
@@ -343,16 +348,16 @@ object HighPrecisionMoney {
     HighPrecisionMoney(scaledAmount, fractionDigits, actualCentAmount, currency)
   }
 
-  def make(money: Money, fractionDigits: Int)(implicit mode: RoundingMode): HighPrecisionMoney =
+  def fromMoney(money: Money, fractionDigits: Int)(implicit mode: RoundingMode): HighPrecisionMoney =
     HighPrecisionMoney(money.amount.setScale(fractionDigits, mode), fractionDigits, money.centAmount, money.currency)
 
-  def make(money: BaseMoney, fractionDigits: Int)(implicit mode: RoundingMode): HighPrecisionMoney = money match {
-    case m: Money ⇒ make(m, fractionDigits)
+  def fromBaseMoney(money: BaseMoney, fractionDigits: Int)(implicit mode: RoundingMode): HighPrecisionMoney = money match {
+    case m: Money ⇒ fromMoney(m, fractionDigits)
     case hp: HighPrecisionMoney ⇒ hp.withFractionDigits(fractionDigits)
   }
 
   def monoid(fractionDigits: Int, c: Currency): Monoid[HighPrecisionMoney] = new Monoid[HighPrecisionMoney] {
     def combine(x: HighPrecisionMoney, y: HighPrecisionMoney): HighPrecisionMoney = x + y
-    val empty: HighPrecisionMoney = HighPrecisionMoney.makeWithCentAmount(0L, fractionDigits, c)
+    val empty: HighPrecisionMoney = HighPrecisionMoney.fromCentAmount(0L, fractionDigits, c)
   }
 }

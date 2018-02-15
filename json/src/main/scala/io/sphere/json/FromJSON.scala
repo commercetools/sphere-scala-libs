@@ -174,7 +174,7 @@ object FromJSON {
     def read(value: JValue): JValidation[Money] = value match {
       case o: JObject ⇒
         (field[Long]("centAmount")(o), field[Currency]("currencyCode")(o)).mapN(
-          Money.makeWithCentAmount)
+          Money.fromCentAmount)
 
       case _ ⇒ fail("JSON object expected.")
     }
@@ -190,7 +190,7 @@ object FromJSON {
         (field[Long]("preciseAmount")(o),
           field[Int]("fractionDigits")(o),
           field[Currency]("currencyCode")(o),
-          field[Option[Long]]("centAmount")(o)).mapN(HighPrecisionMoney.makeWithPreciseAmount)
+          field[Option[Long]]("centAmount")(o)).mapN(HighPrecisionMoney.fromPreciseAmount)
 
       case _ ⇒ fail("JSON object expected.")
     }
