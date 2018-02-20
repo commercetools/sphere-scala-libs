@@ -8,6 +8,7 @@ import cats.Monoid
 
 import scala.math._
 import BigDecimal.RoundingMode._
+import scala.math.BigDecimal.RoundingMode
 
 sealed trait BaseMoney {
   def currency: Currency
@@ -15,7 +16,7 @@ sealed trait BaseMoney {
   def toHighPrecisionMoney(fractionDigits: Int)(implicit mode: RoundingMode): HighPrecisionMoney =
     HighPrecisionMoney.fromBaseMoney(this, fractionDigits)
 
-  def toMoneyWithLostPrecision: Money = this match {
+  def toMoneyWithPrecisionLoss: Money = this match {
     case m: Money ⇒ m
     case m: HighPrecisionMoney ⇒
       Money.fromCentAmount(m.centAmount, currency)
@@ -203,13 +204,13 @@ case class HighPrecisionMoney(amount: BigDecimal, fractionDigits: Int, centAmoun
   }
 
   def + (other: HighPrecisionMoney): HighPrecisionMoney =
-    calc(this, other, _ + _)
+    calc(this, other, _ + _)(RoundingMode.UNNECESSARY)
 
   def + (other: BigDecimal)(implicit mode: RoundingMode): HighPrecisionMoney =
     this + fromDecimalAmount(other, this.fractionDigits, this.currency)
 
   def - (other: HighPrecisionMoney): HighPrecisionMoney =
-    calc(this, other, _ - _)
+    calc(this, other, _ - _)(RoundingMode.UNNECESSARY)
 
   def - (other: BigDecimal)(implicit mode: RoundingMode): HighPrecisionMoney =
     this - fromDecimalAmount(other, this.fractionDigits, this.currency)
@@ -312,10 +313,9 @@ object HighPrecisionMoney {
     (scale(m1, newFractionDigits), scale(m2, newFractionDigits), newFractionDigits)
   }
 
-  def calc(m1: HighPrecisionMoney, m2: HighPrecisionMoney, fn: (BigDecimal, BigDecimal) ⇒ BigDecimal) = {
+  def calc(m1: HighPrecisionMoney, m2: HighPrecisionMoney, fn: (BigDecimal, BigDecimal) ⇒ BigDecimal)(implicit mode: RoundingMode) = {
     BaseMoney.requireSameCurrency(m1, m2)
 
-    implicit val rm: RoundingMode = BaseMoney.toScalaRoundingMode(m1.amount.mc.getRoundingMode)
     val (a1, a2, fd) = sameScale(m1, m2)
 
     fromDecimalAmount(fn(a1, a2), fd, m1.currency)
