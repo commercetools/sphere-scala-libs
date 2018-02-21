@@ -88,7 +88,7 @@ object ToJSON {
 
   implicit val moneyWriter: ToJSON[Money] = new ToJSON[Money] {
     def write(m: Money): JValue = JObject(List(
-      JField("type", toJValue("centAmount")),
+      JField("type", toJValue(m.`type`)),
       JField("currencyCode", toJValue(m.currency)),
       JField("centAmount", toJValue(m.centAmount)),
       JField("fractionDigits", toJValue(m.currency.getDefaultFractionDigits))
@@ -97,7 +97,7 @@ object ToJSON {
 
   implicit val highPrecisionMoneyWriter: ToJSON[HighPrecisionMoney] = new ToJSON[HighPrecisionMoney] {
     def write(m: HighPrecisionMoney): JValue = JObject(List(
-      JField("type", toJValue("preciseAmount")),
+      JField("type", toJValue(m.`type`)),
       JField("currencyCode", toJValue(m.currency)),
       JField("centAmount", toJValue(m.centAmount)),
       JField("preciseAmount", toJValue(m.preciseAmountAsLong)),

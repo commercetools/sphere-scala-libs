@@ -201,8 +201,8 @@ object FromJSON {
       case o: JObject ⇒
         field[Option[String]]("type")(o).andThen {
           case None ⇒ moneyReader.read(value)
-          case Some("centAmount") ⇒ moneyReader.read(value)
-          case Some("preciseAmount") ⇒ highPrecisionMoneyReader.read(value)
+          case Some(Money.TypeName) ⇒ moneyReader.read(value)
+          case Some(HighPrecisionMoney.TypeName) ⇒ highPrecisionMoneyReader.read(value)
           case Some(tpe) ⇒ fail(s"Unknown money type '$tpe'. Available types are: 'centAmount', 'preciseAmount'.")
         }
 
