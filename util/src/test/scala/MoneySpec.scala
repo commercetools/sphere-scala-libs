@@ -15,7 +15,9 @@ class MoneySpec extends FunSpec with MustMatchers {
       (1.23 EUR) must equal (1.23 EUR)
     }
 
-    it("should default to HALF_EVEN rounding mode when using monetary notation.") {
+    it("should default to HALF_EVEN rounding mode when using monetary notation and use provided rounding mode when performing operations.") {
+      implicit val mode = BigDecimal.RoundingMode.HALF_EVEN
+
       (1.001 EUR) must equal (1.00 EUR)
       (1.005 EUR) must equal (1.00 EUR)
       (1.015 EUR) must equal (1.02 EUR)
