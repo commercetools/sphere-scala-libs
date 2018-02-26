@@ -22,14 +22,14 @@ sealed trait BaseMoney {
 
   def toMoneyWithPrecisionLoss: Money
 
-  def + (m: Money): BaseMoney
-  def + (m: HighPrecisionMoney): BaseMoney
-  def + (m: BaseMoney): BaseMoney
+  def + (m: Money)(implicit mode: RoundingMode): BaseMoney
+  def + (m: HighPrecisionMoney)(implicit mode: RoundingMode): BaseMoney
+  def + (m: BaseMoney)(implicit mode: RoundingMode): BaseMoney
   def + (m: BigDecimal)(implicit mode: RoundingMode): BaseMoney
 
-  def - (m: Money): BaseMoney
-  def - (m: HighPrecisionMoney): BaseMoney
-  def - (m: BaseMoney): BaseMoney
+  def - (m: Money)(implicit mode: RoundingMode): BaseMoney
+  def - (m: HighPrecisionMoney)(implicit mode: RoundingMode): BaseMoney
+  def - (m: BaseMoney)(implicit mode: RoundingMode): BaseMoney
   def - (m: BigDecimal)(implicit mode: RoundingMode): BaseMoney
 
   def * (m: Money)(implicit mode: RoundingMode): BaseMoney
@@ -89,16 +89,16 @@ case class Money(amount: BigDecimal, currency: Currency) extends BaseMoney with 
   def apply(mc: MathContext): Money =
     fromDecimalAmount(this.amount(mc), this.currency)(RoundingMode.HALF_EVEN)
 
-  def + (m: Money): Money = {
+  def + (m: Money)(implicit mode: RoundingMode): Money = {
     BaseMoney.requireSameCurrency(this, m)
 
     fromDecimalAmount(this.amount + m.amount, this.currency)(backwardsCompatibleRoundingModeForOperations)
   }
 
-  def + (m: HighPrecisionMoney): HighPrecisionMoney =
+  def + (m: HighPrecisionMoney)(implicit mode: RoundingMode): HighPrecisionMoney =
     this.toHighPrecisionMoney(m.fractionDigits) + m
 
-  def + (money: BaseMoney): BaseMoney = money match {
+  def + (money: BaseMoney)(implicit mode: RoundingMode): BaseMoney = money match {
     case m: Money ⇒ this + m
     case m: HighPrecisionMoney ⇒ this + m
   }
@@ -106,17 +106,17 @@ case class Money(amount: BigDecimal, currency: Currency) extends BaseMoney with 
   def + (m: BigDecimal)(implicit mode: RoundingMode): Money =
     this + fromDecimalAmount(m, this.currency)
 
-  def - (m: Money): Money = {
+  def - (m: Money)(implicit mode: RoundingMode): Money = {
     BaseMoney.requireSameCurrency(this, m)
-    fromDecimalAmount(this.amount - m.amount, this.currency)(backwardsCompatibleRoundingModeForOperations)
+    fromDecimalAmount(this.amount - m.amount, this.currency)
   }
 
-  def - (money: BaseMoney): BaseMoney = money match {
+  def - (money: BaseMoney)(implicit mode: RoundingMode): BaseMoney = money match {
     case m: Money ⇒ this - m
     case m: HighPrecisionMoney ⇒ this - m
   }
   
-  def - (m: HighPrecisionMoney): HighPrecisionMoney =
+  def - (m: HighPrecisionMoney)(implicit mode: RoundingMode): HighPrecisionMoney =
     this.toHighPrecisionMoney(m.fractionDigits) - m
 
   def - (m: BigDecimal)(implicit mode: RoundingMode): Money =
@@ -222,11 +222,6 @@ object Money {
   def zero(currency: Currency) =
     fromCentAmount(0L, currency)
 
-  implicit def moneyMonoid(implicit c: Currency): Monoid[Money] = new Monoid[Money] {
-    def combine(x: Money, y: Money): Money = x + y
-    val empty: Money = Money.zero(c)
-  }
-
   implicit def moneyMonoid(implicit c: Currency, mode: RoundingMode): Monoid[Money] = new Monoid[Money] {
     def combine(x: Money, y: Money): Money = x + y
     val empty: Money = Money.zero(c)
@@ -254,13 +249,13 @@ case class HighPrecisionMoney(amount: BigDecimal, fractionDigits: Int, centAmoun
     HighPrecisionMoney(newAmount, fd, roundToCents(newAmount, currency), currency)
   }
 
-  def + (other: HighPrecisionMoney): HighPrecisionMoney =
-    calc(this, other, _ + _)(RoundingMode.UNNECESSARY)
+  def + (other: HighPrecisionMoney)(implicit mode: RoundingMode): HighPrecisionMoney =
+    calc(this, other, _ + _)
 
-  def + (m: Money): HighPrecisionMoney =
+  def + (m: Money)(implicit mode: RoundingMode): HighPrecisionMoney =
     this + m.toHighPrecisionMoney(fractionDigits)
 
-  def + (money: BaseMoney): BaseMoney = money match {
+  def + (money: BaseMoney)(implicit mode: RoundingMode): BaseMoney = money match {
     case m: Money ⇒ this + m
     case m: HighPrecisionMoney ⇒ this + m
   }
@@ -268,13 +263,13 @@ case class HighPrecisionMoney(amount: BigDecimal, fractionDigits: Int, centAmoun
   def + (other: BigDecimal)(implicit mode: RoundingMode): HighPrecisionMoney =
     this + fromDecimalAmount(other, this.fractionDigits, this.currency)
 
-  def - (other: HighPrecisionMoney): HighPrecisionMoney =
-    calc(this, other, _ - _)(RoundingMode.UNNECESSARY)
+  def - (other: HighPrecisionMoney)(implicit mode: RoundingMode): HighPrecisionMoney =
+    calc(this, other, _ - _)
 
-  def - (m: Money): HighPrecisionMoney =
+  def - (m: Money)(implicit mode: RoundingMode): HighPrecisionMoney =
     this - m.toHighPrecisionMoney(fractionDigits)
 
-  def - (money: BaseMoney): BaseMoney = money match {
+  def - (money: BaseMoney)(implicit mode: RoundingMode): BaseMoney = money match {
     case m: Money ⇒ this - m
     case m: HighPrecisionMoney ⇒ this - m
   }
@@ -434,7 +429,7 @@ object HighPrecisionMoney {
   def fromMoney(money: Money, fractionDigits: Int): HighPrecisionMoney =
     HighPrecisionMoney(money.amount.setScale(fractionDigits, RoundingMode.UNNECESSARY), fractionDigits, money.centAmount, money.currency)
 
-  def monoid(fractionDigits: Int, c: Currency): Monoid[HighPrecisionMoney] = new Monoid[HighPrecisionMoney] {
+  def monoid(fractionDigits: Int, c: Currency)(implicit mode: RoundingMode): Monoid[HighPrecisionMoney] = new Monoid[HighPrecisionMoney] {
     def combine(x: HighPrecisionMoney, y: HighPrecisionMoney): HighPrecisionMoney = x + y
     val empty: HighPrecisionMoney = HighPrecisionMoney.zero(fractionDigits, c)
   }
