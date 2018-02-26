@@ -202,10 +202,13 @@ object Money {
     def JPY = Money.JPY(amount)
   }
 
-  def EUR(amount: BigDecimal): Money = fromDecimalAmount(amount, Currency.getInstance("EUR"))(BigDecimal.RoundingMode.HALF_EVEN)
-  def USD(amount: BigDecimal): Money = fromDecimalAmount(amount, Currency.getInstance("USD"))(BigDecimal.RoundingMode.HALF_EVEN)
-  def GBP(amount: BigDecimal): Money = fromDecimalAmount(amount, Currency.getInstance("GBP"))(BigDecimal.RoundingMode.HALF_EVEN)
-  def JPY(amount: BigDecimal): Money = fromDecimalAmount(amount, Currency.getInstance("JPY"))(BigDecimal.RoundingMode.HALF_EVEN)
+  private def decimalAmountWithCurrencyAndHalfEvenRounding(amount: BigDecimal, currency: String) =
+    fromDecimalAmount(amount, Currency.getInstance(currency))(BigDecimal.RoundingMode.HALF_EVEN)
+
+  def EUR(amount: BigDecimal): Money = decimalAmountWithCurrencyAndHalfEvenRounding(amount, "EUR")
+  def USD(amount: BigDecimal): Money = decimalAmountWithCurrencyAndHalfEvenRounding(amount, "USD")
+  def GBP(amount: BigDecimal): Money = decimalAmountWithCurrencyAndHalfEvenRounding(amount, "GBP")
+  def JPY(amount: BigDecimal): Money = decimalAmountWithCurrencyAndHalfEvenRounding(amount, "JPY")
 
   val TypeName = "centAmount"
 
@@ -302,6 +305,9 @@ case class HighPrecisionMoney(amount: BigDecimal, fractionDigits: Int, centAmoun
   def % (other: HighPrecisionMoney)(implicit mode: RoundingMode): HighPrecisionMoney =
     this.remainder(other)
 
+  def % (m: Money)(implicit mode: RoundingMode): HighPrecisionMoney =
+    this.remainder(m.toHighPrecisionMoney(fractionDigits))
+
   def % (other: BigDecimal)(implicit mode: RoundingMode): HighPrecisionMoney =
     this.remainder(fromDecimalAmount(other, this.fractionDigits, this.currency))
 
@@ -354,24 +360,31 @@ case class HighPrecisionMoney(amount: BigDecimal, fractionDigits: Int, centAmoun
 }
 
 object HighPrecisionMoney {
-  final implicit class HighPrecisionMoneyNotation(val amount: Double) extends AnyVal {
+  final implicit class HighPrecisionMoneyNotation(val amount: BigDecimal) extends AnyVal {
     def EUR = HighPrecisionMoney.EUR(amount)
     def USD = HighPrecisionMoney.USD(amount)
     def GBP = HighPrecisionMoney.GBP(amount)
     def JPY = HighPrecisionMoney.JPY(amount)
+
+    def EUR_PRECISE(precision: Int) = HighPrecisionMoney.EUR(amount, Some(precision))
+    def USD_PRECISE(precision: Int) = HighPrecisionMoney.EUR(amount, Some(precision))
+    def GBP_PRECISE(precision: Int) = HighPrecisionMoney.EUR(amount, Some(precision))
+    def JPY_PRECISE(precision: Int) = HighPrecisionMoney.EUR(amount, Some(precision))
   }
 
-  def EUR(amount: BigDecimal) = simpleValueMeantToBeUsedOnlyInTests(amount, "EUR")
-  def USD(amount: BigDecimal) = simpleValueMeantToBeUsedOnlyInTests(amount, "USD")
-  def GBP(amount: BigDecimal) = simpleValueMeantToBeUsedOnlyInTests(amount, "GBP")
-  def JPY(amount: BigDecimal) = simpleValueMeantToBeUsedOnlyInTests(amount, "JPY")
+  def EUR(amount: BigDecimal, precision: Option[Int] = None) = simpleValueMeantToBeUsedOnlyInTests(amount, "EUR", precision)
+  def USD(amount: BigDecimal, precision: Option[Int] = None) = simpleValueMeantToBeUsedOnlyInTests(amount, "USD", precision)
+  def GBP(amount: BigDecimal, precision: Option[Int] = None) = simpleValueMeantToBeUsedOnlyInTests(amount, "GBP", precision)
+  def JPY(amount: BigDecimal, precision: Option[Int] = None) = simpleValueMeantToBeUsedOnlyInTests(amount, "JPY", precision)
 
   val TypeName = "preciseAmount"
 
-  private def simpleValueMeantToBeUsedOnlyInTests(amount: BigDecimal, currencyCode: String): HighPrecisionMoney = {
+  private def simpleValueMeantToBeUsedOnlyInTests(amount: BigDecimal, currencyCode: String, precision: Option[Int] = None): HighPrecisionMoney = {
     val currency = Currency.getInstance(currencyCode)
 
-    fromDecimalAmount(amount, currency.getDefaultFractionDigits, currency)(BigDecimal.RoundingMode.HALF_EVEN)
+    val fractionDigits = precision.getOrElse(currency.getDefaultFractionDigits)
+
+    fromDecimalAmount(amount, fractionDigits, currency)(BigDecimal.RoundingMode.HALF_EVEN)
   }
 
   def roundToCents(amount: BigDecimal, currency: Currency)(implicit mode: RoundingMode): Long =

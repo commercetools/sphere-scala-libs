@@ -7,7 +7,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.language.postfixOps
 
 class HighPrecisionMoneySpec extends FunSpec with MustMatchers {
-  import Money._
+  import HighPrecisionMoney._
 
   implicit val defaultRoundingMode = BigDecimal.RoundingMode.HALF_EVEN
 
@@ -16,8 +16,7 @@ class HighPrecisionMoneySpec extends FunSpec with MustMatchers {
   describe("High Precision Money") {
 
     it("should allow creation of high precision money") {
-      HighPrecisionMoney(amount = 0.01, fractionDigits = 2, centAmount = 1, Euro) must equal(
-        HighPrecisionMoney(amount = 0.01, fractionDigits = 2, centAmount = 1, Euro))
+      (BigDecimal(0.01) EUR) must equal(BigDecimal(0.01) EUR)
     }
 
     it("should not allow creation of high precision money without sufficient scale") {
@@ -30,107 +29,100 @@ class HighPrecisionMoneySpec extends FunSpec with MustMatchers {
 
     it("should not allow creation of high precision money with less fraction digits than the currency has") {
       val thrown = intercept[IllegalArgumentException] {
-        HighPrecisionMoney(amount = 0.01, fractionDigits = 1, centAmount = 1, Euro)
+        BigDecimal(0.01) EUR_PRECISE 1
       }
 
-      assert(thrown.getMessage == "requirement failed: The scale of the given amount does not match the scale of the provided currency. - 2 <-> 1")
+      assert(thrown.getMessage == "requirement failed: `fractionDigits` should be  >= than the default fraction digits of the currency.")
     }
 
     it("should convert precise amount to long value correctly") {
-      HighPrecisionMoney(amount = BigDecimal("0.0001"), fractionDigits = 4, centAmount = 0, Euro).preciseAmountAsLong must equal(1)
+      (BigDecimal("0.0001") EUR_PRECISE 4).preciseAmountAsLong must equal (1)
     }
 
     it("should reduce fraction digits as expected") {
-      HighPrecisionMoney(amount = BigDecimal("0.0001"), fractionDigits = 4, centAmount = 0, Euro).withFractionDigits(2).preciseAmountAsLong must equal(0)
+      (BigDecimal("0.0001") EUR_PRECISE 4).withFractionDigits(2).preciseAmountAsLong must equal(0)
     }
 
     it("should support the unary '-' operator.") {
-      -HighPrecisionMoney(amount = 0.01, fractionDigits = 2, centAmount = 1, Euro) must equal (HighPrecisionMoney(amount = -0.01, fractionDigits = 2, centAmount = -1, Euro))
+      -(BigDecimal(0.01) EUR_PRECISE 2) must equal (BigDecimal(-0.01) EUR_PRECISE 2)
     }
 
     it("should support the binary '+' operator.") {
-      HighPrecisionMoney(amount = 0.001, fractionDigits = 3, centAmount = 0, Euro) +  HighPrecisionMoney(amount = 0.002, fractionDigits = 3, centAmount = 0, Euro) must equal(
-        HighPrecisionMoney(amount = 0.003, fractionDigits = 3, centAmount = 0, Euro)
+      (BigDecimal(0.001) EUR_PRECISE 3) + (BigDecimal(0.002) EUR_PRECISE 3) must equal(
+        BigDecimal(0.003) EUR_PRECISE 3
       )
 
-      HighPrecisionMoney(amount = 0.005, fractionDigits = 3, centAmount = 0, Euro) +  Money(0.01, Euro) must equal(
-        HighPrecisionMoney(amount = 0.015, fractionDigits = 3, centAmount = 2, Euro)
+      (BigDecimal(0.005) EUR_PRECISE 3) + Money(0.01, Euro) must equal(
+        BigDecimal(0.015) EUR_PRECISE 3
       )
 
-      HighPrecisionMoney(amount = 0.005, fractionDigits = 3, centAmount = 0, Euro).+(BigDecimal("0.005")) must equal(
-        HighPrecisionMoney(amount = BigDecimal("0.010"), fractionDigits = 3, centAmount = 1, Euro)
+      (BigDecimal(0.005) EUR_PRECISE 3) + BigDecimal("0.005") must equal(
+        BigDecimal("0.010") EUR_PRECISE 3
       )
     }
 
     it("should support the binary '-' operator.") {
-      HighPrecisionMoney(amount = 0.002, fractionDigits = 3, centAmount = 0, Euro) -  HighPrecisionMoney(amount = 0.001, fractionDigits = 3, centAmount = 0, Euro) must equal(
-        HighPrecisionMoney(amount = 0.001, fractionDigits = 3, centAmount = 0, Euro)
+      (BigDecimal(0.002) EUR_PRECISE 3) - (BigDecimal(0.001) EUR_PRECISE 3) must equal(
+        BigDecimal(0.001) EUR_PRECISE 3
       )
 
-      HighPrecisionMoney(amount = 0.015, fractionDigits = 3, centAmount = 0, Euro) -  Money(0.01, Euro) must equal(
-        HighPrecisionMoney(amount = 0.005, fractionDigits = 3, centAmount = 0, Euro)
+      (BigDecimal(0.015) EUR_PRECISE 3) - Money(0.01, Euro) must equal(
+        BigDecimal(0.005) EUR_PRECISE 3
       )
 
-      HighPrecisionMoney(amount = 0.005, fractionDigits = 3, centAmount = 0, Euro).-(BigDecimal("0.005")) must equal(
-        HighPrecisionMoney(amount = BigDecimal("0.000"), fractionDigits = 3, centAmount = 0, Euro)
+      (BigDecimal(0.005) EUR_PRECISE 3) - BigDecimal("0.005") must equal(
+        BigDecimal(0.000) EUR_PRECISE 3
       )
     }
 
     it("should support the binary '*' operator.") {
-      HighPrecisionMoney(amount = 0.002, fractionDigits = 3, centAmount = 0, Euro) *  HighPrecisionMoney(amount = BigDecimal("5.00"), fractionDigits = 2, centAmount = 500, Euro) must equal(
-        HighPrecisionMoney(amount = BigDecimal("0.010"), fractionDigits = 3, centAmount = 1, Euro)
+      (BigDecimal(0.002) EUR_PRECISE 3) * (BigDecimal("5.00") EUR_PRECISE 2) must equal(
+        BigDecimal("0.010") EUR_PRECISE 3
       )
 
-      HighPrecisionMoney(amount = 0.015, fractionDigits = 3, centAmount = 0, Euro) *  Money(BigDecimal("100.00"), Euro) must equal(
-        HighPrecisionMoney(amount = BigDecimal("1.500"), fractionDigits = 3, centAmount = 150, Euro)
+      (BigDecimal(0.015) EUR_PRECISE 3) * Money(BigDecimal("100.00"), Euro) must equal(
+        BigDecimal("1.500") EUR_PRECISE 3
       )
 
-      HighPrecisionMoney(amount = 0.005, fractionDigits = 3, centAmount = 0, Euro).*(BigDecimal("0.005")) must equal(
-        HighPrecisionMoney(amount = BigDecimal("0.000"), fractionDigits = 3, centAmount = 0, Euro)
+      (BigDecimal(0.005) EUR_PRECISE 3) * BigDecimal("0.005") must equal(
+        BigDecimal("0.000") EUR_PRECISE 3
       )
     }
 
     it("should support the binary '%' operator.") {
-      HighPrecisionMoney(amount = 0.002, fractionDigits = 3, centAmount = 0, Euro) *  HighPrecisionMoney(amount = BigDecimal("5.00"), fractionDigits = 2, centAmount = 500, Euro) must equal(
-        HighPrecisionMoney(amount = BigDecimal("0.010"), fractionDigits = 3, centAmount = 1, Euro)
+      (BigDecimal("0.010") EUR_PRECISE 3) % (BigDecimal("5.00") EUR_PRECISE 2) must equal(
+        BigDecimal("0.010") EUR_PRECISE 3
       )
 
-      HighPrecisionMoney(amount = 0.015, fractionDigits = 3, centAmount = 0, Euro) *  Money(BigDecimal("100.00"), Euro) must equal(
-        HighPrecisionMoney(amount = BigDecimal("1.500"), fractionDigits = 3, centAmount = 150, Euro)
+      (BigDecimal("100.000") EUR_PRECISE 3) % Money(BigDecimal("100.00"), Euro) must equal(
+        BigDecimal("0.000") EUR_PRECISE 3
       )
 
-      HighPrecisionMoney(amount = 0.005, fractionDigits = 3, centAmount = 0, Euro).*(BigDecimal("0.005")) must equal(
-        HighPrecisionMoney(amount = BigDecimal("0.000"), fractionDigits = 3, centAmount = 0, Euro)
+      (BigDecimal("0.015") EUR_PRECISE 3) % BigDecimal("0.002") must equal(
+        BigDecimal("0.001") EUR_PRECISE 3
       )
     }
 
     it("should support the binary '/%' operator.") {
-      HighPrecisionMoney(amount = BigDecimal("10.000"), fractionDigits = 3, centAmount = 1000, Euro)./%(3.00) must equal(
-        (HighPrecisionMoney(amount = BigDecimal("3.000"), fractionDigits = 3, centAmount = 300, Euro),
-          HighPrecisionMoney(amount = BigDecimal("1.000"), fractionDigits = 3, centAmount = 100, Euro))
+      (BigDecimal("10.000") EUR_PRECISE 3)./%(3.00) must equal(
+        (BigDecimal("3.000") EUR_PRECISE 3, BigDecimal("1.000") EUR_PRECISE 3)
       )
     }
 
     it("should support the remainder operator.") {
-      HighPrecisionMoney(amount = BigDecimal("10.000"), fractionDigits = 3, centAmount = 1000, Euro).remainder(3.00) must equal(
-        HighPrecisionMoney(amount = BigDecimal("1.000"), fractionDigits = 3, centAmount = 100, Euro))
+      (BigDecimal("10.000") EUR_PRECISE 3).remainder(3.00) must equal(BigDecimal("1.000") EUR_PRECISE 3)
 
-      HighPrecisionMoney(amount = BigDecimal("10.000"), fractionDigits = 3, centAmount = 1000, Euro).remainder(
-        HighPrecisionMoney(amount = BigDecimal("3.000"), fractionDigits = 3, centAmount = 300, Euro)) must equal(
-          HighPrecisionMoney(amount = BigDecimal("1.000"), fractionDigits = 3, centAmount = 100, Euro))
+      (BigDecimal("10.000") EUR_PRECISE 3).remainder(BigDecimal("3.000") EUR_PRECISE 3) must equal(BigDecimal("1.000") EUR_PRECISE 3)
     }
 
     it("should partition the value properly.") {
-      val a = HighPrecisionMoney(amount = BigDecimal("10.000"), fractionDigits = 3, centAmount = 1000, Euro).partition(1, 2, 3) must equal(
+      (BigDecimal("10.000") EUR_PRECISE 3).partition(1, 2, 3) must equal(
         ArrayBuffer(
-          HighPrecisionMoney(amount = BigDecimal("1.667"), fractionDigits = 3, centAmount = 167, Euro),
-          HighPrecisionMoney(amount = BigDecimal("3.333"), fractionDigits = 3, centAmount = 333, Euro),
-          HighPrecisionMoney(amount = BigDecimal("5.000"), fractionDigits = 3, centAmount = 500, Euro)
+          BigDecimal("1.667") EUR_PRECISE 3,
+          BigDecimal("3.333") EUR_PRECISE 3,
+          BigDecimal("5.000") EUR_PRECISE 3
         )
       )
     }
-
-    //make constructors private, only use from centAmount, fromDecimalAmount
-
   }
 }
