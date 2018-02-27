@@ -1,5 +1,7 @@
 package io.sphere.util
 
+import language.implicitConversions
+
 import java.math.MathContext
 import java.text.NumberFormat
 import java.util.Currency
@@ -57,7 +59,7 @@ object BaseMoney {
  *               number of fractional digits of the currency.
  * @param currency The currency of the amount.
  */
-case class Money(amount: BigDecimal, currency: Currency) extends BaseMoney with Ordered[Money] {
+case class Money private (amount: BigDecimal, currency: Currency) extends BaseMoney with Ordered[Money] {
   import Money._
 
   require(amount.scale == currency.getDefaultFractionDigits,
@@ -195,11 +197,21 @@ case class Money(amount: BigDecimal, currency: Currency) extends BaseMoney with 
 }
 
 object Money {
-  final implicit class MoneyNotation(val amount: Double) extends AnyVal {
-    def EUR = Money.EUR(amount)
-    def USD = Money.USD(amount)
-    def GBP = Money.GBP(amount)
-    def JPY = Money.JPY(amount)
+  object ImplicitsDecimal {
+    final implicit class MoneyNotation(val amount: BigDecimal) extends AnyVal {
+      def EUR = Money.EUR(amount)
+      def USD = Money.USD(amount)
+      def GBP = Money.GBP(amount)
+      def JPY = Money.JPY(amount)
+    }
+
+    implicit def doubleMoneyNotation(amount: Double) =
+      new ImplicitsDecimal.MoneyNotation(BigDecimal(amount))
+  }
+
+  object ImplicitsString {
+    implicit def stringMoneyNotation(amount: String) =
+      new ImplicitsDecimal.MoneyNotation(BigDecimal(amount))
   }
 
   private def decimalAmountWithCurrencyAndHalfEvenRounding(amount: BigDecimal, currency: String) =
@@ -210,7 +222,7 @@ object Money {
   def GBP(amount: BigDecimal): Money = decimalAmountWithCurrencyAndHalfEvenRounding(amount, "GBP")
   def JPY(amount: BigDecimal): Money = decimalAmountWithCurrencyAndHalfEvenRounding(amount, "JPY")
 
-  val TypeName = "centAmount"
+  val TypeName = "centPrecision"
 
   def fromDecimalAmount(amount: BigDecimal, currency: Currency)(implicit mode: RoundingMode) =
     Money(amount.setScale(currency.getDefaultFractionDigits, mode), currency)
@@ -231,7 +243,7 @@ object Money {
   }
 }
 
-case class HighPrecisionMoney(amount: BigDecimal, fractionDigits: Int, centAmount: Long, currency: Currency) extends BaseMoney with Ordered[Money] {
+case class HighPrecisionMoney private (amount: BigDecimal, fractionDigits: Int, centAmount: Long, currency: Currency) extends BaseMoney with Ordered[Money] {
   import HighPrecisionMoney._
 
   require(amount.scale == fractionDigits,
@@ -258,7 +270,7 @@ case class HighPrecisionMoney(amount: BigDecimal, fractionDigits: Int, centAmoun
   def + (m: Money)(implicit mode: RoundingMode): HighPrecisionMoney =
     this + m.toHighPrecisionMoney(fractionDigits)
 
-  def + (money: BaseMoney)(implicit mode: RoundingMode): BaseMoney = money match {
+  def + (money: BaseMoney)(implicit mode: RoundingMode): HighPrecisionMoney = money match {
     case m: Money ⇒ this + m
     case m: HighPrecisionMoney ⇒ this + m
   }
@@ -272,7 +284,7 @@ case class HighPrecisionMoney(amount: BigDecimal, fractionDigits: Int, centAmoun
   def - (m: Money)(implicit mode: RoundingMode): HighPrecisionMoney =
     this - m.toHighPrecisionMoney(fractionDigits)
 
-  def - (money: BaseMoney)(implicit mode: RoundingMode): BaseMoney = money match {
+  def - (money: BaseMoney)(implicit mode: RoundingMode): HighPrecisionMoney = money match {
     case m: Money ⇒ this - m
     case m: HighPrecisionMoney ⇒ this - m
   }
@@ -286,7 +298,7 @@ case class HighPrecisionMoney(amount: BigDecimal, fractionDigits: Int, centAmoun
   def * (m: Money)(implicit mode: RoundingMode): HighPrecisionMoney =
     this * m.toHighPrecisionMoney(fractionDigits)
 
-  def * (money: BaseMoney)(implicit mode: RoundingMode): BaseMoney = money match {
+  def * (money: BaseMoney)(implicit mode: RoundingMode): HighPrecisionMoney = money match {
     case m: Money ⇒ this * m
     case m: HighPrecisionMoney ⇒ this * m
   }
@@ -357,19 +369,35 @@ case class HighPrecisionMoney(amount: BigDecimal, fractionDigits: Int, centAmoun
 
     nf.format(this.amount.doubleValue) + " " + this.currency.getSymbol
   }
-}
+}           
 
 object HighPrecisionMoney {
-  final implicit class HighPrecisionMoneyNotation(val amount: BigDecimal) extends AnyVal {
-    def EUR = HighPrecisionMoney.EUR(amount)
-    def USD = HighPrecisionMoney.USD(amount)
-    def GBP = HighPrecisionMoney.GBP(amount)
-    def JPY = HighPrecisionMoney.JPY(amount)
+  object ImplicitsDecimal {
+    final implicit class HighPrecisionMoneyNotation(val amount: BigDecimal) extends AnyVal {
+      def EUR = HighPrecisionMoney.EUR(amount)
+      def USD = HighPrecisionMoney.USD(amount)
+      def GBP = HighPrecisionMoney.GBP(amount)
+      def JPY = HighPrecisionMoney.JPY(amount)
+    }
+  }
 
-    def EUR_PRECISE(precision: Int) = HighPrecisionMoney.EUR(amount, Some(precision))
-    def USD_PRECISE(precision: Int) = HighPrecisionMoney.EUR(amount, Some(precision))
-    def GBP_PRECISE(precision: Int) = HighPrecisionMoney.EUR(amount, Some(precision))
-    def JPY_PRECISE(precision: Int) = HighPrecisionMoney.EUR(amount, Some(precision))
+  object ImplicitsDecimalPrecise {
+    final implicit class HighPrecisionPreciseMoneyNotation(val amount: BigDecimal) extends AnyVal {
+      def EUR_PRECISE(precision: Int) = HighPrecisionMoney.EUR(amount, Some(precision))
+      def USD_PRECISE(precision: Int) = HighPrecisionMoney.EUR(amount, Some(precision))
+      def GBP_PRECISE(precision: Int) = HighPrecisionMoney.EUR(amount, Some(precision))
+      def JPY_PRECISE(precision: Int) = HighPrecisionMoney.EUR(amount, Some(precision))
+    }
+  }
+
+  object ImplicitsString {
+    implicit def stringMoneyNotation(amount: String): ImplicitsDecimal.HighPrecisionMoneyNotation =
+      new ImplicitsDecimal.HighPrecisionMoneyNotation(BigDecimal(amount))
+  }
+
+  object ImplicitsStringPrecise {
+    implicit def stringPreciseMoneyNotation(amount: String): ImplicitsDecimalPrecise.HighPrecisionPreciseMoneyNotation =
+      new ImplicitsDecimalPrecise.HighPrecisionPreciseMoneyNotation(BigDecimal(amount))
   }
 
   def EUR(amount: BigDecimal, precision: Option[Int] = None) = simpleValueMeantToBeUsedOnlyInTests(amount, "EUR", precision)
@@ -377,7 +405,7 @@ object HighPrecisionMoney {
   def GBP(amount: BigDecimal, precision: Option[Int] = None) = simpleValueMeantToBeUsedOnlyInTests(amount, "GBP", precision)
   def JPY(amount: BigDecimal, precision: Option[Int] = None) = simpleValueMeantToBeUsedOnlyInTests(amount, "JPY", precision)
 
-  val TypeName = "preciseAmount"
+  val TypeName = "highPrecision"
 
   private def simpleValueMeantToBeUsedOnlyInTests(amount: BigDecimal, currencyCode: String, precision: Option[Int] = None): HighPrecisionMoney = {
     val currency = Currency.getInstance(currencyCode)
