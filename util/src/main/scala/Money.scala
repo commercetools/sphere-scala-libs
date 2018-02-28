@@ -264,6 +264,9 @@ case class HighPrecisionMoney private (amount: BigDecimal, fractionDigits: Int, 
     HighPrecisionMoney(newAmount, fd, roundToCents(newAmount, currency), currency)
   }
 
+  def updateCentAmountWithRoundingMode(implicit mode: RoundingMode) =
+    copy(centAmount = roundToCents(amount, currency))
+
   def + (other: HighPrecisionMoney)(implicit mode: RoundingMode): HighPrecisionMoney =
     calc(this, other, _ + _)
 
