@@ -203,7 +203,7 @@ object FromJSON {
           case None ⇒ moneyReader.read(value)
           case Some(Money.TypeName) ⇒ moneyReader.read(value)
           case Some(HighPrecisionMoney.TypeName) ⇒ highPrecisionMoneyReader.read(value)
-          case Some(tpe) ⇒ fail(s"Unknown money type '$tpe'. Available types are: 'centAmount', 'preciseAmount'.")
+          case Some(tpe) ⇒ fail(s"Unknown money type '$tpe'. Available types are: 'centPrecision', 'highPrecision'.")
         }
 
       case _ ⇒ fail("JSON object expected.")
