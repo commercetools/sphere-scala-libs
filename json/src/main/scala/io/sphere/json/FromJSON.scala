@@ -10,7 +10,7 @@ import cats.instances.list._
 import cats.instances.vector._
 import cats.syntax.apply._
 import cats.syntax.traverse._
-import io.sphere.util.{LangTag, Money}
+import io.sphere.util.{BaseMoney, HighPrecisionMoney, LangTag, Money}
 import org.json4s.JsonAST._
 import org.joda.time._
 import org.joda.time.format.ISODateTimeFormat
@@ -170,17 +170,43 @@ object FromJSON {
 
   implicit val moneyReader: FromJSON[Money] = new FromJSON[Money] {
     override val fields = Set("centAmount", "currencyCode")
-    def read(jval: JValue): JValidation[Money] = jval match {
-      case o: JObject =>
-        (field[Currency]("currencyCode")(o),
-        field[Long]("centAmount")(o)).mapN(mkMoney)
-      case _ => fail("JSON object expected.")
-    }
 
-    private def mkMoney(currency: Currency, centAmount: Long): Money = {
-      Money.make(
-        centAmount / math.pow(10, currency.getDefaultFractionDigits),
-        currency)
+    def read(value: JValue): JValidation[Money] = value match {
+      case o: JObject ⇒
+        (field[Long]("centAmount")(o), field[Currency]("currencyCode")(o)).mapN(
+          Money.fromCentAmount)
+
+      case _ ⇒ fail("JSON object expected.")
+    }
+  }
+
+  implicit val highPrecisionMoneyReader: FromJSON[HighPrecisionMoney] = new FromJSON[HighPrecisionMoney] {
+    override val fields = Set("preciseAmount", "currencyCode", "fractionDigits")
+
+    import cats.implicits._
+    
+    def read(value: JValue): JValidation[HighPrecisionMoney] = value match {
+      case o: JObject ⇒
+        (field[Long]("preciseAmount")(o),
+          field[Int]("fractionDigits")(o),
+          field[Currency]("currencyCode")(o),
+          field[Option[Long]]("centAmount")(o)).mapN(HighPrecisionMoney.fromPreciseAmount)
+
+      case _ ⇒ fail("JSON object expected.")
+    }
+  }
+
+  implicit val baseMoneyReader: FromJSON[BaseMoney] = new FromJSON[BaseMoney] {
+    def read(value: JValue): JValidation[BaseMoney] = value match {
+      case o: JObject ⇒
+        field[Option[String]]("type")(o).andThen {
+          case None ⇒ moneyReader.read(value)
+          case Some(Money.TypeName) ⇒ moneyReader.read(value)
+          case Some(HighPrecisionMoney.TypeName) ⇒ highPrecisionMoneyReader.read(value)
+          case Some(tpe) ⇒ fail(s"Unknown money type '$tpe'. Available types are: '${Money.TypeName}', '${HighPrecisionMoney.TypeName}'.")
+        }
+
+      case _ ⇒ fail("JSON object expected.")
     }
   }
 

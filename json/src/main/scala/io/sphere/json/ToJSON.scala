@@ -1,12 +1,11 @@
 package io.sphere.json
 
 import cats.data.NonEmptyList
+
 import scala.collection.breakOut
+import java.util.{Currency, Locale, UUID}
 
-import java.util.{ Locale, Currency, UUID }
-
-import io.sphere.util.Money
-
+import io.sphere.util.{BaseMoney, HighPrecisionMoney, Money}
 import org.json4s.JsonAST._
 import org.joda.time._
 import org.joda.time.format.ISODateTimeFormat
@@ -88,10 +87,29 @@ object ToJSON {
   }
 
   implicit val moneyWriter: ToJSON[Money] = new ToJSON[Money] {
-    def write(m: Money): JValue = JObject(
-      JField("currencyCode", toJValue(m.currency)) ::
-      JField("centAmount", toJValue(m.centAmount)) :: Nil
-    )
+    def write(m: Money): JValue = JObject(List(
+      JField("type", toJValue(m.`type`)),
+      JField("currencyCode", toJValue(m.currency)),
+      JField("centAmount", toJValue(m.centAmount)),
+      JField("fractionDigits", toJValue(m.currency.getDefaultFractionDigits))
+    ))
+  }
+
+  implicit val highPrecisionMoneyWriter: ToJSON[HighPrecisionMoney] = new ToJSON[HighPrecisionMoney] {
+    def write(m: HighPrecisionMoney): JValue = JObject(List(
+      JField("type", toJValue(m.`type`)),
+      JField("currencyCode", toJValue(m.currency)),
+      JField("centAmount", toJValue(m.centAmount)),
+      JField("preciseAmount", toJValue(m.preciseAmountAsLong)),
+      JField("fractionDigits", toJValue(m.fractionDigits))
+    ))
+  }
+
+  implicit def baseMoneyWriter: ToJSON[BaseMoney] = new ToJSON[BaseMoney] {
+    def write(m: BaseMoney): JValue = m match {
+      case m: Money ⇒ moneyWriter.write(m)
+      case m: HighPrecisionMoney ⇒ highPrecisionMoneyWriter.write(m)
+    }
   }
 
   implicit val currencyWriter: ToJSON[Currency] = new ToJSON[Currency] {

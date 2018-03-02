@@ -6,14 +6,19 @@ import org.scalatest.FunSpec
 import org.scalatest.MustMatchers
 
 class MoneySpec extends FunSpec with MustMatchers {
+  import Money.ImplicitsDecimal._
   import Money._
+
+  implicit val mode = BigDecimal.RoundingMode.UNNECESSARY
 
   describe("Money") {
     it("should have value semantics.") {
       (1.23 EUR) must equal (1.23 EUR)
     }
 
-    it("should default to HALF_EVEN rounding mode when using monetary notation.") {
+    it("should default to HALF_EVEN rounding mode when using monetary notation and use provided rounding mode when performing operations.") {
+      implicit val mode = BigDecimal.RoundingMode.HALF_EVEN
+
       (1.001 EUR) must equal (1.00 EUR)
       (1.005 EUR) must equal (1.00 EUR)
       (1.015 EUR) must equal (1.02 EUR)
@@ -32,8 +37,10 @@ class MoneySpec extends FunSpec with MustMatchers {
     }
 
     it("should not be prone to common rounding errors known from floating point numbers.") {
-      var m = 0.00 EUR;
-      for (i <- 1 to 10) m = m + 0.10
+      var m = 0.00 EUR
+
+      for (i ← 1 to 10) m = m + 0.10
+
       m must equal (1.00 EUR)
     }
 

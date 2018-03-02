@@ -11,6 +11,8 @@ import cats.syntax.eq._
 import org.joda.time._
 import org.scalacheck._
 
+import scala.math.BigDecimal.RoundingMode
+
 
 object JSONProperties extends Properties("JSON") {
   private def check[A: FromJSON: ToJSON: Eq](a: A): Boolean = {
@@ -68,7 +70,7 @@ object JSONProperties extends Properties("JSON") {
     Arbitrary(for {
       c <- Arbitrary.arbitrary[Currency]
       i <- Arbitrary.arbitrary[Int]
-    } yield Money.make(i, c))
+    } yield Money.fromDecimalAmount(i, c)(RoundingMode.HALF_EVEN))
 
   implicit def arbitraryUUID: Arbitrary[UUID] =
     Arbitrary(for {
