@@ -24,6 +24,19 @@ sealed trait BaseMoney {
   // Use with CAUTION! will loose precision in case of a high precision money value
   def centAmount: Long
 
+  /**
+    * Normalized representation.
+    *
+    * for centPrecision:
+    *   centAmount: 1234 EUR
+    *   amount:     12.34
+    *
+    * for highPrecision:
+    *   preciseAmount: 123456 EUR (with fractionDigits = 4)
+    *   amount:        12.3456
+    */
+  def amount: BigDecimal
+
   def fractionDigits: Int
 
   def toMoneyWithPrecisionLoss: Money
@@ -50,6 +63,11 @@ object BaseMoney {
 
   def toScalaRoundingMode(mode: java.math.RoundingMode): RoundingMode =
     BigDecimal.RoundingMode(mode.ordinal())
+
+  implicit def baseMoneyMonoid(implicit c: Currency, mode: RoundingMode): Monoid[BaseMoney] = new Monoid[BaseMoney] {
+    def combine(x: BaseMoney, y: BaseMoney): BaseMoney = x + y
+    val empty: BaseMoney = Money.zero(c)
+  }
 }
 
 /**
@@ -407,20 +425,19 @@ object HighPrecisionMoney {
       new ImplicitsDecimalPrecise.HighPrecisionPreciseMoneyNotation(BigDecimal(amount))
   }
 
-  def EUR(amount: BigDecimal, precision: Option[Int] = None) = simpleValueMeantToBeUsedOnlyInTests(amount, "EUR", precision)
-  def USD(amount: BigDecimal, precision: Option[Int] = None) = simpleValueMeantToBeUsedOnlyInTests(amount, "USD", precision)
-  def GBP(amount: BigDecimal, precision: Option[Int] = None) = simpleValueMeantToBeUsedOnlyInTests(amount, "GBP", precision)
-  def JPY(amount: BigDecimal, precision: Option[Int] = None) = simpleValueMeantToBeUsedOnlyInTests(amount, "JPY", precision)
+  def EUR(amount: BigDecimal, fractionDigits: Option[Int] = None) = simpleValueMeantToBeUsedOnlyInTests(amount, "EUR", fractionDigits)
+  def USD(amount: BigDecimal, fractionDigits: Option[Int] = None) = simpleValueMeantToBeUsedOnlyInTests(amount, "USD", fractionDigits)
+  def GBP(amount: BigDecimal, fractionDigits: Option[Int] = None) = simpleValueMeantToBeUsedOnlyInTests(amount, "GBP", fractionDigits)
+  def JPY(amount: BigDecimal, fractionDigits: Option[Int] = None) = simpleValueMeantToBeUsedOnlyInTests(amount, "JPY", fractionDigits)
 
   val TypeName = "highPrecision"
   val MaxFractionDigits = 20
 
-  private def simpleValueMeantToBeUsedOnlyInTests(amount: BigDecimal, currencyCode: String, precision: Option[Int] = None): HighPrecisionMoney = {
+  private def simpleValueMeantToBeUsedOnlyInTests(amount: BigDecimal, currencyCode: String, fractionDigits: Option[Int] = None): HighPrecisionMoney = {
     val currency = Currency.getInstance(currencyCode)
+    val fd = fractionDigits.getOrElse(currency.getDefaultFractionDigits)
 
-    val fractionDigits = precision.getOrElse(currency.getDefaultFractionDigits)
-
-    fromDecimalAmount(amount, fractionDigits, currency)(BigDecimal.RoundingMode.HALF_EVEN)
+    fromDecimalAmount(amount, fd, currency)(BigDecimal.RoundingMode.HALF_EVEN)
   }
 
   def roundToCents(amount: BigDecimal, currency: Currency)(implicit mode: RoundingMode): Long =
