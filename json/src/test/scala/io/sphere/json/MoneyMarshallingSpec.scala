@@ -71,7 +71,25 @@ class MoneyMarshallingSpec extends WordSpec with Matchers {
         }
         """
 
-      fromJSON[BaseMoney](json) should be (Valid(HighPrecisionMoney.USD(BigDecimal("0.0042"), Some(4))))
+      fromJSON[BaseMoney](json) should be (Valid(
+        HighPrecisionMoney.USD(BigDecimal("0.0042"), Some(4))))
+    }
+
+    "decode with centAmount" in {
+      val Valid(json) = parseJSON(
+        """
+        {
+          "type": "highPrecision",
+          "currencyCode": "USD",
+          "preciseAmount": 42,
+          "centAmount": 1,
+          "fractionDigits": 4
+        }
+        """)
+
+      val Valid(parsed) = fromJValue[BaseMoney](json)
+
+      toJValue(parsed) should be (json)
     }
 
     "validate data when decoded from JSON" in {
