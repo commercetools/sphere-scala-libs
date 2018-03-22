@@ -1,4 +1,17 @@
-## 0.9.5-SNAPSHOT
+## 0.9.6 (2018-03-22)
+
+* Added `HighPrecisionMoney` decoding validations for `fractionDigits` and `centAmount`
+* Added helpers for `BaseMoney` (`amount` and `baseMoneyMonoid`)
+* Introduced `ValidatedFlatMap`
+
+## 0.9.5 (2018-03-02)
+
+* added initial support for high precision money
+  * money is now polymorphic and has `centPrecision` and `highPrecision` types
+  * old format with `currencyCode` and `centAmount` still supported for input, it's treated as `centPrecision`
+  * when returned to clients "old" money has additional fields: `type`, `fractionDigits`
+  * high precision money `centAmount` can be specified and is used for rounding - experimental
+  * high precision money is defined by `preciseAmount` and `fractionDigits`
 
 ## 0.9.4 (2018-02-06)
 
