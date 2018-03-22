@@ -187,12 +187,18 @@ object FromJSON {
     
     def read(value: JValue): JValidation[HighPrecisionMoney] = value match {
       case o: JObject ⇒
-        (field[Long]("preciseAmount")(o),
+        val validatedFields = (
+          field[Long]("preciseAmount")(o),
           field[Int]("fractionDigits")(o),
           field[Currency]("currencyCode")(o),
-          field[Option[Long]]("centAmount")(o)).mapN(HighPrecisionMoney.fromPreciseAmount)
+          field[Option[Long]]("centAmount")(o))
 
-      case _ ⇒ fail("JSON object expected.")
+        validatedFields.tupled.andThen { case (preciseAmount, fractionDigits, currencyCode, centAmount) ⇒
+          HighPrecisionMoney.fromPreciseAmount(preciseAmount, fractionDigits, currencyCode, centAmount).leftMap(_.map(JSONParseError(_)))
+        }
+
+      case _ ⇒
+        fail("JSON object expected.")
     }
   }
 

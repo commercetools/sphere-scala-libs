@@ -1,5 +1,6 @@
 import java.util.Currency
 
+import cats.data.Validated.Invalid
 import io.sphere.util.{BaseMoney, HighPrecisionMoney, Money}
 import org.scalatest._
 
@@ -124,6 +125,24 @@ class HighPrecisionMoneySpec extends FunSpec with MustMatchers {
           "5.000" EUR_PRECISE 3
         )
       )
+    }
+
+    it("should validate fractionDigits (min)") {
+      val Invalid(errors) = HighPrecisionMoney.fromPreciseAmount(123456L, 1, Euro, None)
+
+      errors.toList must be (List("fractionDigits must be > 2 (default fraction digits defined by currency EUR)."))
+    }
+
+    it("should validate fractionDigits (max)") {
+      val Invalid(errors) = HighPrecisionMoney.fromPreciseAmount(123456L, 100, Euro, None)
+
+      errors.toList must be (List("fractionDigits must be <= 20."))
+    }
+
+    it("should validate centAmount") {
+      val Invalid(errors) = HighPrecisionMoney.fromPreciseAmount(123456L, 4, Euro, Some(1))
+
+      errors.toList must be (List("centAmount must be correctly rounded preciseAmount (a number between 1234 and 1235)."))
     }
   }
 }
