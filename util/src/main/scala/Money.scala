@@ -502,11 +502,11 @@ object HighPrecisionMoney {
   private def validateCentAmount(amount: BigDecimal, centAmount: Option[Long], currency: Currency): ValidatedNel[String, Option[Long]] =
     centAmount match {
       case Some(actual) ⇒
-        val expected = roundToCents(amount, currency)(RoundingMode.FLOOR)
-        val diff = math.abs(actual - expected)
+        val min = roundToCents(amount, currency)(RoundingMode.FLOOR)
+        val max = roundToCents(amount, currency)(RoundingMode.CEILING)
 
-        if (diff > 2)
-          s"centAmount must be floor-rounded preciseAmount +/- 2 (${expected - 2} - ${expected + 2}).".invalidNel
+        if (actual < min || actual > max)
+          s"centAmount must be correctly rounded preciseAmount (a number between $min and $max).".invalidNel
         else
           centAmount.validNel
 

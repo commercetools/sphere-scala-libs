@@ -142,7 +142,7 @@ class HighPrecisionMoneySpec extends FunSpec with MustMatchers {
     it("should validate centAmount") {
       val Invalid(errors) = HighPrecisionMoney.fromPreciseAmount(123456L, 4, Euro, Some(1))
 
-      errors.toList must be (List("centAmount must be floor-rounded preciseAmount +/- 2 (1232 - 1236)."))
+      errors.toList must be (List("centAmount must be correctly rounded preciseAmount (a number between 1234 and 1235)."))
     }
   }
 }
