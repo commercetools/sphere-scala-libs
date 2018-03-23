@@ -1,6 +1,7 @@
 ## 0.9.7-SNAPSHOT
 
 * update cats to [`1.1.0`](https://github.com/typelevel/cats/releases/tag/v1.1.0)
+* update scala-logging to [`3.8.0`](https://github.com/lightbend/scala-logging/compare/17675ec78992e277e8aeda476ae0da3888c1b40a...44807e24739b3019b1a93b17d79f3f15084c159d)
 
 ## 0.9.6 (2018-03-22)
 
