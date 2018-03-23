@@ -1,5 +1,8 @@
-## 0.9.7-SNAPSHOT
+## 0.9.8-SNAPSHOT
 
+## 0.9.7 (2018-03-23)
+
+* json and mongo formats performance optimization
 * update cats to [`1.1.0`](https://github.com/typelevel/cats/releases/tag/v1.1.0)
 * update scala-logging to [`3.8.0`](https://github.com/lightbend/scala-logging/compare/17675ec78992e277e8aeda476ae0da3888c1b40a...44807e24739b3019b1a93b17d79f3f15084c159d)
 * update `joda-convert` to [`2.0.1`](http://www.joda.org/joda-convert/changes-report.html#a2.0.1)
