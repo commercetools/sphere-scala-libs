@@ -1,13 +1,11 @@
 package io.sphere.json
 
-import scala.collection.breakOut
 import scala.util.control.NonFatal
 import java.util.{Currency, Locale, UUID}
 
 import cats.data.NonEmptyList
 import cats.data.Validated.{Invalid, Valid}
 import cats.instances.list._
-import cats.instances.vector._
 import cats.syntax.apply._
 import cats.syntax.traverse._
 import io.sphere.util.{BaseMoney, HighPrecisionMoney, LangTag, Money}
@@ -16,7 +14,7 @@ import org.joda.time._
 import org.joda.time.format.ISODateTimeFormat
 
 /** Type class for types that can be read from JSON. */
-trait FromJSON[A] {
+trait FromJSON[@specialized A] {
   def read(jval: JValue): JValidation[A]
   final protected def fail(msg: String) = jsonParseError(msg)
   /** needed JSON fields - ignored if empty */
@@ -25,7 +23,7 @@ trait FromJSON[A] {
 
 object FromJSON {
 
-  implicit def optionReader[A](implicit c: FromJSON[A]): FromJSON[Option[A]] = new FromJSON[Option[A]] {
+  implicit def optionReader[@specialized A](implicit c: FromJSON[A]): FromJSON[Option[A]] = new FromJSON[Option[A]] {
     def read(jval: JValue): JValidation[Option[A]] = jval match {
       case JNothing | JNull | JObject(Nil) => Valid(None)
       case JObject(s) if fields.nonEmpty && s.forall(t ⇒ !fields.contains(t._1)) ⇒ Valid(None) // if none of the optional fields are in the JSON
@@ -34,7 +32,7 @@ object FromJSON {
     override val fields = c.fields
   }
 
-  implicit def listReader[A](implicit r: FromJSON[A]): FromJSON[List[A]] = new FromJSON[List[A]] {
+  implicit def listReader[@specialized A](implicit r: FromJSON[A]): FromJSON[List[A]] = new FromJSON[List[A]] {
     import scala.collection.mutable.ListBuffer
 
     def read(jval: JValue): JValidation[List[A]] = jval match {
@@ -54,21 +52,21 @@ object FromJSON {
     }
   }
 
-  implicit def seqReader[A](implicit r: FromJSON[A]): FromJSON[Seq[A]] = new FromJSON[Seq[A]] {
+  implicit def seqReader[@specialized A](implicit r: FromJSON[A]): FromJSON[Seq[A]] = new FromJSON[Seq[A]] {
     def read(jval: JValue): JValidation[Seq[A]] = jval match {
       case JArray(l) => l.traverse[JValidation, A](r.read)
       case _ => fail("JSON Array expected.")
     }
   }
 
-  implicit def setReader[A](implicit r: FromJSON[A]): FromJSON[Set[A]] = new FromJSON[Set[A]] {
+  implicit def setReader[@specialized A](implicit r: FromJSON[A]): FromJSON[Set[A]] = new FromJSON[Set[A]] {
     def read(jval: JValue): JValidation[Set[A]] = jval match {
       case JArray(l) => l.traverse[JValidation, A](r.read).map(Set(_:_*))
       case _ => fail("JSON Array expected.")
     }
   }
 
-  implicit def vectorReader[A](implicit r: FromJSON[A]): FromJSON[Vector[A]] = new FromJSON[Vector[A]] {
+  implicit def vectorReader[@specialized A](implicit r: FromJSON[A]): FromJSON[Vector[A]] = new FromJSON[Vector[A]] {
     import scala.collection.immutable.VectorBuilder
 
     def read(jval: JValue): JValidation[Vector[A]] = jval match {
