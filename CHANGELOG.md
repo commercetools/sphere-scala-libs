@@ -1,3 +1,7 @@
+## 0.9.7-SNAPSHOT
+
+* update cats to [`1.1.0`](https://github.com/typelevel/cats/releases/tag/v1.1.0)
+
 ## 0.9.6 (2018-03-22)
 
 * Added `HighPrecisionMoney` decoding validations for `fractionDigits` and `centAmount`
