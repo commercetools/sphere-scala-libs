@@ -4,7 +4,7 @@ import com.mongodb.DBObject
 
 
 /** Typeclass for types with a MongoDB (Java driver) format. */
-trait MongoFormat[A] {
+trait MongoFormat[@specialized A] {
   def toMongoValue(a: A): Any
   def fromMongoValue(any: Any): A
   def default: Option[A] = None

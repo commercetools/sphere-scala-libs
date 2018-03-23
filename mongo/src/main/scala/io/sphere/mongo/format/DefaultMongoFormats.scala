@@ -43,7 +43,7 @@ trait DefaultMongoFormats {
   implicit val booleanFormat: MongoFormat[Boolean] = new NativeMongoFormat[Boolean]
   implicit val patternFormat: MongoFormat[Pattern] = new NativeMongoFormat[Pattern]
 
-  implicit def optionFormat[A](implicit f: MongoFormat[A]): MongoFormat[Option[A]] = new MongoFormat[Option[A]] {
+  implicit def optionFormat[@specialized A](implicit f: MongoFormat[A]): MongoFormat[Option[A]] = new MongoFormat[Option[A]] {
     override def toMongoValue(a: Option[A]) = a match {
       case Some(aa) => f.toMongoValue(aa)
       case None => MongoNothing
@@ -55,7 +55,7 @@ trait DefaultMongoFormats {
     override def default: Option[Option[A]] = Some(None)
   }
 
-  implicit def vecFormat[A](implicit f: MongoFormat[A]): MongoFormat[Vector[A]] = new MongoFormat[Vector[A]] {
+  implicit def vecFormat[@specialized A](implicit f: MongoFormat[A]): MongoFormat[Vector[A]] = new MongoFormat[Vector[A]] {
     import scala.collection.JavaConverters._
     override def toMongoValue(a: Vector[A]) = {
       val m = new BasicDBList()
@@ -72,7 +72,7 @@ trait DefaultMongoFormats {
     }
   }
 
-  implicit def listFormat[A](implicit f: MongoFormat[A]): MongoFormat[List[A]] = new MongoFormat[List[A]] {
+  implicit def listFormat[@specialized A](implicit f: MongoFormat[A]): MongoFormat[List[A]] = new MongoFormat[List[A]] {
     import scala.collection.JavaConverters._
     override def toMongoValue(a: List[A]) = {
       val m = new BasicDBList()
@@ -89,7 +89,7 @@ trait DefaultMongoFormats {
     }
   }
 
-  implicit def setFormat[A](implicit f: MongoFormat[A]): MongoFormat[Set[A]] = new MongoFormat[Set[A]] {
+  implicit def setFormat[@specialized A](implicit f: MongoFormat[A]): MongoFormat[Set[A]] = new MongoFormat[Set[A]] {
     import scala.collection.JavaConverters._
     override def toMongoValue(a: Set[A]) = {
       val m = new BasicDBList()
