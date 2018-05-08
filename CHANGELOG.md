@@ -1,4 +1,8 @@
-## 0.9.8-SNAPSHOT
+## 0.9.9-SNAPSHOT
+
+## 0.9.8 (2018-05-08)
+
+* increase limit to allow more subclasses for `deriveJSON[X]`.
 
 ## 0.9.7 (2018-03-23)
 
