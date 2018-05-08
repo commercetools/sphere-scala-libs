@@ -226,7 +226,7 @@ package object generic {
     }
   }
 
-  <#list 3..80 as i>
+  <#list 3..84 as i>
   <#assign typeParams><#list 1..i-1 as j>A${j}<#if i-1 != j>,</#if></#list></#assign>
   <#assign implTypeParams><#list 1..i as j>A${j} <: T : FromJSON : ToJSON : ClassTag<#if i !=j>,</#if></#list></#assign>
   def jsonTypeSwitch[T: ClassTag, ${implTypeParams}](selectors: List[TypeSelector[_]]): JSON[T] with TypeSelectorContainer = jsonTypeSwitch[T, ${typeParams}](typeSelector[A${i}] :: selectors)
