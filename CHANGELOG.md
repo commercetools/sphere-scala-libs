@@ -1,5 +1,7 @@
 ## 0.9.9-SNAPSHOT
 
+* update Scala to 2.12.6
+
 ## 0.9.8 (2018-05-08)
 
 * increase limit to allow more subclasses for `deriveJSON[X]`.

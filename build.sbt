@@ -10,8 +10,8 @@ lazy val publishSettings = Seq(
 
 lazy val standardSettings = Defaults.coreDefaultSettings ++ publishSettings ++ Seq(
   organization := "io.sphere",
-  scalaVersion := "2.12.4",
-  crossScalaVersions := Seq("2.11.11", "2.12.4"),
+  scalaVersion := "2.12.6",
+  crossScalaVersions := Seq("2.11.12", "2.12.6"),
   licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html")),
   logBuffered := false,
   scalacOptions ++= Seq(
