@@ -3,6 +3,7 @@
 * update Scala to `2.12.6`
 * update scala-logging to [`3.9.0`](https://github.com/lightbend/scala-logging#390)
 * update jackson-databind to `2.9.5`
+* update mongodb-driver to [`3.7.0`](https://github.com/mongodb/mongo-java-driver/releases/tag/r3.7.0)
 
 ## 0.9.8 (2018-05-08)
 
