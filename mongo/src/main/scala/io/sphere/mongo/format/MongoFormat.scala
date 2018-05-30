@@ -12,7 +12,7 @@ trait MongoFormat[@specialized A] {
 
 object MongoFormat {
 
-  @inline def apply[A](implicit format: MongoFormat[A]): MongoFormat[A] = format
+  @inline def apply[A](implicit instance: MongoFormat[A]): MongoFormat[A] = instance
 
   /** Puts `value` under `name` into the given `DBObject`, thereby requiring and applying
     * a MongoFormat for the value type `A`. If ''value'' is ''None'' it is (intentionally) ignored.

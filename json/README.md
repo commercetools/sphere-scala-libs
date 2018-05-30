@@ -88,7 +88,7 @@ It can be used in an implementation of `read` as follows:
     }
   }
 
-## using `ToJSON.apply`
+## using `ToJSON.instance`
 
 ```
 import java.util.UUID
@@ -97,7 +97,7 @@ case class User(id: UUID, firstName: String, age: Int)
 
 import io.sphere.json._
 
-implicit val encodeUser: ToJSON[User] = ToJSON[User](u ⇒ JObject(List(
+implicit val encodeUser: ToJSON[User] = ToJSON.instance[User](u ⇒ JObject(List(
   "id" → toJValue(u.id),
   "first_name" → toJValue(u.firstName),
   "age" → toJValue(u.age)

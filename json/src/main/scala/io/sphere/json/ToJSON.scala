@@ -19,7 +19,12 @@ class JSONWriteException(msg: String) extends JSONException(msg)
 
 object ToJSON {
 
-  def apply[T](toJson: T ⇒ JValue): ToJSON[T] = new ToJSON[T] {
+  @inline def apply[A](implicit instance: ToJSON[A]): ToJSON[A] = instance
+
+  /**
+    * construct an instance from a function
+    */
+  def instance[T](toJson: T ⇒ JValue): ToJSON[T] = new ToJSON[T] {
     override def write(value: T): JValue = toJson(value)
   }
 

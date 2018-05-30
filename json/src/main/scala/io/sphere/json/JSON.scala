@@ -3,7 +3,7 @@ package io.sphere.json
 trait JSON[A] extends FromJSON[A] with ToJSON[A]
 
 object JSON {
-  def apply[A](implicit json: JSON[A]): JSON[A] = json
+  @inline def apply[A](implicit instance: JSON[A]): JSON[A] = instance
 }
 
 class JSONException(msg: String) extends RuntimeException(msg)

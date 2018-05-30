@@ -23,6 +23,8 @@ trait FromJSON[@specialized A] {
 
 object FromJSON {
 
+  @inline def apply[A](implicit instance: FromJSON[A]): FromJSON[A] = instance
+
   implicit def optionReader[@specialized A](implicit c: FromJSON[A]): FromJSON[Option[A]] = new FromJSON[Option[A]] {
     def read(jval: JValue): JValidation[Option[A]] = jval match {
       case JNothing | JNull | JObject(Nil) => Valid(None)
