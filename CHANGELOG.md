@@ -1,4 +1,6 @@
-## 0.9.9-SNAPSHOT
+## 0.9.10-SNAPSHOT
+
+## 0.9.9 (2018-05-30)
 
 * update Scala to `2.12.6`
 * update scala-logging to [`3.9.0`](https://github.com/lightbend/scala-logging#390)
