@@ -311,4 +311,13 @@ object FromJSON {
       case _ => fail("JSON string expected.")
     }
   }
+
+  implicit def eitherReader[A, B](implicit aReader: FromJSON[A], bReader: FromJSON[B]): FromJSON[Either[A, B]] = new FromJSON[Either[A, B]] {
+    def read(jval: JValue): JValidation[Either[A, B]] = (aReader.read(jval), bReader.read(jval)) match {
+      case (Valid(_), Valid(_)) => fail("Can not determine which side of the either is to be used. Both sides accept the JSON. Ensure that parsing is deterministic.")
+      case (Valid(a), _) => Valid(Left(a))
+      case (_, Valid(b)) => Valid(Right(b))
+      case (Invalid(a), Invalid(b)) => Invalid(JSONParseError("Neither Left or Right side of Either can be parsed successfully.") :: a ::: b)
+    }
+  }
 }

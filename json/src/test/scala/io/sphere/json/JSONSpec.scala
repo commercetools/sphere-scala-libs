@@ -1,7 +1,7 @@
 package io.sphere.json
 
 import cats.data.Validated.{Invalid, Valid}
-import cats.data.ValidatedNel
+import cats.data.{NonEmptyList, ValidatedNel}
 import cats.syntax.apply._
 import org.json4s.JsonAST._
 import io.sphere.json.generic._
@@ -37,6 +37,9 @@ object JSONSpec {
   object ScalaEnum extends Enumeration {
     val One, Two, Three = Value
   }
+
+  case class WithEither1(e: Either[Animal, Project])
+  case class WithEither2(e: Either[Dog, Cat])
 
   // case class Node(value: Option[List[Node]]) // JSON instances for recursive data types cannot be derived
 }
@@ -198,6 +201,40 @@ class JSONSpec extends FunSpec with MustMatchers {
           }
         })
 
+    }
+
+    it("must handle Eithers correctly if JSON is distinct") {
+      implicit val jsonAnimal = deriveJSON[Animal]
+      implicit val jsonMilestone = jsonProduct(Milestone.apply _)
+      implicit val jsonProject = jsonProduct(Project.apply _)
+      implicit val json = jsonProduct(WithEither1.apply _)
+
+      val withAnimal = WithEither1(Left(Dog("Hasso")))
+      val withProject = WithEither1(Right(Project(1, "my project")))
+      fromJSON[WithEither1](toJSON(withAnimal)) must equal (Valid(withAnimal))
+      fromJSON[WithEither1](toJSON(withProject)) must equal (Valid(withProject))
+    }
+
+    it("must not handle Eithers when the JSON is not distinct between both sides") {
+      implicit val jsonDog = deriveJSON[Dog]
+      implicit val jsonCat = deriveJSON[Cat]
+      implicit val json = jsonProduct(WithEither2.apply _)
+
+      val withDog = WithEither2(Left(Dog("Hasso")))
+      val Invalid(err) = fromJSON[WithEither2](toJSON(withDog))
+      err.toList mustEqual List(JSONFieldError(List("e"), "Can not determine which side of the either is to be used. Both sides accept the JSON. Ensure that parsing is deterministic."))
+    }
+
+    it("must give complete errors if no side of Either accepts JSON") {
+      implicit val jsonAnimal = deriveJSON[Animal]
+      implicit val jsonMilestone = jsonProduct(Milestone.apply _)
+      implicit val jsonProject = jsonProduct(Project.apply _)
+      implicit val json = jsonProduct(WithEither1.apply _)
+
+      val Invalid(err) = fromJSON[WithEither1]("""{ "e": { "foo": "bar" } }""")
+      val errList = err.toList
+      errList.head mustEqual JSONFieldError(List("e"), "Neither Left or Right side of Either can be parsed successfully.")
+      errList.size must be(4)
     }
 
   }
