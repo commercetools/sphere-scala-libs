@@ -1,5 +1,7 @@
 ## 0.9.11-SNAPSHOT
 
+* sphere-mongo depends on `mongodb-driver-core` instead of `mongodb-driver` to let the user decide to use whether the sync or the `mongodb-driver-async` driver.
+
 ## 0.9.10 (2018-06-01)
 
 * update Scala to `2.12.6`
