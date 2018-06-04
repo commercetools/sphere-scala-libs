@@ -1,4 +1,4 @@
-## 0.9.11-SNAPSHOT
+## 0.9.11 (2019-06-04)
 
 * sphere-mongo depends on `mongodb-driver-core` instead of `mongodb-driver` to let the user decide to use whether the sync or the `mongodb-driver-async` driver.
 
