@@ -1,3 +1,7 @@
+## 0.9.12 (2019-06-05)
+
+* Added derive functions for `ToJSON` and `FromJSON`. E.g. in addition to `jsonProduct`, there is now also `toJsonProduct` and `fromJsonProduct`.
+
 ## 0.9.11 (2019-06-04)
 
 * sphere-mongo depends on `mongodb-driver-core` instead of `mongodb-driver` to let the user decide to use whether the sync or the `mongodb-driver-async` driver.
