@@ -126,7 +126,7 @@ package object generic {
 
   <#list 1..22 as i>
   <#assign typeParams><#list 1..i as j>A${j}<#if i !=j>,</#if></#list></#assign>
-  <#assign implTypeParams><#list 1..i as j>A${j} : FromJSON : ToJSON<#if i !=j>,</#if></#list></#assign>
+  <#assign implTypeParams><#list 1..i as j>A${j} : ToJSON<#if i !=j>,</#if></#list></#assign>
   /** Creates a `ToJSON[T]` instance for a product type (case class) `T` of arity ${i}. */
   def toJsonProduct[T <: Product: ClassTag, ${implTypeParams}](
     construct: (<#list 1..i as j>A${j}<#if i !=j>, </#if></#list>) => T
@@ -148,7 +148,7 @@ package object generic {
 
   <#list 1..22 as i>
   <#assign typeParams><#list 1..i as j>A${j}<#if i !=j>,</#if></#list></#assign>
-  <#assign implTypeParams><#list 1..i as j>A${j} : FromJSON : ToJSON<#if i !=j>,</#if></#list></#assign>
+  <#assign implTypeParams><#list 1..i as j>A${j} : FromJSON<#if i !=j>,</#if></#list></#assign>
   /** Creates a `FromJSON[T]` instance for a product type (case class) `T` of arity ${i}. */
   def fromJsonProduct[T <: Product: ClassTag, ${implTypeParams}](
     construct: (<#list 1..i as j>A${j}<#if i !=j>, </#if></#list>) => T
