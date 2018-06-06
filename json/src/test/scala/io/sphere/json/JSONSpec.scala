@@ -312,6 +312,19 @@ class JSONSpec extends FunSpec with MustMatchers {
       })
 
     }
+
+    it("must provide derived JSON instances for product types (case classes)") {
+      import JSONSpec.{ Project, Milestone }
+      // ToJSON
+      implicit val milestoneToJSON = toJsonProduct(Milestone.apply _)
+      implicit val projectToJSON = toJsonProduct(Project.apply _)
+      // FromJSON
+      implicit val milestoneFromJSON = fromJsonProduct(Milestone.apply _)
+      implicit val projectFromJSON = fromJsonProduct(Project.apply _)
+
+      val proj = Project(42, "Linux", 7, Milestone("1.0") :: Milestone("2.0") :: Milestone("3.0") :: Nil)
+      fromJSON[Project](toJSON(proj)) must equal (Valid(proj))
+    }
   }
 }
 
