@@ -1,3 +1,7 @@
+## 0.9.13 (2019-06-06)
+
+* Fix a bug in the new derive functions introduced in 0.9.12.
+
 ## 0.9.12 (2019-06-05)
 
 * Added derive functions for `ToJSON` and `FromJSON`. E.g. in addition to `jsonProduct`, there is now also `toJsonProduct` and `fromJsonProduct`.
