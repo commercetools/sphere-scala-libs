@@ -58,8 +58,12 @@ lazy val `sphere-json` = project.in(file("./json"))
         files.map {  f  => {
             val path = f.relativeTo(base).get.getPath
             val pathWithoutFmpp = path.replaceAll("\\.fmpp(\\.[^\\.]+)$", "$1")
+            // eliminate main/scala or main/java folder path in jar sources
 
-            (f, pathWithoutFmpp)
+            val withoutSbtPath =
+              pathWithoutFmpp.replaceAll("^main/scala/","").replaceAll("^main/java/","")
+            println(s"$path -> $withoutSbtPath")
+            (f, withoutSbtPath)
           }
         }
 
