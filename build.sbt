@@ -47,6 +47,25 @@ lazy val `sphere-util` = project.in(file("./util"))
 lazy val `sphere-json` = project.in(file("./json"))
   .settings(standardSettings: _*)
   .settings(Fmpp.settings: _*)
+  .settings(
+
+    mappings in (Compile, packageSrc) := {
+      val base  = (sourceManaged in Compile).value
+      val files = (managedSources in Compile).value
+
+      // pick managed sources only
+      val collected =
+        files.map {  f  => {
+            val path = f.relativeTo(base).get.getPath
+            val pathWithoutFmpp = path.replaceAll("\\.fmpp(\\.[^\\.]+)$", "$1")
+
+            (f, pathWithoutFmpp)
+          }
+        }
+
+      collected
+    }
+  )
   .settings(homepage := Some(url("https://github.com/sphereio/sphere-scala-libs/blob/master/json/README.md")))
   .dependsOn(`sphere-util`)
 
