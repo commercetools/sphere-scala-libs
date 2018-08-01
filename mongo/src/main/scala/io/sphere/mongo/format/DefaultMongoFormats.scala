@@ -6,7 +6,9 @@ import java.util.regex.Pattern
 import com.mongodb.BasicDBList
 import org.bson.types.ObjectId
 
-object DefaultMongoFormats extends DefaultMongoFormats
+object DefaultMongoFormats extends DefaultMongoFormats {
+  val someNone = Some(None)
+}
 
 // Represents an absent value for a field that should be not serialized.
 private [mongo] object MongoNothing
@@ -52,7 +54,7 @@ trait DefaultMongoFormats {
       Option(any).map(f.fromMongoValue)
     }
 
-    override def default: Option[Option[A]] = Some(None)
+    override def default: Option[Option[A]] = DefaultMongoFormats.someNone
   }
 
   implicit def vecFormat[@specialized A](implicit f: MongoFormat[A]): MongoFormat[Vector[A]] = new MongoFormat[Vector[A]] {
