@@ -20,7 +20,6 @@ private[generic] object JSONMacros {
   def jsonProductApply(c: blackbox.Context)(tpe: c.universe.Type, classSym: c.universe.ClassSymbol): c.universe.Tree = {
     import c.universe._
 
-    val symbol = tpe.typeSymbol
     val argList = classSym.toType.member(termNames.CONSTRUCTOR).asMethod.paramLists.head
 
     val (argDefs, args) = (for ((a, i) <- argList.zipWithIndex) yield {
@@ -30,7 +29,7 @@ private[generic] object JSONMacros {
     }).unzip
 
     if (classSym.isCaseClass && !classSym.isModuleClass) {
-      val applyBlock = Block(List(), Function(
+      val applyBlock = Block(Nil, Function(
         argDefs,
         Apply(Select(Ident(classSym.companion), TermName("apply")), args)
       ))
@@ -39,7 +38,7 @@ private[generic] object JSONMacros {
           reify(io.sphere.json.generic.`package`).tree,
           TermName("jsonProduct")
         ),
-        List(applyBlock)
+        applyBlock :: Nil
       )
     } else if (classSym.isCaseClass && classSym.isModuleClass) {
       Apply(
@@ -47,7 +46,7 @@ private[generic] object JSONMacros {
           reify(io.sphere.json.generic.`package`).tree,
           TermName("jsonProduct0")
         ),
-        List(Ident(classSym.name.toTermName))
+        Ident(classSym.name.toTermName) :: Nil
       )
     } else if (classSym.isModuleClass) {
       Apply(
@@ -55,7 +54,7 @@ private[generic] object JSONMacros {
           reify(io.sphere.json.generic.`package`).tree,
           TermName("jsonSingleton")
         ),
-        List(Ident(classSym.name.toTermName))
+        Ident(classSym.name.toTermName) :: Nil
       )
     } else c.abort(c.enclosingPosition, "Not a case class or (case) object")
   }
@@ -73,7 +72,7 @@ private[generic] object JSONMacros {
             reify(io.sphere.json.generic.`package`).tree,
             TermName("jsonSingleton")
           ),
-          List(Ident(classSym.name.toTermName))
+          Ident(classSym.name.toTermName) :: Nil
         )
       } else c.abort(c.enclosingPosition, "Only case Objects are supported.")
 
@@ -101,7 +100,7 @@ private[generic] object JSONMacros {
                 TermName("json" + i),
                 AppliedTypeTree(
                   Ident(TypeName("JSON")),
-                  List(Ident(symbol))
+                  Ident(symbol) :: Nil
                 ),
                 singletonTree(symbol.asClass)
               )
@@ -119,7 +118,7 @@ private[generic] object JSONMacros {
                 ),
                 idents
               ),
-              List(reify(Nil).tree)
+              reify(Nil).tree :: Nil
             )
           )
         )
@@ -140,7 +139,7 @@ private[generic] object JSONMacros {
           reify(io.sphere.json.generic.`package`).tree,
           TermName("jsonEnum")
         ),
-        List(Ident(pre.typeSymbol.name.toTermName))
+        Ident(pre.typeSymbol.name.toTermName) :: Nil
       ))
     } else if (symbol.isClass && (symbol.asClass.isCaseClass || symbol.asClass.isModuleClass))
       // product type or singleton
@@ -174,7 +173,7 @@ private[generic] object JSONMacros {
                   TermName("json" + i),
                   AppliedTypeTree(
                     Ident(TypeName("JSON")),
-                    List(Ident(symbol))
+                    Ident(symbol) :: Nil
                   ),
                   jsonProductApply(c)(tpe, symbol.asClass)
                 )
@@ -192,7 +191,7 @@ private[generic] object JSONMacros {
                   ),
                   idents
                 ),
-                List(reify(Nil).tree)
+                reify(Nil).tree :: Nil
               )
             )
           )
