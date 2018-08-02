@@ -9,9 +9,7 @@ object ToJSONProduct {
   ): ToJSON[A] = new ToJSON[A] {
     override def write(a: A): JValue = {
       val t = f(a)
-      JObject(List(
-        t._1 -> toJValue(t._2)
-      ))
+      JObject((t._1 -> toJValue(t._2)) :: Nil)
     }
   }
 

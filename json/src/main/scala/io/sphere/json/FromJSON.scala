@@ -25,10 +25,12 @@ object FromJSON {
 
   @inline def apply[A](implicit instance: FromJSON[A]): FromJSON[A] = instance
 
+  private val validNone = Valid(None)
+
   implicit def optionReader[@specialized A](implicit c: FromJSON[A]): FromJSON[Option[A]] = new FromJSON[Option[A]] {
     def read(jval: JValue): JValidation[Option[A]] = jval match {
-      case JNothing | JNull | JObject(Nil) => Valid(None)
-      case JObject(s) if fields.nonEmpty && s.forall(t ⇒ !fields.contains(t._1)) ⇒ Valid(None) // if none of the optional fields are in the JSON
+      case JNothing | JNull | JObject(Nil) => validNone
+      case JObject(s) if fields.nonEmpty && s.forall(t ⇒ !fields.contains(t._1)) ⇒ validNone // if none of the optional fields are in the JSON
       case x => c.read(x).map(Option.apply)
     }
     override val fields = c.fields
@@ -240,9 +242,11 @@ object FromJSON {
     }
   }
 
+  private val validUnit = Valid(())
+
   implicit val unitReader: FromJSON[Unit] = new FromJSON[Unit] {
     def read(jval: JValue): JValidation[Unit] = jval match {
-      case JNothing | JNull | JObject(Nil) => Valid(())
+      case JNothing | JNull | JObject(Nil) => validUnit
       case _ => fail("Unexpected JSON")
     }
   }
