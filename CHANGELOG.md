@@ -1,4 +1,4 @@
-## 0.9.14 (2019-08-02)
+## 0.9.14 (2018-08-02)
 
 * update `cats` to [`1.2.0`](https://github.com/typelevel/cats/releases/tag/v1.2.0)
 * update `joda` to [`2.10`](http://www.joda.org/joda-time/changes-report.html#a2.10)
@@ -7,15 +7,15 @@
 * update `jackson-databind` to `2.9.6`
 * update `json4s-jackson` to [`3.6.0`](https://github.com/json4s/json4s/compare/v3.5.3...v3.6.0)
 
-## 0.9.13 (2019-06-06)
+## 0.9.13 (2018-06-06)
 
 * Fix a bug in the new derive functions introduced in 0.9.12.
 
-## 0.9.12 (2019-06-05)
+## 0.9.12 (2018-06-05)
 
 * Added derive functions for `ToJSON` and `FromJSON`. E.g. in addition to `jsonProduct`, there is now also `toJsonProduct` and `fromJsonProduct`.
 
-## 0.9.11 (2019-06-04)
+## 0.9.11 (2018-06-04)
 
 * sphere-mongo depends on `mongodb-driver-core` instead of `mongodb-driver` to let the user decide to use whether the sync or the `mongodb-driver-async` driver.
 
