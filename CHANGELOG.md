@@ -1,9 +1,9 @@
 ## 0.9.14 (2019-08-02)
 
-* update cats to [`1.2.0`](https://github.com/typelevel/cats/releases/tag/v1.2.0)
+* update `cats` to [`1.2.0`](https://github.com/typelevel/cats/releases/tag/v1.2.0)
 * update `joda` to [`2.10`](http://www.joda.org/joda-time/changes-report.html#a2.10)
 * update `joda-convert` to [`2.1.1`](http://www.joda.org/joda-convert/changes-report.html#a2.1.1)
-* update mongodb-driver to [`3.8.0`](https://github.com/mongodb/mongo-java-driver/releases/tag/r3.8.0)
+* update `mongodb-driver` to [`3.8.0`](https://github.com/mongodb/mongo-java-driver/releases/tag/r3.8.0)
 * update `jackson-databind` to `2.9.6`
 * update `json4s-jackson` to [`3.6.0`](https://github.com/json4s/json4s/compare/v3.5.3...v3.6.0)
 
