@@ -9,11 +9,11 @@
 
 ## 0.9.13 (2018-06-06)
 
-* Fix a bug in the new derive functions introduced in 0.9.12.
+* Fix a bug in the new derive functions introduced in 0.9.12. [40](https://github.com/sphereio/sphere-scala-libs/pull/40)
 
 ## 0.9.12 (2018-06-05)
 
-* Added derive functions for `ToJSON` and `FromJSON`. E.g. in addition to `jsonProduct`, there is now also `toJsonProduct` and `fromJsonProduct`.
+* Added derive functions for `ToJSON` and `FromJSON`. E.g. in addition to `jsonProduct`, there is now also `toJsonProduct` and `fromJsonProduct`. [39](https://github.com/sphereio/sphere-scala-libs/pull/39)
 
 ## 0.9.11 (2018-06-04)
 
