@@ -1,4 +1,4 @@
-val catsVersion = "1.2.0"
+val catsVersion = "1.3.1"
 
 libraryDependencies ++= Seq(
   "com.typesafe.scala-logging"  %% "scala-logging"  % "3.9.0",
