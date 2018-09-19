@@ -1,3 +1,7 @@
+## master
+
+* update `jackson-databind` from `2.9.6` to `2.9.7`. [50](https://github.com/sphereio/sphere-scala-libs/pull/50)
+
 ## 0.9.14 (2018-08-02)
 
 * update `cats` to [`1.2.0`](https://github.com/typelevel/cats/releases/tag/v1.2.0)
