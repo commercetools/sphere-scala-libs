@@ -2,7 +2,7 @@
 addSbtPlugin("org.foundweekends" % "sbt-bintray" % "0.5.4")
 
 // https://github.com/sbt/sbt-release/releases
-addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.8")
+addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.9")
 
 // https://github.com/sbt/sbt-boilerplate/releases
 addSbtPlugin("io.spray" % "sbt-boilerplate" % "0.6.1")
