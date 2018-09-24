@@ -27,6 +27,17 @@ object JSONEmbeddedSpec {
     implicit val json: JSON[Test2] = jsonProduct(apply _)
   }
 
+  case class Test3(
+    name:String,
+    @JSONEmbedded
+    // @io.sphere.json.annotations.JSONEmbedded()
+    embedded: Embedded
+  )
+
+  object Test3 {
+    implicit val json: JSON[Test3] = jsonProduct(apply _)
+  }
+
 }
 
 class JSONEmbeddedSpec extends WordSpec with MustMatchers with OptionValues {
@@ -75,6 +86,23 @@ class JSONEmbeddedSpec extends WordSpec with MustMatchers with OptionValues {
       test2.embedded.value.value2 mustEqual 45
 
       val result = toJSON(test2)
+      parseJSON(result) mustEqual parseJSON(json)
+    }
+
+    "support embedded attribute with java annotation" in {
+      val json =
+        """{
+          |  "name": "ze name",
+          |  "value1": "ze value1",
+          |  "value2": 45
+          |}
+        """.stripMargin
+      val test3 = getFromJSON[Test3](json)
+      test3.name mustEqual "ze name"
+      test3.embedded.value1 mustEqual "ze value1"
+      test3.embedded.value2 mustEqual 45
+
+      val result = toJSON(test3)
       parseJSON(result) mustEqual parseJSON(json)
     }
 
