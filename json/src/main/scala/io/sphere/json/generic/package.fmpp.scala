@@ -523,7 +523,7 @@ package object generic {
     Reflect.getCaseClassMeta(clazz).fields.map { fm =>
       val m = clazz.getDeclaredMethod(fm.name)
       val name = Option(m.getAnnotation(classOf[JSONKey])).map(_.value).getOrElse(fm.name)
-      val embedded = m.isAnnotationPresent(classOf[JSONEmbedded])
+      val embedded = m.isAnnotationPresent(classOf[JSONEmbedded]) || m.isAnnotationPresent(classOf[io.sphere.json.annotations.JSONEmbedded])
       val ignored = m.isAnnotationPresent(classOf[JSONIgnore])
       if (ignored && fm.default.isEmpty) {
         // programmer error
