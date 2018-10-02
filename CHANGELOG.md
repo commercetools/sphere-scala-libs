@@ -1,5 +1,8 @@
 ## master
 
+
+## 0.9.15 (2018-10-02)
+
 * update `jackson-databind` from `2.9.6` to `2.9.7`. [50](https://github.com/sphereio/sphere-scala-libs/pull/50)
 * update `cats` to [`1.4.0`](https://github.com/typelevel/cats/releases/tag/v1.4.0)
 * update `mongodb-driver` to [`3.8.2`](https://github.com/mongodb/mongo-java-driver/releases/tag/r3.8.2)
