@@ -1,6 +1,11 @@
 ## master
 
 * update `jackson-databind` from `2.9.6` to `2.9.7`. [50](https://github.com/sphereio/sphere-scala-libs/pull/50)
+* update `cats` to [`1.4.0`](https://github.com/typelevel/cats/releases/tag/v1.4.0)
+* update `mongodb-driver` to [`3.8.2`](https://github.com/mongodb/mongo-java-driver/releases/tag/r3.8.2)
+* update `json4s-jackson` to [`3.6.0`](https://github.com/json4s/json4s/compare/v3.6.0...v3.6.1)
+* update `scala` to `2.12.7`
+* fix to respect the java embedded annotation https://github.com/sphereio/sphere-scala-libs/pull/52
 
 ## 0.9.14 (2018-08-02)
 
