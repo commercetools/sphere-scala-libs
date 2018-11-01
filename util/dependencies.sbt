@@ -2,7 +2,7 @@ val catsVersion = "1.4.0"
 
 libraryDependencies ++= Seq(
   "com.typesafe.scala-logging"  %% "scala-logging"  % "3.9.0",
-  "joda-time"                   %  "joda-time"      % "2.10",
+  "joda-time"                   %  "joda-time"      % "2.10.1",
   "org.joda"                    %  "joda-convert"   % "2.1.1",
   "org.typelevel"               %% "cats-macros"    % catsVersion,
   "org.typelevel"               %% "cats-core"      % catsVersion,
