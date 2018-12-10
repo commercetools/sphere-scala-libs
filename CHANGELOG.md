@@ -1,5 +1,8 @@
 ## master
 
+## 0.9.16-SNAPSHOT
+
+* make value `log` of `Logging` protected. [60](https://github.com/sphereio/sphere-scala-libs/pull/60)
 
 ## 0.9.15 (2018-10-02)
 

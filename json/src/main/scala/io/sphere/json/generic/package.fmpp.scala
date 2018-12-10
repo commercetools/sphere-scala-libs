@@ -10,14 +10,14 @@ import scala.annotation.meta.getter
 import scala.collection.mutable.ListBuffer
 import scala.language.experimental.macros
 import scala.reflect.{ClassTag, classTag}
-import io.sphere.util.{Memoizer, Reflect}
+import io.sphere.util.{Logging, Memoizer, Reflect}
 import org.json4s.JsonAST._
 import org.json4s.jackson.compactJson
 import org.json4s.JsonDSL._
 
 /** The generic package provides generic functions for deriving JSON instances via
   * some runtime & compile-time reflection. */
-package object generic {
+package object generic extends Logging {
   // Type aliases for more convenient use of the annotations in Scala code
   type JSONEmbedded = io.sphere.json.annotations.JSONEmbedded @getter
   type JSONKey = io.sphere.json.annotations.JSONKey @getter
