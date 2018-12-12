@@ -3,6 +3,11 @@
 ## 0.9.16-SNAPSHOT
 
 * make value `log` of `Logging` protected. [60](https://github.com/sphereio/sphere-scala-libs/pull/60)
+* update Scala to `2.12.8`
+* update `cats` to [`1.5.0`](https://github.com/typelevel/cats/releases/tag/v1.5.0)
+* update `mongodb-driver` to [`3.9.1`](https://github.com/mongodb/mongo-java-driver/releases/tag/r3.9.1)
+* update `joda-convert` to [`2.1.2`](http://www.joda.org/joda-convert/changes-report.html#a2.1.2)
+* update `json4s-jackson` to [`3.6.6`](https://github.com/json4s/json4s/compare/v3.6.0...v3.6.2)
 
 ## 0.9.15 (2018-10-02)
 
