@@ -14,12 +14,12 @@ class JsonBenchmark {
   /* on local mac
   jmh:run -i 10 -wi 10 -f1 -t1
 
-Benchmark                                  Mode  Cnt   Score    Error  Units
-JsonBenchmark.listReader                  thrpt    5  67,389 ±  4,290  ops/s
-JsonBenchmark.parseFromStringToCaseClass  thrpt    5  11,803 ±  2,290  ops/s
-JsonBenchmark.parseFromStringToJValue     thrpt    5  82,132 ±  2,656  ops/s
-JsonBenchmark.serializeCaseClassToString  thrpt    5  38,549 ±  5,789  ops/s
-JsonBenchmark.vectorReader                thrpt    5  63,393 ± 17,100  ops/s
+Benchmark                                  Mode  Cnt   Score   Error  Units
+JsonBenchmark.listReader                  thrpt   10  67,842 ± 0,774  ops/s
+JsonBenchmark.parseFromStringToCaseClass  thrpt   10  13,368 ± 0,142  ops/s
+JsonBenchmark.parseFromStringToJValue     thrpt   10  80,702 ± 1,329  ops/s
+JsonBenchmark.serializeCaseClassToString  thrpt   10  40,573 ± 0,159  ops/s
+JsonBenchmark.vectorReader                thrpt   10  66,885 ± 1,478  ops/s
    */
 
   @Benchmark

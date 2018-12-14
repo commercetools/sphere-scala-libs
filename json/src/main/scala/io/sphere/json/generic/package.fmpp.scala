@@ -132,15 +132,23 @@ package object generic extends Logging {
     construct: (<#list 1..i as j>A${j}<#if i !=j>, </#if></#list>) => T
   ): ToJSON[T] = {
     val jsonClass = getJSONClass(classTag[T].runtimeClass)
+    val typeHintDefined = jsonClass.typeHint.isDefined
     val _fields = jsonClass.fields
+
     new ToJSON[T] {
       def write(r: T): JValue = {
-        val buf = new ListBuffer[JField]
-        if (jsonClass.typeHint.isDefined) writeTypeField(jsonClass, buf)
+        // use parallel CPU pipeline
         <#list 1..i as j>
-          writeField[A${j}](buf, _fields(${j-1}), r.productElement(${j-1}).asInstanceOf[A${j}])
+        val jvalue${j} = toJValue[A${j}](r.productElement(${j-1}).asInstanceOf[A${j}])
         </#list>
-        JObject(buf.toList)
+
+        var fields: List[JField] = Nil
+        if (typeHintDefined) fields = writeTypeField(jsonClass, fields)
+
+        <#list 1..i as j>
+        fields = writeField[A${j}](fields, _fields(${j - 1}), jvalue${j})
+        </#list>
+        JObject(fields)
       }
     }
   }
@@ -158,12 +166,12 @@ package object generic extends Logging {
     new FromJSON[T] {
       def read(jval: JValue): ValidatedNel[JSONError, T] = jval match {
         case o: JObject =>
-          (readField[A1](_fields.head, o)<#if i!=1>
-          <#list 2..i as j>
-      , readField[A${j}](_fields(${j-1}), o)
-      </#list>
-      </#if>
-      ).map<#if i!=1>N</#if>(construct)
+          // use parallel CPU pipeline
+          <#list 1..i as j>
+          val read${j} = readField[A${j}](_fields(${j - 1}), o)
+          </#list>
+
+          (read1<#if i!=1><#list 2..i as j>, read${j}</#list></#if>).map<#if i!=1>N</#if>(construct)
         case _ => jsonParseError("JSON object expected.")
       }
       override val fields = _fields.map(_.name).toSet
@@ -533,21 +541,23 @@ package object generic extends Logging {
     }
   }
 
-  private def writeField[A: ToJSON](buf: ListBuffer[JField], field: JSONFieldMeta, e: A) {
-    if (!field.ignored) {
+  private def writeField[A: ToJSON](current: List[JField], field: JSONFieldMeta, jvalue: JValue): List[JField] = {
+    if (field.ignored) current
+    else {
       if (field.embedded)
-        toJValue(e) match {
-          case o: JObject => buf ++= o.obj
-          case _ => // no update on buf
+        jvalue match {
+          case o: JObject => current ++ o.obj
+          case _ => current // no update
         }
       else
-        buf += JField(field.name, toJValue(e))
+        JField(field.name, jvalue) :: current
     }
   }
 
-  private def writeTypeField(jClass: JSONClassMeta, buf: ListBuffer[JField]): Unit =
-    jClass.typeHint foreach { th =>
-      buf += JField(th.field, JString(th.value))
+  private def writeTypeField(jClass: JSONClassMeta, current: List[JField]): List[JField] =
+    jClass.typeHint match {
+      case Some(th) ⇒ JField(th.field, JString(th.value)) :: current
+      case None ⇒ current
     }
 
   private def readField[A: FromJSON](f: JSONFieldMeta, o: JObject): JSONParseResult[A] = {
