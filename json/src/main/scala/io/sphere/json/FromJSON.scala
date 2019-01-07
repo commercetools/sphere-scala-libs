@@ -57,10 +57,7 @@ object FromJSON {
   }
 
   implicit def seqReader[@specialized A](implicit r: FromJSON[A]): FromJSON[Seq[A]] = new FromJSON[Seq[A]] {
-    def read(jval: JValue): JValidation[Seq[A]] = jval match {
-      case JArray(l) => l.traverse[JValidation, A](r.read)
-      case _ => fail("JSON Array expected.")
-    }
+    def read(jval: JValue): JValidation[Seq[A]] = listReader(r).read(jval)
   }
 
   implicit def setReader[@specialized A](implicit r: FromJSON[A]): FromJSON[Set[A]] = new FromJSON[Set[A]] {

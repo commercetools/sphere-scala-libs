@@ -15,12 +15,12 @@ class JsonBenchmark {
   jmh:run -i 10 -wi 10 -f1 -t1
 
 Benchmark                                  Mode  Cnt   Score    Error  Units
-JsonBenchmark.listReader                  thrpt    5  61,893 ± 10,388  ops/s
-JsonBenchmark.parseFromStringToCaseClass  thrpt    5  12,884 ±  0,866  ops/s
-JsonBenchmark.parseFromStringToJValue     thrpt    5  86,482 ±  3,955  ops/s
-JsonBenchmark.seqReader                   thrpt    5  40,278 ± 10,474  ops/s
-JsonBenchmark.serializeCaseClassToString  thrpt    5  40,916 ±  7,214  ops/s
-JsonBenchmark.vectorReader                thrpt    5  71,867 ±  8,257  ops/s
+JsonBenchmark.listReader                  thrpt    5  65,248 ± 17,094  ops/s
+JsonBenchmark.parseFromStringToCaseClass  thrpt    5  13,365 ±  0,467  ops/s
+JsonBenchmark.parseFromStringToJValue     thrpt    5  84,705 ± 12,377  ops/s
+JsonBenchmark.seqReader                   thrpt    5  64,475 ± 14,184  ops/s
+JsonBenchmark.serializeCaseClassToString  thrpt    5  40,563 ±  4,731  ops/s
+JsonBenchmark.vectorReader                thrpt    5  66,068 ±  7,377  ops/s
    */
 
   @Benchmark
