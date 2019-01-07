@@ -14,12 +14,13 @@ class JsonBenchmark {
   /* on local mac
   jmh:run -i 10 -wi 10 -f1 -t1
 
-[info] Benchmark                                  Mode  Cnt   Score   Error  Units
-[info] JsonBenchmark.listReader                  thrpt   10  55.931 ± 1.438  ops/s
-[info] JsonBenchmark.parseFromStringToCaseClass  thrpt   10  12.429 ± 0.573  ops/s
-[info] JsonBenchmark.parseFromStringToJValue     thrpt   10  75.169 ± 1.859  ops/s
-[info] JsonBenchmark.serializeCaseClassToString  thrpt   10  36.716 ± 2.147  ops/s
-[info] JsonBenchmark.vectorReader                thrpt   10  48.047 ± 2.473  ops/s
+Benchmark                                  Mode  Cnt   Score    Error  Units
+JsonBenchmark.listReader                  thrpt    5  61,893 ± 10,388  ops/s
+JsonBenchmark.parseFromStringToCaseClass  thrpt    5  12,884 ±  0,866  ops/s
+JsonBenchmark.parseFromStringToJValue     thrpt    5  86,482 ±  3,955  ops/s
+JsonBenchmark.seqReader                   thrpt    5  40,278 ± 10,474  ops/s
+JsonBenchmark.serializeCaseClassToString  thrpt    5  40,916 ±  7,214  ops/s
+JsonBenchmark.vectorReader                thrpt    5  71,867 ±  8,257  ops/s
    */
 
   @Benchmark
@@ -48,6 +49,11 @@ class JsonBenchmark {
   @Benchmark
   def listReader(): Unit = {
     fromJSON[List[Int]](JsonBenchmark.lotsOfInts)
+  }
+
+  @Benchmark
+  def seqReader(): Unit = {
+    fromJSON[Seq[Int]](JsonBenchmark.lotsOfInts)
   }
 
 }
