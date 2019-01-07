@@ -8,6 +8,7 @@
 * update `mongodb-driver` to [`3.9.1`](https://github.com/mongodb/mongo-java-driver/releases/tag/r3.9.1)
 * update `joda-convert` to [`2.1.2`](http://www.joda.org/joda-convert/changes-report.html#a2.1.2)
 * update `json4s-jackson` to [`3.6.6`](https://github.com/json4s/json4s/compare/v3.6.0...v3.6.2)
+* optimize `FromJSON[Seq[A]]`
 
 ## 0.9.15 (2018-10-02)
 
