@@ -1,7 +1,11 @@
 ## master
 
-## 0.9.18-SNAPSHOT
+## 0.9.19-SNAPSHOT
 
+## 0.9.18 (2019-02-22)
+
+* update `json4s-jackson` and `json4s-scalap` to 3.6.5. [71](https://github.com/sphereio/sphere-scala-libs/pull/71)
+* update `cats` to `1.6.0`. [68](https://github.com/sphereio/sphere-scala-libs/pull/68)
 
 ## 0.9.17 (2019-01-15)
 
