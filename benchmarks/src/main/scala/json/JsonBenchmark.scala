@@ -7,12 +7,17 @@ import io.sphere.json.generic._
 import io.sphere.util.BaseMoney
 import org.json4s.StringInput
 import org.json4s.jackson._
-import org.openjdk.jmh.annotations.Benchmark
+import org.openjdk.jmh.annotations._
 
+@State(Scope.Benchmark)
+@BenchmarkMode(Array(Mode.Throughput))
+@Warmup(iterations = 10, time = 1)
+@Measurement(iterations = 10, time = 1)
+@Fork(value = 1)
 class JsonBenchmark {
 
   /* on local mac
-  jmh:run -i 10 -wi 10 -f1 -t1
+  jmh:run
 
 Benchmark                                  Mode  Cnt   Score    Error  Units
 JsonBenchmark.listReader                  thrpt    5  65,248 ± 17,094  ops/s
