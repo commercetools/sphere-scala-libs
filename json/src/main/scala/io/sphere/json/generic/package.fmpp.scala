@@ -61,7 +61,7 @@ package object generic extends Logging {
 
   private def jsonSingletonTypeValue[T](singleton: T): String = {
     val clazz = singleton.getClass
-    getJSONClass(clazz).typeHint.map(_.value).getOrElse(defaultTypeValue(clazz))
+    getJSONClass(clazz).typeHint.fold(defaultTypeValue(clazz))(_.value)
   }
 
   /** Creates a ToJSON instance for a singleton object that encodes only the type value

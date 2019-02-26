@@ -2,6 +2,8 @@
 
 ## 0.9.19-SNAPSHOT
 
+- support scala singleton objects in mongo generics
+
 ## 0.9.18 (2019-02-22)
 
 * update `json4s-jackson` and `json4s-scalap` to 3.6.5. [71](https://github.com/sphereio/sphere-scala-libs/pull/71)
