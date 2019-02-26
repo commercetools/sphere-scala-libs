@@ -1,13 +1,11 @@
 package io.sphere.mongo
 
 import scala.annotation.meta.getter
-import scala.reflect.{ classTag, ClassTag }
+import scala.reflect.{ClassTag, classTag}
 import scala.language.experimental.macros
-
 import io.sphere.mongo.format.MongoFormat
 import io.sphere.mongo.format._
-import io.sphere.util.{ Logging, Reflect, Memoizer }
-
+import io.sphere.util.{Logging, Memoizer, Reflect}
 import com.mongodb._
 
 /**
@@ -36,6 +34,29 @@ package object generic extends Logging {
     def fromMongoValue(any: Any): e.Value = e.withName(any.asInstanceOf[String])
   }
 
+  private def mongoProduct0Type[T <: Product](singleton: T): (String, String) = {
+    getMongoClassMeta(singleton.getClass).typeHint match {
+      case Some(hint) => (hint.field, hint.value)
+      case None => (defaultTypeFieldName, defaultTypeValue(singleton.getClass))
+    }
+  }
+
+  def mongoProduct0[T <: Product](singleton: T): MongoFormat[T] = new MongoFormat[T] {
+    val (typeField, typeValue) = mongoProduct0Type(singleton)
+    override def toMongoValue(a: T): Any = {
+      val dbo = new BasicDBObject()
+      dbo.append(typeField, typeValue)
+      dbo
+    }
+    override def fromMongoValue(any: Any): T = any match {
+      case o: DBObject => findTypeValue(o, typeField) match {
+        case Some(t) if t == typeValue => singleton
+        case Some(t) => sys.error("Invalid type value '" + t + "'. Excepted '%s'".format(typeValue))
+        case None => sys.error("Missing type field.")
+      }
+      case _ => sys.error("DB object excepted.")
+    }
+  }
 
   <#list 1..22 as i>
   <#assign typeParams><#list 1..i as j>A${j}<#if i !=j>,</#if></#list></#assign>
