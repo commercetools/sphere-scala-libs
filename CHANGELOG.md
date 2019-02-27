@@ -1,8 +1,11 @@
 ## master
 
+## 0.9.20-SNAPSHOT
+
 ## 0.9.19-SNAPSHOT
 
-- support scala singleton objects in mongo generics
+- support scala singleton objects in mongo generics. [72](https://github.com/sphereio/sphere-scala-libs/pull/72)
+- Breaking change: avoid need for currying in mongo format. [73](https://github.com/sphereio/sphere-scala-libs/pull/73)
 
 ## 0.9.18 (2019-02-22)
 
