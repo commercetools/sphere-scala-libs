@@ -92,10 +92,12 @@ package object generic extends Logging {
         val builder = Set.newBuilder[String]
         <#list 1..i as j>
           val f${j} = _fields(${j-1})
-          if (f${j}.embedded)
-            builder ++= MongoFormat[A${j}].fields
-          else
-            builder += f${j}.name
+          if (!f${j}.ignored) {
+            if (f${j}.embedded)
+              builder ++= MongoFormat[A${j}].fields
+            else
+              builder += f${j}.name
+          }
         </#list>
         builder.result()
       }
