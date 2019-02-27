@@ -87,7 +87,18 @@ package object generic extends Logging {
           )
         case _ => sys.error("Deserialization failed. DBObject expected.")
       }
-      override val fields = _fields.map(_.name).toSet
+      override val fields: Set[String] = calculateFields()
+      private def calculateFields(): Set[String] = {
+        val builder = Set.newBuilder[String]
+        <#list 1..i as j>
+          val f${j} = _fields(${j-1})
+          if (f${j}.embedded)
+            builder ++= MongoFormat[A${j}].fields
+          else
+            builder += f${j}.name
+        </#list>
+        builder.result()
+      }
     }
   }
   </#list>

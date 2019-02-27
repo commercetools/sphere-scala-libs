@@ -8,7 +8,9 @@ import io.sphere.mongo.MongoUtils._
 import scala.util.Try
 
 object MongoEmbeddedSpec {
-  case class Embedded(value1: String, value2: Int)
+  case class Embedded(
+     value1: String,
+     @MongoKey("_value2") value2: Int)
 
   object Embedded {
     implicit val mongo: MongoFormat[Embedded] = mongoProduct(apply _)
@@ -29,6 +31,24 @@ object MongoEmbeddedSpec {
   object Test2 {
     implicit val mongo: MongoFormat[Test2] = mongoProduct(apply _)
   }
+
+  case class Test3(
+    @MongoIgnore name: String = "default",
+    @MongoEmbedded embedded: Option[Embedded] = None)
+
+  object Test3 {
+    implicit val mongo: MongoFormat[Test3] = mongoProduct(apply _)
+  }
+
+  case class SubTest4(@MongoEmbedded embedded: Embedded)
+  object SubTest4 {
+    implicit val mongo: MongoFormat[SubTest4] = mongoProduct(apply _)
+  }
+
+  case class Test4(subField: Option[SubTest4] = None)
+  object Test4 {
+    implicit val mongo: MongoFormat[Test4] = mongoProduct(apply _)
+  }
 }
 
 class MongoEmbeddedSpec extends WordSpec with MustMatchers with OptionValues {
@@ -39,7 +59,7 @@ class MongoEmbeddedSpec extends WordSpec with MustMatchers with OptionValues {
       val dbo = dbObj(
         "name" -> "ze name",
         "value1" -> "ze value1",
-        "value2" -> 45
+        "_value2" -> 45
       )
       val test1 = MongoFormat[Test1].fromMongoValue(dbo)
       test1.name mustEqual "ze name"
@@ -62,7 +82,7 @@ class MongoEmbeddedSpec extends WordSpec with MustMatchers with OptionValues {
       val dbo = dbObj(
         "name" -> "ze name",
         "value1" -> "ze value1",
-        "value2" -> 45
+        "_value2" -> 45
       )
       val test2 = MongoFormat[Test2].fromMongoValue(dbo)
       test2.name mustEqual "ze name"
@@ -77,13 +97,36 @@ class MongoEmbeddedSpec extends WordSpec with MustMatchers with OptionValues {
       val dbo = dbObj(
         "name" -> "ze name",
         "value1" -> "ze value1",
-        "value2" -> 45,
-        "value3" -> true
+        "_value2" -> 45,
+        "value4" -> true
       )
       val test2 = MongoFormat[Test2].fromMongoValue(dbo)
       test2.name mustEqual "ze name"
       test2.embedded.value.value1 mustEqual "ze value1"
       test2.embedded.value.value2 mustEqual 45
+    }
+
+    "ignore ignored fields" in {
+      val dbo = dbObj(
+        "value1" -> "ze value1",
+        "_value2" -> 45
+      )
+      val test3 = MongoFormat[Test3].fromMongoValue(dbo)
+      test3.name mustEqual "default"
+      test3.embedded.value.value1 mustEqual "ze value1"
+      test3.embedded.value.value2 mustEqual 45
+    }
+
+    "check for sub-fields" in {
+      val dbo = dbObj(
+        "subField" -> dbObj(
+          "value1" -> "ze value1",
+          "_value2" -> 45
+        )
+      )
+      val test4 = MongoFormat[Test4].fromMongoValue(dbo)
+      test4.subField.value.embedded.value1 mustEqual "ze value1"
+      test4.subField.value.embedded.value2 mustEqual 45
     }
 
     "support the absence of optional embedded attribute" in {
