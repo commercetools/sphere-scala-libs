@@ -103,7 +103,7 @@ class MoneySpec extends FunSpec with MustMatchers with GeneratorDrivenPropertyCh
     }
 
     it("should provide convenient toString") {
-      (1.00 EUR).toString must be ("1.00 €")
+      (1.00 EUR).toString must be ("1.00 EUR")
     }
 
     it("should not fail on toString") {

@@ -148,7 +148,7 @@ class HighPrecisionMoneySpec extends FunSpec with MustMatchers with GeneratorDri
     }
 
     it("should provide convenient toString") {
-      ("10.000" EUR_PRECISE 3).toString must be ("10.000 €")
+      ("10.000" EUR_PRECISE 3).toString must be ("10.000 EUR")
     }
 
     it("should not fail on toString") {

@@ -207,7 +207,7 @@ case class Money private (amount: BigDecimal, currency: Currency) extends BaseMo
     this.amount compare that.amount
   }
 
-  override def toString = this.amount.bigDecimal.toPlainString + " " + this.currency.getSymbol(Locale.ENGLISH)
+  override def toString = this.amount.bigDecimal.toPlainString + " " + this.currency.getCurrencyCode
 
   def toString(nf: NumberFormat, locale: Locale) = {
     require(nf.getCurrency eq this.currency)
@@ -383,7 +383,7 @@ case class HighPrecisionMoney private (amount: BigDecimal, fractionDigits: Int, 
     this.amount compare other.amount
   }
 
-  override def toString: String = this.amount.bigDecimal.toPlainString + " " + this.currency.getSymbol(Locale.ENGLISH)
+  override def toString: String = this.amount.bigDecimal.toPlainString + " " + this.currency.getCurrencyCode
 
   def toString(nf: NumberFormat, locale: Locale) = {
     require(nf.getCurrency eq this.currency)
