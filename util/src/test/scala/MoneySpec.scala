@@ -1,11 +1,11 @@
 package io.sphere.util
 
+import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatest.{FunSpec, MustMatchers}
+
 import scala.language.postfixOps
 
-import org.scalatest.FunSpec
-import org.scalatest.MustMatchers
-
-class MoneySpec extends FunSpec with MustMatchers {
+class MoneySpec extends FunSpec with MustMatchers with GeneratorDrivenPropertyChecks {
   import Money.ImplicitsDecimal._
   import Money._
 
@@ -100,6 +100,16 @@ class MoneySpec extends FunSpec with MustMatchers {
       (1.10 EUR).withCentAmount(170) must be (1.70 EUR)
       (1.10 EUR).withCentAmount(1711) must be (17.11 EUR)
       (1 JPY).withCentAmount(34) must be (34 JPY)
+    }
+
+    it("should provide convenient toString") {
+      (1.00 EUR).toString must be ("1.00 EUR")
+    }
+
+    it("should not fail on toString") {
+      forAll(DomainObjectsGen.money) { m =>
+        m.toString
+      }
     }
   }
 }

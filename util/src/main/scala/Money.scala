@@ -1,10 +1,9 @@
 package io.sphere.util
 
 import language.implicitConversions
-
 import java.math.MathContext
 import java.text.NumberFormat
-import java.util.Currency
+import java.util.{Currency, Locale}
 
 import cats.Monoid
 import cats.data.ValidatedNel
@@ -13,7 +12,6 @@ import cats.syntax.validated._
 import scala.math._
 import BigDecimal.RoundingMode._
 import scala.math.BigDecimal.RoundingMode
-
 import ValidatedFlatMapFeature._
 
 sealed trait BaseMoney {
@@ -209,12 +207,11 @@ case class Money private (amount: BigDecimal, currency: Currency) extends BaseMo
     this.amount compare that.amount
   }
 
-  override def toString = ("%." + this.currency.getDefaultFractionDigits + "f %s")
-    .format(this.amount, this.currency.getSymbol)
+  override def toString = this.amount.bigDecimal.toPlainString + " " + this.currency.getCurrencyCode
 
-  def toString(nf: NumberFormat) = {
+  def toString(nf: NumberFormat, locale: Locale) = {
     require(nf.getCurrency eq this.currency)
-    nf.format(this.amount.doubleValue) + " " + this.currency.getSymbol
+    nf.format(this.amount.doubleValue) + " " + this.currency.getSymbol(locale)
   }
 }
 
@@ -386,13 +383,12 @@ case class HighPrecisionMoney private (amount: BigDecimal, fractionDigits: Int, 
     this.amount compare other.amount
   }
 
-  override def toString = ("%." + this.fractionDigits + "f %s")
-    .format(this.amount, this.currency.getSymbol)
+  override def toString: String = this.amount.bigDecimal.toPlainString + " " + this.currency.getCurrencyCode
 
-  def toString(nf: NumberFormat) = {
+  def toString(nf: NumberFormat, locale: Locale) = {
     require(nf.getCurrency eq this.currency)
 
-    nf.format(this.amount.doubleValue) + " " + this.currency.getSymbol
+    nf.format(this.amount.doubleValue) + " " + this.currency.getSymbol(locale)
   }
 }           
 
