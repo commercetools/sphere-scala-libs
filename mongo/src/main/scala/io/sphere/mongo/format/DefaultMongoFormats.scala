@@ -3,7 +3,7 @@ package io.sphere.mongo.format
 import java.util.UUID
 import java.util.regex.Pattern
 
-import com.mongodb.BasicDBList
+import com.mongodb.{BasicDBList, DBObject}
 import org.bson.types.ObjectId
 
 object DefaultMongoFormats extends DefaultMongoFormats {
@@ -46,15 +46,21 @@ trait DefaultMongoFormats {
   implicit val patternFormat: MongoFormat[Pattern] = new NativeMongoFormat[Pattern]
 
   implicit def optionFormat[@specialized A](implicit f: MongoFormat[A]): MongoFormat[Option[A]] = new MongoFormat[Option[A]] {
+    import scala.collection.JavaConverters._
     override def toMongoValue(a: Option[A]) = a match {
       case Some(aa) => f.toMongoValue(aa)
       case None => MongoNothing
     }
     override def fromMongoValue(any: Any) = {
-      Option(any).map(f.fromMongoValue)
+      Option(any) match {
+        case None => None
+        case Some(dbo: DBObject) if fields.nonEmpty && dbo.keySet().asScala.forall(t ⇒ !fields.contains(t)) => None
+        case Some(x) => Some(f.fromMongoValue(x))
+      }
     }
 
     override def default: Option[Option[A]] = DefaultMongoFormats.someNone
+    override val fields = f.fields
   }
 
   implicit def vecFormat[@specialized A](implicit f: MongoFormat[A]): MongoFormat[Vector[A]] = new MongoFormat[Vector[A]] {

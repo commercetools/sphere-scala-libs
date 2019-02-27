@@ -66,7 +66,7 @@ package object generic extends Logging {
     construct: (<#list 1..i as j>A${j}<#if i !=j>, </#if></#list>) => T
   ): MongoFormat[T] = {
     val mongoClass = getMongoClassMeta(classTag[T].runtimeClass)
-    val fields = mongoClass.fields
+    val _fields = mongoClass.fields
     new MongoFormat[T] {
       def toMongoValue(r: T): Any = {
         val dbo = new BasicDBObject
@@ -75,18 +75,19 @@ package object generic extends Logging {
           dbo.put(th.field, th.value)
         }
         <#list 1..i as j>
-          writeField[A${j}](dbo, fields(${j-1}), r.productElement(${j-1}).asInstanceOf[A${j}])
+          writeField[A${j}](dbo, _fields(${j-1}), r.productElement(${j-1}).asInstanceOf[A${j}])
         </#list>
         dbo
       }
       def fromMongoValue(any: Any): T = any match {
         case dbo: DBObject =>
           construct(
-            readField[A1](fields.head, dbo)<#if i!=1><#list 2..i as j>,
-            readField[A${j}](fields(${j-1}), dbo)</#list></#if>
+            readField[A1](_fields.head, dbo)<#if i!=1><#list 2..i as j>,
+            readField[A${j}](_fields(${j-1}), dbo)</#list></#if>
           )
         case _ => sys.error("Deserialization failed. DBObject expected.")
       }
+      override val fields = _fields.map(_.name).toSet
     }
   }
   </#list>

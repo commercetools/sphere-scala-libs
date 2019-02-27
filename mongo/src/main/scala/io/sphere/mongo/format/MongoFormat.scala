@@ -8,6 +8,8 @@ trait MongoFormat[@specialized A] {
   def toMongoValue(a: A): Any
   def fromMongoValue(any: Any): A
   def default: Option[A] = None
+  /** needed JSON fields - ignored if empty */
+  def fields: Set[String] = Set.empty
 }
 
 object MongoFormat {
