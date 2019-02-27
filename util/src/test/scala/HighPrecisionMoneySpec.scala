@@ -1,13 +1,15 @@
+package io.sphere.util
+
 import java.util.Currency
 
 import cats.data.Validated.Invalid
-import io.sphere.util.{BaseMoney, HighPrecisionMoney, Money}
 import org.scalatest._
+import org.scalatest.prop.GeneratorDrivenPropertyChecks
 
 import scala.collection.mutable.ArrayBuffer
 import scala.language.postfixOps
 
-class HighPrecisionMoneySpec extends FunSpec with MustMatchers {
+class HighPrecisionMoneySpec extends FunSpec with MustMatchers with GeneratorDrivenPropertyChecks {
   import HighPrecisionMoney.ImplicitsString._
   import HighPrecisionMoney.ImplicitsStringPrecise._
 
@@ -143,6 +145,16 @@ class HighPrecisionMoneySpec extends FunSpec with MustMatchers {
       val Invalid(errors) = HighPrecisionMoney.fromPreciseAmount(123456L, 4, Euro, Some(1))
 
       errors.toList must be (List("centAmount must be correctly rounded preciseAmount (a number between 1234 and 1235)."))
+    }
+
+    it("should provide convenient toString") {
+      ("10.000" EUR_PRECISE 3).toString must be ("10.000 €")
+    }
+
+    it("should not fail on toString") {
+      forAll(DomainObjectsGen.highPrecisionMoney) { m =>
+        m.toString
+      }
     }
   }
 }
