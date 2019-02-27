@@ -84,5 +84,5 @@ object PictureSize {
 case class UserWithPicture(userId: String, pictureSize: PictureSize, pictureUrl: String)
 
 object UserWithPicture {
-  implicit val mongo: MongoFormat[UserWithPicture] = mongoProduct((apply _).curried)
+  implicit val mongo: MongoFormat[UserWithPicture] = mongoProduct(apply _)
 }

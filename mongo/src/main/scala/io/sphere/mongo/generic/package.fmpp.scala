@@ -60,10 +60,10 @@ package object generic extends Logging {
 
   <#list 1..22 as i>
   <#assign typeParams><#list 1..i as j>A${j}<#if i !=j>,</#if></#list></#assign>
-  <#assign implTypeParams><#list 1..i as j>A${j} : MongoFormat<#if i !=j>,</#if></#list></#assign>
+  <#assign implTypeParams><#list 1..i as j>A${j}: MongoFormat<#if i !=j>, </#if></#list></#assign>
   /** Creates a `MongoFormat[T]` instance for a product type (case class) `T` of arity ${i}. */
   def mongoProduct[T <: Product: ClassTag, ${implTypeParams}](
-    construct: <#list 1..i as j>A${j}<#if i !=j> => </#if></#list> => T
+    construct: (<#list 1..i as j>A${j}<#if i !=j>, </#if></#list>) => T
   ): MongoFormat[T] = {
     val mongoClass = getMongoClassMeta(classTag[T].runtimeClass)
     val fields = mongoClass.fields
@@ -81,8 +81,10 @@ package object generic extends Logging {
       }
       def fromMongoValue(any: Any): T = any match {
         case dbo: DBObject =>
-          construct<#list 1..i as j>(
-            readField[A${j}](fields(${j-1}), dbo))</#list>
+          construct(
+            readField[A1](fields.head, dbo)<#if i!=1><#list 2..i as j>,
+            readField[A${j}](fields(${j-1}), dbo)</#list></#if>
+          )
         case _ => sys.error("Deserialization failed. DBObject expected.")
       }
     }

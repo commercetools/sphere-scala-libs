@@ -42,12 +42,7 @@ private[generic] object MongoFormatMacros {
           reify(io.sphere.mongo.generic.`package`).tree,
           TermName("mongoProduct")
         ),
-        List(
-          if (argList.size > 1)
-            Select(applyBlock, TermName("curried"))
-          else
-            applyBlock
-        )
+        applyBlock :: Nil
       )
     } else if (classSym.isCaseClass && classSym.isModuleClass) {
       Apply(

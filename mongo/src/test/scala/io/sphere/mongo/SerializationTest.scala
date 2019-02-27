@@ -27,7 +27,7 @@ class SerializationTest extends WordSpec with MustMatchers {
     "generate a format that serializes optional fields with value None as BSON objects without that field" in {
       val testFormat: MongoFormat[Something] =
         io.sphere.mongo.generic.mongoProduct[Something, Option[Int], Int] {
-          (a: Option[Int]) => (b: Int) => Something(a, b)
+          (a: Option[Int], b: Int) => Something(a, b)
         }
 
       val serializedObject = testFormat.toMongoValue(Something(None, 1)).asInstanceOf[DBObject]
