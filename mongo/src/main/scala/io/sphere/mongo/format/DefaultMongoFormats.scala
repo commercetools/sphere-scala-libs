@@ -3,7 +3,8 @@ package io.sphere.mongo.format
 import java.util.UUID
 import java.util.regex.Pattern
 
-import com.mongodb.BasicDBList
+import com.mongodb.{BasicDBList, DBObject}
+import org.bson.BasicBSONObject
 import org.bson.types.ObjectId
 
 object DefaultMongoFormats extends DefaultMongoFormats {
@@ -105,6 +106,31 @@ trait DefaultMongoFormats {
           it.asScala.map(f.fromMongoValue).toSet
         case _ => throw new Exception(s"cannot read value from ${any.getClass.getName}")
       }
+    }
+  }
+
+  implicit def mapFormat[@specialized A](implicit f: MongoFormat[A]): MongoFormat[Map[String, A]] = new MongoFormat[Map[String, A]] {
+    override def toMongoValue(map: Map[String, A]): Any = {
+      map.foldLeft(new BasicBSONObject()) { case (dbo, (k, v)) => dbo.append(k, v) }
+    }
+
+    override def fromMongoValue(any: Any): Map[String, A] = {
+      import scala.language.existentials
+
+      val map: java.util.Map[_, _] = any match {
+        case b: BasicBSONObject => b // avoid instantiating a new map
+        case dbo: DBObject => dbo.toMap
+        case other => throw new Exception(s"cannot read value from ${other.getClass.getName}")
+      }
+      val builder = Map.newBuilder[String, A]
+      val iter = map.entrySet().iterator()
+      while (iter.hasNext) {
+        val entry = iter.next()
+        val k = entry.getKey.asInstanceOf[String]
+        val v = f.fromMongoValue(entry.getValue)
+        builder += (k -> v)
+      }
+      builder.result()
     }
   }
 
