@@ -1,6 +1,7 @@
 package io.sphere.mongo.format
 
 import io.sphere.mongo.format.DefaultMongoFormats._
+import org.bson.BasicBSONObject
 import org.bson.types.BasicBSONList
 import org.scalacheck.Gen
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
@@ -32,6 +33,23 @@ class DefaultMongoFormatsTest extends WordSpec with MustMatchers with GeneratorD
         dbo.asInstanceOf[BasicBSONList].asScala.toSet must be (s)
         val resultSet = format.fromMongoValue(dbo)
         resultSet must be (s)
+      }
+    }
+
+    "support Map[String, A]" in {
+      val format = mapFormat[String]
+      val map = Gen.listOf {
+        for {
+          key <- Gen.alphaNumStr
+          value <- Gen.alphaNumStr
+        } yield (key, value)
+      }.map(_.toMap)
+
+      forAll(map) { m ⇒
+        val dbo = format.toMongoValue(m)
+        dbo.asInstanceOf[BasicBSONObject].asScala must be (m)
+        val resultMap = format.fromMongoValue(dbo)
+        resultMap must be (m)
       }
     }
   }
