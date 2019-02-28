@@ -168,11 +168,13 @@ object FromJSON {
   }
 
   implicit val moneyReader: FromJSON[Money] = new FromJSON[Money] {
-    override val fields = Set("centAmount", "currencyCode")
+    import Money._
+
+    override val fields = Set(CentAmountField, CurrencyCodeField)
 
     def read(value: JValue): JValidation[Money] = value match {
       case o: JObject ⇒
-        (field[Long]("centAmount")(o), field[Currency]("currencyCode")(o)).mapN(
+        (field[Long](CentAmountField)(o), field[Currency](CurrencyCodeField)(o)).mapN(
           Money.fromCentAmount)
 
       case _ ⇒ fail("JSON object expected.")
@@ -180,17 +182,19 @@ object FromJSON {
   }
 
   implicit val highPrecisionMoneyReader: FromJSON[HighPrecisionMoney] = new FromJSON[HighPrecisionMoney] {
-    override val fields = Set("preciseAmount", "currencyCode", "fractionDigits")
+    import HighPrecisionMoney._
+
+    override val fields = Set(PreciseAmountField, CurrencyCodeField, FractionDigitsField)
 
     import cats.implicits._
     
     def read(value: JValue): JValidation[HighPrecisionMoney] = value match {
       case o: JObject ⇒
         val validatedFields = (
-          field[Long]("preciseAmount")(o),
-          field[Int]("fractionDigits")(o),
-          field[Currency]("currencyCode")(o),
-          field[Option[Long]]("centAmount")(o))
+          field[Long](PreciseAmountField)(o),
+          field[Int](FractionDigitsField)(o),
+          field[Currency](CurrencyCodeField)(o),
+          field[Option[Long]](CentAmountField)(o))
 
         validatedFields.tupled.andThen { case (preciseAmount, fractionDigits, currencyCode, centAmount) ⇒
           HighPrecisionMoney.fromPreciseAmount(preciseAmount, fractionDigits, currencyCode, centAmount).leftMap(_.map(JSONParseError(_)))
@@ -204,7 +208,7 @@ object FromJSON {
   implicit val baseMoneyReader: FromJSON[BaseMoney] = new FromJSON[BaseMoney] {
     def read(value: JValue): JValidation[BaseMoney] = value match {
       case o: JObject ⇒
-        field[Option[String]]("type")(o).andThen {
+        field[Option[String]](BaseMoney.TypeField)(o).andThen {
           case None ⇒ moneyReader.read(value)
           case Some(Money.TypeName) ⇒ moneyReader.read(value)
           case Some(HighPrecisionMoney.TypeName) ⇒ highPrecisionMoneyReader.read(value)

@@ -1,10 +1,11 @@
 package io.sphere.mongo.format
 
-import java.util.UUID
+import java.util.{Currency, UUID}
 import java.util.regex.Pattern
 
 import com.mongodb.{BasicDBList, DBObject}
-import org.bson.BasicBSONObject
+import io.sphere.util.{BaseMoney, HighPrecisionMoney, Money}
+import org.bson.{BSONObject, BasicBSONObject}
 import org.bson.types.ObjectId
 
 object DefaultMongoFormats extends DefaultMongoFormats {
@@ -140,4 +141,86 @@ trait DefaultMongoFormats {
     }
   }
 
+  implicit val currencyFormat: MongoFormat[Currency] = new MongoFormat[Currency] {
+    val failMsg = "ISO 4217 code JSON String expected"
+
+    override def toMongoValue(c: Currency): Any = c.getCurrencyCode
+    override def fromMongoValue(any: Any): Currency = any match {
+      case s: String =>
+        try {
+          Currency.getInstance(s)
+        } catch {
+          case _: IllegalArgumentException => throw new Exception(failMsg)
+        }
+    }
+  }
+
+  implicit val moneyFormat: MongoFormat[Money] = new MongoFormat[Money] {
+    import Money._
+
+    override val fields = Set(CentAmountField, CurrencyCodeField)
+
+    override def toMongoValue(m: Money): Any = {
+      new BasicBSONObject()
+        .append(BaseMoney.TypeField, m.`type`)
+        .append(CurrencyCodeField, currencyFormat.toMongoValue(m.currency))
+        .append(CentAmountField, longFormat.toMongoValue(m.centAmount))
+        .append(FractionDigitsField, m.currency.getDefaultFractionDigits)
+    }
+
+    override def fromMongoValue(any: Any): Money = any match {
+      case dbo: BSONObject =>
+        Money.fromCentAmount(
+          field[Long](CentAmountField, dbo),
+          field[Currency](CurrencyCodeField, dbo))
+      case other => throw new Exception(s"db object expected but has '${other.getClass.getName}'")
+    }
+  }
+
+  implicit val highPrecisionMoneyFormat: MongoFormat[HighPrecisionMoney] = new MongoFormat[HighPrecisionMoney] {
+    import HighPrecisionMoney._
+
+    override val fields = Set(PreciseAmountField, CurrencyCodeField, FractionDigitsField)
+
+    override def toMongoValue(m: HighPrecisionMoney): Any = {
+      new BasicBSONObject()
+        .append(BaseMoney.TypeField, m.`type`)
+        .append(CurrencyCodeField, currencyFormat.toMongoValue(m.currency))
+        .append(CentAmountField, longFormat.toMongoValue(m.centAmount))
+        .append(PreciseAmountField, longFormat.toMongoValue(m.preciseAmountAsLong))
+        .append(FractionDigitsField, m.fractionDigits)
+    }
+    override def fromMongoValue(any: Any): HighPrecisionMoney = any match {
+      case dbo: BSONObject =>
+        HighPrecisionMoney.fromPreciseAmount(
+          field[Long](PreciseAmountField, dbo),
+          field[Int](FractionDigitsField, dbo),
+          field[Currency](CurrencyCodeField, dbo),
+          field[Option[Long]](CentAmountField, dbo)
+        ).fold(nel => throw new Exception(nel.toList.mkString(", ")), identity)
+
+      case other => throw new Exception(s"db object expected but has '${other.getClass.getName}'")
+    }
+  }
+
+  implicit val baseMoneyFormat: MongoFormat[BaseMoney] = new MongoFormat[BaseMoney] {
+    override def toMongoValue(a: BaseMoney): Any = a match {
+      case m: Money => moneyFormat.toMongoValue(m)
+      case m: HighPrecisionMoney => highPrecisionMoneyFormat.toMongoValue(m)
+    }
+    override def fromMongoValue(any: Any): BaseMoney = any match {
+      case dbo: BSONObject =>
+        Option(dbo.get(BaseMoney.TypeField)).map(stringFormat.fromMongoValue) match {
+          case None => moneyFormat.fromMongoValue(any)
+          case Some(Money.TypeName) => moneyFormat.fromMongoValue(any)
+          case Some(HighPrecisionMoney.TypeName) => highPrecisionMoneyFormat.fromMongoValue(any)
+          case Some(tpe) => throw new Exception(s"Unknown money type '$tpe'. Available types are: '${Money.TypeName}', '${HighPrecisionMoney.TypeName}'.")
+        }
+      case other => throw new Exception(s"db object expected but has '${other.getClass.getName}'")
+    }
+  }
+
+
+  private def field[A](name: String, dbo: BSONObject)(implicit format: MongoFormat[A]): A =
+    format.fromMongoValue(dbo.get(name))
 }

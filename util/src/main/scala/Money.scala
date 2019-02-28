@@ -56,6 +56,8 @@ sealed trait BaseMoney {
 }
 
 object BaseMoney {
+  val TypeField: String = "type"
+
   def requireSameCurrency(m1: BaseMoney, m2: BaseMoney): Unit =
     require(m1.currency eq m2.currency, s"${m1.currency} != ${m2.currency}")
 
@@ -241,7 +243,10 @@ object Money {
   def GBP(amount: BigDecimal): Money = decimalAmountWithCurrencyAndHalfEvenRounding(amount, "GBP")
   def JPY(amount: BigDecimal): Money = decimalAmountWithCurrencyAndHalfEvenRounding(amount, "JPY")
 
-  val TypeName = "centPrecision"
+  val CurrencyCodeField: String = "currencyCode"
+  val CentAmountField: String = "centAmount"
+  val FractionDigitsField: String = "fractionDigits"
+  val TypeName: String = "centPrecision"
 
   def fromDecimalAmount(amount: BigDecimal, currency: Currency)(implicit mode: RoundingMode) =
     Money(amount.setScale(currency.getDefaultFractionDigits, mode), currency)
@@ -426,7 +431,12 @@ object HighPrecisionMoney {
   def GBP(amount: BigDecimal, fractionDigits: Option[Int] = None) = simpleValueMeantToBeUsedOnlyInTests(amount, "GBP", fractionDigits)
   def JPY(amount: BigDecimal, fractionDigits: Option[Int] = None) = simpleValueMeantToBeUsedOnlyInTests(amount, "JPY", fractionDigits)
 
-  val TypeName = "highPrecision"
+  val CurrencyCodeField: String = "currencyCode"
+  val CentAmountField: String = "centAmount"
+  val PreciseAmountField: String = "preciseAmount"
+  val FractionDigitsField: String = "fractionDigits"
+
+  val TypeName: String = "highPrecision"
   val MaxFractionDigits = 20
 
   private def simpleValueMeantToBeUsedOnlyInTests(amount: BigDecimal, currencyCode: String, fractionDigits: Option[Int] = None): HighPrecisionMoney = {
