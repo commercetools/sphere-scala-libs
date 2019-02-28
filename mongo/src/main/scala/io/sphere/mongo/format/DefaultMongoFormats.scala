@@ -111,7 +111,7 @@ trait DefaultMongoFormats {
 
   implicit def mapFormat[@specialized A](implicit f: MongoFormat[A]): MongoFormat[Map[String, A]] = new MongoFormat[Map[String, A]] {
     override def toMongoValue(map: Map[String, A]): Any = {
-      map.foldLeft(new BasicBSONObject()) { case (dbo, (k, v)) => dbo.append(k, v) }
+      map.foldLeft(new BasicBSONObject()) { case (dbo, (k, v)) => dbo.append(k, f.toMongoValue(v)) }
     }
 
     override def fromMongoValue(any: Any): Map[String, A] = {
