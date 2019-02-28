@@ -68,7 +68,7 @@ class OptionReaderSpec extends WordSpec with MustMatchers with OptionValues {
       result mustEqual None
     }
 
-    "do not ignore fields if no one is expected" in {
+    "consider all fields if the data type does not impose any restriction" in {
       val json =
         """{
           |  "key1": "value1",

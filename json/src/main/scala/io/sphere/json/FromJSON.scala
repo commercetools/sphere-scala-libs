@@ -255,7 +255,7 @@ object FromJSON {
       } catch {
         case NonFatal(_) => fail("Failed to parse date/time: %s".format(s))
       }
-      case _ => fail("JSON Object expected.")
+      case _ => fail("JSON string expected.")
     }
   }
 
