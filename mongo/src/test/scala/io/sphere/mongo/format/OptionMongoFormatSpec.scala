@@ -66,7 +66,7 @@ class OptionMongoFormatSpec extends WordSpec with MustMatchers with OptionValues
       result mustEqual None
     }
 
-    "do not ignore fields if no one is expected" in {
+    "consider all fields if the data type does not impose any restriction" in {
       val dbo = dbObj(
         "key1" -> "value1",
         "key2" -> "value2"
