@@ -1,6 +1,7 @@
 package io.sphere.mongo.format
 
 import io.sphere.mongo.format.DefaultMongoFormats._
+import io.sphere.mongo.generic._
 import org.bson.BasicBSONObject
 import org.bson.types.BasicBSONList
 import org.scalacheck.Gen
@@ -9,10 +10,18 @@ import org.scalatest.{MustMatchers, WordSpec}
 
 import scala.collection.JavaConverters._
 
+object DefaultMongoFormatsTest {
+  case class User(name: String)
+  object User {
+    implicit val mongo: MongoFormat[User] = mongoProduct(apply _)
+  }
+}
+
 class DefaultMongoFormatsTest extends WordSpec with MustMatchers with GeneratorDrivenPropertyChecks {
+  import DefaultMongoFormatsTest._
 
   "DefaultMongoFormats" must {
-    "support List" in {
+    "support List[String]" in {
       val format = listFormat[String]
       val list = Gen.listOf(Gen.alphaNumStr)
 
@@ -24,7 +33,14 @@ class DefaultMongoFormatsTest extends WordSpec with MustMatchers with GeneratorD
       }
     }
 
-    "support Set" in {
+    "support List[A: MongoFormat]" in {
+      val format = listFormat[User]
+      val list = Gen.listOf(Gen.alphaNumStr.map(User.apply))
+
+      check(list, format)
+    }
+
+    "support Set[String]" in {
       val format = setFormat[String]
       val set = Gen.listOf(Gen.alphaNumStr).map(_.toSet)
 
@@ -36,7 +52,14 @@ class DefaultMongoFormatsTest extends WordSpec with MustMatchers with GeneratorD
       }
     }
 
-    "support Map[String, A]" in {
+    "support Set[A: MongoFormat]" in {
+      val format = setFormat[User]
+      val set = Gen.listOf(Gen.alphaNumStr.map(User.apply)).map(_.toSet)
+
+      check(set, format)
+    }
+
+    "support Map[String, String]" in {
       val format = mapFormat[String]
       val map = Gen.listOf {
         for {
@@ -51,6 +74,26 @@ class DefaultMongoFormatsTest extends WordSpec with MustMatchers with GeneratorD
         val resultMap = format.fromMongoValue(dbo)
         resultMap must be (m)
       }
+    }
+
+    "support Map[String, A: MongoFormat]" in {
+      val format = mapFormat[User]
+      val map = Gen.listOf {
+        for {
+          key <- Gen.alphaNumStr
+          value <- Gen.alphaNumStr.map(User.apply)
+        } yield (key, value)
+      }.map(_.toMap)
+
+      check(map, format)
+    }
+  }
+
+  private def check[A](gen: Gen[A], format: MongoFormat[A]) = {
+    forAll(gen) { value ⇒
+      val dbo = format.toMongoValue(value)
+      val result = format.fromMongoValue(dbo)
+      result must be (value)
     }
   }
 
