@@ -133,7 +133,6 @@ class MongoEmbeddedSpec extends WordSpec with MustMatchers with OptionValues {
       val dbo = dbObj(
         "name" -> "ze name"
       )
-      val json = """{ "name": "ze name" }"""
       val test2 = MongoFormat[Test2].fromMongoValue(dbo)
       test2.name mustEqual "ze name"
       test2.embedded mustEqual None

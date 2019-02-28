@@ -44,13 +44,6 @@ class OptionMongoFormatSpec extends WordSpec with MustMatchers with OptionValues
         "value2" -> 45,
         "value3" -> "b"
       )
-      val json =
-        """{
-          |  "value1": "a",
-          |  "value2": 45,
-          |  "value3": "b"
-          |}
-        """.stripMargin
       val result = MongoFormat[Option[SimpleClass]].fromMongoValue(dbo)
       result.value.value1 mustEqual "a"
       result.value.value2 mustEqual 45
