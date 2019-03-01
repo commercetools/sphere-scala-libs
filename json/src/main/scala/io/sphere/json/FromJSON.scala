@@ -220,13 +220,15 @@ object FromJSON {
   }
 
   implicit val currencyReader: FromJSON[Currency] = new FromJSON[Currency] {
-    val failMsg = "ISO 4217 code JSON String expected"
+    val failMsg = "ISO 4217 code JSON String expected."
+    def failMsgFor(input: String) = s"Currency '$input' not valid as ISO 4217 code."
+
     def read(jval: JValue): JValidation[Currency] = jval match {
       case JString(s) =>
         try {
           Valid(Currency.getInstance(s))
         } catch {
-          case e: IllegalArgumentException => fail(failMsg)
+          case e: IllegalArgumentException => fail(failMsgFor(s))
         }
       case _ => fail(failMsg)
     }

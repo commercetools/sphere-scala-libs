@@ -142,7 +142,8 @@ trait DefaultMongoFormats {
   }
 
   implicit val currencyFormat: MongoFormat[Currency] = new MongoFormat[Currency] {
-    val failMsg = "ISO 4217 code JSON String expected"
+    val failMsg = "ISO 4217 code JSON String expected."
+    def failMsgFor(input: String) = s"Currency '$input' not valid as ISO 4217 code."
 
     override def toMongoValue(c: Currency): Any = c.getCurrencyCode
     override def fromMongoValue(any: Any): Currency = any match {
@@ -150,8 +151,9 @@ trait DefaultMongoFormats {
         try {
           Currency.getInstance(s)
         } catch {
-          case _: IllegalArgumentException => throw new Exception(failMsg)
+          case _: IllegalArgumentException => throw new Exception(failMsgFor(s))
         }
+      case _ => throw new Exception(failMsg)
     }
   }
 
