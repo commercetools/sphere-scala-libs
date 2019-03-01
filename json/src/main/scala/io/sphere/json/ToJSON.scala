@@ -92,22 +92,25 @@ object ToJSON {
   }
 
   implicit val moneyWriter: ToJSON[Money] = new ToJSON[Money] {
+    import Money._
+
     def write(m: Money): JValue = JObject(
-      JField("type", toJValue(m.`type`)) ::
-      JField("currencyCode", toJValue(m.currency)) ::
-      JField("centAmount", toJValue(m.centAmount)) ::
-      JField("fractionDigits", toJValue(m.currency.getDefaultFractionDigits)) ::
+      JField(BaseMoney.TypeField, toJValue(m.`type`)) ::
+      JField(CurrencyCodeField, toJValue(m.currency)) ::
+      JField(CentAmountField, toJValue(m.centAmount)) ::
+      JField(FractionDigitsField, toJValue(m.currency.getDefaultFractionDigits)) ::
       Nil
     )
   }
 
   implicit val highPrecisionMoneyWriter: ToJSON[HighPrecisionMoney] = new ToJSON[HighPrecisionMoney] {
+    import HighPrecisionMoney._
     def write(m: HighPrecisionMoney): JValue = JObject(
-      JField("type", toJValue(m.`type`)) ::
-      JField("currencyCode", toJValue(m.currency)) ::
-      JField("centAmount", toJValue(m.centAmount)) ::
-      JField("preciseAmount", toJValue(m.preciseAmountAsLong)) ::
-      JField("fractionDigits", toJValue(m.fractionDigits)) ::
+      JField(BaseMoney.TypeField, toJValue(m.`type`)) ::
+      JField(CurrencyCodeField, toJValue(m.currency)) ::
+      JField(CentAmountField, toJValue(m.centAmount)) ::
+      JField(PreciseAmountField, toJValue(m.preciseAmountAsLong)) ::
+      JField(FractionDigitsField, toJValue(m.fractionDigits)) ::
       Nil
     )
   }
