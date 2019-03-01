@@ -6,7 +6,7 @@
 
 - fix runtime error on `HighPrecisionMoney.toString`. [74](https://github.com/sphereio/sphere-scala-libs/pull/74)
 - lots of improvement on mongo support:
-  - handle optional embedded field. [75][(https://github.com/sphereio/sphere-scala-libs/pull/75)
+  - handle optional embedded field. [75](https://github.com/sphereio/sphere-scala-libs/pull/75)
   - `MongoFormat` instance for `Map[String, A]` where `A: MongoFormat`. [76](https://github.com/sphereio/sphere-scala-libs/pull/76) (and a [fix](https://github.com/sphereio/sphere-scala-libs/pull/78))
   - `MongoFormat` instance for `BaseMoney`. [79](https://github.com/sphereio/sphere-scala-libs/pull/79)
 
