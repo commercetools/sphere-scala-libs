@@ -6,7 +6,8 @@ import scala.language.experimental.macros
 import io.sphere.mongo.format.MongoFormat
 import io.sphere.mongo.format._
 import io.sphere.util.{Logging, Memoizer, Reflect}
-import com.mongodb._
+import com.mongodb.BasicDBObject
+import org.bson.BSONObject
 
 /**
   * copy/paste from https://github.com/sphereio/sphere-scala-libs/blob/master/json/src/main/scala/generic/package.fmpp.scala
@@ -49,7 +50,7 @@ package object generic extends Logging {
       dbo
     }
     override def fromMongoValue(any: Any): T = any match {
-      case o: DBObject => findTypeValue(o, typeField) match {
+      case o: BSONObject => findTypeValue(o, typeField) match {
         case Some(t) if t == typeValue => singleton
         case Some(t) => sys.error("Invalid type value '" + t + "'. Excepted '%s'".format(typeValue))
         case None => sys.error("Missing type field.")
@@ -80,7 +81,7 @@ package object generic extends Logging {
         dbo
       }
       def fromMongoValue(any: Any): T = any match {
-        case dbo: DBObject =>
+        case dbo: BSONObject =>
           construct(
             readField[A1](_fields.head, dbo)<#if i!=1><#list 2..i as j>,
             readField[A${j}](_fields(${j-1}), dbo)</#list></#if>
@@ -128,7 +129,7 @@ package object generic extends Logging {
 
     new MongoFormat[T] {
       def fromMongoValue(any: Any): T = any match {
-        case dbo: DBObject =>
+        case dbo: BSONObject =>
           findTypeValue(dbo, typeField) match {
             case Some(t) => readMap.get(t) match {
               case Some(r) => r.read(dbo).asInstanceOf[T]
@@ -140,7 +141,7 @@ package object generic extends Logging {
       }
       def toMongoValue(t: T): Any = writeMap.get(t.getClass) match {
         case Some(w) => w.write(t) match {
-          case dbo: DBObject => findTypeValue(dbo, w.typeField) match {
+          case dbo: BSONObject => findTypeValue(dbo, w.typeField) match {
             case Some(_) => dbo
             case None => dbo.put(w.typeField, w.typeValue)
           }
@@ -208,11 +209,11 @@ package object generic extends Logging {
     }
   }
 
-  private def writeField[A: MongoFormat](dbo: DBObject, field: MongoFieldMeta, e: A): Unit =
+  private def writeField[A: MongoFormat](dbo: BSONObject, field: MongoFieldMeta, e: A): Unit =
     if (!field.ignored) {
       if (field.embedded)
         toMongo(e) match {
-          case dbo2: DBObject => dbo.putAll(dbo2)
+          case dbo2: BSONObject => dbo.putAll(dbo2)
           case MongoNothing => ()
           case x => dbo.put(field.name, x)
         }
@@ -224,7 +225,7 @@ package object generic extends Logging {
 
     }
 
-  private def readField[A: MongoFormat](f: MongoFieldMeta, dbo: DBObject): A = {
+  private def readField[A: MongoFormat](f: MongoFieldMeta, dbo: BSONObject): A = {
     val mf = MongoFormat[A]
     def default = f.default.asInstanceOf[Option[A]].orElse(mf.default)
     if (f.ignored)
@@ -243,7 +244,7 @@ package object generic extends Logging {
     }
   }
 
-  private def findTypeValue(dbo: DBObject, typeField: String): Option[String] =
+  private def findTypeValue(dbo: BSONObject, typeField: String): Option[String] =
     Option(dbo.get(typeField)).map(_.toString)
 
   private def typeSelector[A: ClassTag: MongoFormat](): TypeSelector[_] = {
