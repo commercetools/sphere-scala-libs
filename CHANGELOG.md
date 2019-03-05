@@ -1,6 +1,11 @@
 ## master
 
-## 0.9.21-SNAPSHOT
+## 0.9.22-SNAPSHOT
+
+## 0.9.21 (2019-03-05)
+
+- add cats instances for `MongoFormat` and `JSON`. [85](https://github.com/sphereio/sphere-scala-libs/pull/85)
+- use more generic BSONObject and BasicBSONList. [87](https://github.com/sphereio/sphere-scala-libs/pull/87)
 
 ## 0.9.20 (2019-03-01)
 
