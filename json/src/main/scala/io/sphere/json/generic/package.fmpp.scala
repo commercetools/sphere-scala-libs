@@ -166,7 +166,20 @@ package object generic extends Logging {
       ).map<#if i!=1>N</#if>(construct)
         case _ => jsonParseError("JSON object expected.")
       }
-      override val fields = _fields.map(_.name).toSet
+      override val fields: Set[String] = calculateFields()
+      private def calculateFields(): Set[String] = {
+        val builder = Set.newBuilder[String]
+        <#list 1..i as j>
+          val f${j} = _fields(${j-1})
+          if (!f${j}.ignored) {
+            if (f${j}.embedded)
+              builder ++= FromJSON[A${j}].fields
+            else
+              builder += f${j}.name
+          }
+        </#list>
+        builder.result()
+      }
     }
   }
   </#list>
