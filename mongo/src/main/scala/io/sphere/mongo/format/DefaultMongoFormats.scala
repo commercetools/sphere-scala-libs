@@ -3,10 +3,9 @@ package io.sphere.mongo.format
 import java.util.{Currency, UUID}
 import java.util.regex.Pattern
 
-import com.mongodb.{BasicDBList, DBObject}
 import io.sphere.util.{BaseMoney, HighPrecisionMoney, Money}
 import org.bson.{BSONObject, BasicBSONObject}
-import org.bson.types.ObjectId
+import org.bson.types.{BasicBSONList, ObjectId}
 
 object DefaultMongoFormats extends DefaultMongoFormats {
   val someNone = Some(None)
@@ -56,7 +55,7 @@ trait DefaultMongoFormats {
     override def fromMongoValue(any: Any) = {
       Option(any) match {
         case None => None
-        case Some(dbo: DBObject) if fields.nonEmpty && dbo.keySet().asScala.forall(t ⇒ !fields.contains(t)) => None
+        case Some(dbo: BSONObject) if fields.nonEmpty && dbo.keySet().asScala.forall(t ⇒ !fields.contains(t)) => None
         case Some(x) => Some(f.fromMongoValue(x))
       }
     }
@@ -68,15 +67,14 @@ trait DefaultMongoFormats {
   implicit def vecFormat[@specialized A](implicit f: MongoFormat[A]): MongoFormat[Vector[A]] = new MongoFormat[Vector[A]] {
     import scala.collection.JavaConverters._
     override def toMongoValue(a: Vector[A]) = {
-      val m = new BasicDBList()
+      val m = new BasicBSONList()
       m.addAll(a.map(f.toMongoValue(_).asInstanceOf[AnyRef]).asJavaCollection)
       m
     }
     override def fromMongoValue(any: Any): Vector[A] = {
       any match {
-        case l: BasicDBList =>
-          val it = l.asInstanceOf[BasicDBList].iterator()
-          it.asScala.map(f.fromMongoValue).toVector
+        case l: BasicBSONList =>
+          l.iterator().asScala.map(f.fromMongoValue).toVector
         case _ => throw new Exception(s"cannot read value from ${any.getClass.getName}")
       }
     }
@@ -85,15 +83,14 @@ trait DefaultMongoFormats {
   implicit def listFormat[@specialized A](implicit f: MongoFormat[A]): MongoFormat[List[A]] = new MongoFormat[List[A]] {
     import scala.collection.JavaConverters._
     override def toMongoValue(a: List[A]) = {
-      val m = new BasicDBList()
+      val m = new BasicBSONList()
       m.addAll(a.map(f.toMongoValue(_).asInstanceOf[AnyRef]).asJavaCollection)
       m
     }
     override def fromMongoValue(any: Any): List[A] = {
       any match {
-        case l: BasicDBList =>
-          val it = l.asInstanceOf[BasicDBList].iterator()
-          it.asScala.map(f.fromMongoValue).toList
+        case l: BasicBSONList =>
+          l.iterator().asScala.map(f.fromMongoValue).toList
         case _ => throw new Exception(s"cannot read value from ${any.getClass.getName}")
       }
     }
@@ -102,15 +99,14 @@ trait DefaultMongoFormats {
   implicit def setFormat[@specialized A](implicit f: MongoFormat[A]): MongoFormat[Set[A]] = new MongoFormat[Set[A]] {
     import scala.collection.JavaConverters._
     override def toMongoValue(a: Set[A]) = {
-      val m = new BasicDBList()
+      val m = new BasicBSONList()
       m.addAll(a.map(f.toMongoValue(_).asInstanceOf[AnyRef]).asJavaCollection)
       m
     }
     override def fromMongoValue(any: Any): Set[A] = {
       any match {
-        case l: BasicDBList =>
-          val it = l.asInstanceOf[BasicDBList].iterator()
-          it.asScala.map(f.fromMongoValue).toSet
+        case l: BasicBSONList =>
+          l.iterator().asScala.map(f.fromMongoValue).toSet
         case _ => throw new Exception(s"cannot read value from ${any.getClass.getName}")
       }
     }
@@ -126,7 +122,7 @@ trait DefaultMongoFormats {
 
       val map: java.util.Map[_, _] = any match {
         case b: BasicBSONObject => b // avoid instantiating a new map
-        case dbo: DBObject => dbo.toMap
+        case dbo: BSONObject => dbo.toMap
         case other => throw new Exception(s"cannot read value from ${other.getClass.getName}")
       }
       val builder = Map.newBuilder[String, A]
