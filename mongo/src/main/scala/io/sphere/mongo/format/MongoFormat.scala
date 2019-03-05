@@ -9,10 +9,12 @@ trait MongoFormat[@specialized A] {
   def fromMongoValue(any: Any): A
   def default: Option[A] = None
   /** needed JSON fields - ignored if empty */
-  def fields: Set[String] = Set.empty
+  val fields: Set[String] = MongoFormat.emptyFieldsSet
 }
 
 object MongoFormat {
+
+  private[MongoFormat] val emptyFieldsSet: Set[String] = Set.empty
 
   @inline def apply[A](implicit instance: MongoFormat[A]): MongoFormat[A] = instance
 

@@ -21,13 +21,14 @@ class JSONInvariant extends Invariant[JSON] {
   override def imap[A, B](fa: JSON[A])(f: A => B)(g: B => A): JSON[B] = new JSON[B] {
     override def write(b: B): JValue = fa.write(g(b))
     override def read(jval: JValue): JValidation[B] = fa.read(jval).map(f)
-    override def fields: Set[String] = fa.fields
+    override val fields: Set[String] = fa.fields
   }
 }
 
 class FromJSONFunctor extends Functor[FromJSON] {
   override def map[A, B](fa: FromJSON[A])(f: A => B): FromJSON[B] = new FromJSON[B] {
     override def read(jval: JValue): JValidation[B] = fa.read(jval).map(f)
+    override val fields: Set[String] = fa.fields
   }
 }
 
