@@ -2,6 +2,11 @@
 
 ## 0.9.22-SNAPSHOT
 
+## 0.9.22 (2019-03-05)
+
+- avoid unnecessary instantiations. [88](https://github.com/sphereio/sphere-scala-libs/pull/88) [91](https://github.com/sphereio/sphere-scala-libs/pull/91)
+- handle fields of embedded json. [90](https://github.com/sphereio/sphere-scala-libs/pull/90)
+
 ## 0.9.21 (2019-03-05)
 
 - add cats instances for `MongoFormat` and `JSON`. [85](https://github.com/sphereio/sphere-scala-libs/pull/85)
