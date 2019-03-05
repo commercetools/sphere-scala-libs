@@ -26,6 +26,16 @@ object JSONEmbeddedSpec {
   object Test2 {
     implicit val json: JSON[Test2] = jsonProduct(apply _)
   }
+
+  case class SubTest4(@JSONEmbedded embedded: Embedded)
+  object SubTest4 {
+    implicit val json: JSON[SubTest4] = jsonProduct(apply _)
+  }
+
+  case class Test4(subField: Option[SubTest4] = None)
+  object Test4 {
+    implicit val json: JSON[Test4] = jsonProduct(apply _)
+  }
 }
 
 class JSONEmbeddedSpec extends WordSpec with MustMatchers with OptionValues {
@@ -90,6 +100,21 @@ class JSONEmbeddedSpec extends WordSpec with MustMatchers with OptionValues {
       test2.name mustEqual "ze name"
       test2.embedded.value.value1 mustEqual "ze value1"
       test2.embedded.value.value2 mustEqual 45
+    }
+
+    "check for sub-fields" in {
+      val json =
+        """
+        {
+          "subField": {
+            "value1": "ze value1",
+            "value2": 45
+          }
+        }
+        """
+      val test4 = getFromJSON[Test4](json)
+      test4.subField.value.embedded.value1 mustEqual "ze value1"
+      test4.subField.value.embedded.value2 mustEqual 45
     }
 
     "support the absence of optional embedded attribute" in {
