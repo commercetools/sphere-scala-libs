@@ -18,10 +18,12 @@ trait FromJSON[@specialized A] {
   def read(jval: JValue): JValidation[A]
   final protected def fail(msg: String) = jsonParseError(msg)
   /** needed JSON fields - ignored if empty */
-  def fields: Set[String] = Set.empty
+  val fields: Set[String] = FromJSON.emptyFieldsSet
 }
 
 object FromJSON {
+
+  private[FromJSON] val emptyFieldsSet: Set[String] = Set.empty
 
   @inline def apply[A](implicit instance: FromJSON[A]): FromJSON[A] = instance
 
@@ -33,7 +35,7 @@ object FromJSON {
       case JObject(s) if fields.nonEmpty && s.forall(t ⇒ !fields.contains(t._1)) ⇒ validNone // if none of the optional fields are in the JSON
       case x => c.read(x).map(Option.apply)
     }
-    override val fields = c.fields
+    override val fields: Set[String] = c.fields
   }
 
   implicit def listReader[@specialized A](implicit r: FromJSON[A]): FromJSON[List[A]] = new FromJSON[List[A]] {

@@ -34,7 +34,7 @@ package object generic extends Logging {
     new JSON[A] {
       def write(a: A): JValue = toJSON.write(a)
       def read(jval: JValue): ValidatedNel[JSONError, A] = fromJSON.read(jval)
-      override def fields: Set[String] = fromJSON.fields
+      override val fields: Set[String] = fromJSON.fields
     }
   }
 
