@@ -29,8 +29,7 @@ object JSONEmbeddedSpec {
 
   case class Test3(
     name:String,
-    @JSONEmbedded
-    // @io.sphere.json.annotations.JSONEmbedded()
+    @io.sphere.json.annotations.JSONEmbedded()
     embedded: Embedded
   )
 
