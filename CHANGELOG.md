@@ -1,6 +1,10 @@
 ## master
 
-## 0.9.22-SNAPSHOT
+## 0.9.24-SNAPSHOT
+
+## 0.9.23 (2019-03-11)
+
+- update mongo core driver to 3.10.1. [70](https://github.com/sphereio/sphere-scala-libs/pull/70)
 
 ## 0.9.22 (2019-03-05)
 
