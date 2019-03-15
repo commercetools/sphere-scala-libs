@@ -67,6 +67,25 @@ class DeriveMongoformatSpec extends WordSpec with MustMatchers {
 
       newUser must be (originalUser)
     }
+
+    "read and write sealed trait with only one subtype" in {
+      val dbo = dbObj(
+          "userId" -> "foo-123",
+          "pictureSize" -> dbObj(
+            "type" -> "Medium"),
+          "pictureUrl" -> "http://example.com",
+          "access" -> dbObj(
+            "type" -> "Authorized",
+            "project" -> "internal"))
+      val user = fromMongo[UserWithPicture](dbo)
+
+      user must be (UserWithPicture("foo-123", Medium, "http://example.com", Some(Access.Authorized("internal"))))
+      val newDbo = toMongo[UserWithPicture](user)
+      newDbo must be (dbo)
+
+      val newUser = fromMongo[UserWithPicture](newDbo)
+      newUser must be (user)
+    }
   }
 }
 
@@ -81,7 +100,19 @@ object PictureSize {
   implicit val mongo: MongoFormat[PictureSize] = deriveMongoFormat[PictureSize]
 }
 
-case class UserWithPicture(userId: String, pictureSize: PictureSize, pictureUrl: String)
+sealed trait Access
+object Access {
+  // only one sub-type
+  case class Authorized(project: String) extends Access
+
+  implicit val mongo: MongoFormat[Access] = deriveMongoFormat
+}
+
+case class UserWithPicture(
+  userId: String,
+  pictureSize: PictureSize,
+  pictureUrl: String,
+  access: Option[Access] = None)
 
 object UserWithPicture {
   implicit val mongo: MongoFormat[UserWithPicture] = mongoProduct(apply _)

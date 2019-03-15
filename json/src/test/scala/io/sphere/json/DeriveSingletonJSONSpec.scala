@@ -2,6 +2,9 @@ package io.sphere.json
 
 import cats.data.Validated.Valid
 import io.sphere.json.generic._
+import org.json4s.JValue
+import org.json4s.JsonAST.{JNothing, JObject}
+import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import org.scalatest.{MustMatchers, WordSpec}
 
@@ -42,7 +45,7 @@ class DeriveSingletonJSONSpec extends WordSpec with MustMatchers {
         }
         """)
 
-      userJson must be (expectedJson)
+      filter(userJson) must be (expectedJson)
     }
 
     "read custom singleton values" in {
@@ -69,7 +72,7 @@ class DeriveSingletonJSONSpec extends WordSpec with MustMatchers {
         }
         """)
 
-      userJson must be (expectedJson)
+      filter(userJson) must be (expectedJson)
     }
 
     "write and consequently read, which must produce the original value" in {
@@ -78,7 +81,36 @@ class DeriveSingletonJSONSpec extends WordSpec with MustMatchers {
 
       newUser must be (originalUser)
     }
+
+    "read and write sealed trait with only one subtype" in {
+      val json = """
+        {
+          "userId": "foo-123",
+          "pictureSize": "Medium",
+          "pictureUrl": "http://example.com",
+          "access": {
+             "type": "Authorized",
+             "project": "internal"
+          }
+        }
+      """
+      val user = getFromJSON[UserWithPicture](json)
+
+      user must be (UserWithPicture("foo-123", Medium, "http://example.com", Some(Access.Authorized("internal"))))
+
+      val newJson = toJValue[UserWithPicture](user)
+      Valid(newJson) must be (parseJSON(json))
+
+      val Valid(newUser) = fromJValue[UserWithPicture](newJson)
+      newUser must be (user)
+    }
   }
+
+  private def filter(jvalue: JValue): JValue =
+    jvalue.removeField {
+      case (_, JNothing) => true
+      case _ => false
+    }
 }
 
 sealed abstract class PictureSize(val weight: Int, val height: Int)
@@ -94,7 +126,20 @@ object PictureSize {
   implicit val json: JSON[PictureSize] = deriveSingletonJSON[PictureSize]
 }
 
-case class UserWithPicture(userId: String, pictureSize: PictureSize, pictureUrl: String)
+sealed trait Access
+object Access {
+  // only one sub-type
+  case class Authorized(project: String) extends Access
+
+  implicit val json: JSON[Access] = deriveJSON
+}
+
+
+case class UserWithPicture(
+  userId: String,
+  pictureSize: PictureSize,
+  pictureUrl: String,
+  access: Option[Access] = None)
 
 object UserWithPicture {
   implicit val json: JSON[UserWithPicture] = deriveJSON[UserWithPicture]
