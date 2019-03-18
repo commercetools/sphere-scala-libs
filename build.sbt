@@ -24,7 +24,7 @@ lazy val standardSettings = Defaults.coreDefaultSettings ++ publishSettings ++ S
   testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "3.0.5" % Test,
-    "org.scalacheck" %% "scalacheck" % "1.13.5" % Test,
+    "org.scalacheck" %% "scalacheck" % "1.14.0" % Test,
     "ch.qos.logback" % "logback-classic" % "1.2.3" % Test
   ),
   shellPrompt in ThisBuild := { state ⇒
