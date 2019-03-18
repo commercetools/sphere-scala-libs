@@ -98,8 +98,6 @@ private[generic] object MongoFormatMacros {
 
         if (idents.size == 1)
           c.abort(c.enclosingPosition, "Subtypes not found.")
-        else if (idents.size < 3)
-          c.abort(c.enclosingPosition, "At least 2 subtypes in type switch required.")
         else {
           val instanceDefs = subtypes.zipWithIndex.collect {
             case (symbol, i) if symbol.isClass && symbol.asClass.isCaseClass =>

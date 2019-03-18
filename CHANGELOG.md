@@ -2,6 +2,8 @@
 
 ## 0.9.24-SNAPSHOT
 
+- `deriveJSON` and `deriveMongoFormat` support sum types with only one sub-type. 
+
 ## 0.9.23 (2019-03-11)
 
 - update mongo core driver to 3.10.1. [70](https://github.com/sphereio/sphere-scala-libs/pull/70)

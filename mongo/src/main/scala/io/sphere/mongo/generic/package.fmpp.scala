@@ -143,13 +143,20 @@ package object generic extends Logging {
         case Some(w) => w.write(t) match {
           case dbo: BSONObject => findTypeValue(dbo, w.typeField) match {
             case Some(_) => dbo
-            case None => dbo.put(w.typeField, w.typeValue)
+            case None =>
+              dbo.put(w.typeField, w.typeValue)
+              dbo
           }
+          case _ => throw new Exception("Excepted 'BSONObject'")
         }
         case None => new BasicDBObject(defaultTypeFieldName, defaultTypeValue(t.getClass))
       }
     }
   }
+
+  // special case with only one sub-type
+  def mongoTypeSwitch[T: ClassTag, A1 <: T: ClassTag: MongoFormat](selectors: List[TypeSelector[_]]): MongoFormat[T] =
+    mongoTypeSwitch[T, A1, A1](selectors)
 
   <#list 3..80 as i>
   <#assign typeParams><#list 1..i-1 as j>A${j}<#if i-1 != j>,</#if></#list></#assign>

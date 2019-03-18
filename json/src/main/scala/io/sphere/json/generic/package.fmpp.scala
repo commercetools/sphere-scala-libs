@@ -399,6 +399,10 @@ package object generic extends Logging {
     }
   }
 
+  // special case with only one sub-type
+  def jsonTypeSwitch[T: ClassTag, A1 <: T: ClassTag: FromJSON: ToJSON](selectors: List[TypeSelector[_]]): JSON[T] with TypeSelectorContainer =
+    jsonTypeSwitch[T, A1, A1](selectors)
+
   <#list 3..84 as i>
   <#assign typeParams><#list 1..i-1 as j>A${j}<#if i-1 != j>,</#if></#list></#assign>
   <#assign implTypeParams><#list 1..i as j>A${j} <: T : ToJSON : ClassTag<#if i !=j>,</#if></#list></#assign>
