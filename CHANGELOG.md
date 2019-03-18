@@ -1,8 +1,8 @@
-## master
+## 0.9.25-SNAPSHOT
 
-## 0.9.24-SNAPSHOT
+## 0.9.24 (2019-03-18)
 
-- `deriveJSON` and `deriveMongoFormat` support sum types with only one sub-type. 
+- `deriveJSON` and `deriveMongoFormat` support sum types with only one concrete type. [92](https://github.com/sphereio/sphere-scala-libs/pull/92)
 
 ## 0.9.23 (2019-03-11)
 
