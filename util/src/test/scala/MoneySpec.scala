@@ -1,11 +1,11 @@
 package io.sphere.util
 
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatest.{FunSpec, MustMatchers}
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.language.postfixOps
 
-class MoneySpec extends FunSpec with MustMatchers with GeneratorDrivenPropertyChecks {
+class MoneySpec extends FunSpec with MustMatchers with ScalaCheckDrivenPropertyChecks {
   import Money.ImplicitsDecimal._
   import Money._
 

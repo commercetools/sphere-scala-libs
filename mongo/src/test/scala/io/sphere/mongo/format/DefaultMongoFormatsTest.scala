@@ -5,8 +5,8 @@ import io.sphere.mongo.generic._
 import org.bson.BasicBSONObject
 import org.bson.types.BasicBSONList
 import org.scalacheck.Gen
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatest.{MustMatchers, WordSpec}
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.collection.JavaConverters._
 
@@ -17,7 +17,7 @@ object DefaultMongoFormatsTest {
   }
 }
 
-class DefaultMongoFormatsTest extends WordSpec with MustMatchers with GeneratorDrivenPropertyChecks {
+class DefaultMongoFormatsTest extends WordSpec with MustMatchers with ScalaCheckDrivenPropertyChecks {
   import DefaultMongoFormatsTest._
 
   "DefaultMongoFormats" must {
