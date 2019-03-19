@@ -4,6 +4,7 @@ import cats.data.Validated.{Invalid, Valid}
 import cats.data.ValidatedNel
 import cats.syntax.apply._
 import org.json4s.JsonAST._
+import io.sphere.json.field
 import io.sphere.json.generic._
 import io.sphere.util.Money
 import org.joda.time._
