@@ -4,12 +4,12 @@ import java.util.Currency
 
 import cats.data.Validated.Invalid
 import org.scalatest._
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.collection.mutable.ArrayBuffer
 import scala.language.postfixOps
 
-class HighPrecisionMoneySpec extends FunSpec with MustMatchers with GeneratorDrivenPropertyChecks {
+class HighPrecisionMoneySpec extends FunSpec with MustMatchers with ScalaCheckDrivenPropertyChecks {
   import HighPrecisionMoney.ImplicitsString._
   import HighPrecisionMoney.ImplicitsStringPrecise._
 
