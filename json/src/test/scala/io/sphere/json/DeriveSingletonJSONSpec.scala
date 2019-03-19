@@ -3,9 +3,8 @@ package io.sphere.json
 import cats.data.Validated.Valid
 import io.sphere.json.generic._
 import org.json4s.JValue
-import org.json4s.JsonAST.{JNothing, JObject}
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
+import org.json4s.JsonAST.JNothing
+import org.json4s.jackson.JsonMethods.{compact, render}
 import org.scalatest.{MustMatchers, WordSpec}
 
 class DeriveSingletonJSONSpec extends WordSpec with MustMatchers {

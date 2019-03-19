@@ -550,7 +550,7 @@ package object generic extends Logging {
     }
   }
 
-  private def writeField[A: ToJSON](buf: ListBuffer[JField], field: JSONFieldMeta, e: A) {
+  private def writeField[A: ToJSON](buf: ListBuffer[JField], field: JSONFieldMeta, e: A): Unit = {
     if (!field.ignored) {
       if (field.embedded)
         toJValue(e) match {
