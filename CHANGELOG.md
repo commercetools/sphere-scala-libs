@@ -1,4 +1,8 @@
-## 0.9.25-SNAPSHOT
+## 0.9.26-SNAPSHOT
+
+## 0.9.25 (2019-03-23)
+
+- artifacts for scala 2.13.0-M5 available. [95](https://github.com/sphereio/sphere-scala-libs/pull/95) and [96](https://github.com/sphereio/sphere-scala-libs/pull/96)
 
 ## 0.9.24 (2019-03-18)
 
