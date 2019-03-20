@@ -19,11 +19,11 @@ class ToJsonBenchmark {
   /* on local mac
   jmh:run
 
-Benchmark                                      Mode  Cnt   Score   Error  Units
-ToJsonBenchmark.listWriter                    thrpt   10  70,065 ± 0,967  ops/s
-ToJsonBenchmark.seqWriter                     thrpt   10  63,512 ± 3,889  ops/s
-ToJsonBenchmark.serializeCaseClassToString    thrpt   10  37,925 ± 2,252  ops/s
-ToJsonBenchmark.vectorWriter                  thrpt   10  63,762 ± 1,470  ops/s
+Benchmark                                    Mode  Cnt   Score   Error  Units
+ToJsonBenchmark.listWriter                  thrpt   10  68,770 ± 1,157  ops/s
+ToJsonBenchmark.seqWriter                   thrpt   10  65,792 ± 1,191  ops/s
+ToJsonBenchmark.serializeCaseClassToString  thrpt   10  39,142 ± 0,574  ops/s
+ToJsonBenchmark.vectorWriter                thrpt   10  64,359 ± 2,162  ops/s
    */
 
   @Benchmark

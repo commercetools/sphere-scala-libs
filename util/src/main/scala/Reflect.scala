@@ -43,6 +43,7 @@ object Reflect extends Logging {
       }
 
       sym.children
+        .iterator
         .collect { case m: MethodSymbol if m.isCaseAccessor && !m.isPrivate => m }
         .zipWithIndex
         .map { case (ms, idx) =>
@@ -52,7 +53,7 @@ object Reflect extends Logging {
             case _: NoSuchMethodException => None
           }
           CaseClassFieldMeta(ms.name, defaultValue)
-        }(collection.breakOut)
+        }.toIndexedSeq
     }
   }
 }
