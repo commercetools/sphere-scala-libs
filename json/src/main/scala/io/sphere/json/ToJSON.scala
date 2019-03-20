@@ -2,7 +2,6 @@ package io.sphere.json
 
 import cats.data.NonEmptyList
 
-import scala.collection.breakOut
 import java.util.{Currency, Locale, UUID}
 
 import io.sphere.util.{BaseMoney, HighPrecisionMoney, Money}
@@ -44,15 +43,17 @@ object ToJSON {
   }
 
   implicit def seqWriter[@specialized A](implicit w: ToJSON[A]): ToJSON[Seq[A]] = new ToJSON[Seq[A]] {
-    def write(s: Seq[A]): JValue = JArray(s.map(w.write)(breakOut))
+    def write(s: Seq[A]): JValue = JArray(s.iterator.map(w.write).toList)
   }
 
   implicit def setWriter[@specialized A](implicit w: ToJSON[A]): ToJSON[Set[A]] = new ToJSON[Set[A]] {
-    def write(s: Set[A]): JValue = JArray(s.map(w.write)(breakOut))
+    def write(s: Set[A]): JValue = JArray(s.iterator.map(w.write).toList)
   }
 
   implicit def vectorWriter[@specialized A](implicit w: ToJSON[A]): ToJSON[Vector[A]] = new ToJSON[Vector[A]] {
-    def write(v: Vector[A]): JValue = JArray(v.map(w.write)(breakOut))
+    def write(v: Vector[A]): JValue = {
+      JArray(v.iterator.map(w.write).toList)
+    }
   }
 
   implicit val intWriter: ToJSON[Int] = new ToJSON[Int] {
@@ -88,7 +89,7 @@ object ToJSON {
   }
 
   implicit def mapWriter[A: ToJSON]: ToJSON[Map[String, A]] = new ToJSON[Map[String, A]] {
-    def write(m: Map[String, A]) = JObject(m.map { case (k, v) => JField(k, toJValue(v)) }(breakOut): _*)
+    def write(m: Map[String, A]) = JObject(m.iterator.map { case (k, v) => JField(k, toJValue(v)) }.toList)
   }
 
   implicit val moneyWriter: ToJSON[Money] = new ToJSON[Money] {
