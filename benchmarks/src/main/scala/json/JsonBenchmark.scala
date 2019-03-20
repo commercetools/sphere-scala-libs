@@ -5,63 +5,9 @@ import java.util.UUID
 import io.sphere.json._
 import io.sphere.json.generic._
 import io.sphere.util.BaseMoney
-import org.json4s.StringInput
-import org.json4s.jackson._
-import org.openjdk.jmh.annotations._
 
-@State(Scope.Benchmark)
-@BenchmarkMode(Array(Mode.Throughput))
-@Warmup(iterations = 10, time = 1)
-@Measurement(iterations = 10, time = 1)
-@Fork(value = 1)
-class JsonBenchmark {
-
-  /* on local mac
-  jmh:run
-
-Benchmark                                  Mode  Cnt   Score    Error  Units
-JsonBenchmark.listReader                  thrpt    5  65,248 ± 17,094  ops/s
-JsonBenchmark.parseFromStringToCaseClass  thrpt    5  13,365 ±  0,467  ops/s
-JsonBenchmark.parseFromStringToJValue     thrpt    5  84,705 ± 12,377  ops/s
-JsonBenchmark.seqReader                   thrpt    5  64,475 ± 14,184  ops/s
-JsonBenchmark.serializeCaseClassToString  thrpt    5  40,563 ±  4,731  ops/s
-JsonBenchmark.vectorReader                thrpt    5  66,068 ±  7,377  ops/s
-   */
-
-  @Benchmark
-  def parseFromStringToJValue(): Unit = {
-    val jvalue = parseJson(StringInput(JsonBenchmark.json))
-    assert(jvalue != null)
-  }
-
-  @Benchmark
-  def parseFromStringToCaseClass(): Unit = {
-    val product = getFromJSON[Product](JsonBenchmark.json)
-    assert(product.version == 2)
-  }
-
-  @Benchmark
-  def serializeCaseClassToString(): Unit = {
-    val json = toJSON[Product](JsonBenchmark.product)
-    assert(json != null)
-  }
-
-  @Benchmark
-  def vectorReader(): Unit = {
-    fromJSON[Vector[Int]](JsonBenchmark.lotsOfInts)
-  }
-
-  @Benchmark
-  def listReader(): Unit = {
-    fromJSON[List[Int]](JsonBenchmark.lotsOfInts)
-  }
-
-  @Benchmark
-  def seqReader(): Unit = {
-    fromJSON[Seq[Int]](JsonBenchmark.lotsOfInts)
-  }
-
-}
+import scala.collection.generic.CanBuildFrom
+import scala.language.higherKinds
 
 case class Reference(typeId: String, id: UUID)
 
@@ -93,7 +39,10 @@ object Product {
 
 object JsonBenchmark {
 
-  val lotsOfInts = Range(1, 100000).mkString("[", ",", "]")
+  val lotsOfIntsList = Range(1, 100000).toList
+  val lotsOfIntsSeq = Range(1, 100000).toSeq
+  val lotsOfIntsVector = Range(1, 100000).toVector
+  val lotsOfIntsAsJson = Range(1, 100000).mkString("[", ",", "]")
 
   val prices = for (i ← 1 to 200) yield
     s"""
