@@ -8,6 +8,7 @@ import cats.data.Validated.{Invalid, Valid}
 import cats.instances.list._
 import cats.syntax.apply._
 import cats.syntax.traverse._
+import io.sphere.json.field
 import io.sphere.util.{BaseMoney, HighPrecisionMoney, LangTag, Money}
 import org.json4s.JsonAST._
 import org.joda.time._
