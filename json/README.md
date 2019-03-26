@@ -2,6 +2,8 @@
 
 Typeclasses & derived instances on top of [json4s](http://json4s.org/).
 
+![Cats Friendly Badge](https://typelevel.org/cats/img/cats-badge-tiny.png) 
+
 ## Motivation
 
 sphere-json was created with the following goals / requirements:
