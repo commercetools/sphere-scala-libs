@@ -1,7 +1,9 @@
 package io.sphere.mongo.format
 
+import java.util.Locale
 import io.sphere.mongo.format.DefaultMongoFormats._
 import io.sphere.mongo.generic._
+import io.sphere.util.LangTag
 import org.bson.BasicBSONObject
 import org.bson.types.BasicBSONList
 import org.scalacheck.Gen
@@ -87,6 +89,12 @@ class DefaultMongoFormatsTest extends WordSpec with MustMatchers with ScalaCheck
 
       check(map, format)
     }
+
+    "support Java Locale" in {
+      Locale.getAvailableLocales.filter(_.toLanguageTag != LangTag.UNDEFINED).foreach{ l: Locale =>
+        localeFormat.fromMongoValue(localeFormat.toMongoValue(l)).toLanguageTag must be (l.toLanguageTag)
+      }
+    }
   }
 
   private def check[A](gen: Gen[A], format: MongoFormat[A]) = {
@@ -96,5 +104,4 @@ class DefaultMongoFormatsTest extends WordSpec with MustMatchers with ScalaCheck
       result must be (value)
     }
   }
-
 }
