@@ -1,9 +1,8 @@
 package io.sphere.mongo.format
 
-import java.util.{Currency, UUID}
+import java.util.{Currency, Locale, UUID}
 import java.util.regex.Pattern
-
-import io.sphere.util.{BaseMoney, HighPrecisionMoney, Money}
+import io.sphere.util.{BaseMoney, HighPrecisionMoney, LangTag, Money}
 import org.bson.{BSONObject, BasicBSONObject}
 import org.bson.types.{BasicBSONList, ObjectId}
 
@@ -219,6 +218,20 @@ trait DefaultMongoFormats {
     }
   }
 
+  implicit val localeFormat: MongoFormat[Locale] = new MongoFormat[Locale] {
+    override def toMongoValue(a: Locale): Any = a.toLanguageTag
+    override def fromMongoValue(any: Any): Locale = any match {
+      case s: String => s match {
+        case LangTag(langTag) => langTag
+        case _ =>
+          if(LangTag.unapply(s).isEmpty)
+            throw new Exception("Undefined locale is not allowed")
+          else
+            throw new Exception(LangTag.invalidLangTagMessage(s))
+      }
+      case _ => throw new Exception(s"Locale is expected to be of type String but has '${any.getClass.getName}'")
+    }
+  }
 
   private def field[A](name: String, dbo: BSONObject)(implicit format: MongoFormat[A]): A =
     format.fromMongoValue(dbo.get(name))
