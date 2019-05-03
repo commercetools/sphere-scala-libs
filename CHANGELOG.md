@@ -1,6 +1,8 @@
-## 0.9.26-SNAPSHOT
+## 0.9.27-SNAPSHOT
 
-- introduce mongo format for java.util.Local
+## 0.9.26 (2019-05-03)
+
+- introduce mongo format for java.util.Local [101](https://github.com/sphereio/sphere-scala-libs/pull/101)
 
 ## 0.9.25 (2019-03-23)
 
