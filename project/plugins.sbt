@@ -1,5 +1,5 @@
 // https://github.com/sbt/sbt-bintray/releases
-addSbtPlugin("org.foundweekends" % "sbt-bintray" % "0.5.4")
+addSbtPlugin("org.foundweekends" % "sbt-bintray" % "0.5.5")
 
 // https://github.com/sbt/sbt-release/releases
 addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.11")
