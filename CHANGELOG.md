@@ -1,4 +1,10 @@
-## 0.9.27-SNAPSHOT
+## 0.9.28-SNAPSHOT
+
+
+## 0.9.27 (2019-05-20)
+
+- Update joda-time to 2.10.2. [102](https://github.com/sphereio/sphere-scala-libs/pull/102)
+- Update jackson-databind to 2.9.9. [104](https://github.com/sphereio/sphere-scala-libs/pull/104)
 
 ## 0.9.26 (2019-05-03)
 
