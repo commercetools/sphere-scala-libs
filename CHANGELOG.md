@@ -1,5 +1,10 @@
-## 0.9.28-SNAPSHOT
+## 0.9.29-SNAPSHOT
 
+## 0.9.28 (2019-06-06)
+
+- Update cats to 1.6.1. [105](https://github.com/sphereio/sphere-scala-libs/pull/105)
+- Update json4s to 3.6.6. [108](https://github.com/sphereio/sphere-scala-libs/pull/108)
+- Remove scala 2.13.0-M5 artifacts to allow updating dependencies. [107](https://github.com/sphereio/sphere-scala-libs/pull/107)
 
 ## 0.9.27 (2019-05-20)
 
