@@ -27,7 +27,7 @@ class DefaultMongoFormatsTest extends WordSpec with MustMatchers with ScalaCheck
       val format = listFormat[String]
       val list = Gen.listOf(Gen.alphaNumStr)
 
-      forAll(list) { l ⇒
+      forAll(list) { l =>
         val dbo = format.toMongoValue(l)
         dbo.asInstanceOf[BasicBSONList].asScala.toList must be (l)
         val resultList = format.fromMongoValue(dbo)
@@ -46,7 +46,7 @@ class DefaultMongoFormatsTest extends WordSpec with MustMatchers with ScalaCheck
       val format = setFormat[String]
       val set = Gen.listOf(Gen.alphaNumStr).map(_.toSet)
 
-      forAll(set) { s ⇒
+      forAll(set) { s =>
         val dbo = format.toMongoValue(s)
         dbo.asInstanceOf[BasicBSONList].asScala.toSet must be (s)
         val resultSet = format.fromMongoValue(dbo)
@@ -70,7 +70,7 @@ class DefaultMongoFormatsTest extends WordSpec with MustMatchers with ScalaCheck
         } yield (key, value)
       }.map(_.toMap)
 
-      forAll(map) { m ⇒
+      forAll(map) { m =>
         val dbo = format.toMongoValue(m)
         dbo.asInstanceOf[BasicBSONObject].asScala must be (m)
         val resultMap = format.fromMongoValue(dbo)
@@ -98,7 +98,7 @@ class DefaultMongoFormatsTest extends WordSpec with MustMatchers with ScalaCheck
   }
 
   private def check[A](gen: Gen[A], format: MongoFormat[A]) = {
-    forAll(gen) { value ⇒
+    forAll(gen) { value =>
       val dbo = format.toMongoValue(value)
       val result = format.fromMongoValue(dbo)
       result must be (value)

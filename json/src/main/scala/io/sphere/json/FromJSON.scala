@@ -33,7 +33,7 @@ object FromJSON {
   implicit def optionReader[@specialized A](implicit c: FromJSON[A]): FromJSON[Option[A]] = new FromJSON[Option[A]] {
     def read(jval: JValue): JValidation[Option[A]] = jval match {
       case JNothing | JNull | JObject(Nil) => validNone
-      case JObject(s) if fields.nonEmpty && s.forall(t ⇒ !fields.contains(t._1)) ⇒ validNone // if none of the optional fields are in the JSON
+      case JObject(s) if fields.nonEmpty && s.forall(t => !fields.contains(t._1)) => validNone // if none of the optional fields are in the JSON
       case x => c.read(x).map(Option.apply)
     }
     override val fields: Set[String] = c.fields
@@ -46,13 +46,13 @@ object FromJSON {
       case JArray(l) =>
         // "imperative" style for performances
         val initial: JValidation[ListBuffer[A]] = Valid(new ListBuffer())
-        l.foldLeft(initial) { (acc, jvalue) ⇒
+        l.foldLeft(initial) { (acc, jvalue) =>
           val result = r.read(jvalue)
           (acc, result) match {
-            case (Valid(builder), Valid(e)) ⇒ Valid(builder += e)
-            case (Valid(_), i @ Invalid(_)) ⇒ i
-            case (Invalid(e1), Invalid(e2)) ⇒ Invalid(e1.concatNel(e2))
-            case (i @ Invalid(_), _) ⇒ i
+            case (Valid(builder), Valid(e)) => Valid(builder += e)
+            case (Valid(_), i @ Invalid(_)) => i
+            case (Invalid(e1), Invalid(e2)) => Invalid(e1.concatNel(e2))
+            case (i @ Invalid(_), _) => i
           }
         }.map(_.result())
       case _ => fail("JSON Array expected.")
@@ -77,13 +77,13 @@ object FromJSON {
       case JArray(l) =>
         // "imperative" style for performances
         val initial: JValidation[VectorBuilder[A]] = Valid(new VectorBuilder())
-        l.foldLeft(initial) { (acc, jvalue) ⇒
+        l.foldLeft(initial) { (acc, jvalue) =>
           val result = r.read(jvalue)
           (acc, result) match {
-            case (Valid(builder), Valid(e)) ⇒ Valid(builder += e)
-            case (Valid(_), i @ Invalid(_)) ⇒ i
-            case (Invalid(e1), Invalid(e2)) ⇒ Invalid(e1.concatNel(e2))
-            case (i @ Invalid(_), _) ⇒ i
+            case (Valid(builder), Valid(e)) => Valid(builder += e)
+            case (Valid(_), i @ Invalid(_)) => i
+            case (Invalid(e1), Invalid(e2)) => Invalid(e1.concatNel(e2))
+            case (i @ Invalid(_), _) => i
           }
         }.map(_.result())
       case _ => fail("JSON Array expected.")
@@ -116,7 +116,7 @@ object FromJSON {
   implicit val bigIntReader: FromJSON[BigInt] = new FromJSON[BigInt] {
     def read(jval: JValue): JValidation[BigInt] = jval match {
       case JInt(i) => Valid(i)
-      case JLong(l) ⇒ Valid(l)
+      case JLong(l) => Valid(l)
       case _ => fail("JSON Number in the range of a BigInt expected.")
     }
   }
@@ -176,11 +176,11 @@ object FromJSON {
     override val fields = Set(CentAmountField, CurrencyCodeField)
 
     def read(value: JValue): JValidation[Money] = value match {
-      case o: JObject ⇒
+      case o: JObject =>
         (field[Long](CentAmountField)(o), field[Currency](CurrencyCodeField)(o)).mapN(
           Money.fromCentAmount)
 
-      case _ ⇒ fail("JSON object expected.")
+      case _ => fail("JSON object expected.")
     }
   }
 
@@ -192,33 +192,33 @@ object FromJSON {
     import cats.implicits._
     
     def read(value: JValue): JValidation[HighPrecisionMoney] = value match {
-      case o: JObject ⇒
+      case o: JObject =>
         val validatedFields = (
           field[Long](PreciseAmountField)(o),
           field[Int](FractionDigitsField)(o),
           field[Currency](CurrencyCodeField)(o),
           field[Option[Long]](CentAmountField)(o))
 
-        validatedFields.tupled.andThen { case (preciseAmount, fractionDigits, currencyCode, centAmount) ⇒
+        validatedFields.tupled.andThen { case (preciseAmount, fractionDigits, currencyCode, centAmount) =>
           HighPrecisionMoney.fromPreciseAmount(preciseAmount, fractionDigits, currencyCode, centAmount).leftMap(_.map(JSONParseError(_)))
         }
 
-      case _ ⇒
+      case _ =>
         fail("JSON object expected.")
     }
   }
 
   implicit val baseMoneyReader: FromJSON[BaseMoney] = new FromJSON[BaseMoney] {
     def read(value: JValue): JValidation[BaseMoney] = value match {
-      case o: JObject ⇒
+      case o: JObject =>
         field[Option[String]](BaseMoney.TypeField)(o).andThen {
-          case None ⇒ moneyReader.read(value)
-          case Some(Money.TypeName) ⇒ moneyReader.read(value)
-          case Some(HighPrecisionMoney.TypeName) ⇒ highPrecisionMoneyReader.read(value)
-          case Some(tpe) ⇒ fail(s"Unknown money type '$tpe'. Available types are: '${Money.TypeName}', '${HighPrecisionMoney.TypeName}'.")
+          case None => moneyReader.read(value)
+          case Some(Money.TypeName) => moneyReader.read(value)
+          case Some(HighPrecisionMoney.TypeName) => highPrecisionMoneyReader.read(value)
+          case Some(tpe) => fail(s"Unknown money type '$tpe'. Available types are: '${Money.TypeName}', '${HighPrecisionMoney.TypeName}'.")
         }
 
-      case _ ⇒ fail("JSON object expected.")
+      case _ => fail("JSON object expected.")
     }
   }
 

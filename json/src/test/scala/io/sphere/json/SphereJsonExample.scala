@@ -24,9 +24,9 @@ class SphereJsonExample extends WordSpec with Matchers {
       }
 
       def write(u: User): JValue = JObject(List(
-        "name" → toJValue(u.name),
-        "age" → toJValue(u.age),
-        "location" → toJValue(u.location)
+        "name" -> toJValue(u.name),
+        "age" -> toJValue(u.age),
+        "location" -> toJValue(u.location)
       ))
     }
   }

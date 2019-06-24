@@ -44,7 +44,7 @@ object JsonBenchmark {
   val lotsOfIntsVector = Range(1, 100000).toVector
   val lotsOfIntsAsJson = Range(1, 100000).mkString("[", ",", "]")
 
-  val prices = for (i ← 1 to 200) yield
+  val prices = for (i <- 1 to 200) yield
     s"""
        |{
        |  "id": "$i",
@@ -56,10 +56,10 @@ object JsonBenchmark {
        """.stripMargin
 
   val customAttributes =
-    (for (i ← 1 to 80) yield s""" "field-$i": "value $i" """).mkString("{", ",", "}")
+    (for (i <- 1 to 80) yield s""" "field-$i": "value $i" """).mkString("{", ",", "}")
 
 
-  val variants = for (i ← 1 to 100) yield
+  val variants = for (i <- 1 to 100) yield
     s"""{
         |  "id": $i,
         |  "prices": ${prices.mkString("[", ",", "]")},

@@ -23,14 +23,14 @@ object ToJSON {
   /**
     * construct an instance from a function
     */
-  def instance[T](toJson: T ⇒ JValue): ToJSON[T] = new ToJSON[T] {
+  def instance[T](toJson: T => JValue): ToJSON[T] = new ToJSON[T] {
     override def write(value: T): JValue = toJson(value)
   }
 
   implicit def optionWriter[@specialized A](implicit c: ToJSON[A]): ToJSON[Option[A]] = new ToJSON[Option[A]] {
     def write(opt: Option[A]): JValue = opt match {
-      case Some(a) ⇒ c.write(a)
-      case None ⇒ JNothing
+      case Some(a) => c.write(a)
+      case None => JNothing
     }
   }
 
@@ -118,8 +118,8 @@ object ToJSON {
 
   implicit def baseMoneyWriter: ToJSON[BaseMoney] = new ToJSON[BaseMoney] {
     def write(m: BaseMoney): JValue = m match {
-      case m: Money ⇒ moneyWriter.write(m)
-      case m: HighPrecisionMoney ⇒ highPrecisionMoneyWriter.write(m)
+      case m: Money => moneyWriter.write(m)
+      case m: HighPrecisionMoney => highPrecisionMoneyWriter.write(m)
     }
   }
 

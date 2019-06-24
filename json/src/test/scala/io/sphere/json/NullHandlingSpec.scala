@@ -29,10 +29,10 @@ class NullHandlingSpec extends WordSpec with MustMatchers {
     "should accept JNothing values and use default values for them" in {
       val jeans = getFromJValue[Jeans](
         JObject(
-          "leftPocket" → JNothing,
-          "rightPocket" → JNothing,
-          "backPocket" → JNothing,
-          "hiddenPocket" → JNothing))
+          "leftPocket" -> JNothing,
+          "rightPocket" -> JNothing,
+          "backPocket" -> JNothing,
+          "hiddenPocket" -> JNothing))
 
       jeans must be (Jeans(None, None, Set.empty, "secret"))
     }

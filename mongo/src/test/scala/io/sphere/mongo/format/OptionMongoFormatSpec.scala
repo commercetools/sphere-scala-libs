@@ -71,7 +71,7 @@ class OptionMongoFormatSpec extends WordSpec with MustMatchers with OptionValues
         "key1" -> "value1",
         "key2" -> "value2"
       )
-      val expected = Map("key1" → "value1", "key2" → "value2")
+      val expected = Map("key1" -> "value1", "key2" -> "value2")
       val result = MongoFormat[Map[String, String]].fromMongoValue(dbo)
       result mustEqual expected
 

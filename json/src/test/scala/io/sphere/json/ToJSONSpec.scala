@@ -13,18 +13,18 @@ class ToJSONSpec extends WordSpec with MustMatchers {
 
   "ToJSON.apply" must {
     "create a ToJSON" in {
-      implicit val encodeUser: ToJSON[User] = ToJSON.instance[User](u ⇒ JObject(List(
-        "id" → toJValue(u.id),
-        "first_name" → toJValue(u.firstName),
-        "age" → toJValue(u.age)
+      implicit val encodeUser: ToJSON[User] = ToJSON.instance[User](u => JObject(List(
+        "id" -> toJValue(u.id),
+        "first_name" -> toJValue(u.firstName),
+        "age" -> toJValue(u.age)
       )))
 
       val id = UUID.randomUUID()
       val json = toJValue(User(id, "bidule", 109))
       json must be (JObject(List(
-        "id" → JString(id.toString),
-        "first_name" → JString("bidule"),
-        "age" → JInt(109)
+        "id" -> JString(id.toString),
+        "first_name" -> JString("bidule"),
+        "age" -> JInt(109)
       )))
     }
   }

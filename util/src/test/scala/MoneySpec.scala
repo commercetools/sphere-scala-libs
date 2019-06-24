@@ -39,7 +39,7 @@ class MoneySpec extends FunSpec with MustMatchers with ScalaCheckDrivenPropertyC
     it("should not be prone to common rounding errors known from floating point numbers.") {
       var m = 0.00 EUR
 
-      for (i ← 1 to 10) m = m + 0.10
+      for (i <- 1 to 10) m = m + 0.10
 
       m must equal (1.00 EUR)
     }

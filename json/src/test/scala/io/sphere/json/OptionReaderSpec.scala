@@ -75,7 +75,7 @@ class OptionReaderSpec extends WordSpec with MustMatchers with OptionValues {
           |  "key2": "value2"
           |}
         """.stripMargin
-      val expected = Map("key1" → "value1", "key2" → "value2")
+      val expected = Map("key1" -> "value1", "key2" -> "value2")
       val result = getFromJSON[Map[String, String]](json)
       result mustEqual expected
 

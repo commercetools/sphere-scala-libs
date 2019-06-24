@@ -35,8 +35,8 @@ trait DefaultMongoFormats {
     override def fromMongoValue(any: Any) =
       any match {
         // a Long can read from an Int (for example, old aggregates version)
-        case i: Int ⇒ intFormat.fromMongoValue(i)
-        case _ ⇒ native.fromMongoValue(any)
+        case i: Int => intFormat.fromMongoValue(i)
+        case _ => native.fromMongoValue(any)
       }
   }
 
@@ -54,7 +54,7 @@ trait DefaultMongoFormats {
     override def fromMongoValue(any: Any) = {
       Option(any) match {
         case None => None
-        case Some(dbo: BSONObject) if fields.nonEmpty && dbo.keySet().iterator().asScala.forall(t ⇒ !fields.contains(t)) =>
+        case Some(dbo: BSONObject) if fields.nonEmpty && dbo.keySet().iterator().asScala.forall(t => !fields.contains(t)) =>
           None
         case Some(x) => Some(f.fromMongoValue(x))
       }
