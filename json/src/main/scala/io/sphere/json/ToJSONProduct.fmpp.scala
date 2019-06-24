@@ -5,7 +5,7 @@ import org.json4s._
 object ToJSONProduct {
 
   def forProduct1[A, A1 : ToJSON](
-    f: A ⇒ (String, A1)
+    f: A => (String, A1)
   ): ToJSON[A] = new ToJSON[A] {
     override def write(a: A): JValue = {
       val t = f(a)
@@ -16,7 +16,7 @@ object ToJSONProduct {
   <#list 2..22 as i>
   <#assign implTypeParams><#list 1..i as j>A${j} : ToJSON<#if i !=j>,</#if></#list></#assign>
   def forProduct${i}[A, ${implTypeParams}](
-    f: A ⇒ (<#list 1..i as j>(String, A${j})<#if i !=j>, </#if></#list>)
+    f: A => (<#list 1..i as j>(String, A${j})<#if i !=j>, </#if></#list>)
   ): ToJSON[A] = new ToJSON[A] {
     override def write(a: A): JValue = {
       val t = f(a)

@@ -21,8 +21,8 @@ package object json extends Logging {
   def parseJSON(json: JsonInput): JValidation[JValue] =
     try Valid(parseJson(json)) catch {
       case e: ParseException => jsonParseError(e.getMessage)
-      case e: JsonMappingException ⇒ jsonParseError(e.getOriginalMessage)
-      case e: JsonParseException ⇒ jsonParseError(e.getOriginalMessage)
+      case e: JsonMappingException => jsonParseError(e.getOriginalMessage)
+      case e: JsonParseException => jsonParseError(e.getOriginalMessage)
     }
 
   def parseJSON(json: String): JValidation[JValue] =
@@ -78,7 +78,7 @@ package object json extends Logging {
   )(jObject: JObject)(implicit jsonr: FromJSON[A]): JValidation[A] = {
     val fields = jObject.obj
     fields
-      .find(f ⇒ f._1 == name && f._2 != JNull && f._2 != JNothing)
+      .find(f => f._1 == name && f._2 != JNull && f._2 != JNothing)
       .map(f => jsonr.read(f._2).leftMap(
         errs => errs map {
           case JSONParseError(msg) => JSONFieldError(List(name), msg)
