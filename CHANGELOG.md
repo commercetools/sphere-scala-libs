@@ -1,4 +1,13 @@
-## 0.9.29-SNAPSHOT
+## 0.10.1-SNAPSHOT
+
+## 0.10.0 (2019-11-11)
+
+- Update scala-logging to 3.9.2. [109](https://github.com/sphereio/sphere-scala-libs/pull/109)
+- Update json4s-jackson, json4s-scalap to 3.6.7. [114](https://github.com/sphereio/sphere-scala-libs/pull/114)
+- Update joda-time to 2.10.3. [116](https://github.com/sphereio/sphere-scala-libs/pull/116)
+- Update jackson-databind to 2.9.9.3. [118](https://github.com/sphereio/sphere-scala-libs/pull/118)
+- Update cats-core, cats-macros to 2.0.0. [122](https://github.com/sphereio/sphere-scala-libs/pull/122)
+- cross-compile on scala 2.13, 2.12 & 2.11. [123](https://github.com/sphereio/sphere-scala-libs/pull/123)
 
 ## 0.9.28 (2019-06-06)
 
