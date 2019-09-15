@@ -5,13 +5,16 @@ import org.scalatest.{MustMatchers, WordSpec}
 import io.sphere.mongo.format.MongoFormat
 import io.sphere.mongo.format.DefaultMongoFormats._
 
-case class Something(a: Option[Int], b: Int = 2)
+object SerializationTest {
+  case class Something(a: Option[Int], b: Int = 2)
 
-object Color extends Enumeration {
-  val Blue, Red, Yellow = Value
+  object Color extends Enumeration {
+    val Blue, Red, Yellow = Value
+  }
 }
 
 class SerializationTest extends WordSpec with MustMatchers {
+  import SerializationTest._
 
   "mongoProduct" must {
     "deserialize mongo object" in {
