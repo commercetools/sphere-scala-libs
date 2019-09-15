@@ -7,6 +7,8 @@ import io.sphere.mongo.format.DefaultMongoFormats._
 import io.sphere.mongo.MongoUtils._
 
 class DeriveMongoformatSpec extends WordSpec with MustMatchers {
+  import DeriveMongoformatSpec._
+
   "deriving MongoFormat" must {
     "read normal singleton values" in {
       val user = fromMongo[UserWithPicture](
@@ -89,31 +91,33 @@ class DeriveMongoformatSpec extends WordSpec with MustMatchers {
   }
 }
 
-sealed trait PictureSize
-case object Small extends PictureSize
-case object Medium extends PictureSize
-case object Big extends PictureSize
-@MongoTypeHint("bar")
-case class Custom(width: Int, height: Int) extends PictureSize
+object DeriveMongoformatSpec {
+  sealed trait PictureSize
+  case object Small extends PictureSize
+  case object Medium extends PictureSize
+  case object Big extends PictureSize
+  @MongoTypeHint(value = "bar")
+  case class Custom(width: Int, height: Int) extends PictureSize
 
-object PictureSize {
-  implicit val mongo: MongoFormat[PictureSize] = deriveMongoFormat[PictureSize]
-}
+  object PictureSize {
+    implicit val mongo: MongoFormat[PictureSize] = deriveMongoFormat[PictureSize]
+  }
 
-sealed trait Access
-object Access {
-  // only one sub-type
-  case class Authorized(project: String) extends Access
+  sealed trait Access
+  object Access {
+    // only one sub-type
+    case class Authorized(project: String) extends Access
 
-  implicit val mongo: MongoFormat[Access] = deriveMongoFormat
-}
+    implicit val mongo: MongoFormat[Access] = deriveMongoFormat
+  }
 
-case class UserWithPicture(
-  userId: String,
-  pictureSize: PictureSize,
-  pictureUrl: String,
-  access: Option[Access] = None)
+  case class UserWithPicture(
+    userId: String,
+    pictureSize: PictureSize,
+    pictureUrl: String,
+    access: Option[Access] = None)
 
-object UserWithPicture {
-  implicit val mongo: MongoFormat[UserWithPicture] = mongoProduct(apply _)
+  object UserWithPicture {
+    implicit val mongo: MongoFormat[UserWithPicture] = mongoProduct(apply _)
+  }
 }
