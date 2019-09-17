@@ -15,7 +15,7 @@ import scala.collection.JavaConverters._
 object DefaultMongoFormatsTest {
   case class User(name: String)
   object User {
-    implicit val mongo: MongoFormat[User] = mongoProduct(apply _)
+    implicit val mongo: MongoFormat[User] = mongoProduct
   }
 }
 

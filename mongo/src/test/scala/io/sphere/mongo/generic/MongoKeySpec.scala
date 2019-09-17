@@ -36,7 +36,7 @@ object MongoKeySpec {
     @MongoKey("new_sub_value_2") value2: String
   )
   object SubTest {
-    implicit val mongo: MongoFormat[SubTest] = mongoProduct(apply _)
+    implicit val mongo: MongoFormat[SubTest] = mongoProduct
   }
 
   case class Test(
@@ -45,6 +45,6 @@ object MongoKeySpec {
     @MongoEmbedded subTest: SubTest
   )
   object Test {
-    implicit val mongo: MongoFormat[Test] = mongoProduct(apply _)
+    implicit val mongo: MongoFormat[Test] = mongoProduct
   }
 }

@@ -47,6 +47,6 @@ object MongoTypeHintFieldSpec {
     pictureUrl: String)
 
   object UserWithPicture {
-    implicit val mongo: MongoFormat[UserWithPicture] = mongoProduct(apply _)
+    implicit val mongo: MongoFormat[UserWithPicture] = mongoProduct
   }
 }

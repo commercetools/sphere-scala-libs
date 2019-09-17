@@ -13,7 +13,7 @@ object MongoEmbeddedSpec {
      @MongoKey("_value2") value2: Int)
 
   object Embedded {
-    implicit val mongo: MongoFormat[Embedded] = mongoProduct(apply _)
+    implicit val mongo: MongoFormat[Embedded] = mongoProduct
   }
 
   case class Test1(
@@ -21,7 +21,7 @@ object MongoEmbeddedSpec {
     @MongoEmbedded embedded: Embedded)
 
   object Test1 {
-    implicit val mongo: MongoFormat[Test1] = mongoProduct(apply _)
+    implicit val mongo: MongoFormat[Test1] = mongoProduct
   }
 
   case class Test2(
@@ -29,7 +29,7 @@ object MongoEmbeddedSpec {
     @MongoEmbedded embedded: Option[Embedded] = None)
 
   object Test2 {
-    implicit val mongo: MongoFormat[Test2] = mongoProduct(apply _)
+    implicit val mongo: MongoFormat[Test2] = mongoProduct
   }
 
   case class Test3(
@@ -37,17 +37,17 @@ object MongoEmbeddedSpec {
     @MongoEmbedded embedded: Option[Embedded] = None)
 
   object Test3 {
-    implicit val mongo: MongoFormat[Test3] = mongoProduct(apply _)
+    implicit val mongo: MongoFormat[Test3] = mongoProduct
   }
 
   case class SubTest4(@MongoEmbedded embedded: Embedded)
   object SubTest4 {
-    implicit val mongo: MongoFormat[SubTest4] = mongoProduct(apply _)
+    implicit val mongo: MongoFormat[SubTest4] = mongoProduct
   }
 
   case class Test4(subField: Option[SubTest4] = None)
   object Test4 {
-    implicit val mongo: MongoFormat[Test4] = mongoProduct(apply _)
+    implicit val mongo: MongoFormat[Test4] = mongoProduct
   }
 }
 

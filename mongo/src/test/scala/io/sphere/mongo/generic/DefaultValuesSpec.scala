@@ -28,6 +28,6 @@ object DefaultValuesSpec {
     value4: Option[String] = Some("hi")
   )
   object Test {
-    implicit val mongo: MongoFormat[Test] = mongoProduct(apply _)
+    implicit val mongo: MongoFormat[Test] = mongoProduct
   }
 }

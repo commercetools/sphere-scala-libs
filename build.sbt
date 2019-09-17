@@ -11,12 +11,13 @@ lazy val publishSettings = Seq(
 lazy val standardSettings = Defaults.coreDefaultSettings ++ publishSettings ++ Seq(
   organization := "io.sphere",
   scalaVersion := "2.13.0",
-  crossScalaVersions := Seq("2.11.12", "2.12.9", scalaVersion.value),
+  crossScalaVersions := Seq("2.12.9", scalaVersion.value),
   licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html")),
   logBuffered := false,
   scalacOptions ++= Seq(
     "-deprecation",
     "-unchecked",
+    "-language:higherKinds",
     "-feature"
   ),
   javacOptions ++= Seq("-deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7"),
@@ -51,7 +52,6 @@ lazy val `sphere-json` = project.in(file("./json"))
 
 lazy val `sphere-mongo` = project.in(file("./mongo"))
   .settings(standardSettings: _*)
-  .settings(Fmpp.settings: _*)
   .dependsOn(`sphere-util`)
 
 // benchmarks
