@@ -21,7 +21,6 @@ package object generic extends Logging {
 
   type Typeclass[T] = MongoFormat[T]
 
-  implicit def gen[T]: MongoFormat[T] = macro Magnolia.gen[T]
   def deriveMongoFormat[T]: MongoFormat[T] = macro Magnolia.gen[T]
   def mongoProduct[T]: MongoFormat[T] = macro Magnolia.gen[T]
 
