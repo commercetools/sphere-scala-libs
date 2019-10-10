@@ -42,20 +42,22 @@ package object generic extends Logging {
     }
   }
 
-  def mongoProduct0[T <: Product](singleton: T): MongoFormat[T] = new MongoFormat[T] {
+  def mongoProduct0[T <: Product](singleton: T): MongoFormat[T] = {
     val (typeField, typeValue) = mongoProduct0Type(singleton)
-    override def toMongoValue(a: T): Any = {
-      val dbo = new BasicDBObject()
-      dbo.append(typeField, typeValue)
-      dbo
-    }
-    override def fromMongoValue(any: Any): T = any match {
-      case o: BSONObject => findTypeValue(o, typeField) match {
-        case Some(t) if t == typeValue => singleton
-        case Some(t) => sys.error("Invalid type value '" + t + "'. Excepted '%s'".format(typeValue))
-        case None => sys.error("Missing type field.")
+    new MongoFormat[T] {
+      override def toMongoValue(a: T): Any = {
+        val dbo = new BasicDBObject()
+        dbo.append(typeField, typeValue)
+        dbo
       }
-      case _ => sys.error("DB object excepted.")
+      override def fromMongoValue(any: Any): T = any match {
+        case o: BSONObject => findTypeValue(o, typeField) match {
+          case Some(t) if t == typeValue => singleton
+          case Some(t) => sys.error("Invalid type value '" + t + "'. Excepted '%s'".format(typeValue))
+          case None => sys.error("Missing type field.")
+        }
+        case _ => sys.error("DB object excepted.")
+      }
     }
   }
 

@@ -116,7 +116,7 @@ object ToJSON {
     )
   }
 
-  implicit def baseMoneyWriter: ToJSON[BaseMoney] = new ToJSON[BaseMoney] {
+  implicit val baseMoneyWriter: ToJSON[BaseMoney] = new ToJSON[BaseMoney] {
     def write(m: BaseMoney): JValue = m match {
       case m: Money => moneyWriter.write(m)
       case m: HighPrecisionMoney => highPrecisionMoneyWriter.write(m)
