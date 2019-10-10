@@ -8,6 +8,8 @@ import org.json4s.jackson.JsonMethods.{compact, render}
 import org.scalatest.{MustMatchers, WordSpec}
 
 class DeriveSingletonJSONSpec extends WordSpec with MustMatchers {
+  import DeriveSingletonJSONSpec._
+
   "DeriveSingletonJSON" must {
     "read normal singleton values" in {
       val user = getFromJSON[UserWithPicture](
@@ -112,34 +114,37 @@ class DeriveSingletonJSONSpec extends WordSpec with MustMatchers {
     }
 }
 
-sealed abstract class PictureSize(val weight: Int, val height: Int)
+object DeriveSingletonJSONSpec {
 
-case object Small extends PictureSize(100, 100)
-case object Medium extends PictureSize(500, 450)
-case object Big extends PictureSize(1024, 2048)
+  sealed abstract class PictureSize(val weight: Int, val height: Int)
 
-@JSONTypeHint("bar")
-case object Custom extends PictureSize(1, 2)
+  case object Small extends PictureSize(100, 100)
+  case object Medium extends PictureSize(500, 450)
+  case object Big extends PictureSize(1024, 2048)
 
-object PictureSize {
-  implicit val json: JSON[PictureSize] = deriveSingletonJSON[PictureSize]
-}
+  @JSONTypeHint("bar")
+  case object Custom extends PictureSize(1, 2)
 
-sealed trait Access
-object Access {
-  // only one sub-type
-  case class Authorized(project: String) extends Access
+  object PictureSize {
+    implicit val json: JSON[PictureSize] = deriveSingletonJSON[PictureSize]
+  }
 
-  implicit val json: JSON[Access] = deriveJSON
-}
+  sealed trait Access
+  object Access {
+    // only one sub-type
+    case class Authorized(project: String) extends Access
+
+    implicit val json: JSON[Access] = deriveJSON
+  }
 
 
-case class UserWithPicture(
-  userId: String,
-  pictureSize: PictureSize,
-  pictureUrl: String,
-  access: Option[Access] = None)
+  case class UserWithPicture(
+    userId: String,
+    pictureSize: PictureSize,
+    pictureUrl: String,
+    access: Option[Access] = None)
 
-object UserWithPicture {
-  implicit val json: JSON[UserWithPicture] = deriveJSON[UserWithPicture]
+  object UserWithPicture {
+    implicit val json: JSON[UserWithPicture] = deriveJSON[UserWithPicture]
+  }
 }

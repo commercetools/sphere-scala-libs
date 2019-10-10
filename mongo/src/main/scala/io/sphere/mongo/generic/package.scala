@@ -72,17 +72,17 @@ package object generic extends Logging {
 
   def dispatch[T](sealedTrait: SealedTrait[MongoFormat, T]): MongoFormat[T] = new MongoFormat[T] {
 
-    val allSelectors = sealedTrait.subtypes.map { subType =>
+    private val allSelectors = sealedTrait.subtypes.map { subType =>
       typeSelector(subType)
     }
-    val readMapBuilder = Map.newBuilder[String, TypeSelector[_]]
-    val writeMapBuilder = Map.newBuilder[TypeName, TypeSelector[_]]
+    private val readMapBuilder = Map.newBuilder[String, TypeSelector[_]]
+    private val writeMapBuilder = Map.newBuilder[TypeName, TypeSelector[_]]
     allSelectors.foreach { s =>
       readMapBuilder += (s.typeValue -> s)
       writeMapBuilder += (s.subType.typeName -> s)
     }
-    val readMap = readMapBuilder.result
-    val writeMap = writeMapBuilder.result
+    private val readMap = readMapBuilder.result
+    private val writeMap = writeMapBuilder.result
 
     private val typeField = sealedTrait.annotations.collectFirst {
       case a: MongoTypeHintField => a.value
@@ -130,65 +130,14 @@ package object generic extends Logging {
     name: String,
     default: Option[Any] = None,
     embedded: Boolean = false,
-    ignored: Boolean = false
-  )
+    ignored: Boolean = false)
 
   private val getMongoClassMeta = new Memoizer[CaseClass[MongoFormat, _], MongoClassMeta](caseClass => {
-    def hintVal(h: generic.MongoTypeHint): String =
-      if (h.value.isEmpty) defaultTypeValue(caseClass.typeName)
-      else h.value
-
     log.trace("Initializing Mongo metadata for %s".format(caseClass.typeName.full))
 
-    val annotations = caseClass.annotations
-
-    val typeHintFieldAnnot: Option[MongoTypeHintField] = annotations.collectFirst {
-      case h: MongoTypeHintField => h
-    }
-    val typeHintAnnot: Option[generic.MongoTypeHint] = annotations.collectFirst {
-      case h: generic.MongoTypeHint => h
-    }
-    val typeField = typeHintFieldAnnot.map(_.value)
-    val typeValue = typeHintAnnot.map(hintVal)
-
     MongoClassMeta(
-      typeHint = (typeField, typeValue) match {
-        case (Some(field), Some(hint)) => Some(MongoClassMeta.TypeHint(field, hint))
-        case (None       , Some(hint)) => Some(MongoClassMeta.TypeHint(defaultTypeFieldName, hint))
-        case (Some(field), None)       => Some(MongoClassMeta.TypeHint(field, defaultTypeValue(caseClass.typeName)))
-        case (None       , None)       => None
-      },
-      fields = getMongoFieldMeta(caseClass)
-    )
-  })
-
-  private val getMongoClassMetaFromSubType = new Memoizer[Subtype[MongoFormat, _], MongoClassMeta](subType => {
-    def hintVal(h: generic.MongoTypeHint): String =
-      if (h.value.isEmpty) defaultTypeValue(subType.typeName)
-      else h.value
-
-    log.trace("Initializing Mongo metadata for %s".format(subType.typeName.full))
-
-    val annotations = subType.annotations
-
-    val typeHintFieldAnnot: Option[MongoTypeHintField] = annotations.collectFirst {
-      case h: MongoTypeHintField => h
-    }
-    val typeHintAnnot: Option[generic.MongoTypeHint] = annotations.collectFirst {
-      case h: generic.MongoTypeHint => h
-    }
-    val typeField = typeHintFieldAnnot.map(_.value)
-    val typeValue = typeHintAnnot.map(hintVal)
-
-    MongoClassMeta(
-      typeHint = (typeField, typeValue) match {
-        case (Some(field), Some(hint)) => Some(MongoClassMeta.TypeHint(field, hint))
-        case (None       , Some(hint)) => Some(MongoClassMeta.TypeHint(defaultTypeFieldName, hint))
-        case (Some(field), None)       => Some(MongoClassMeta.TypeHint(field, defaultTypeValue(subType.typeName)))
-        case (None       , None)       => None
-      },
-      fields = IndexedSeq[MongoFieldMeta]()
-    )
+      typeHint = typeHint(caseClass.typeName, caseClass.annotations),
+      fields = getMongoFieldMeta(caseClass))
   })
 
   private def getMongoFieldMeta(caseClass: CaseClass[MongoFormat, _]): IndexedSeq[MongoFieldMeta] = {
@@ -210,6 +159,36 @@ package object generic extends Logging {
       }
       MongoFieldMeta(name, p.default, embedded, ignored)
     }.toIndexedSeq
+  }
+
+  private val getMongoClassMetaFromSubType = new Memoizer[Subtype[MongoFormat, _], MongoClassMeta](subType => {
+    log.trace("Initializing Mongo metadata for %s".format(subType.typeName.full))
+
+    MongoClassMeta(
+      typeHint = typeHint(subType.typeName, subType.annotations),
+      fields = IndexedSeq[MongoFieldMeta]())
+  })
+
+  private def typeHint(typeName: TypeName, annotations: Seq[Any]): Option[MongoClassMeta.TypeHint] = {
+    def hintVal(h: generic.MongoTypeHint): String =
+      if (h.value.isEmpty) defaultTypeValue(typeName)
+      else h.value
+
+    val typeHintFieldAnnot: Option[MongoTypeHintField] = annotations.collectFirst {
+      case h: MongoTypeHintField => h
+    }
+    val typeHintAnnot: Option[generic.MongoTypeHint] = annotations.collectFirst {
+      case h: generic.MongoTypeHint => h
+    }
+    val typeField = typeHintFieldAnnot.map(_.value)
+    val typeValue = typeHintAnnot.map(hintVal)
+
+    (typeField, typeValue) match {
+      case (Some(field), Some(hint)) => Some(MongoClassMeta.TypeHint(field, hint))
+      case (None       , Some(hint)) => Some(MongoClassMeta.TypeHint(defaultTypeFieldName, hint))
+      case (Some(field), None)       => Some(MongoClassMeta.TypeHint(field, defaultTypeValue(typeName)))
+      case (None       , None)       => None
+    }
   }
 
   private def writeField[A: MongoFormat](dbo: DBObject, field: MongoFieldMeta, e: A): Unit = {

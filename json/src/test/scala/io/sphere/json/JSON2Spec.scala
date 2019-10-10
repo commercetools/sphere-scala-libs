@@ -6,12 +6,13 @@ import cats.syntax.apply._
 import org.json4s.JsonAST._
 import io.sphere.json.field
 import io.sphere.json.generic._
+import io.sphere.json.generic.derive.{MagnoliaFromJSONDerivation, MagnoliaJSONDerivation, MagnoliaToJSONDerivation}
 import io.sphere.util.Money
 import org.joda.time._
 import org.scalatest._
 import org.scalatest.MustMatchers
 
-object JSONSpec {
+object JSON2Spec {
   case class Project(nr: Int, name: String, version: Int = 1, milestones: List[Milestone] = Nil)
   case class Milestone(name: String, date: Option[DateTime] = None)
 
@@ -71,8 +72,8 @@ object JSONSpec {
   }
 }
 
-class JSONSpec extends FunSpec with MustMatchers {
-  import JSONSpec._
+class JSON2Spec extends FunSpec with MustMatchers {
+  import JSON2Spec._
 
   describe("JSON") {
     it("must read/write a custom class using custom typeclass instances") {
@@ -138,8 +139,8 @@ class JSONSpec extends FunSpec with MustMatchers {
 
     it("must provide derived JSON instances for product types (case classes)") {
       import JSONSpec.{ Project, Milestone }
-      implicit val milestoneJSON = deriveJSON[Milestone]
-      implicit val projectJSON = deriveJSON[Project]
+      implicit val milestoneJSON: JSON[Milestone] = MagnoliaJSONDerivation.deriveJSON
+      implicit val projectJSON: JSON[Project] = MagnoliaJSONDerivation.deriveJSON
       val proj = Project(42, "Linux", 7, Milestone("1.0") :: Milestone("2.0") :: Milestone("3.0") :: Nil)
       fromJSON[Project](toJSON(proj)) must equal (Valid(proj))
     }
@@ -165,20 +166,20 @@ class JSONSpec extends FunSpec with MustMatchers {
     }
 
     it("must provide derived JSON instances for sum types") {
-      implicit val animalJSON = deriveJSON[Animal]
+      implicit val animalJSON: JSON[Animal] = MagnoliaJSONDerivation.deriveJSON
       List(Bird("Peewee"), Dog("Hasso"), Cat("Felidae")) foreach { a: Animal =>
         fromJSON[Animal](toJSON(a)) must equal (Valid(a))
       }
     }
 
     it("must provide derived instances for product types with concrete type parameters") {
-      implicit val aJSON = deriveJSON[GenericA[String]]
+      implicit val aJSON: JSON[GenericA[String]] = MagnoliaJSONDerivation.deriveJSON
       val a = GenericA("hello")
       fromJSON[GenericA[String]](toJSON(a)) must equal (Valid(a))
     }
 
     it("must provide derived instances for product types with generic type parameters") {
-      implicit def aJSON[A: FromJSON: ToJSON] = deriveJSON[GenericA[A]]
+      implicit def aJSON[A: FromJSON: ToJSON] = MagnoliaJSONDerivation.deriveJSON[GenericA[A]]
       val a = GenericA("hello")
       fromJSON[GenericA[String]](toJSON(a)) must equal (Valid(a))
     }
@@ -190,14 +191,14 @@ class JSONSpec extends FunSpec with MustMatchers {
         fromJSON[Seq[Singleton.type]](json) must equal(Valid(Seq(Singleton)))
       }
 
-      implicit val singleEnumJSON = deriveJSON[SingletonEnum]
+      implicit val singleEnumJSON = MagnoliaJSONDerivation.deriveJSON[SingletonEnum]
       List(SingletonA, SingletonB, SingletonC) foreach { s: SingletonEnum =>
         fromJSON[SingletonEnum](toJSON(s)) must equal (Valid(s))
       }
     }
 
     it("must provide derived instances for sum types with a mix of case class / object") {
-      implicit val mixedJSON = deriveJSON[Mixed]
+      implicit val mixedJSON = MagnoliaJSONDerivation.deriveJSON[Mixed]
       List(SingletonMixed, RecordMixed(1)) foreach { m: Mixed =>
         fromJSON[Mixed](toJSON(m)) must equal (Valid(m))
       }
@@ -237,15 +238,9 @@ class JSONSpec extends FunSpec with MustMatchers {
   describe("ToJSON and FromJSON") {
     it("must provide derived JSON instances for sum types") {
       // ToJSON
-      implicit val birdToJSON = toJsonProduct(Bird.apply _)
-      implicit val dogToJSON = toJsonProduct(Dog.apply _)
-      implicit val catToJSON = toJsonProduct(Cat.apply _)
-      implicit val animalToJSON = toJsonTypeSwitch[Animal, Bird, Dog, Cat](Nil)
+      implicit val animalToJSON = MagnoliaToJSONDerivation.toJsonProduct[Animal]
       // FromJSON
-      implicit val birdFromJSON = fromJsonProduct(Bird.apply _)
-      implicit val dogFromJSON = fromJsonProduct(Dog.apply _)
-      implicit val catFromJSON = fromJsonProduct(Cat.apply _)
-      implicit val animalFromJSON = fromJsonTypeSwitch[Animal, Bird, Dog, Cat](Nil)
+      implicit val animalFromJSON = MagnoliaFromJSONDerivation.fromJsonProduct[Animal]
 
       List(Bird("Peewee"), Dog("Hasso"), Cat("Felidae")) foreach { a: Animal =>
         fromJSON[Animal](toJSON(a)) must equal (Valid(a))
@@ -253,7 +248,7 @@ class JSONSpec extends FunSpec with MustMatchers {
     }
 
     it("must provide derived instances for product types with concrete type parameters") {
-      implicit val aToJSON = toJsonProduct(GenericA.apply[String] _)
+      implicit val aToJSON = MagnoliaToJSONDerivation.toJsonProduct[GenericA[String]]
       implicit val aFromJSON = fromJsonProduct(GenericA.apply[String] _)
       val a = GenericA("hello")
       fromJSON[GenericA[String]](toJSON(a)) must equal (Valid(a))
@@ -346,11 +341,11 @@ class JSONSpec extends FunSpec with MustMatchers {
     it("must provide derived JSON instances for product types (case classes)") {
       import JSONSpec.{ Project, Milestone }
       // ToJSON
-      implicit val milestoneToJSON = toJsonProduct(Milestone.apply _)
-      implicit val projectToJSON = toJsonProduct(Project.apply _)
+      implicit val milestoneToJSON = MagnoliaToJSONDerivation.toJsonProduct[Milestone]
+      implicit val projectToJSON = MagnoliaToJSONDerivation.toJsonProduct[Project]
       // FromJSON
-      implicit val milestoneFromJSON = fromJsonProduct(Milestone.apply _)
-      implicit val projectFromJSON = fromJsonProduct(Project.apply _)
+      implicit val milestoneFromJSON = MagnoliaFromJSONDerivation.fromJsonProduct[Milestone]
+      implicit val projectFromJSON = MagnoliaFromJSONDerivation.fromJsonProduct[Project]
 
       val proj = Project(42, "Linux", 7, Milestone("1.0") :: Milestone("2.0") :: Milestone("3.0") :: Nil)
       fromJSON[Project](toJSON(proj)) must equal (Valid(proj))
