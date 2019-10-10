@@ -1,6 +1,15 @@
-## 0.10.1-SNAPSHOT
+## 0.10.2-SNAPSHOT
 
-## 0.10.0 (2019-11-11)
+## 0.10.1 (2019-10-10)
+
+* micro-optimizations (#132) @yanns
+* Update jackson-databind to 2.10.0 (#130) @scala-steward
+* Update joda-time to 2.10.4 (#126) @scala-steward
+* Update jackson-databind to 2.9.10 (#128) @scala-steward
+* automatic release notes (#129) @yanns
+* test MongoTypeHintField (#124) @yanns
+
+## 0.10.0 (2019-09-11)
 
 - Update scala-logging to 3.9.2. [109](https://github.com/sphereio/sphere-scala-libs/pull/109)
 - Update json4s-jackson, json4s-scalap to 3.6.7. [114](https://github.com/sphereio/sphere-scala-libs/pull/114)
