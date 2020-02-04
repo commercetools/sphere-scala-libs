@@ -1,4 +1,25 @@
-## 0.10.2-SNAPSHOT
+## 0.11.2-SNAPSHOT
+
+## 0.11.1 (2020-01-07)
+
+* cats 2.1.0 in sphere-util (#151) @yanns
+
+## 0.11.0 (2020-01-07)
+
+This version is available for scala 2.12 and scala 2.13.
+Support for scala 2.11 has been removed.
+
+* cats 2.1.0 (#148) @yanns
+* Update jackson-databind to 2.10.2 (#149) @scala-steward
+* Update sbt-bintray to 0.5.6 (#147) @scala-steward
+* Update sbt to 1.3.6 (#146) @scala-steward
+* Update scalacheck to 1.14.3 (#145) @scala-steward
+* scala 2.13.1 (#142) @yanns
+* Update sbt-release to 1.0.12 (#135) @scala-steward
+* Update sbt to 1.3.4 (#139) @scala-steward
+* Update scalacheck to 1.14.2 (#140) @scala-steward
+* Update jackson-databind to 2.10.1 (#138) @scala-steward
+* Update joda-time to 2.10.5 (#136) @scala-steward
 
 ## 0.10.1 (2019-10-10)
 
