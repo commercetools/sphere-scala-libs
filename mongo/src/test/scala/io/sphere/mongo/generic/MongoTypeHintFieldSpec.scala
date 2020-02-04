@@ -9,7 +9,19 @@ class MongoTypeHintFieldSpec extends WordSpec with MustMatchers {
   import MongoTypeHintFieldSpec._
 
   "MongoTypeHintField" must {
-    "allow to set another field to distinguish between types" in {
+    "allow to set another field to distinguish between types (toMongo)" in {
+      val user = UserWithPicture("foo-123", Medium, "http://example.com")
+      val expected = dbObj(
+        "userId" -> "foo-123",
+        "pictureSize" -> dbObj(
+          "pictureType" -> "Medium"),
+        "pictureUrl" -> "http://example.com")
+
+      val dbo = toMongo[UserWithPicture](user)
+      dbo must be (expected)
+    }
+
+    "allow to set another field to distinguish between types (fromMongo)" in {
       val initialDbo = dbObj(
         "userId" -> "foo-123",
         "pictureSize" -> dbObj(
@@ -19,9 +31,6 @@ class MongoTypeHintFieldSpec extends WordSpec with MustMatchers {
       val user = fromMongo[UserWithPicture](initialDbo)
 
       user must be (UserWithPicture("foo-123", Medium, "http://example.com"))
-
-      val dbo = toMongo[UserWithPicture](user)
-      dbo must be (initialDbo)
     }
   }
 }
