@@ -2,10 +2,11 @@ package io.sphere.mongo.generic
 
 import io.sphere.mongo.MongoUtils.dbObj
 import io.sphere.mongo.format.{MongoFormat, fromMongo, toMongo}
-import org.scalatest.{MustMatchers, WordSpec}
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import io.sphere.mongo.format.DefaultMongoFormats._
 
-class MongoTypeHintFieldSpec extends WordSpec with MustMatchers {
+class MongoTypeHintFieldSpec extends AnyWordSpec with Matchers {
   import MongoTypeHintFieldSpec._
 
   "MongoTypeHintField" must {

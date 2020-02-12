@@ -3,9 +3,10 @@ package io.sphere.mongo.catsinstances
 import cats.syntax.invariant._
 import io.sphere.mongo.format.DefaultMongoFormats._
 import io.sphere.mongo.format._
-import org.scalatest.{MustMatchers, WordSpec}
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
-class MongoFormatCatsInstancesTest extends WordSpec with MustMatchers {
+class MongoFormatCatsInstancesTest extends AnyWordSpec with Matchers {
   import MongoFormatCatsInstancesTest._
 
   "Invariant[MongoFormat]" must {

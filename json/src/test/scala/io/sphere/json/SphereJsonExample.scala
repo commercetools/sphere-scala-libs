@@ -2,9 +2,10 @@ package io.sphere.json
 
 import io.sphere.json._
 import org.json4s.{JObject, JValue}
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
-class SphereJsonExample extends WordSpec with Matchers {
+class SphereJsonExample extends AnyWordSpec with Matchers {
 
   case class User(name: String, age: Int, location: String)
 

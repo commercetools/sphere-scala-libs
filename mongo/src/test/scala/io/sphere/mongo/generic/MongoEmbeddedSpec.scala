@@ -1,9 +1,11 @@
 package io.sphere.mongo.generic
 
 import io.sphere.mongo.format.MongoFormat
-import org.scalatest.{MustMatchers, OptionValues, WordSpec}
+import org.scalatest.OptionValues
+import org.scalatest.matchers.must.Matchers
 import io.sphere.mongo.format.DefaultMongoFormats._
 import io.sphere.mongo.MongoUtils._
+import org.scalatest.wordspec.AnyWordSpec
 
 import scala.util.Try
 
@@ -51,7 +53,7 @@ object MongoEmbeddedSpec {
   }
 }
 
-class MongoEmbeddedSpec extends WordSpec with MustMatchers with OptionValues {
+class MongoEmbeddedSpec extends AnyWordSpec with Matchers with OptionValues {
   import MongoEmbeddedSpec._
 
   "MongoEmbedded" should {

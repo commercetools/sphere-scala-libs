@@ -5,9 +5,10 @@ import io.sphere.json.generic._
 import org.json4s.JValue
 import org.json4s.JsonAST.JNothing
 import org.json4s.jackson.JsonMethods.{compact, render}
-import org.scalatest.{MustMatchers, WordSpec}
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
-class DeriveSingletonJSONSpec extends WordSpec with MustMatchers {
+class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
   "DeriveSingletonJSON" must {
     "read normal singleton values" in {
       val user = getFromJSON[UserWithPicture](

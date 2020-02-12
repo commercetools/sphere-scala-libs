@@ -7,7 +7,8 @@ import io.sphere.util.LangTag
 import org.bson.BasicBSONObject
 import org.bson.types.BasicBSONList
 import org.scalacheck.Gen
-import org.scalatest.{MustMatchers, WordSpec}
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.collection.JavaConverters._
@@ -19,7 +20,7 @@ object DefaultMongoFormatsTest {
   }
 }
 
-class DefaultMongoFormatsTest extends WordSpec with MustMatchers with ScalaCheckDrivenPropertyChecks {
+class DefaultMongoFormatsTest extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks {
   import DefaultMongoFormatsTest._
 
   "DefaultMongoFormats" must {

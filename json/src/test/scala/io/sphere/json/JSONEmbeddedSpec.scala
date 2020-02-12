@@ -1,7 +1,9 @@
 package io.sphere.json
 
 import io.sphere.json.generic._
-import org.scalatest.{OptionValues, MustMatchers, WordSpec}
+import org.scalatest.OptionValues
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
 object JSONEmbeddedSpec {
 
@@ -38,7 +40,7 @@ object JSONEmbeddedSpec {
   }
 }
 
-class JSONEmbeddedSpec extends WordSpec with MustMatchers with OptionValues {
+class JSONEmbeddedSpec extends AnyWordSpec with Matchers with OptionValues {
   import JSONEmbeddedSpec._
 
   "JSONEmbedded" should {

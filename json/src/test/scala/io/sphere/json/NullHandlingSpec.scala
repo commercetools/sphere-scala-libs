@@ -2,9 +2,10 @@ package io.sphere.json
 
 import io.sphere.json.generic._
 import org.json4s.JsonAST.{JNothing, JObject}
-import org.scalatest.{MustMatchers, WordSpec}
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
-class NullHandlingSpec extends WordSpec with MustMatchers {
+class NullHandlingSpec extends AnyWordSpec with Matchers {
   "JSON deserialization" must {
     "should accept undefined fields and use default values for them" in {
       val jeans = getFromJSON[Jeans]("{}")

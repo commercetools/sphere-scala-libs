@@ -1,7 +1,9 @@
 package io.sphere.json
 
 import io.sphere.json.generic._
-import org.scalatest.{OptionValues, MustMatchers, WordSpec}
+import org.scalatest.OptionValues
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
 object OptionReaderSpec {
 
@@ -22,7 +24,7 @@ object OptionReaderSpec {
 }
 
 
-class OptionReaderSpec extends WordSpec with MustMatchers with OptionValues {
+class OptionReaderSpec extends AnyWordSpec with Matchers with OptionValues {
   import OptionReaderSpec._
 
   "OptionReader" should {

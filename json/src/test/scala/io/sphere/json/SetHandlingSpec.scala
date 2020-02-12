@@ -1,8 +1,9 @@
 package io.sphere.json
 
-import org.scalatest.{MustMatchers, WordSpec}
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
-class SetHandlingSpec extends WordSpec with MustMatchers {
+class SetHandlingSpec extends AnyWordSpec with Matchers {
   "JSON deserialization" must {
 
     "should accept same elements in array to create a set" in {

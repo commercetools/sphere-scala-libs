@@ -5,9 +5,10 @@ import java.util.Currency
 import io.sphere.util.{BaseMoney, HighPrecisionMoney, Money}
 import cats.data.Validated.Valid
 import org.json4s.jackson.compactJson
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
-class MoneyMarshallingSpec extends WordSpec with Matchers {
+class MoneyMarshallingSpec extends AnyWordSpec with Matchers {
   "money encoding/decoding" should {
     "be symmetric" in {
       val money = Money.EUR(34.56)

@@ -1,11 +1,11 @@
 package io.sphere.util
 
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.must.Matchers
+
 import scala.language.postfixOps
 
-import org.scalatest.FunSpec
-import org.scalatest.MustMatchers
-
-class LangTagSpec extends FunSpec with MustMatchers {
+class LangTagSpec extends AnyFunSpec with Matchers {
   describe("LangTag") {
     it("should accept valid language tags") {
       LangTag.unapply("de").isEmpty must be (false)

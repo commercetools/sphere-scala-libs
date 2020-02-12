@@ -2,11 +2,12 @@ package io.sphere.mongo.generic
 
 import io.sphere.mongo.format.MongoFormat
 import io.sphere.mongo.format._
-import org.scalatest.{MustMatchers, WordSpec}
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import io.sphere.mongo.format.DefaultMongoFormats._
 import io.sphere.mongo.MongoUtils._
 
-class DeriveMongoformatSpec extends WordSpec with MustMatchers {
+class DeriveMongoformatSpec extends AnyWordSpec with Matchers {
   import DeriveMongoformatSpec._
 
   "deriving MongoFormat" must {

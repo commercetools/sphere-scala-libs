@@ -3,13 +3,15 @@ package io.sphere.util
 import java.util.Currency
 
 import cats.data.Validated.Invalid
-import org.scalatest._
+
+import org.scalatest.funspec.AnyFunSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import org.scalatest.matchers.must.Matchers
 
 import scala.collection.mutable.ArrayBuffer
 import scala.language.postfixOps
 
-class HighPrecisionMoneySpec extends FunSpec with MustMatchers with ScalaCheckDrivenPropertyChecks {
+class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDrivenPropertyChecks {
   import HighPrecisionMoney.ImplicitsString._
   import HighPrecisionMoney.ImplicitsStringPrecise._
 

@@ -1,9 +1,10 @@
 package io.sphere.mongo
 
 import com.mongodb.{BasicDBObject, DBObject}
-import org.scalatest.{MustMatchers, WordSpec}
+import org.scalatest.matchers.must.Matchers
 import io.sphere.mongo.format.MongoFormat
 import io.sphere.mongo.format.DefaultMongoFormats._
+import org.scalatest.wordspec.AnyWordSpec
 
 object SerializationTest {
   case class Something(a: Option[Int], b: Int = 2)
@@ -13,7 +14,7 @@ object SerializationTest {
   }
 }
 
-class SerializationTest extends WordSpec with MustMatchers {
+class SerializationTest extends AnyWordSpec with Matchers {
   import SerializationTest._
 
   "mongoProduct" must {

@@ -8,8 +8,8 @@ import io.sphere.json.field
 import io.sphere.json.generic._
 import io.sphere.util.Money
 import org.joda.time._
-import org.scalatest._
-import org.scalatest.MustMatchers
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.funspec.AnyFunSpec
 
 object JSONSpec {
   case class Project(nr: Int, name: String, version: Int = 1, milestones: List[Milestone] = Nil)
@@ -42,7 +42,7 @@ object JSONSpec {
   // case class Node(value: Option[List[Node]]) // JSON instances for recursive data types cannot be derived
 }
 
-class JSONSpec extends FunSpec with MustMatchers {
+class JSONSpec extends AnyFunSpec with Matchers {
   import JSONSpec._
 
   describe("JSON") {
