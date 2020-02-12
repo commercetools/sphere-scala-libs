@@ -3,11 +3,12 @@ package io.sphere.mongo.generic
 import io.sphere.mongo.format.DefaultMongoFormats._
 import io.sphere.mongo.format.MongoFormat
 import org.bson.BSONObject
-import org.scalatest.{MustMatchers, WordSpec}
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
 import scala.collection.JavaConverters._
 
-class MongoKeySpec extends WordSpec with MustMatchers {
+class MongoKeySpec extends AnyWordSpec with Matchers {
   import MongoKeySpec._
 
   "deriving MongoFormat" must {

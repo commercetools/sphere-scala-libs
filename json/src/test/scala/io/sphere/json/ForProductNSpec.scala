@@ -4,13 +4,14 @@ import java.util.UUID
 
 import io.sphere.json.ToJSONProduct._
 import org.json4s._
-import org.scalatest.{MustMatchers, WordSpec}
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
 
 case class User(id: UUID, firstName: String, age: Int)
 
 
-class ForProductNSpec extends WordSpec with MustMatchers {
+class ForProductNSpec extends AnyWordSpec with Matchers {
 
   "forProductN helper methods" must {
     "serialize" in {

@@ -4,10 +4,11 @@ package io.sphere.json
 import java.util.UUID
 
 import org.json4s._
-import org.scalatest.{MustMatchers, WordSpec}
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
 
-class ToJSONSpec extends WordSpec with MustMatchers {
+class ToJSONSpec extends AnyWordSpec with Matchers {
 
   case class User(id: UUID, firstName: String, age: Int)
 

@@ -2,9 +2,10 @@ package io.sphere.mongo.generic
 
 import io.sphere.json._
 import io.sphere.json.generic._
-import org.scalatest.{MustMatchers, WordSpec}
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
-class DefaultValuesSpec extends WordSpec with MustMatchers {
+class DefaultValuesSpec extends AnyWordSpec with Matchers {
   import DefaultValuesSpec._
 
   "deriving JSON" must {

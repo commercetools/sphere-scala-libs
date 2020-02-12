@@ -1,7 +1,9 @@
 package io.sphere.mongo.format
 
 import io.sphere.mongo.generic._
-import org.scalatest.{MustMatchers, OptionValues, WordSpec}
+import org.scalatest.OptionValues
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import io.sphere.mongo.MongoUtils._
 import DefaultMongoFormats._
 
@@ -24,7 +26,7 @@ object OptionMongoFormatSpec {
 }
 
 
-class OptionMongoFormatSpec extends WordSpec with MustMatchers with OptionValues {
+class OptionMongoFormatSpec extends AnyWordSpec with Matchers with OptionValues {
   import OptionMongoFormatSpec._
 
   "MongoFormat[Option[_]]" should {

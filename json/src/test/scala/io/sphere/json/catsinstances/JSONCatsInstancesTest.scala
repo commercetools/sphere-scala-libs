@@ -7,9 +7,10 @@ import io.sphere.json.JSON
 import io.sphere.json._
 import org.json4s.JsonAST
 import org.json4s.JsonAST.JString
-import org.scalatest.{MustMatchers, WordSpec}
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
-class JSONCatsInstancesTest extends WordSpec with MustMatchers {
+class JSONCatsInstancesTest extends AnyWordSpec with Matchers {
   import JSONCatsInstancesTest._
 
   "Invariant[JSON]" must {

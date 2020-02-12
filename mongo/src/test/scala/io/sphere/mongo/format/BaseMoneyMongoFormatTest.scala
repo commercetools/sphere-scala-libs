@@ -4,13 +4,15 @@ package io.sphere.mongo.format
 import java.util.Currency
 
 import io.sphere.util.{BaseMoney, HighPrecisionMoney, Money}
-import org.scalatest.{Matchers, WordSpec}
 import DefaultMongoFormats._
 import io.sphere.mongo.MongoUtils._
 import org.bson.BSONObject
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.should.Matchers
+
 import scala.collection.JavaConverters._
 
-class BaseMoneyMongoFormatTest extends WordSpec with Matchers {
+class BaseMoneyMongoFormatTest extends AnyWordSpec with Matchers {
 
   "MongoFormat[BaseMoney]" should {
     "be symmetric" in {
