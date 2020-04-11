@@ -1,4 +1,24 @@
-## 0.11.2-SNAPSHOT
+## 0.11.4-SNAPSHOT
+
+## 0.11.3 (2020-04-11)
+
+* Update mongodb-driver-core to 3.12.3 (#165) @scala-steward
+* Update mongodb-driver-core to 3.12.2 (#162) @scala-steward
+* Update sbt to 1.3.9 (#163) @scala-steward
+* Update jackson-databind to 2.10.3 (#161) @scala-steward
+* Update scalacheck-1-14 to 3.1.1.1 (#159) @scala-steward
+* Update cats-core to 2.1.1 (#160) @scala-steward
+* Update scalatest to 3.1.1 (#158) @scala-steward
+
+
+## 0.11.2 (2020-02-13)
+
+* upgrade to scalatest 3.1.0 (#157) @agourlay
+* Update mongodb-driver-core to 3.12.1 (#154) @scala-steward
+* test JSONTypeHintField (#156) @yanns
+* Update sbt to 1.3.8 (#155) @scala-steward
+* Update sbt-release to 1.0.13 (#153) @scala-steward
+* Update sbt to 1.3.7 (#152) @scala-steward
 
 ## 0.11.1 (2020-01-07)
 
