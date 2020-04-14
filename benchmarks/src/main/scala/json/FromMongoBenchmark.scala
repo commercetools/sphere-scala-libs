@@ -10,6 +10,18 @@ import org.openjdk.jmh.annotations.{Benchmark, BenchmarkMode, Fork, Measurement,
 @Fork(value = 1)
 class FromMongoBenchmark {
 
+  /* on local mac
+jmh:run
+
+*** scala 2.12 ***
+Benchmark                                      Mode  Cnt   Score   Error  Units
+FromMongoBenchmark.mongoValueToCaseClass      thrpt   10   17,550 ± 0,133  ops/s
+
+*** scala 2.13 ***
+Benchmark                                      Mode  Cnt   Score   Error  Units
+FromMongoBenchmark.mongoValueToCaseClass      thrpt   10   17,550 ± 0,269  ops/s
+ */
+
   @Benchmark
   def mongoValueToCaseClass(): Unit = {
     val product = fromMongo[Product](JsonBenchmark.productMongoValue)

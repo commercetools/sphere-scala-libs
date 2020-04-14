@@ -21,17 +21,17 @@ class ToJsonBenchmark {
 
 *** scala 2.12 ***
 Benchmark                                    Mode  Cnt   Score   Error  Units
-ToJsonBenchmark.listWriter                  thrpt   10  68,770 ± 1,157  ops/s
-ToJsonBenchmark.seqWriter                   thrpt   10  65,792 ± 1,191  ops/s
-ToJsonBenchmark.serializeCaseClassToString  thrpt   10  39,142 ± 0,574  ops/s
-ToJsonBenchmark.vectorWriter                thrpt   10  64,359 ± 2,162  ops/s
+ToJsonBenchmark.listWriter                  thrpt   10   74,710 ± 1,427  ops/s
+ToJsonBenchmark.seqWriter                   thrpt   10   60,558 ± 2,016  ops/s
+ToJsonBenchmark.serializeCaseClassToString  thrpt   10   49,572 ± 0,700  ops/s
+ToJsonBenchmark.vectorWriter                thrpt   10   62,821 ± 0,703  ops/s
 
 *** scala 2.13 ***
 Benchmark                                    Mode  Cnt   Score   Error  Units
-ToJsonBenchmark.listWriter                  thrpt   10  71,097 ± 1,392  ops/s
-ToJsonBenchmark.seqWriter                   thrpt   10  56,812 ± 1,715  ops/s
-ToJsonBenchmark.serializeCaseClassToString  thrpt   10  53,280 ± 0,993  ops/s
-ToJsonBenchmark.vectorWriter                thrpt   10  54,754 ± 1,563  ops/s
+ToJsonBenchmark.listWriter                  thrpt   10   79,194 ± 1,735  ops/s
+ToJsonBenchmark.seqWriter                   thrpt   10   70,637 ± 1,383  ops/s
+ToJsonBenchmark.serializeCaseClassToString  thrpt   10   48,469 ± 1,141  ops/s
+ToJsonBenchmark.vectorWriter                thrpt   10   69,971 ± 2,436  ops/s
    */
 
   @Benchmark

@@ -15,17 +15,17 @@ class FromJsonBenchmark {
 
 *** scala 2.12 ***
 Benchmark                                      Mode  Cnt   Score   Error  Units
-FromJsonBenchmark.listReader                  thrpt   10  66,286 ± 1,025  ops/s
-FromJsonBenchmark.parseFromStringToCaseClass  thrpt   10  12,974 ± 0,333  ops/s
-FromJsonBenchmark.seqReader                   thrpt   10  66,626 ± 1,235  ops/s
-FromJsonBenchmark.vectorReader                thrpt   10  67,702 ± 2,501  ops/s
+FromJsonBenchmark.listReader                  thrpt   10   65,822 ± 4,552  ops/s
+FromJsonBenchmark.parseFromStringToCaseClass  thrpt   10   13,583 ± 0,433  ops/s
+FromJsonBenchmark.seqReader                   thrpt   10   68,325 ± 1,412  ops/s
+FromJsonBenchmark.vectorReader                thrpt   10   70,977 ± 1,907  ops/s
 
 *** scala 2.13 ***
 Benchmark                                      Mode  Cnt   Score   Error  Units
-FromJsonBenchmark.listReader                  thrpt   10  58,223 ± 1,198  ops/s
-FromJsonBenchmark.parseFromStringToCaseClass  thrpt   10  12,929 ± 0,094  ops/s
-FromJsonBenchmark.seqReader                   thrpt   10  59,705 ± 1,311  ops/s
-FromJsonBenchmark.vectorReader                thrpt   10  62,816 ± 0,750  ops/s
+FromJsonBenchmark.listReader                  thrpt   10   68,492 ± 1,393  ops/s
+FromJsonBenchmark.parseFromStringToCaseClass  thrpt   10   14,076 ± 0,148  ops/s
+FromJsonBenchmark.seqReader                   thrpt   10   63,854 ± 1,515  ops/s
+FromJsonBenchmark.vectorReader                thrpt   10   67,712 ± 1,236  ops/s
    */
 
   @Benchmark
