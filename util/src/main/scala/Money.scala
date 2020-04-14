@@ -267,6 +267,7 @@ object Money {
         case 1 => centFactorOneFractionDigit
         case 2 => centFactorTwoFractionDigit
         case 3 => centFactorThreeFractionDigit
+        case other => bdOne / bdTen.pow(other)
       }
     val amount = BigDecimal(centAmount) * centFactor
 
