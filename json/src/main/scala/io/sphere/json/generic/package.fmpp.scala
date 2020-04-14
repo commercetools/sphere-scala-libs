@@ -571,10 +571,14 @@ package object generic extends Logging {
     }
 
   private def readField[A: FromJSON](f: JSONFieldMeta, o: JObject): JSONParseResult[A] = {
-    val default = f.default.asInstanceOf[Option[A]]
-    if (f.ignored) default.map(Valid(_))/*.orElse(jsonr.default)*/.getOrElse {
-      // programmer error
-      throw new JSONException("Missing default for ignored field.")
+    def default = f.default.asInstanceOf[Option[A]]
+    if (f.ignored) {
+      default match {
+        case Some(v) => Valid(v)
+        case None =>
+          // programmer error
+          throw new JSONException("Missing default for ignored field.")
+      }
     }
     else if (f.embedded) fromJValue[A](o)
     else field[A](f.name, default)(o)
