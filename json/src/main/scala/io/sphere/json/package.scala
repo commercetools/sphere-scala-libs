@@ -29,7 +29,7 @@ package object json extends Logging {
     parseJSON(StringInput(json))
 
   def jsonParseError[A](msg: String): Invalid[NonEmptyList[JSONError]] =
-    Invalid(NonEmptyList.of(JSONParseError(msg)))
+    Invalid(NonEmptyList.one(JSONParseError(msg)))
 
   def fromJSON[A: FromJSON](json: JsonInput): JValidation[A] =
     parseJSON(json).andThen(fromJValue[A])
@@ -81,11 +81,11 @@ package object json extends Logging {
       .find(f => f._1 == name && f._2 != JNull && f._2 != JNothing)
       .map(f => jsonr.read(f._2).leftMap(
         errs => errs map {
-          case JSONParseError(msg) => JSONFieldError(List(name), msg)
+          case JSONParseError(msg) => JSONFieldError(name :: Nil, msg)
           case JSONFieldError(path, msg) => JSONFieldError(name :: path, msg)
         }))
       .orElse(default.map(Valid(_)))
       .orElse(jsonr.read(JNothing).fold(_ => None, x => Some(Valid(x)))) // orElse(jsonr.default)
-      .getOrElse(Invalid(NonEmptyList(JSONFieldError(List(name), "Missing required value"), Nil)))
+      .getOrElse(Invalid(NonEmptyList.one(JSONFieldError(name :: Nil, "Missing required value"))))
   }
 }
