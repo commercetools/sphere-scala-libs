@@ -251,8 +251,23 @@ object Money {
   def fromDecimalAmount(amount: BigDecimal, currency: Currency)(implicit mode: RoundingMode) =
     Money(amount.setScale(currency.getDefaultFractionDigits, mode), currency)
 
+  val bdOne = BigDecimal(1)
+  val bdTen = BigDecimal(10)
+
+  private val centFactorZeroFractionDigit = bdOne / bdTen.pow(0)
+  private val centFactorOneFractionDigit = bdOne / bdTen.pow(1)
+  private val centFactorTwoFractionDigit = bdOne / bdTen.pow(2)
+  private val centFactorThreeFractionDigit = bdOne / bdTen.pow(3)
+
   def fromCentAmount(centAmount: Long, currency: Currency) = {
-    val centFactor = BigDecimal(1) / BigDecimal(10).pow(currency.getDefaultFractionDigits)
+    val currencyFractionDigits = currency.getDefaultFractionDigits
+    val centFactor =
+      currencyFractionDigits match {
+        case 0 => centFactorZeroFractionDigit
+        case 1 => centFactorOneFractionDigit
+        case 2 => centFactorTwoFractionDigit
+        case 3 => centFactorThreeFractionDigit
+      }
     val amount = BigDecimal(centAmount) * centFactor
 
     fromDecimalAmount(amount, currency)(BigDecimal.RoundingMode.UNNECESSARY)
@@ -280,7 +295,7 @@ case class HighPrecisionMoney private (amount: BigDecimal, fractionDigits: Int, 
   val `type` = TypeName
 
   lazy val preciseAmountAsLong: Long =
-    (amount * BigDecimal(10).pow(fractionDigits)).toLongExact
+    (amount * Money.bdTen.pow(fractionDigits)).toLongExact
 
   def withFractionDigits(fd: Int)(implicit mode: RoundingMode) = {
     val newAmount = amount.setScale(fd, mode)
@@ -329,7 +344,7 @@ case class HighPrecisionMoney private (amount: BigDecimal, fractionDigits: Int, 
     case m: Money => this * m
     case m: HighPrecisionMoney => this * m
   }
-  
+
   def * (other: BigDecimal)(implicit mode: RoundingMode): HighPrecisionMoney =
     this * fromDecimalAmount(other, this.fractionDigits, this.currency)
 
@@ -367,7 +382,7 @@ case class HighPrecisionMoney private (amount: BigDecimal, fractionDigits: Int, 
    */
   def partition(ratios: Int*)(implicit mode: RoundingMode): Seq[HighPrecisionMoney] = {
     val total = ratios.sum
-    val factor = BigDecimal(1) / BigDecimal(10).pow(fractionDigits)
+    val factor = Money.bdOne / Money.bdTen.pow(fractionDigits)
     val amountAsInt = (this.amount / factor).toBigInt
     val portionAmounts = ratios.map(amountAsInt * _ / total)
     var remainder = portionAmounts.foldLeft(amountAsInt)(_ - _)
@@ -395,7 +410,7 @@ case class HighPrecisionMoney private (amount: BigDecimal, fractionDigits: Int, 
 
     nf.format(this.amount.doubleValue) + " " + this.currency.getSymbol(locale)
   }
-}           
+}
 
 object HighPrecisionMoney {
   object ImplicitsDecimal {
@@ -468,7 +483,7 @@ object HighPrecisionMoney {
     fromDecimalAmount(fn(a1, a2), fd, m1.currency)
   }
 
-  def factor(fractionDigits: Int) = BigDecimal(1) / BigDecimal(10).pow(fractionDigits)
+  def factor(fractionDigits: Int) = Money.bdOne / Money.bdTen.pow(fractionDigits)
   def centFactor(currency: Currency) = factor(currency.getDefaultFractionDigits)
 
   def fromDecimalAmount(amount: BigDecimal, fractionDigits: Int, currency: Currency)(implicit mode: RoundingMode) = {
