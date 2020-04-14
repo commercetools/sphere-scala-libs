@@ -133,10 +133,11 @@ package object generic extends Logging {
   ): ToJSON[T] = {
     val jsonClass = getJSONClass(classTag[T].runtimeClass)
     val _fields = jsonClass.fields
+    val _withTypeHint = jsonClass.typeHint.isDefined
     new ToJSON[T] {
       def write(r: T): JValue = {
         val buf = new ListBuffer[JField]
-        if (jsonClass.typeHint.isDefined) writeTypeField(jsonClass, buf)
+        if (_withTypeHint) writeTypeField(jsonClass, buf)
         <#list 1..i as j>
           writeField[A${j}](buf, _fields(${j-1}), r.productElement(${j-1}).asInstanceOf[A${j}])
         </#list>
@@ -155,10 +156,11 @@ package object generic extends Logging {
   ): FromJSON[T] = {
     val jsonClass = getJSONClass(classTag[T].runtimeClass)
     val _fields = jsonClass.fields
+    val _firstField = _fields.head
     new FromJSON[T] {
       def read(jval: JValue): ValidatedNel[JSONError, T] = jval match {
         case o: JObject =>
-          (readField[A1](_fields.head, o)<#if i!=1>
+          (readField[A1](_firstField, o)<#if i!=1>
           <#list 2..i as j>
       , readField[A${j}](_fields(${j-1}), o)
       </#list>
@@ -355,10 +357,8 @@ package object generic extends Logging {
     val readMap = readMapBuilder.result
     val clazz = classTag[T].runtimeClass
 
-    val typeField = Option(clazz.getAnnotation(classOf[JSONTypeHintField])) match {
-      case Some(a) => a.value
-      case None => defaultTypeFieldName
-    }
+    val fieldWithJSONTypeHint = clazz.getAnnotation(classOf[JSONTypeHintField])
+    val typeField = if (fieldWithJSONTypeHint != null) fieldWithJSONTypeHint.value() else defaultTypeFieldName
 
     new FromJSON[T] with TypeSelectorFromJSONContainer {
       override def typeSelectors: List[TypeSelectorFromJSON[_]] = allSelectors
@@ -539,7 +539,8 @@ package object generic extends Logging {
   private def getJSONFields(clazz: Class[_]): IndexedSeq[JSONFieldMeta] = {
     Reflect.getCaseClassMeta(clazz).fields.map { fm =>
       val m = clazz.getDeclaredMethod(fm.name)
-      val name = Option(m.getAnnotation(classOf[JSONKey])).map(_.value).getOrElse(fm.name)
+      val fieldWithJSONKey = m.getAnnotation(classOf[JSONKey])
+      val name = if (fieldWithJSONKey != null) fieldWithJSONKey.value() else fm.name
       val embedded = m.isAnnotationPresent(classOf[JSONEmbedded])
       val ignored = m.isAnnotationPresent(classOf[JSONIgnore])
       if (ignored && fm.default.isEmpty) {
@@ -568,10 +569,14 @@ package object generic extends Logging {
     }
 
   private def readField[A: FromJSON](f: JSONFieldMeta, o: JObject): JSONParseResult[A] = {
-    val default = f.default.asInstanceOf[Option[A]]
-    if (f.ignored) default.map(Valid(_))/*.orElse(jsonr.default)*/.getOrElse {
-      // programmer error
-      throw new JSONException("Missing default for ignored field.")
+    def default = f.default.asInstanceOf[Option[A]]
+    if (f.ignored) {
+      default match {
+        case Some(v) => Valid(v)
+        case None =>
+          // programmer error
+          throw new JSONException("Missing default for ignored field.")
+      }
     }
     else if (f.embedded) fromJValue[A](o)
     else field[A](f.name, default)(o)

@@ -70,10 +70,12 @@ package object generic extends Logging {
   ): MongoFormat[T] = {
     val mongoClass = getMongoClassMeta(classTag[T].runtimeClass)
     val _fields = mongoClass.fields
+    val _firstField = _fields.head
+    val _withTypeHint = mongoClass.typeHint.isDefined
     new MongoFormat[T] {
       def toMongoValue(r: T): Any = {
         val dbo = new BasicDBObject
-        if (mongoClass.typeHint.isDefined) {
+        if (_withTypeHint) {
           val th = mongoClass.typeHint.get
           dbo.put(th.field, th.value)
         }
@@ -85,7 +87,7 @@ package object generic extends Logging {
       def fromMongoValue(any: Any): T = any match {
         case dbo: BSONObject =>
           construct(
-            readField[A1](_fields.head, dbo)<#if i!=1><#list 2..i as j>,
+            readField[A1](_firstField, dbo)<#if i!=1><#list 2..i as j>,
             readField[A${j}](_fields(${j-1}), dbo)</#list></#if>
           )
         case _ => sys.error("Deserialization failed. DBObject expected.")
@@ -124,10 +126,8 @@ package object generic extends Logging {
     val writeMap = writeMapBuilder.result
     val clazz = classTag[T].runtimeClass
 
-    val typeField = Option(clazz.getAnnotation(classOf[MongoTypeHintField])) match {
-      case Some(a) => a.value
-      case None => defaultTypeFieldName
-    }
+    val fieldWithMongoTypeHintField = clazz.getAnnotation(classOf[MongoTypeHintField])
+    val typeField = if (fieldWithMongoTypeHintField != null) fieldWithMongoTypeHintField.value() else defaultTypeFieldName
 
     new MongoFormat[T] {
       def fromMongoValue(any: Any): T = any match {
@@ -208,7 +208,8 @@ package object generic extends Logging {
   private def getMongoFieldMeta(clazz: Class[_]): IndexedSeq[MongoFieldMeta] = {
     Reflect.getCaseClassMeta(clazz).fields.map { fm =>
       val m = clazz.getDeclaredMethod(fm.name)
-      val name = Option(m.getAnnotation(classOf[MongoKey])).map(_.value).getOrElse(fm.name)
+      val fieldWithMongoKey = m.getAnnotation(classOf[MongoKey])
+      val name = if (fieldWithMongoKey != null) fieldWithMongoKey.value else fm.name
       val embedded = m.isAnnotationPresent(classOf[MongoEmbedded])
       val ignored = m.isAnnotationPresent(classOf[MongoIgnore])
       if (ignored && fm.default.isEmpty) {

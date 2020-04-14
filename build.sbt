@@ -64,5 +64,4 @@ lazy val benchmarks = project
     publish := {})
   .enablePlugins(JmhPlugin)
   .disablePlugins(BintrayPlugin)
-  .dependsOn(`sphere-util`, `sphere-json`)
-
+  .dependsOn(`sphere-util`, `sphere-json`, `sphere-mongo`)

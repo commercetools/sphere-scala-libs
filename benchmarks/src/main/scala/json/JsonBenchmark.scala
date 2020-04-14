@@ -4,6 +4,10 @@ import java.util.UUID
 
 import io.sphere.json._
 import io.sphere.json.generic._
+import io.sphere.mongo.generic._
+import io.sphere.mongo.format.MongoFormat
+import io.sphere.mongo.format.DefaultMongoFormats._
+import io.sphere.mongo.format._
 import io.sphere.util.BaseMoney
 
 import scala.collection.generic.CanBuildFrom
@@ -13,18 +17,21 @@ case class Reference(typeId: String, id: UUID)
 
 object Reference {
   implicit val json: JSON[Reference] = jsonProduct(apply _)
+  implicit val mongoFormat: MongoFormat[Reference] = mongoProduct(apply _)
 }
 
 case class Price(id: String, value: BaseMoney)
 
 object Price {
   implicit val json: JSON[Price] = jsonProduct(apply _)
+  implicit val mongoFormat: MongoFormat[Price] = mongoProduct(apply _)
 }
 
 case class ProductVariant(id: Long, prices: Vector[Price], attributes: Map[String, String])
 
 object ProductVariant {
   implicit val json: JSON[ProductVariant] = jsonProduct(apply _)
+  implicit val mongoFormat: MongoFormat[ProductVariant] = mongoProduct(apply _)
 }
 
 case class Product(
@@ -35,6 +42,7 @@ case class Product(
 
 object Product {
   implicit val json: JSON[Product] = jsonProduct(apply _)
+  implicit val mongoFormat: MongoFormat[Product] = mongoProduct(apply _)
 }
 
 object JsonBenchmark {
@@ -90,4 +98,5 @@ object JsonBenchmark {
       """.stripMargin
 
   val product = getFromJSON[Product](json)
+  val productMongoValue = toMongo(product)
 }

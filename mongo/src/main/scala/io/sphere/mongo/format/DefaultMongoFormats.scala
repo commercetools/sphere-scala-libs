@@ -52,11 +52,14 @@ trait DefaultMongoFormats {
       case None => MongoNothing
     }
     override def fromMongoValue(any: Any) = {
-      Option(any) match {
-        case None => None
-        case Some(dbo: BSONObject) if fields.nonEmpty && dbo.keySet().iterator().asScala.forall(t => !fields.contains(t)) =>
-          None
-        case Some(x) => Some(f.fromMongoValue(x))
+      if (any == null)
+        None
+      else {
+        any match {
+          case dbo: BSONObject if fields.nonEmpty && dbo.keySet().iterator().asScala.forall(t => !fields.contains(t)) =>
+            None
+          case x => Some(f.fromMongoValue(x))
+        }
       }
     }
 
