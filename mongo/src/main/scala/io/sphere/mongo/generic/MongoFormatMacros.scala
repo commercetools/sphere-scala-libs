@@ -33,7 +33,7 @@ private[generic] object MongoFormatMacros {
     }).unzip
 
     if (classSym.isCaseClass && !classSym.isModuleClass) {
-      val applyBlock = Block(List(), Function(
+      val applyBlock = Block(Nil, Function(
         argDefs,
         Apply(Select(Ident(classSym.companion), TermName("apply")), args)
       ))
@@ -50,7 +50,7 @@ private[generic] object MongoFormatMacros {
           reify(io.sphere.mongo.generic.`package`).tree,
           TermName("mongoProduct0")
         ),
-        List(Ident(classSym.name.toTermName))
+        Ident(classSym.name.toTermName) :: Nil
       )
     } else if (classSym.isModuleClass) {
       Apply(
@@ -58,7 +58,7 @@ private[generic] object MongoFormatMacros {
           reify(io.sphere.mongo.generic.`package`).tree,
           TermName("mongoSingleton")
         ),
-        List(Ident(classSym.name.toTermName))
+        Ident(classSym.name.toTermName) :: Nil
       )
     } else c.abort(c.enclosingPosition, "Not a case class or (case) object")
   }
@@ -77,7 +77,7 @@ private[generic] object MongoFormatMacros {
           reify(io.sphere.mongo.generic.`package`).tree,
           TermName("mongoEnum")
         ),
-        List(Ident(pre.typeSymbol.name.toTermName))
+        Ident(pre.typeSymbol.name.toTermName) :: Nil
       ))
     } else if (symbol.isClass && (symbol.asClass.isCaseClass || symbol.asClass.isModuleClass))
     // product type or singleton
@@ -109,7 +109,7 @@ private[generic] object MongoFormatMacros {
                   TermName("mongo" + i),
                   AppliedTypeTree(
                     Ident(TypeName("MongoFormat")),
-                    List(Ident(symbol))
+                    Ident(symbol) :: Nil
                   ),
                   mongoFormatProductApply(c)(tpe, symbol.asClass)
                 )
@@ -127,7 +127,7 @@ private[generic] object MongoFormatMacros {
                   ),
                   idents
                 ),
-                List(reify(Nil).tree)
+                reify(Nil).tree :: Nil
               )
             )
           )
