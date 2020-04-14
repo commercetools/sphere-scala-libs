@@ -77,15 +77,17 @@ package object json extends Logging {
     default: Option[A] = None
   )(jObject: JObject)(implicit jsonr: FromJSON[A]): JValidation[A] = {
     val fields = jObject.obj
-    fields
-      .find(f => f._1 == name && f._2 != JNull && f._2 != JNothing)
-      .map(f => jsonr.read(f._2).leftMap(
-        errs => errs map {
-          case JSONParseError(msg) => JSONFieldError(name :: Nil, msg)
-          case JSONFieldError(path, msg) => JSONFieldError(name :: path, msg)
-        }))
-      .orElse(default.map(Valid(_)))
-      .orElse(jsonr.read(JNothing).fold(_ => None, x => Some(Valid(x)))) // orElse(jsonr.default)
-      .getOrElse(Invalid(NonEmptyList.one(JSONFieldError(name :: Nil, "Missing required value"))))
+    fields.find(f => f._1 == name && f._2 != JNull && f._2 != JNothing) match {
+      case Some(f) =>
+        jsonr.read(f._2).leftMap(
+          errs => errs map {
+            case JSONParseError(msg) => JSONFieldError(name :: Nil, msg)
+            case JSONFieldError(path, msg) => JSONFieldError(name :: path, msg)
+          })
+      case None =>
+        default.map(Valid(_))
+          .orElse(jsonr.read(JNothing).fold(_ => None, x => Some(Valid(x)))) // orElse(jsonr.default)
+          .getOrElse(Invalid(NonEmptyList.one(JSONFieldError(name :: Nil, "Missing required value"))))
+    }
   }
 }
