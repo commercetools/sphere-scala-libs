@@ -15,11 +15,11 @@ jmh:run
 
 *** scala 2.12 ***
 Benchmark                                     Mode  Cnt   Score   Error  Units
-ToMongoValueBenchmark.caseClassToMongoValue  thrpt   10  249,225 ± 2,339  ops/s
+ToMongoValueBenchmark.caseClassToMongoValue   thrpt   10  255,323 ± 4,959  ops/s
 
 *** scala 2.13 ***
 Benchmark                                     Mode  Cnt   Score   Error  Units
-ToMongoValueBenchmark.caseClassToMongoValue  thrpt   10  265,411 ± 6,020  ops/s
+ToMongoValueBenchmark.caseClassToMongoValue   thrpt   10  263,907 ± 7,305  ops/s
 */
 
 

@@ -16,11 +16,11 @@ class ParseJsonBenchmark {
 
 *** scala 2.12 ***
 Benchmark                                     Mode  Cnt   Score   Error  Units
-ParseJsonBenchmark.parseFromStringToJValue   thrpt   10   88,784 ± 0,551  ops/s
+ParseJsonBenchmark.parseFromStringToJValue    thrpt   10   87,591 ± 0,320  ops/s
 
 *** scala 2.13 ***
 Benchmark                                     Mode  Cnt   Score   Error  Units
-ParseJsonBenchmark.parseFromStringToJValue   thrpt   10   86,459 ± 0,482  ops/s
+ParseJsonBenchmark.parseFromStringToJValue    thrpt   10   87,495 ± 0,388  ops/s
    */
 
   @Benchmark
