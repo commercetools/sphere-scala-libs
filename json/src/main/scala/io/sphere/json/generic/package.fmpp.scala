@@ -357,10 +357,8 @@ package object generic extends Logging {
     val readMap = readMapBuilder.result
     val clazz = classTag[T].runtimeClass
 
-    val typeField = Option(clazz.getAnnotation(classOf[JSONTypeHintField])) match {
-      case Some(a) => a.value
-      case None => defaultTypeFieldName
-    }
+    val fieldWithJSONTypeHint = clazz.getAnnotation(classOf[JSONTypeHintField])
+    val typeField = if (fieldWithJSONTypeHint != null) fieldWithJSONTypeHint.value() else defaultTypeFieldName
 
     new FromJSON[T] with TypeSelectorFromJSONContainer {
       override def typeSelectors: List[TypeSelectorFromJSON[_]] = allSelectors
@@ -541,10 +539,8 @@ package object generic extends Logging {
   private def getJSONFields(clazz: Class[_]): IndexedSeq[JSONFieldMeta] = {
     Reflect.getCaseClassMeta(clazz).fields.map { fm =>
       val m = clazz.getDeclaredMethod(fm.name)
-      val name = Option(m.getAnnotation(classOf[JSONKey])) match {
-        case Some(field) => field.value()
-        case None => fm.name
-      }
+      val fieldWithJSONKey = m.getAnnotation(classOf[JSONKey])
+      val name = if (fieldWithJSONKey != null) fieldWithJSONKey.value() else fm.name
       val embedded = m.isAnnotationPresent(classOf[JSONEmbedded])
       val ignored = m.isAnnotationPresent(classOf[JSONIgnore])
       if (ignored && fm.default.isEmpty) {

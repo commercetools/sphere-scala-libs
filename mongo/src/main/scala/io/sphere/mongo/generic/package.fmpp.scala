@@ -126,10 +126,8 @@ package object generic extends Logging {
     val writeMap = writeMapBuilder.result
     val clazz = classTag[T].runtimeClass
 
-    val typeField = Option(clazz.getAnnotation(classOf[MongoTypeHintField])) match {
-      case Some(a) => a.value
-      case None => defaultTypeFieldName
-    }
+    val fieldWithMongoTypeHintField = clazz.getAnnotation(classOf[MongoTypeHintField])
+    val typeField = if (fieldWithMongoTypeHintField != null) fieldWithMongoTypeHintField.value() else defaultTypeFieldName
 
     new MongoFormat[T] {
       def fromMongoValue(any: Any): T = any match {
@@ -210,7 +208,8 @@ package object generic extends Logging {
   private def getMongoFieldMeta(clazz: Class[_]): IndexedSeq[MongoFieldMeta] = {
     Reflect.getCaseClassMeta(clazz).fields.map { fm =>
       val m = clazz.getDeclaredMethod(fm.name)
-      val name = Option(m.getAnnotation(classOf[MongoKey])).map(_.value).getOrElse(fm.name)
+      val fieldWithMongoKey = m.getAnnotation(classOf[MongoKey])
+      val name = if (fieldWithMongoKey != null) fieldWithMongoKey.value else fm.name
       val embedded = m.isAnnotationPresent(classOf[MongoEmbedded])
       val ignored = m.isAnnotationPresent(classOf[MongoIgnore])
       if (ignored && fm.default.isEmpty) {
