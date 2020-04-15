@@ -1,4 +1,13 @@
-## 0.11.4-SNAPSHOT
+## 0.11.5-SNAPSHOT
+
+
+## 0.11.4 (2020-04-15)
+
+* Update sbt to 1.3.10 (#171) @scala-steward
+* Precompute most common centFactor in Money fromCentAmount (#170) @agourlay
+* Various perf improvements (#169) @agourlay
+* Do not use List.apply for performance in MongoFormatMacros (#168) @agourlay
+* Update Scala 2.12.11 (#167) @agourlay
 
 ## 0.11.3 (2020-04-11)
 
@@ -9,7 +18,6 @@
 * Update scalacheck-1-14 to 3.1.1.1 (#159) @scala-steward
 * Update cats-core to 2.1.1 (#160) @scala-steward
 * Update scalatest to 3.1.1 (#158) @scala-steward
-
 
 ## 0.11.2 (2020-02-13)
 
