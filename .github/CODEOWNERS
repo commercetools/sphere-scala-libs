@@ -1,0 +1,3 @@
+# why this file: to pick reviewers for a pull request automatically
+# doc on https://help.github.com/articles/about-codeowners/
+*       @yanns @agourlay
