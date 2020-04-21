@@ -19,7 +19,7 @@ lazy val standardSettings = Defaults.coreDefaultSettings ++ publishSettings ++ S
     "-unchecked",
     "-feature"
   ),
-  javacOptions ++= Seq("-deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7"),
+  javacOptions ++= Seq("-deprecation", "-Xlint:unchecked"),
   testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "3.1.1" % Test,
