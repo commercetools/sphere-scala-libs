@@ -133,11 +133,16 @@ package object generic extends Logging {
   ): ToJSON[T] = {
     val jsonClass = getJSONClass(classTag[T].runtimeClass)
     val _fields = jsonClass.fields
-    val _withTypeHint = jsonClass.typeHint.isDefined
+    val hintField: JField = {
+      if (jsonClass.typeHint.isDefined) {
+        val th = jsonClass.typeHint.get
+        JField(th.field, JString(th.value))
+      } else null
+    }
     new ToJSON[T] {
       def write(r: T): JValue = {
         val buf = new ListBuffer[JField]
-        if (_withTypeHint) writeTypeField(jsonClass, buf)
+        if (hintField != null) buf += hintField
         <#list 1..i as j>
           writeField[A${j}](buf, _fields(${j-1}), r.productElement(${j-1}).asInstanceOf[A${j}])
         </#list>
@@ -562,11 +567,6 @@ package object generic extends Logging {
         buf += JField(field.name, toJValue(e))
     }
   }
-
-  private def writeTypeField(jClass: JSONClassMeta, buf: ListBuffer[JField]): Unit =
-    jClass.typeHint foreach { th =>
-      buf += JField(th.field, JString(th.value))
-    }
 
   private def readField[A: FromJSON](f: JSONFieldMeta, o: JObject): JSONParseResult[A] = {
     def default = f.default.asInstanceOf[Option[A]]
