@@ -133,11 +133,9 @@ package object generic extends Logging {
   ): ToJSON[T] = {
     val jsonClass = getJSONClass(classTag[T].runtimeClass)
     val _fields = jsonClass.fields
-    val hintField: JField = {
-      if (jsonClass.typeHint.isDefined) {
-        val th = jsonClass.typeHint.get
-        JField(th.field, JString(th.value))
-      } else null
+    val hintField: JField = jsonClass.typeHint match {
+      case Some(th) => JField(th.field, JString(th.value))
+      case None => null  
     }
     new ToJSON[T] {
       def write(r: T): JValue = {
