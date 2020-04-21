@@ -43,6 +43,25 @@ class DefaultMongoFormatsTest extends AnyWordSpec with Matchers with ScalaCheckD
       check(list, format)
     }
 
+    "support Vector[String]" in {
+      val format = vecFormat[String]
+      val vector = Gen.listOf(Gen.alphaNumStr).map(_.toVector)
+
+      forAll(vector) { v =>
+        val dbo = format.toMongoValue(v)
+        dbo.asInstanceOf[BasicBSONList].asScala.toVector must be (v)
+        val resultVector = format.fromMongoValue(dbo)
+        resultVector must be (v)
+      }
+    }
+
+    "support Vector[A: MongoFormat]" in {
+      val format = vecFormat[User]
+      val vector = Gen.listOf(Gen.alphaNumStr.map(User.apply)).map(_.toVector)
+
+      check(vector, format)
+    }
+
     "support Set[String]" in {
       val format = setFormat[String]
       val set = Gen.listOf(Gen.alphaNumStr).map(_.toSet)
