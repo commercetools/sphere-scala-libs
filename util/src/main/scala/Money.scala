@@ -13,6 +13,7 @@ import scala.math._
 import BigDecimal.RoundingMode._
 import scala.math.BigDecimal.RoundingMode
 import ValidatedFlatMapFeature._
+import io.sphere.util.Money.ImplicitsDecimal.MoneyNotation
 
 sealed trait BaseMoney {
   def `type`: String
@@ -88,15 +89,15 @@ case class Money private (amount: BigDecimal, currency: Currency) extends BaseMo
     "The scale of the given amount does not match the scale of the provided currency." +
     " - " + amount.scale + " <-> " + currency.getDefaultFractionDigits)
 
-  private val centFactor: Double = 1 / pow(10, currency.getDefaultFractionDigits)
+  private val centFactor: Double = Money.cachedCentFactor(currency.getDefaultFractionDigits).doubleValue
 
   lazy val centAmount: Long = (amount / centFactor).toLong
 
   private val backwardsCompatibleRoundingModeForOperations = BigDecimal.RoundingMode.HALF_EVEN
 
-  val `type` = TypeName
+  val `type`: String = TypeName
 
-  lazy val fractionDigits = currency.getDefaultFractionDigits
+  lazy val fractionDigits: Int = currency.getDefaultFractionDigits
 
   def withCentAmount(centAmount: Long): Money = {
     val newAmount = BigDecimal(centAmount) * centFactor
@@ -182,7 +183,7 @@ case class Money private (amount: BigDecimal, currency: Currency) extends BaseMo
 
   def remainder(m: BigDecimal)(implicit mode: RoundingMode): Money = this.remainder(fromDecimalAmount(m, this.currency)(RoundingMode.HALF_EVEN))
 
-  def unary_- = fromDecimalAmount(-this.amount, this.currency)(BigDecimal.RoundingMode.UNNECESSARY)
+  def unary_- : Money = fromDecimalAmount(-this.amount, this.currency)(BigDecimal.RoundingMode.UNNECESSARY)
 
   /**
    * Partitions this amount of money into several parts where the size of the individual
@@ -194,12 +195,12 @@ case class Money private (amount: BigDecimal, currency: Currency) extends BaseMo
   def partition(ratios: Int*): Seq[Money] = {
     val total = ratios.sum
     val amountInCents = (this.amount / centFactor).toBigInt
-    val amounts = Seq(ratios.map(amountInCents * _ / total):_*)
+    val amounts = ratios.map(amountInCents * _ / total)
     var remainder = amounts.foldLeft(amountInCents)(_ - _)
-    amounts.map(amount => {
+    amounts.map{ amount =>
       remainder -= 1
       fromDecimalAmount(BigDecimal(amount + (if (remainder >= 0) 1 else 0)) * centFactor, this.currency)(backwardsCompatibleRoundingModeForOperations)
-    })
+    }
   }
 
   def toMoneyWithPrecisionLoss: Money = this
@@ -209,9 +210,9 @@ case class Money private (amount: BigDecimal, currency: Currency) extends BaseMo
     this.amount compare that.amount
   }
 
-  override def toString = this.amount.bigDecimal.toPlainString + " " + this.currency.getCurrencyCode
+  override def toString: String = this.amount.bigDecimal.toPlainString + " " + this.currency.getCurrencyCode
 
-  def toString(nf: NumberFormat, locale: Locale) = {
+  def toString(nf: NumberFormat, locale: Locale): String = {
     require(nf.getCurrency eq this.currency)
     nf.format(this.amount.doubleValue) + " " + this.currency.getSymbol(locale)
   }
@@ -220,18 +221,18 @@ case class Money private (amount: BigDecimal, currency: Currency) extends BaseMo
 object Money {
   object ImplicitsDecimal {
     final implicit class MoneyNotation(val amount: BigDecimal) extends AnyVal {
-      def EUR = Money.EUR(amount)
-      def USD = Money.USD(amount)
-      def GBP = Money.GBP(amount)
-      def JPY = Money.JPY(amount)
+      def EUR: Money = Money.EUR(amount)
+      def USD: Money = Money.USD(amount)
+      def GBP: Money = Money.GBP(amount)
+      def JPY: Money = Money.JPY(amount)
     }
 
-    implicit def doubleMoneyNotation(amount: Double) =
+    implicit def doubleMoneyNotation(amount: Double): MoneyNotation =
       new ImplicitsDecimal.MoneyNotation(BigDecimal(amount))
   }
 
   object ImplicitsString {
-    implicit def stringMoneyNotation(amount: String) =
+    implicit def stringMoneyNotation(amount: String): MoneyNotation =
       new ImplicitsDecimal.MoneyNotation(BigDecimal(amount))
   }
 
@@ -248,34 +249,49 @@ object Money {
   val FractionDigitsField: String = "fractionDigits"
   val TypeName: String = "centPrecision"
 
-  def fromDecimalAmount(amount: BigDecimal, currency: Currency)(implicit mode: RoundingMode) =
+  def fromDecimalAmount(amount: BigDecimal, currency: Currency)(implicit mode: RoundingMode): Money =
     Money(amount.setScale(currency.getDefaultFractionDigits, mode), currency)
 
-  val bdOne = BigDecimal(1)
-  val bdTen = BigDecimal(10)
+  val bdOne: BigDecimal = BigDecimal(1)
+  val bdTen: BigDecimal = BigDecimal(10)
 
   private val centFactorZeroFractionDigit = bdOne / bdTen.pow(0)
   private val centFactorOneFractionDigit = bdOne / bdTen.pow(1)
   private val centFactorTwoFractionDigit = bdOne / bdTen.pow(2)
   private val centFactorThreeFractionDigit = bdOne / bdTen.pow(3)
+  private val centFactorFourFractionDigit = bdOne / bdTen.pow(4)
 
-  def fromCentAmount(centAmount: Long, currency: Currency) = {
+  def cachedCentFactor(currencyFractionDigits: Int): BigDecimal =
+    currencyFractionDigits match {
+      case 0 => centFactorZeroFractionDigit
+      case 1 => centFactorOneFractionDigit
+      case 2 => centFactorTwoFractionDigit
+      case 3 => centFactorThreeFractionDigit
+      case 4 => centFactorFourFractionDigit
+      case other => bdOne / bdTen.pow(other)
+    }
+
+  def fromCentAmount(centAmount: Long, currency: Currency): Money = {
     val currencyFractionDigits = currency.getDefaultFractionDigits
-    val centFactor =
-      currencyFractionDigits match {
-        case 0 => centFactorZeroFractionDigit
-        case 1 => centFactorOneFractionDigit
-        case 2 => centFactorTwoFractionDigit
-        case 3 => centFactorThreeFractionDigit
-        case other => bdOne / bdTen.pow(other)
-      }
+    val centFactor = cachedCentFactor(currencyFractionDigits)
     val amount = BigDecimal(centAmount) * centFactor
 
     fromDecimalAmount(amount, currency)(BigDecimal.RoundingMode.UNNECESSARY)
   }
 
-  def zero(currency: Currency) =
-    fromCentAmount(0L, currency)
+  private val cachedZeroEUR = fromCentAmount(0L, Currency.getInstance("EUR"))
+  private val cachedZeroUSD = fromCentAmount(0L, Currency.getInstance("USD"))
+  private val cachedZeroGBP = fromCentAmount(0L, Currency.getInstance("GBP"))
+  private val cachedZeroJPY = fromCentAmount(0L, Currency.getInstance("JPY"))
+
+  def zero(currency: Currency): Money =
+    currency.getCurrencyCode match {
+      case "EUR" => cachedZeroEUR
+      case "USD" => cachedZeroUSD
+      case "GBP" => cachedZeroGBP
+      case "JPY" => cachedZeroJPY
+      case _ => fromCentAmount(0L, currency)
+    }
 
   implicit def moneyMonoid(implicit c: Currency, mode: RoundingMode): Monoid[Money] = new Monoid[Money] {
     def combine(x: Money, y: Money): Money = x + y
@@ -293,18 +309,18 @@ case class HighPrecisionMoney private (amount: BigDecimal, fractionDigits: Int, 
   require(fractionDigits >= currency.getDefaultFractionDigits,
     "`fractionDigits` should be  >= than the default fraction digits of the currency.")
 
-  val `type` = TypeName
+  val `type`: String = TypeName
 
   lazy val preciseAmountAsLong: Long =
-    (amount * Money.bdTen.pow(fractionDigits)).toLongExact
+    (amount * Money.bdTen.pow(fractionDigits)).toLongExact // left side could be cached if necessary
 
-  def withFractionDigits(fd: Int)(implicit mode: RoundingMode) = {
+  def withFractionDigits(fd: Int)(implicit mode: RoundingMode): HighPrecisionMoney = {
     val newAmount = amount.setScale(fd, mode)
 
     HighPrecisionMoney(newAmount, fd, roundToCents(newAmount, currency), currency)
   }
 
-  def updateCentAmountWithRoundingMode(implicit mode: RoundingMode) =
+  def updateCentAmountWithRoundingMode(implicit mode: RoundingMode): HighPrecisionMoney =
     copy(centAmount = roundToCents(amount, currency))
 
   def + (other: HighPrecisionMoney)(implicit mode: RoundingMode): HighPrecisionMoney =
@@ -372,7 +388,7 @@ case class HighPrecisionMoney private (amount: BigDecimal, fractionDigits: Int, 
   def remainder(other: BigDecimal)(implicit mode: RoundingMode): HighPrecisionMoney =
     this.remainder(fromDecimalAmount(other, this.fractionDigits, this.currency))
 
-  def unary_- = fromDecimalAmount(-this.amount, this.fractionDigits, this.currency)(BigDecimal.RoundingMode.UNNECESSARY)
+  def unary_- :HighPrecisionMoney = fromDecimalAmount(-this.amount, this.fractionDigits, this.currency)(BigDecimal.RoundingMode.UNNECESSARY)
 
   /**
    * Partitions this amount of money into several parts where the size of the individual
@@ -383,7 +399,7 @@ case class HighPrecisionMoney private (amount: BigDecimal, fractionDigits: Int, 
    */
   def partition(ratios: Int*)(implicit mode: RoundingMode): Seq[HighPrecisionMoney] = {
     val total = ratios.sum
-    val factor = Money.bdOne / Money.bdTen.pow(fractionDigits)
+    val factor = Money.cachedCentFactor(fractionDigits)
     val amountAsInt = (this.amount / factor).toBigInt
     val portionAmounts = ratios.map(amountAsInt * _ / total)
     var remainder = portionAmounts.foldLeft(amountAsInt)(_ - _)
@@ -406,7 +422,7 @@ case class HighPrecisionMoney private (amount: BigDecimal, fractionDigits: Int, 
 
   override def toString: String = this.amount.bigDecimal.toPlainString + " " + this.currency.getCurrencyCode
 
-  def toString(nf: NumberFormat, locale: Locale) = {
+  def toString(nf: NumberFormat, locale: Locale): String = {
     require(nf.getCurrency eq this.currency)
 
     nf.format(this.amount.doubleValue) + " " + this.currency.getSymbol(locale)
@@ -416,19 +432,19 @@ case class HighPrecisionMoney private (amount: BigDecimal, fractionDigits: Int, 
 object HighPrecisionMoney {
   object ImplicitsDecimal {
     final implicit class HighPrecisionMoneyNotation(val amount: BigDecimal) extends AnyVal {
-      def EUR = HighPrecisionMoney.EUR(amount)
-      def USD = HighPrecisionMoney.USD(amount)
-      def GBP = HighPrecisionMoney.GBP(amount)
-      def JPY = HighPrecisionMoney.JPY(amount)
+      def EUR: HighPrecisionMoney = HighPrecisionMoney.EUR(amount)
+      def USD: HighPrecisionMoney = HighPrecisionMoney.USD(amount)
+      def GBP: HighPrecisionMoney = HighPrecisionMoney.GBP(amount)
+      def JPY: HighPrecisionMoney = HighPrecisionMoney.JPY(amount)
     }
   }
 
   object ImplicitsDecimalPrecise {
     final implicit class HighPrecisionPreciseMoneyNotation(val amount: BigDecimal) extends AnyVal {
-      def EUR_PRECISE(precision: Int) = HighPrecisionMoney.EUR(amount, Some(precision))
-      def USD_PRECISE(precision: Int) = HighPrecisionMoney.EUR(amount, Some(precision))
-      def GBP_PRECISE(precision: Int) = HighPrecisionMoney.EUR(amount, Some(precision))
-      def JPY_PRECISE(precision: Int) = HighPrecisionMoney.EUR(amount, Some(precision))
+      def EUR_PRECISE(precision: Int): HighPrecisionMoney = HighPrecisionMoney.EUR(amount, Some(precision))
+      def USD_PRECISE(precision: Int): HighPrecisionMoney = HighPrecisionMoney.EUR(amount, Some(precision))
+      def GBP_PRECISE(precision: Int): HighPrecisionMoney = HighPrecisionMoney.EUR(amount, Some(precision))
+      def JPY_PRECISE(precision: Int): HighPrecisionMoney = HighPrecisionMoney.EUR(amount, Some(precision))
     }
   }
 
@@ -442,10 +458,10 @@ object HighPrecisionMoney {
       new ImplicitsDecimalPrecise.HighPrecisionPreciseMoneyNotation(BigDecimal(amount))
   }
 
-  def EUR(amount: BigDecimal, fractionDigits: Option[Int] = None) = simpleValueMeantToBeUsedOnlyInTests(amount, "EUR", fractionDigits)
-  def USD(amount: BigDecimal, fractionDigits: Option[Int] = None) = simpleValueMeantToBeUsedOnlyInTests(amount, "USD", fractionDigits)
-  def GBP(amount: BigDecimal, fractionDigits: Option[Int] = None) = simpleValueMeantToBeUsedOnlyInTests(amount, "GBP", fractionDigits)
-  def JPY(amount: BigDecimal, fractionDigits: Option[Int] = None) = simpleValueMeantToBeUsedOnlyInTests(amount, "JPY", fractionDigits)
+  def EUR(amount: BigDecimal, fractionDigits: Option[Int] = None): HighPrecisionMoney = simpleValueMeantToBeUsedOnlyInTests(amount, "EUR", fractionDigits)
+  def USD(amount: BigDecimal, fractionDigits: Option[Int] = None): HighPrecisionMoney = simpleValueMeantToBeUsedOnlyInTests(amount, "USD", fractionDigits)
+  def GBP(amount: BigDecimal, fractionDigits: Option[Int] = None): HighPrecisionMoney = simpleValueMeantToBeUsedOnlyInTests(amount, "GBP", fractionDigits)
+  def JPY(amount: BigDecimal, fractionDigits: Option[Int] = None): HighPrecisionMoney = simpleValueMeantToBeUsedOnlyInTests(amount, "JPY", fractionDigits)
 
   val CurrencyCodeField: String = "currencyCode"
   val CentAmountField: String = "centAmount"
@@ -476,7 +492,7 @@ object HighPrecisionMoney {
     (scale(m1, newFractionDigits), scale(m2, newFractionDigits), newFractionDigits)
   }
 
-  def calc(m1: HighPrecisionMoney, m2: HighPrecisionMoney, fn: (BigDecimal, BigDecimal) => BigDecimal)(implicit mode: RoundingMode) = {
+  def calc(m1: HighPrecisionMoney, m2: HighPrecisionMoney, fn: (BigDecimal, BigDecimal) => BigDecimal)(implicit mode: RoundingMode): HighPrecisionMoney = {
     BaseMoney.requireSameCurrency(m1, m2)
 
     val (a1, a2, fd) = sameScale(m1, m2)
@@ -484,22 +500,22 @@ object HighPrecisionMoney {
     fromDecimalAmount(fn(a1, a2), fd, m1.currency)
   }
 
-  def factor(fractionDigits: Int) = Money.bdOne / Money.bdTen.pow(fractionDigits)
-  def centFactor(currency: Currency) = factor(currency.getDefaultFractionDigits)
+  def factor(fractionDigits: Int): BigDecimal = Money.cachedCentFactor(fractionDigits)
+  def centFactor(currency: Currency): BigDecimal = factor(currency.getDefaultFractionDigits)
 
-  def fromDecimalAmount(amount: BigDecimal, fractionDigits: Int, currency: Currency)(implicit mode: RoundingMode) = {
+  def fromDecimalAmount(amount: BigDecimal, fractionDigits: Int, currency: Currency)(implicit mode: RoundingMode): HighPrecisionMoney = {
     val scaledAmount = amount.setScale(fractionDigits, mode)
 
     HighPrecisionMoney(scaledAmount, fractionDigits, roundToCents(scaledAmount, currency), currency)
   }
 
-  def fromCentAmount(centAmount: Long, fractionDigits: Int, currency: Currency) = {
+  def fromCentAmount(centAmount: Long, fractionDigits: Int, currency: Currency): HighPrecisionMoney = {
     val amount = BigDecimal(centAmount) * centFactor(currency)
 
     HighPrecisionMoney(amount.setScale(fractionDigits, BigDecimal.RoundingMode.UNNECESSARY), fractionDigits, centAmount, currency)
   }
 
-  def zero(fractionDigits: Int, currency: Currency) =
+  def zero(fractionDigits: Int, currency: Currency): HighPrecisionMoney =
     fromCentAmount(0L, fractionDigits, currency)
 
   /* centAmount provides an escape hatch in cases where the default rounding mode is not applicable */
