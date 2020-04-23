@@ -261,7 +261,7 @@ object Money {
   private val centFactorThreeFractionDigit = bdOne / bdTen.pow(3)
   private val centFactorFourFractionDigit = bdOne / bdTen.pow(4)
 
-  def cachedCentFactor(currencyFractionDigits: Int): BigDecimal =
+  private[util] def cachedCentFactor(currencyFractionDigits: Int): BigDecimal =
     currencyFractionDigits match {
       case 0 => centFactorZeroFractionDigit
       case 1 => centFactorOneFractionDigit
