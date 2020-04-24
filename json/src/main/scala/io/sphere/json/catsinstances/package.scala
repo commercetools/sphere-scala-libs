@@ -1,7 +1,6 @@
 package io.sphere.json
 
 import _root_.cats.{Contravariant, Functor, Invariant}
-import org.json4s
 import org.json4s.JValue
 
 /**
