@@ -18,7 +18,7 @@ final class Memoizer[K, V](action: K => V) extends (K => V) {
         }
       }
       try { return f.get } catch {
-        case e: CancellationException => cache.remove(k, f)
+        case _: CancellationException => cache.remove(k, f)
         case e: ExecutionException => throw e.getCause
       }
     }

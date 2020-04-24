@@ -23,7 +23,6 @@ private[generic] object MongoFormatMacros {
   def mongoFormatProductApply(c: blackbox.Context)(tpe: c.universe.Type, classSym: c.universe.ClassSymbol): c.universe.Tree = {
     import c.universe._
 
-    val symbol = tpe.typeSymbol
     val argList = classSym.toType.member(termNames.CONSTRUCTOR).asMethod.paramLists.head
 
     val (argDefs, args) = (for ((a, i) <- argList.zipWithIndex) yield {

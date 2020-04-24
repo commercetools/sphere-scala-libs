@@ -471,7 +471,7 @@ object HighPrecisionMoney {
   val TypeName: String = "highPrecision"
   val MaxFractionDigits = 20
 
-  private def simpleValueMeantToBeUsedOnlyInTests(amount: BigDecimal, currencyCode: String, fractionDigits: Option[Int] = None): HighPrecisionMoney = {
+  private def simpleValueMeantToBeUsedOnlyInTests(amount: BigDecimal, currencyCode: String, fractionDigits: Option[Int]): HighPrecisionMoney = {
     val currency = Currency.getInstance(currencyCode)
     val fd = fractionDigits.getOrElse(currency.getDefaultFractionDigits)
 

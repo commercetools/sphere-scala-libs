@@ -180,7 +180,7 @@ object FromJSON {
         fs.traverse[JValidation, (String, A)] { f =>
           fromJValue[A](f._2).map(v => (f._1, v))
         }.map(_.toMap)
-      case x => fail("JSON Object expected")
+      case _ => fail("JSON Object expected")
     }
   }
 
@@ -245,7 +245,7 @@ object FromJSON {
         try {
           Valid(Currency.getInstance(s))
         } catch {
-          case e: IllegalArgumentException => fail(failMsgFor(s))
+          case _: IllegalArgumentException => fail(failMsgFor(s))
         }
       case _ => fail(failMsg)
     }
