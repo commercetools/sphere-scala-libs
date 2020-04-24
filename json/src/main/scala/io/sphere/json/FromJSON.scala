@@ -1,6 +1,7 @@
 package io.sphere.json
 
 import scala.util.control.NonFatal
+import scala.collection.mutable.ListBuffer
 import java.util.{Currency, Locale, UUID}
 
 import cats.data.NonEmptyList
@@ -40,21 +41,27 @@ object FromJSON {
   }
 
   implicit def listReader[@specialized A](implicit r: FromJSON[A]): FromJSON[List[A]] = new FromJSON[List[A]] {
-    import scala.collection.mutable.ListBuffer
 
     def read(jval: JValue): JValidation[List[A]] = jval match {
       case JArray(l) =>
         // "imperative" style for performances
-        val initial: JValidation[ListBuffer[A]] = Valid(new ListBuffer())
-        l.foldLeft(initial) { (acc, jvalue) =>
-          val result = r.read(jvalue)
-          (acc, result) match {
-            case (Valid(builder), Valid(e)) => Valid(builder += e)
-            case (Valid(_), i @ Invalid(_)) => i
-            case (Invalid(e1), Invalid(e2)) => Invalid(e1.concatNel(e2))
-            case (i @ Invalid(_), _) => i
+        val errors = new ListBuffer[JSONError]()
+        val valids = new ListBuffer[A]()
+        var failedOnce: Boolean = false
+        l.foreach { jval =>
+          r.read(jval) match {
+            case Valid(s) if !failedOnce =>
+              valids += s
+            case Invalid(nel) =>
+              errors ++= nel.toList
+              failedOnce = true
+            case _ => ()
           }
-        }.map(_.result())
+        }
+        if (errors.isEmpty)
+          Valid(valids.result())
+        else
+          Invalid(NonEmptyList.fromListUnsafe(errors.result()))
       case _ => fail("JSON Array expected.")
     }
   }
@@ -76,16 +83,23 @@ object FromJSON {
     def read(jval: JValue): JValidation[Vector[A]] = jval match {
       case JArray(l) =>
         // "imperative" style for performances
-        val initial: JValidation[VectorBuilder[A]] = Valid(new VectorBuilder())
-        l.foldLeft(initial) { (acc, jvalue) =>
-          val result = r.read(jvalue)
-          (acc, result) match {
-            case (Valid(builder), Valid(e)) => Valid(builder += e)
-            case (Valid(_), i @ Invalid(_)) => i
-            case (Invalid(e1), Invalid(e2)) => Invalid(e1.concatNel(e2))
-            case (i @ Invalid(_), _) => i
+        val errors = new ListBuffer[JSONError]()
+        val valids = new VectorBuilder[A]()
+        var failedOnce: Boolean = false
+        l.foreach { jval =>
+          r.read(jval) match {
+            case Valid(s) if !failedOnce =>
+              valids += s
+            case Invalid(nel) =>
+              errors ++= nel.toList
+              failedOnce = true
+            case _ => ()
           }
-        }.map(_.result())
+        }
+        if (errors.isEmpty)
+          Valid(valids.result())
+        else
+          Invalid(NonEmptyList.fromListUnsafe(errors.result()))
       case _ => fail("JSON Array expected.")
     }
   }
