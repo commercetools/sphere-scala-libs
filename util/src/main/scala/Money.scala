@@ -89,7 +89,7 @@ case class Money private (amount: BigDecimal, currency: Currency) extends BaseMo
     "The scale of the given amount does not match the scale of the provided currency." +
     " - " + amount.scale + " <-> " + currency.getDefaultFractionDigits)
 
-  private val centFactor: Double = Money.cachedCentFactor(currency.getDefaultFractionDigits).doubleValue
+  private val centFactor: Double = 1 / pow(10, currency.getDefaultFractionDigits)
 
   lazy val centAmount: Long = (amount / centFactor).toLong
 
