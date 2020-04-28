@@ -85,7 +85,7 @@ object ToJSON {
   }
 
   implicit val booleanWriter: ToJSON[Boolean] = new ToJSON[Boolean] {
-    def write(b: Boolean): JValue = JBool(b)
+    def write(b: Boolean): JValue = if (b) JBool.True else JBool.False
   }
 
   implicit def mapWriter[A: ToJSON]: ToJSON[Map[String, A]] = new ToJSON[Map[String, A]] {
@@ -136,7 +136,7 @@ object ToJSON {
   }
 
   implicit val unitWriter: ToJSON[Unit] = new ToJSON[Unit] {
-    def write(u: Unit) = JNothing
+    def write(u: Unit): JValue = JNothing
   }
 
   implicit val dateTimeWriter: ToJSON[DateTime] = new ToJSON[DateTime] {

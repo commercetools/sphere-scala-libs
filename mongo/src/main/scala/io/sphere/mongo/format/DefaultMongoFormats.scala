@@ -56,7 +56,7 @@ trait DefaultMongoFormats {
         None
       else {
         any match {
-          case dbo: BSONObject if fields.nonEmpty && dbo.keySet().iterator().asScala.forall(t => !fields.contains(t)) =>
+          case dbo: BSONObject if fieldsNonEmpty && dbo.keySet().iterator().asScala.forall(t => !fields.contains(t)) =>
             None
           case x => Some(f.fromMongoValue(x))
         }
@@ -65,6 +65,7 @@ trait DefaultMongoFormats {
 
     override def default: Option[Option[A]] = DefaultMongoFormats.someNone
     override val fields = f.fields
+    private val fieldsNonEmpty = fields.nonEmpty
   }
 
   implicit def vecFormat[@specialized A](implicit f: MongoFormat[A]): MongoFormat[Vector[A]] = new MongoFormat[Vector[A]] {
@@ -117,6 +118,7 @@ trait DefaultMongoFormats {
 
   implicit def mapFormat[@specialized A](implicit f: MongoFormat[A]): MongoFormat[Map[String, A]] = new MongoFormat[Map[String, A]] {
     override def toMongoValue(map: Map[String, A]): Any = {
+      // Perf note: new BasicBSONObject(map.size) is much slower for some reason
       map.foldLeft(new BasicBSONObject()) { case (dbo, (k, v)) => dbo.append(k, f.toMongoValue(v)) }
     }
 
@@ -211,12 +213,15 @@ trait DefaultMongoFormats {
     }
     override def fromMongoValue(any: Any): BaseMoney = any match {
       case dbo: BSONObject =>
-        Option(dbo.get(BaseMoney.TypeField)).map(stringFormat.fromMongoValue) match {
-          case None => moneyFormat.fromMongoValue(any)
-          case Some(Money.TypeName) => moneyFormat.fromMongoValue(any)
-          case Some(HighPrecisionMoney.TypeName) => highPrecisionMoneyFormat.fromMongoValue(any)
-          case Some(tpe) => throw new Exception(s"Unknown money type '$tpe'. Available types are: '${Money.TypeName}', '${HighPrecisionMoney.TypeName}'.")
-        }
+        val typeField = dbo.get(BaseMoney.TypeField)
+        if (typeField == null)
+          moneyFormat.fromMongoValue(any)
+        else
+          stringFormat.fromMongoValue(typeField) match {
+            case Money.TypeName => moneyFormat.fromMongoValue(any)
+            case HighPrecisionMoney.TypeName => highPrecisionMoneyFormat.fromMongoValue(any)
+            case tpe => throw new Exception(s"Unknown money type '$tpe'. Available types are: '${Money.TypeName}', '${HighPrecisionMoney.TypeName}'.")
+          }
       case other => throw new Exception(s"db object expected but has '${other.getClass.getName}'")
     }
   }
