@@ -23,15 +23,16 @@ private[generic] object MongoFormatMacros {
   def mongoFormatProductApply(c: blackbox.Context)(tpe: c.universe.Type, classSym: c.universe.ClassSymbol): c.universe.Tree = {
     import c.universe._
 
-    val argList = classSym.toType.member(termNames.CONSTRUCTOR).asMethod.paramLists.head
-
-    val (argDefs, args) = (for ((a, i) <- argList.zipWithIndex) yield {
-      val argType = classSym.toType.member(a.name).typeSignatureIn(tpe)
-      val argTree = ValDef(Modifiers(Flag.PARAM), TermName("x" + i), TypeTree(argType), EmptyTree)
-      (argTree, Ident(TermName("x" + i)))
-    }).unzip
-
     if (classSym.isCaseClass && !classSym.isModuleClass) {
+      val argList = classSym.toType.member(termNames.CONSTRUCTOR).asMethod.paramLists.head
+      val modifiers = Modifiers(Flag.PARAM)
+      val (argDefs, args) = (for ((a, i) <- argList.zipWithIndex) yield {
+        val argType = classSym.toType.member(a.name).typeSignatureIn(tpe)
+        val termName = TermName("x" + i)
+        val argTree = ValDef(modifiers, termName, TypeTree(argType), EmptyTree)
+        (argTree, Ident(termName))
+      }).unzip
+
       val applyBlock = Block(Nil, Function(
         argDefs,
         Apply(Select(Ident(classSym.companion), TermName("apply")), args)
