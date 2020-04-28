@@ -72,7 +72,7 @@ object FromJSON {
 
   implicit def setReader[@specialized A](implicit r: FromJSON[A]): FromJSON[Set[A]] = new FromJSON[Set[A]] {
     def read(jval: JValue): JValidation[Set[A]] = jval match {
-      case JArray(l) => l.traverse[JValidation, A](r.read).map(Set(_:_*))
+      case JArray(_) => listReader(r).read(jval).map(Set.apply(_:_*))
       case _ => fail("JSON Array expected.")
     }
   }
@@ -138,7 +138,7 @@ object FromJSON {
   implicit val shortReader: FromJSON[Short] = new FromJSON[Short] {
     def read(jval: JValue): JValidation[Short] = jval match {
       case JInt(i) if i.isValidShort => Valid(i.toShort)
-      case JLong(i) if i.isValidShort => Valid(i.toShort)
+      case JLong(l) if l.isValidShort => Valid(l.toShort)
       case _ => fail("JSON Number in the range of a Short expected.")
     }
   }
@@ -146,7 +146,7 @@ object FromJSON {
   implicit val longReader: FromJSON[Long] = new FromJSON[Long] {
     def read(jval: JValue): JValidation[Long] = jval match {
       case JInt(i) => Valid(i.toLong)
-      case JLong(i) => Valid(i)
+      case JLong(l) => Valid(l)
       case _ => fail("JSON Number in the range of a Long expected.")
     }
   }
@@ -162,21 +162,24 @@ object FromJSON {
     def read(jval: JValue): JValidation[Double] = jval match {
       case JDouble(d) => Valid(d)
       case JInt(i) => Valid(i.toDouble)
-      case JLong(i) => Valid(i.toDouble)
+      case JLong(l) => Valid(l.toDouble)
       case _ => fail("JSON Number in the range of a Double expected.")
     }
   }
 
   implicit val booleanReader: FromJSON[Boolean] = new FromJSON[Boolean] {
+    private val cachedTrue = Valid(true)
+    private val cachedFalse = Valid(false)
     def read(jval: JValue): JValidation[Boolean] = jval match {
-      case JBool(b) => Valid(b)
+      case JBool(b) => if (b) cachedTrue else cachedFalse
       case _ => fail("JSON Boolean expected")
     }
   }
 
   implicit def mapReader[A: FromJSON]: FromJSON[Map[String, A]] = new FromJSON[Map[String, A]] {
-    def read(json: JValue) = json match {
+    def read(json: JValue): JValidation[Map[String, A]] = json match {
       case JObject(fs) =>
+        // Perf note: an imperative implementation does not seem faster
         fs.traverse[JValidation, (String, A)] { f =>
           fromJValue[A](f._2).map(v => (f._1, v))
         }.map(_.toMap)
@@ -191,8 +194,12 @@ object FromJSON {
 
     def read(value: JValue): JValidation[Money] = value match {
       case o: JObject =>
-        (field[Long](CentAmountField)(o), field[Currency](CurrencyCodeField)(o)).mapN(
-          Money.fromCentAmount)
+        (field[Long](CentAmountField)(o), field[Currency](CurrencyCodeField)(o)) match {
+          case (Valid(centAmount), Valid(currencyCode)) => Valid(Money.fromCentAmount(centAmount, currencyCode))
+          case (Invalid(e1), Invalid(e2)) => Invalid(e1.concat(e2.toList))
+          case (e1@Invalid(_), _) => e1
+          case (_, e2@Invalid(_)) => e2
+        }
 
       case _ => fail("JSON object expected.")
     }
@@ -214,7 +221,7 @@ object FromJSON {
           field[Option[Long]](CentAmountField)(o))
 
         validatedFields.tupled.andThen { case (preciseAmount, fractionDigits, currencyCode, centAmount) =>
-          HighPrecisionMoney.fromPreciseAmount(preciseAmount, fractionDigits, currencyCode, centAmount).leftMap(_.map(JSONParseError(_)))
+          HighPrecisionMoney.fromPreciseAmount(preciseAmount, fractionDigits, currencyCode, centAmount).leftMap(_.map(JSONParseError))
         }
 
       case _ =>
@@ -240,12 +247,22 @@ object FromJSON {
     val failMsg = "ISO 4217 code JSON String expected."
     def failMsgFor(input: String) = s"Currency '$input' not valid as ISO 4217 code."
 
+    private val cachedEUR = Valid(Currency.getInstance("EUR"))
+    private val cachedUSD = Valid(Currency.getInstance("USD"))
+    private val cachedGBP = Valid(Currency.getInstance("GBP"))
+    private val cachedJPY = Valid(Currency.getInstance("JPY"))
+
     def read(jval: JValue): JValidation[Currency] = jval match {
       case JString(s) =>
-        try {
-          Valid(Currency.getInstance(s))
-        } catch {
-          case _: IllegalArgumentException => fail(failMsgFor(s))
+        s match {
+          case "EUR" => cachedEUR
+          case "USD" => cachedUSD
+          case "GBP" => cachedGBP
+          case "JPY" => cachedJPY
+          case _ =>
+            try { Valid(Currency.getInstance(s)) } catch {
+            case _: IllegalArgumentException => fail(failMsgFor(s))
+          }
         }
       case _ => fail(failMsg)
     }
