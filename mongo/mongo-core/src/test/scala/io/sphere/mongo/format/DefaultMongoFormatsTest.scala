@@ -1,8 +1,10 @@
 package io.sphere.mongo.format
 
 import java.util.Locale
+
+import com.mongodb.DBObject
+import io.sphere.mongo.MongoUtils
 import io.sphere.mongo.format.DefaultMongoFormats._
-import io.sphere.mongo.generic._
 import io.sphere.util.LangTag
 import org.bson.BasicBSONObject
 import org.bson.types.BasicBSONList
@@ -16,7 +18,14 @@ import scala.collection.JavaConverters._
 object DefaultMongoFormatsTest {
   case class User(name: String)
   object User {
-    implicit val mongo: MongoFormat[User] = mongoProduct(apply _)
+    implicit val mongo: MongoFormat[User] = new MongoFormat[User] {
+      override def toMongoValue(a: User): Any = MongoUtils.dbObj("name" -> a.name)
+      override def fromMongoValue(any: Any): User = any match {
+        case dbo: DBObject =>
+          User(dbo.get("name").asInstanceOf[String])
+        case _ => throw new Exception("expected DBObject")
+      }
+    }
   }
 }
 
