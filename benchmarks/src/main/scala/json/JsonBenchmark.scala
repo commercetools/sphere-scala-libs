@@ -9,6 +9,8 @@ import io.sphere.mongo.format.MongoFormat
 import io.sphere.mongo.format.DefaultMongoFormats._
 import io.sphere.mongo.format._
 import io.sphere.util.BaseMoney
+import org.joda.time.format.ISODateTimeFormat
+import org.joda.time.{DateTime, DateTimeZone}
 
 import scala.collection.generic.CanBuildFrom
 import scala.language.higherKinds
@@ -20,9 +22,18 @@ object Reference {
   implicit val mongoFormat: MongoFormat[Reference] = mongoProduct(apply _)
 }
 
-case class Price(id: String, value: BaseMoney)
+case class Price(id: String, value: BaseMoney, validUntil: DateTime)
 
 object Price {
+  // the lib does not ship a `MongoFormat[DateTime]`
+  implicit val dateTimeAsIsoStringFormat: MongoFormat[DateTime] = new MongoFormat[DateTime] {
+    override def toMongoValue(dt: DateTime): Any = ISODateTimeFormat.dateTime.print(dt.withZone(DateTimeZone.UTC))
+    override def fromMongoValue(any: Any): DateTime = any match {
+      case s: String => new DateTime(s, DateTimeZone.UTC)
+      case _ => sys.error("String expected")
+    }
+  }
+
   implicit val json: JSON[Price] = jsonProduct(apply _)
   implicit val mongoFormat: MongoFormat[Price] = mongoProduct(apply _)
 }
@@ -59,7 +70,8 @@ object JsonBenchmark {
        |  "value": {
        |    "centAmount": $i,
        |    "currencyCode": "USD"
-       |  }
+       |  },
+       |  "validUntil": "2025-12-14T12:50:25.070Z"
        |}
        """.stripMargin
 
