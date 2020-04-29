@@ -50,10 +50,19 @@ lazy val `sphere-json` = project.in(file("./json"))
   .settings(homepage := Some(url("https://github.com/sphereio/sphere-scala-libs/blob/master/json/README.md")))
   .dependsOn(`sphere-util`)
 
-lazy val `sphere-mongo` = project.in(file("./mongo"))
+lazy val `sphere-mongo-core` = project.in(file("./mongo/mongo-core"))
+  .settings(standardSettings: _*)
+  .dependsOn(`sphere-util`)
+
+lazy val `sphere-mongo-derivation` = project.in(file("./mongo/mongo-derivation"))
   .settings(standardSettings: _*)
   .settings(Fmpp.settings: _*)
-  .dependsOn(`sphere-util`)
+  .dependsOn(`sphere-mongo-core`)
+
+lazy val `sphere-mongo` = project.in(file("./mongo"))
+  .settings(standardSettings: _*)
+  .settings(homepage := Some(url("https://github.com/sphereio/sphere-scala-libs/blob/master/mongo/README.md")))
+  .aggregate(`sphere-mongo-core`, `sphere-mongo-derivation`)
 
 // benchmarks
 
