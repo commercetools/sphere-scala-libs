@@ -6,10 +6,10 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import io.sphere.mongo.format.DefaultMongoFormats._
 
-class MongoTypeHintFieldSpec extends AnyWordSpec with Matchers {
-  import MongoTypeHintFieldSpec._
+class MongoTypeHintFieldWithSealedTraitSpec extends AnyWordSpec with Matchers {
+  import MongoTypeHintFieldWithSealedTraitSpec._
 
-  "MongoTypeHintField" must {
+  "MongoTypeHintField (with sealed trait)" must {
     "allow to set another field to distinguish between types (toMongo)" in {
       val user = UserWithPicture("foo-123", Medium, "http://example.com")
       val expected = dbObj(
@@ -39,7 +39,7 @@ class MongoTypeHintFieldSpec extends AnyWordSpec with Matchers {
   }
 }
 
-object MongoTypeHintFieldSpec {
+object MongoTypeHintFieldWithSealedTraitSpec {
 
   @MongoTypeHintField(value = "pictureType")
   sealed trait PictureSize
