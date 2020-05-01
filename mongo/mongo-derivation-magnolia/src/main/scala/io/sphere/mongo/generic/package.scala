@@ -91,12 +91,12 @@ package object generic extends Logging {
     override def toMongoValue(t: T): Any = {
       sealedTrait.dispatch(t) { subtype =>
         writeMap.get(subtype.typeName) match {
-          case None => new BasicDBObject(defaultTypeFieldName, defaultTypeValue(subtype.typeName))
+          case None => new BasicDBObject(typeField, defaultTypeValue(subtype.typeName))
           case Some(w) => subtype.typeclass.toMongoValue(subtype.cast(t)) match {
-            case dbo: BSONObject => findTypeValue(dbo, w.typeField) match {
+            case dbo: BSONObject => findTypeValue(dbo, typeField) match {
               case Some(_) => dbo
               case None =>
-                dbo.put(w.typeField, w.typeValue)
+                dbo.put(typeField, w.typeValue)
                 dbo
             }
             case _ => throw new Exception("Excepted 'BSONObject'")

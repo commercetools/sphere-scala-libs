@@ -43,11 +43,8 @@ object MongoTypeHintFieldWithSealedTraitSpec {
 
   @MongoTypeHintField(value = "pictureType")
   sealed trait PictureSize
-  @MongoTypeHintField(value = "pictureType")
   case object Small extends PictureSize
-  @MongoTypeHintField(value = "pictureType")
   case object Medium extends PictureSize
-  @MongoTypeHintField(value = "pictureType")
   case object Big extends PictureSize
 
   object PictureSize {
