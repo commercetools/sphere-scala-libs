@@ -143,10 +143,10 @@ package object generic extends Logging {
       }
       def toMongoValue(t: T): Any = writeMap.get(t.getClass) match {
         case Some(w) => w.write(t) match {
-          case dbo: BSONObject => findTypeValue(dbo, w.typeField) match {
+          case dbo: BSONObject => findTypeValue(dbo, typeField) match {
             case Some(_) => dbo
             case None =>
-              dbo.put(w.typeField, w.typeValue)
+              dbo.put(typeField, w.typeValue)
               dbo
           }
           case _ => throw new Exception("Excepted 'BSONObject'")
