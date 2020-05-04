@@ -66,7 +66,7 @@ lazy val `sphere-mongo-derivation-magnolia` = project.in(file("./mongo/mongo-der
 lazy val `sphere-mongo` = project.in(file("./mongo"))
   .settings(standardSettings: _*)
   .settings(homepage := Some(url("https://github.com/sphereio/sphere-scala-libs/blob/master/mongo/README.md")))
-  .aggregate(`sphere-mongo-core`, `sphere-mongo-derivation`)
+  .dependsOn(`sphere-mongo-core`, `sphere-mongo-derivation`)
 
 // benchmarks
 
