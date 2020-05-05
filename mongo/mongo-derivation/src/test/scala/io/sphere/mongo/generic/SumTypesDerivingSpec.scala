@@ -66,9 +66,8 @@ class SumTypesDerivingSpec extends AnyWordSpec with Matchers {
       "deriveMongoFormat[Color6]" mustNot compile
     }
 
-    "use intermediate level" in pendingUntilFixed {
-      //deriveMongoFormat[Color7]
-      fail("current compilation error: Subtypes not found")
+    "use intermediate level" in {
+      Color7.format
     }
   }
 
@@ -136,9 +135,10 @@ object SumTypesDerivingSpec {
   }
 
   sealed trait Color7
-  trait Color7a extends Color7
+  sealed trait Color7a extends Color7
   object Color7 {
     case object Red extends Color7a
     case class Custom(rgb: String) extends Color7a
+    def format = deriveMongoFormat[Color7]
   }
 }

@@ -66,9 +66,8 @@ class SumTypesDerivingSpec extends AnyWordSpec with Matchers {
       "deriveMongoFormat[Color6]" mustNot compile
     }
 
-    "use intermediate level" in pendingUntilFixed {
-//      deriveMongoFormat[Color7]
-      fail("https://github.com/propensive/magnolia/issues/243")
+    "use intermediate level" in {
+      deriveMongoFormat[Color7]
     }
   }
 
@@ -136,7 +135,7 @@ object SumTypesDerivingSpec {
   }
 
   sealed trait Color7
-  trait Color7a extends Color7
+  sealed trait Color7a extends Color7
   object Color7 {
     case object Red extends Color7a
     case class Custom(rgb: String) extends Color7a
