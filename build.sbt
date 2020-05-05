@@ -38,7 +38,13 @@ lazy val `sphere-libs` = project.in(file("."))
     publishArtifact := false,
     publish := {})
   .disablePlugins(BintrayPlugin)
-  .aggregate(`sphere-util`, `sphere-json`, `sphere-mongo`, `sphere-mongo-derivation-magnolia`)
+  .aggregate(
+    `sphere-util`,
+    `sphere-json`,
+    `sphere-mongo`,
+    `sphere-mongo-core`,
+    `sphere-mongo-derivation`,
+    `sphere-mongo-derivation-magnolia`)
 
 lazy val `sphere-util` = project.in(file("./util"))
   .settings(standardSettings: _*)
