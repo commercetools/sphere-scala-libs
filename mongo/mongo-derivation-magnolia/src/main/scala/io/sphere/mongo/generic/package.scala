@@ -24,14 +24,18 @@ package object generic extends Logging {
   def deriveMongoFormat[T]: MongoFormat[T] = macro Magnolia.gen[T]
   def mongoProduct[T]: MongoFormat[T] = macro Magnolia.gen[T]
 
-  def combine[T <: Product](caseClass: CaseClass[MongoFormat, T]): MongoFormat[T] = new MongoFormat[T] {
+  private val addNoTypeHint: DBObject => Unit = Function.const(())
+
+  def combine[T](caseClass: CaseClass[MongoFormat, T]): MongoFormat[T] = new MongoFormat[T] {
     private val mongoClass = getMongoClassMeta(caseClass)
     private val _fields = mongoClass.fields
+    private val _withTypeHint = mongoClass.typeHint.isDefined
+    private val addTypeHint: DBObject => Unit =
+      mongoClass.typeHint.fold(addNoTypeHint)(th => dbo => dbo.put(th.field, th.value))
 
     override def toMongoValue(r: T): Any = {
       val dbo = new BasicDBObject
-      mongoClass.typeHint
-        .foreach(th => dbo.put(th.field, th.value))
+      if (_withTypeHint) addTypeHint(dbo)
 
       var i = 0
       caseClass.parameters.foreach { p =>
@@ -72,17 +76,17 @@ package object generic extends Logging {
 
   def dispatch[T](sealedTrait: SealedTrait[MongoFormat, T]): MongoFormat[T] = new MongoFormat[T] {
 
-    val allSelectors = sealedTrait.subtypes.map { subType =>
+    private val allSelectors = sealedTrait.subtypes.map { subType =>
       typeSelector(subType)
     }
-    val readMapBuilder = Map.newBuilder[String, TypeSelector[_]]
-    val writeMapBuilder = Map.newBuilder[TypeName, TypeSelector[_]]
+    private val readMapBuilder = Map.newBuilder[String, TypeSelector[_]]
+    private val writeMapBuilder = Map.newBuilder[TypeName, TypeSelector[_]]
     allSelectors.foreach { s =>
       readMapBuilder += (s.typeValue -> s)
       writeMapBuilder += (s.subType.typeName -> s)
     }
-    val readMap = readMapBuilder.result
-    val writeMap = writeMapBuilder.result
+    private val readMap = readMapBuilder.result
+    private val writeMap = writeMapBuilder.result
 
     private val typeField = sealedTrait.annotations.collectFirst {
       case a: MongoTypeHintField => a.value
