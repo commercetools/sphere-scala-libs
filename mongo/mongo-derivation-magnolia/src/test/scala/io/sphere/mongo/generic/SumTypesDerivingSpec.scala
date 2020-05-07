@@ -69,6 +69,29 @@ class SumTypesDerivingSpec extends AnyWordSpec with Matchers {
     "use intermediate level" in {
       deriveMongoFormat[Color7]
     }
+
+    "do not use sealed trait info when using a case class directly" in {
+      check(Color8.format, Color8.Custom("2356"),
+        dbObj(
+          "type" -> "Custom",
+          "rgb" -> "2356"))
+
+      check(Color8.Custom.format, Color8.Custom("2356"),
+        dbObj(
+          "rgb" -> "2356"))
+
+      // unless annotated
+
+      check(Color8.format, Color8.CustomAnnotated("2356"),
+        dbObj(
+          "type" -> "CustomAnnotated",
+          "rgb" -> "2356"))
+
+      check(Color8.CustomAnnotated.format, Color8.CustomAnnotated("2356"),
+        dbObj(
+          "type" -> "CustomAnnotated",
+          "rgb" -> "2356"))
+    }
   }
 
 }
@@ -139,5 +162,20 @@ object SumTypesDerivingSpec {
   object Color7 {
     case object Red extends Color7a
     case class Custom(rgb: String) extends Color7a
+  }
+
+  sealed trait Color8
+  object Color8 {
+    case object Red extends Color8
+    case class Custom(rgb: String) extends Color8
+    object Custom {
+      val format = deriveMongoFormat[Custom]
+    }
+    @MongoTypeHintField("type")
+    case class CustomAnnotated(rgb: String) extends Color8
+    object CustomAnnotated {
+      val format = deriveMongoFormat[CustomAnnotated]
+    }
+    val format = deriveMongoFormat[Color8]
   }
 }
