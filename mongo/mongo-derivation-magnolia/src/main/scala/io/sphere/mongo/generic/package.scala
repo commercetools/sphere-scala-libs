@@ -22,7 +22,6 @@ package object generic extends Logging {
   type Typeclass[T] = MongoFormat[T]
 
   def deriveMongoFormat[T]: MongoFormat[T] = macro Magnolia.gen[T]
-  def mongoProduct[T]: MongoFormat[T] = macro Magnolia.gen[T]
 
   private val addNoTypeHint: DBObject => Unit = Function.const(())
 
