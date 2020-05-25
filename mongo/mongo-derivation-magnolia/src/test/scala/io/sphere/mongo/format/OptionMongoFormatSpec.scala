@@ -12,7 +12,7 @@ object OptionMongoFormatSpec {
   case class SimpleClass(value1: String, value2: Int)
 
   object SimpleClass {
-    implicit val mongo: MongoFormat[SimpleClass] = mongoProduct
+    implicit val mongo: MongoFormat[SimpleClass] = deriveMongoFormat
   }
 
   case class ComplexClass(
@@ -20,7 +20,7 @@ object OptionMongoFormatSpec {
     simpleClass: Option[SimpleClass])
 
   object ComplexClass {
-    implicit val mongo: MongoFormat[ComplexClass] = mongoProduct
+    implicit val mongo: MongoFormat[ComplexClass] = deriveMongoFormat
   }
 
 }

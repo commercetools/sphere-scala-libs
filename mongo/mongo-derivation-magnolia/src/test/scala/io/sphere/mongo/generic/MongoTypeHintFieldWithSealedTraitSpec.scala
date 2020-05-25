@@ -57,6 +57,6 @@ object MongoTypeHintFieldWithSealedTraitSpec {
     pictureUrl: String)
 
   object UserWithPicture {
-    implicit val mongo: MongoFormat[UserWithPicture] = mongoProduct
+    implicit val mongo: MongoFormat[UserWithPicture] = deriveMongoFormat
   }
 }

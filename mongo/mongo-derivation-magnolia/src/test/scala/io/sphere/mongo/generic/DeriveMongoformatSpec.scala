@@ -119,6 +119,6 @@ object DeriveMongoformatSpec {
     access: Option[Access] = None)
 
   object UserWithPicture {
-    implicit val mongo: MongoFormat[UserWithPicture] = mongoProduct
+    implicit val mongo: MongoFormat[UserWithPicture] = deriveMongoFormat
   }
 }

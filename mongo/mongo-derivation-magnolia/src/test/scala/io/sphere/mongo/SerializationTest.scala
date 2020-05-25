@@ -29,7 +29,7 @@ class SerializationTest extends AnyWordSpec with Matchers {
     }
 
     "generate a format that serializes optional fields with value None as BSON objects without that field" in {
-      val testFormat: MongoFormat[Something] = io.sphere.mongo.generic.mongoProduct[Something]
+      val testFormat: MongoFormat[Something] = io.sphere.mongo.generic.deriveMongoFormat[Something]
       val serializedObject = testFormat.toMongoValue(Something(None, 1)).asInstanceOf[DBObject]
       serializedObject.keySet().contains("b") must be(true)
       serializedObject.keySet().contains("a") must be(false)
