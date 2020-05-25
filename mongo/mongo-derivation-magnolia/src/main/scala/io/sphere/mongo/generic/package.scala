@@ -25,6 +25,7 @@ package object generic extends Logging {
 
   private val addNoTypeHint: DBObject => Unit = Function.const(())
 
+  // derive for a case class
   def combine[T](caseClass: CaseClass[MongoFormat, T]): MongoFormat[T] = new MongoFormat[T] {
     private val mongoClass = getMongoClassMeta(caseClass)
     private val _fields = mongoClass.fields
@@ -73,6 +74,7 @@ package object generic extends Logging {
     }
   }
 
+  // derive for a sealed trait
   def dispatch[T](sealedTrait: SealedTrait[MongoFormat, T]): MongoFormat[T] = new MongoFormat[T] {
 
     private val allSelectors = sealedTrait.subtypes.map { subType =>
@@ -137,10 +139,6 @@ package object generic extends Logging {
   )
 
   private val getMongoClassMeta = new Memoizer[CaseClass[MongoFormat, _], MongoClassMeta](caseClass => {
-    def hintVal(h: generic.MongoTypeHint): String =
-      if (h.value.isEmpty) defaultTypeValue(caseClass.typeName)
-      else h.value
-
     log.trace("Initializing Mongo metadata for %s".format(caseClass.typeName.full))
 
     val annotations = caseClass.annotations
@@ -152,7 +150,7 @@ package object generic extends Logging {
       case h: generic.MongoTypeHint => h
     }
     val typeField = typeHintFieldAnnot.map(_.value)
-    val typeValue = typeHintAnnot.map(hintVal)
+    val typeValue = typeHintAnnot.map(hintVal(caseClass.typeName))
 
     MongoClassMeta(
       typeHint = (typeField, typeValue) match {
@@ -166,10 +164,6 @@ package object generic extends Logging {
   })
 
   private val getMongoClassMetaFromSubType = new Memoizer[Subtype[MongoFormat, _], MongoClassMeta](subType => {
-    def hintVal(h: generic.MongoTypeHint): String =
-      if (h.value.isEmpty) defaultTypeValue(subType.typeName)
-      else h.value
-
     log.trace("Initializing Mongo metadata for %s".format(subType.typeName.full))
 
     val annotations = subType.annotations
@@ -181,7 +175,7 @@ package object generic extends Logging {
       case h: generic.MongoTypeHint => h
     }
     val typeField = typeHintFieldAnnot.map(_.value)
-    val typeValue = typeHintAnnot.map(hintVal)
+    val typeValue = typeHintAnnot.map(hintVal(subType.typeName))
 
     MongoClassMeta(
       typeHint = (typeField, typeValue) match {
@@ -262,6 +256,10 @@ package object generic extends Logging {
     }
     new TypeSelector[A](typeField, typeValue, subType)
   }
+
+  private def hintVal(typeName: TypeName)(h: generic.MongoTypeHint): String =
+    if (h.value.trim.isEmpty) defaultTypeValue(typeName)
+    else h.value
 
   private def defaultTypeValue(typeName: TypeName): String =
     typeName.short.replace("$", "")

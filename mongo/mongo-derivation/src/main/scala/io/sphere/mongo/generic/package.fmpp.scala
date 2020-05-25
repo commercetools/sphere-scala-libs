@@ -184,7 +184,7 @@ package object generic extends Logging {
 
   private val getMongoClassMeta = new Memoizer[Class[_], MongoClassMeta](clazz => {
     def hintVal(h: MongoTypeHint): String =
-      if (h.value.isEmpty) defaultTypeValue(clazz)
+      if (h.value.trim.isEmpty) defaultTypeValue(clazz)
       else h.value
 
     log.trace("Initializing Mongo metadata for %s".format(clazz.getName))
