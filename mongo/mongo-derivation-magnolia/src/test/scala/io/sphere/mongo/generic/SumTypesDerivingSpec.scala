@@ -92,6 +92,17 @@ class SumTypesDerivingSpec extends AnyWordSpec with Matchers {
           "type" -> "CustomAnnotated",
           "rgb" -> "2356"))
     }
+
+    "use default values if custom values are empty" in {
+      check(Color9.format, Color9.Red,
+        dbObj(
+          "type" -> "Red"))
+
+      check(Color9.format, Color9.Custom("2356"),
+        dbObj(
+          "type" -> "Custom",
+          "rgb" -> "2356"))
+    }
   }
 
 }
@@ -178,4 +189,15 @@ object SumTypesDerivingSpec {
     }
     val format = deriveMongoFormat[Color8]
   }
+
+  sealed trait Color9
+  object Color9 {
+    @MongoTypeHint("")
+    case object Red extends Color9
+    @MongoTypeHint("  ")
+    case class Custom(rgb: String) extends Color9
+    val format = deriveMongoFormat[Color9]
+  }
+
+
 }
