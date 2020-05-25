@@ -1,5 +1,8 @@
 package io.sphere.json
 
+import scala.annotation.implicitNotFound
+
+@implicitNotFound("Could not find an instance of JSON for ${A}")
 trait JSON[A] extends FromJSON[A] with ToJSON[A]
 
 object JSON {

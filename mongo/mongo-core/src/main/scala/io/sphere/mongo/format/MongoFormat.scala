@@ -2,9 +2,11 @@ package io.sphere.mongo.format
 
 import org.bson.BSONObject
 
+import scala.annotation.implicitNotFound
 
 /** Typeclass for types with a MongoDB (Java driver) format. */
-trait MongoFormat[@specialized A] {
+@implicitNotFound("Could not find an instance of MongoFormat for ${A}")
+trait MongoFormat[@specialized A] extends Serializable {
   def toMongoValue(a: A): Any
   def fromMongoValue(any: Any): A
   def default: Option[A] = None
