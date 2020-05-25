@@ -15,8 +15,11 @@ import org.json4s.JsonAST._
 import org.joda.time._
 import org.joda.time.format.ISODateTimeFormat
 
+import scala.annotation.implicitNotFound
+
 /** Type class for types that can be read from JSON. */
-trait FromJSON[@specialized A] {
+@implicitNotFound("Could not find an instance of FromJSON for ${A}")
+trait FromJSON[@specialized A] extends Serializable {
   def read(jval: JValue): JValidation[A]
   final protected def fail(msg: String) = jsonParseError(msg)
   /** needed JSON fields - ignored if empty */

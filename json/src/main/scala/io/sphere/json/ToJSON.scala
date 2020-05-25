@@ -1,7 +1,6 @@
 package io.sphere.json
 
 import cats.data.NonEmptyList
-
 import java.util.{Currency, Locale, UUID}
 
 import io.sphere.util.{BaseMoney, HighPrecisionMoney, Money}
@@ -9,8 +8,11 @@ import org.json4s.JsonAST._
 import org.joda.time._
 import org.joda.time.format.ISODateTimeFormat
 
+import scala.annotation.implicitNotFound
+
 /** Type class for types that can be written to JSON. */
-trait ToJSON[@specialized A] {
+@implicitNotFound("Could not find an instance of ToJSON for ${A}")
+trait ToJSON[@specialized A] extends Serializable {
   def write(value: A): JValue
 }
 
