@@ -15,11 +15,11 @@ class FromMongoBenchmark {
 jmh:run
 
 *** scala 2.13 ***
-Benchmark                                  Mode  Cnt    Score    Error  Units
-FromMongoBenchmark.mongoValueToCaseClass  thrpt   10   27,106 ±  0,190  ops/s
-FromMongoBenchmark.mongoValueToList       thrpt   10  372,471 ±  9,231  ops/s
-FromMongoBenchmark.mongoValueToMap        thrpt   10   74,411 ±  0,238  ops/s
-FromMongoBenchmark.mongoValueToVector     thrpt   10  592,723 ± 49,853  ops/s
+Benchmark                                  Mode  Cnt     Score    Error  Units
+FromMongoBenchmark.mongoValueToCaseClass  thrpt   10    25,306 ±  0,832  ops/s
+FromMongoBenchmark.mongoValueToList       thrpt   10   521,449 ± 17,672  ops/s
+FromMongoBenchmark.mongoValueToMap        thrpt   10    51,554 ±  0,648  ops/s
+FromMongoBenchmark.mongoValueToVector     thrpt   10  1334,286 ± 21,065  ops/s
  */
 
   @Benchmark
