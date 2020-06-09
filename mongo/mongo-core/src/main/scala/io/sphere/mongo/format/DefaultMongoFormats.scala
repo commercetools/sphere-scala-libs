@@ -2,9 +2,13 @@ package io.sphere.mongo.format
 
 import java.util.{Currency, Locale, UUID}
 import java.util.regex.Pattern
+
 import io.sphere.util.{BaseMoney, HighPrecisionMoney, LangTag, Money}
 import org.bson.{BSONObject, BasicBSONObject}
 import org.bson.types.{BasicBSONList, ObjectId}
+
+import scala.collection.immutable.VectorBuilder
+import scala.collection.mutable.ListBuffer
 
 object DefaultMongoFormats extends DefaultMongoFormats {
   val someNone = Some(None)
@@ -78,7 +82,13 @@ trait DefaultMongoFormats {
     override def fromMongoValue(any: Any): Vector[A] = {
       any match {
         case l: BasicBSONList =>
-          l.iterator().asScala.map(f.fromMongoValue).toVector
+          val builder = new VectorBuilder[A]
+          val iter = l.iterator()
+          while (iter.hasNext) {
+            val element = iter.next()
+            builder += f.fromMongoValue(element)
+          }
+          builder.result()
         case _ => throw new Exception(s"cannot read value from ${any.getClass.getName}")
       }
     }
@@ -94,7 +104,13 @@ trait DefaultMongoFormats {
     override def fromMongoValue(any: Any): List[A] = {
       any match {
         case l: BasicBSONList =>
-          l.iterator().asScala.map(f.fromMongoValue).toList
+          val builder = new ListBuffer[A]
+          val iter = l.iterator()
+          while (iter.hasNext) {
+            val element = iter.next()
+            builder += f.fromMongoValue(element)
+          }
+          builder.result()
         case _ => throw new Exception(s"cannot read value from ${any.getClass.getName}")
       }
     }

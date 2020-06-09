@@ -62,6 +62,9 @@ object JsonBenchmark {
   val lotsOfIntsSeq = Range(1, 100000).toSeq
   val lotsOfIntsVector = Range(1, 100000).toVector
   val lotsOfIntsAsJson = Range(1, 100000).mkString("[", ",", "]")
+  val lotsOfIntsMongoValue = toMongo(lotsOfIntsVector)
+  val bigMap: Map[String, String] = lotsOfIntsList.map(i => s"key$i" -> s"value$i").toMap
+  val bigMapMongoValue = toMongo(bigMap)
 
   val prices = for (i <- 1 to 200) yield
     s"""
