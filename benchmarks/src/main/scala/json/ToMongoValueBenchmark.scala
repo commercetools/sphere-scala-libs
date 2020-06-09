@@ -1,6 +1,7 @@
 package json
 
 import io.sphere.mongo.format._
+import io.sphere.mongo.format.DefaultMongoFormats._
 import org.openjdk.jmh.annotations.{Benchmark, BenchmarkMode, Fork, Measurement, Mode, Scope, State, Warmup}
 
 @State(Scope.Benchmark)
@@ -13,19 +14,34 @@ class ToMongoValueBenchmark {
   /* on local mac
 jmh:run
 
-*** scala 2.12 ***
-Benchmark                                     Mode  Cnt   Score   Error  Units
-ToMongoValueBenchmark.caseClassToMongoValue   thrpt   10  79,065 ± 1,075  ops/s
-
-*** scala 2.13 ***
-Benchmark                                     Mode  Cnt   Score   Error  Units
-ToMongoValueBenchmark.caseClassToMongoValue   thrpt   10  80,242 ± 1,033  ops/s
-*/
-
+[info] Benchmark                                     Mode  Cnt    Score    Error  Units
+[info] ToMongoValueBenchmark.caseClassToMongoValue  thrpt   10   76,492 ±  0,968  ops/s
+[info] ToMongoValueBenchmark.listToMongoValue       thrpt   10  484,802 ± 16,722  ops/s
+[info] ToMongoValueBenchmark.mapToMongoValueTo      thrpt   10   30,316 ±  3,938  ops/s
+[info] ToMongoValueBenchmark.vectorToMongoValue     thrpt   10  671,930 ± 17,021  ops/s
+ */
 
   @Benchmark
   def caseClassToMongoValue(): Unit = {
     val mongoValue = toMongo[Product](JsonBenchmark.product)
+    assert(mongoValue != null)
+  }
+
+  @Benchmark
+  def vectorToMongoValue(): Unit = {
+    val mongoValue = toMongo[Vector[Int]](JsonBenchmark.lotsOfIntsVector)
+    assert(mongoValue != null)
+  }
+
+  @Benchmark
+  def listToMongoValue(): Unit = {
+    val mongoValue = toMongo[List[Int]](JsonBenchmark.lotsOfIntsList)
+    assert(mongoValue != null)
+  }
+
+  @Benchmark
+  def mapToMongoValueTo(): Unit = {
+    val mongoValue = toMongo[Map[String, String]](JsonBenchmark.bigMap)
     assert(mongoValue != null)
   }
 
