@@ -55,7 +55,6 @@ lazy val `sphere-util` = project.in(file("./util"))
 
 lazy val `sphere-json-core` = project.in(file("./json/json-core"))
   .settings(standardSettings: _*)
-  .settings(Fmpp.settings: _*)
   .dependsOn(`sphere-util`)
 
 lazy val `sphere-json-derivation` = project.in(file("./json/json-derivation"))
