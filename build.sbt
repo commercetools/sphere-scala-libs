@@ -41,6 +41,8 @@ lazy val `sphere-libs` = project.in(file("."))
   .aggregate(
     `sphere-util`,
     `sphere-json`,
+    `sphere-json-core`,
+    `sphere-json-derivation`,
     `sphere-mongo`,
     `sphere-mongo-core`,
     `sphere-mongo-derivation`,
@@ -50,11 +52,22 @@ lazy val `sphere-util` = project.in(file("./util"))
   .settings(standardSettings: _*)
   .settings(homepage := Some(url("https://github.com/sphereio/sphere-scala-libs/README.md")))
 
-lazy val `sphere-json` = project.in(file("./json"))
+
+lazy val `sphere-json-core` = project.in(file("./json/json-core"))
   .settings(standardSettings: _*)
   .settings(Fmpp.settings: _*)
-  .settings(homepage := Some(url("https://github.com/sphereio/sphere-scala-libs/blob/master/json/README.md")))
   .dependsOn(`sphere-util`)
+
+lazy val `sphere-json-derivation` = project.in(file("./json/json-derivation"))
+  .settings(standardSettings: _*)
+  .settings(Fmpp.settings: _*)
+  .dependsOn(`sphere-json-core`)
+
+lazy val `sphere-json` = project.in(file("./json"))
+  .settings(standardSettings: _*)
+  .settings(homepage := Some(url("https://github.com/sphereio/sphere-scala-libs/blob/master/json/README.md")))
+  .dependsOn(`sphere-json-core`, `sphere-json-derivation`)
+
 
 lazy val `sphere-mongo-core` = project.in(file("./mongo/mongo-core"))
   .settings(standardSettings: _*)
