@@ -43,6 +43,7 @@ lazy val `sphere-libs` = project.in(file("."))
     `sphere-json`,
     `sphere-json-core`,
     `sphere-json-derivation`,
+    `sphere-json-derivation-magnolia`,
     `sphere-mongo`,
     `sphere-mongo-core`,
     `sphere-mongo-derivation`,
@@ -60,6 +61,10 @@ lazy val `sphere-json-core` = project.in(file("./json/json-core"))
 lazy val `sphere-json-derivation` = project.in(file("./json/json-derivation"))
   .settings(standardSettings: _*)
   .settings(Fmpp.settings: _*)
+  .dependsOn(`sphere-json-core`)
+
+lazy val `sphere-json-derivation-magnolia` = project.in(file("./json/json-derivation-magnolia"))
+  .settings(standardSettings: _*)
   .dependsOn(`sphere-json-core`)
 
 lazy val `sphere-json` = project.in(file("./json"))
