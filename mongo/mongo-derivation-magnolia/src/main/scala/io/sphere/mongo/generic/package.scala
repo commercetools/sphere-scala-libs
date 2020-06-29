@@ -86,8 +86,8 @@ package object generic extends Logging {
       readMapBuilder += (s.typeValue -> s)
       writeMapBuilder += (s.subType.typeName -> s)
     }
-    private val readMap = readMapBuilder.result
-    private val writeMap = writeMapBuilder.result
+    private val readMap = readMapBuilder.result()
+    private val writeMap = writeMapBuilder.result()
 
     private val typeField = sealedTrait.annotations.collectFirst {
       case a: MongoTypeHintField => a.value
