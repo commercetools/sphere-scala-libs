@@ -81,9 +81,9 @@ class MoneySpec extends AnyFunSpec with Matchers with ScalaCheckDrivenPropertyCh
     }
 
     it("should support partitioning an amount without losing or gaining money.") {
-      (0.05 EUR) partition (3,7) must equal (Seq(0.02 EUR, 0.03 EUR))
-      (10 EUR) partition (1,2) must equal (Seq(3.34 EUR, 6.66 EUR))
-      (10 EUR) partition (3,1,3) must equal (Seq(4.29 EUR, 1.43 EUR, 4.28 EUR))
+      (0.05 EUR).partition(3,7) must equal (Seq(0.02 EUR, 0.03 EUR))
+      (10 EUR).partition(1,2) must equal (Seq(3.34 EUR, 6.66 EUR))
+      (10 EUR).partition(3,1,3) must equal (Seq(4.29 EUR, 1.43 EUR, 4.28 EUR))
     }
 
     it("should allow comparing money with the same currency.") {
