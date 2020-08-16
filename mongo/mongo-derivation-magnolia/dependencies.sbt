@@ -1,3 +1,3 @@
 libraryDependencies ++= Seq(
-  "com.propensive" %% "magnolia" % "0.16.0"
+  "com.propensive" %% "magnolia" % "0.17.0"
 )
