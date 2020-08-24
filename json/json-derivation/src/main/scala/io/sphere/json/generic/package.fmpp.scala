@@ -478,7 +478,10 @@ package object generic extends Logging {
     def typeSelectors: List[TypeSelector[_]]
   }
 
-  final class TypeSelector[A] private[generic](val typeField: String, val typeValue: String, val clazz: Class[_])(implicit val jsonr: FromJSON[A], val serializer: ToJSON[A]) extends TypeSelectorFromJSON[A] with TypeSelectorToJSON[A] {
+  final class TypeSelector[A] private[generic](val typeField: String, val typeValue: String, val clazz: Class[_])
+                                              (implicit val jsonr: FromJSON[A], val serializer: ToJSON[A])
+    extends TypeSelectorFromJSON[A] with TypeSelectorToJSON[A] {
+
     def read(o: JValue): ValidatedNel[JSONError, A] = fromJValue[A](o)
     def write(a: Any): JValue = toJValue(a.asInstanceOf[A])
   }
