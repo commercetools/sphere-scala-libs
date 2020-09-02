@@ -8,4 +8,4 @@ addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.13")
 addSbtPlugin("io.spray" % "sbt-boilerplate" % "0.6.1")
 
 // https://github.com/ktoso/sbt-jmh/releases
-addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.3.7")
+addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.0")
