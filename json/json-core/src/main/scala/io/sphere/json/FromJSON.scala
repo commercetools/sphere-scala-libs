@@ -6,7 +6,6 @@ import java.util.{Currency, Locale, UUID}
 
 import cats.data.NonEmptyList
 import cats.data.Validated.{Invalid, Valid}
-import cats.instances.list._
 import cats.syntax.apply._
 import cats.syntax.traverse._
 import io.sphere.json.field
@@ -213,8 +212,6 @@ object FromJSON {
 
     override val fields = Set(PreciseAmountField, CurrencyCodeField, FractionDigitsField)
 
-    import cats.implicits._
-    
     def read(value: JValue): JValidation[HighPrecisionMoney] = value match {
       case o: JObject =>
         val validatedFields = (
