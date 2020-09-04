@@ -212,8 +212,6 @@ object FromJSON {
 
     override val fields = Set(PreciseAmountField, CurrencyCodeField, FractionDigitsField)
 
-    import cats.syntax.all._
-    
     def read(value: JValue): JValidation[HighPrecisionMoney] = value match {
       case o: JObject =>
         val validatedFields = (
