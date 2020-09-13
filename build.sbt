@@ -20,6 +20,11 @@ lazy val standardSettings = Defaults.coreDefaultSettings ++ publishSettings ++ S
     "-feature"
   ),
   javacOptions ++= Seq("-deprecation", "-Xlint:unchecked"),
+
+  // targets Java 8 bytecode (scalac & javac)
+  scalacOptions in ThisBuild += "-target:jvm-1.8",
+  javacOptions in ThisBuild ++= Seq("-source", "8", "-target", "8"),
+
   testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "3.2.2" % Test,
