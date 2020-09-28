@@ -1,5 +1,4 @@
 -J-XX:+UnlockDiagnosticVMOptions
--J-XX:+CMSClassUnloadingEnabled
 -J-XX:MaxMetaspaceSize=2g
 -J-Xmx2g 
 -J-Xss2M
