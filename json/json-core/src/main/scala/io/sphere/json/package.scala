@@ -9,7 +9,7 @@ import io.sphere.util.Logging
 import org.json4s.{DefaultFormats, JsonInput, StringInput}
 import org.json4s.JsonAST._
 import org.json4s.ParserUtil.ParseException
-import org.json4s.jackson.{compactJson, parseJson}
+import org.json4s.jackson.compactJson
 
 /** Provides functions for reading & writing JSON, via type classes JSON/JSONR/JSONW. */
 package object json extends Logging {
@@ -18,8 +18,11 @@ package object json extends Logging {
 
   type JValidation[A] = ValidatedNel[JSONError, A]
 
+  def parseJsonUnsafe(json: JsonInput): JValue =
+    SphereJsonParser.parse(json, useBigDecimalForDouble = false, useBigIntForLong = false)
+
   def parseJSON(json: JsonInput): JValidation[JValue] =
-    try Valid(SphereJsonParser.parse(json, useBigDecimalForDouble = false, useBigIntForLong = false)) catch {
+    try Valid(parseJsonUnsafe(json)) catch {
       case e: ParseException => jsonParseError(e.getMessage)
       case e: JsonMappingException => jsonParseError(e.getOriginalMessage)
       case e: JsonParseException => jsonParseError(e.getOriginalMessage)
@@ -51,7 +54,7 @@ package object json extends Logging {
    * @param json The JSON string to parse.
    * @return An instance of type A. */
   def getFromJSON[A: FromJSON](json: JsonInput): A =
-    getFromJValue[A](parseJson(json))
+    getFromJValue[A](parseJsonUnsafe(json))
 
   def getFromJSON[A: FromJSON](json: String): A =
     getFromJSON(StringInput(json))
