@@ -3,8 +3,8 @@ package io.sphere
 import cats.data.Validated.{Invalid, Valid}
 import cats.data.{NonEmptyList, ValidatedNel}
 import com.fasterxml.jackson.core.JsonParseException
+import com.fasterxml.jackson.core.exc.InputCoercionException
 import com.fasterxml.jackson.databind.JsonMappingException
-
 import io.sphere.util.Logging
 import org.json4s.{DefaultFormats, JsonInput, StringInput}
 import org.json4s.JsonAST._
@@ -19,10 +19,11 @@ package object json extends Logging {
   type JValidation[A] = ValidatedNel[JSONError, A]
 
   def parseJSON(json: JsonInput): JValidation[JValue] =
-    try Valid(parseJson(json)) catch {
+    try Valid(SphereJsonParser.parse(json, useBigDecimalForDouble = false, useBigIntForLong = false)) catch {
       case e: ParseException => jsonParseError(e.getMessage)
       case e: JsonMappingException => jsonParseError(e.getOriginalMessage)
       case e: JsonParseException => jsonParseError(e.getOriginalMessage)
+      case e: InputCoercionException => jsonParseError(e.getOriginalMessage)
     }
 
   def parseJSON(json: String): JValidation[JValue] =

@@ -18,7 +18,7 @@ class TypesSwitchSpec extends AnyWordSpec with Matchers {
 
       val jsons = m.map(Message.json.write)
       jsons must be (List(
-        JObject("number" -> JInt(23), "type" -> JString("ClassA1")),
+        JObject("number" -> JLong(23), "type" -> JString("ClassA1")),
         JObject("name" -> JString("world"), "type" -> JString("ClassA2")),
         JObject("valid" -> JBool(false), "type" -> JString("ClassB1")),
         JObject("references" -> JArray(List(JString("a23"), JString("c62"))), "type" -> JString("ClassB2"))))
