@@ -25,7 +25,7 @@ class ToJSONSpec extends AnyWordSpec with Matchers {
       json must be (JObject(List(
         "id" -> JString(id.toString),
         "first_name" -> JString("bidule"),
-        "age" -> JInt(109)
+        "age" -> JLong(109)
       )))
     }
   }
