@@ -49,7 +49,7 @@ package object generic extends Logging {
   def fromJsonEnum(e: Enumeration): FromJSON[e.Value] = new FromJSON[e.Value] {
     def read(jval: JValue): ValidatedNel[JSONError, e.Value] = jval match {
       case JString(s) => e.values.find(_.toString == s).toValidNel(
-        JSONParseError("Invalid enum value: '%s'. Expected one of: %s".format(s, e.values.mkString("','")))
+        JSONParseError("Invalid enum value: '%s'. Expected one of: %s".format(s, e.values.mkString("'", "','", "'")))
       )
       case _ => jsonParseError("JSON String expected.")
     }
