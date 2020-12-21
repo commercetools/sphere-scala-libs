@@ -1,5 +1,9 @@
 import pl.project13.scala.sbt.JmhPlugin
 
+// sbt-github-actions needs configuration in `ThisBuild`
+ThisBuild / crossScalaVersions := Seq("2.12.12", "2.13.3")
+ThisBuild / scalaVersion := crossScalaVersions.value.last
+ThisBuild / githubWorkflowPublishTargetBranches := List()
 
 lazy val publishSettings = Seq(
   releaseCrossBuild := true,
@@ -10,8 +14,6 @@ lazy val publishSettings = Seq(
 
 lazy val standardSettings = Defaults.coreDefaultSettings ++ publishSettings ++ Seq(
   organization := "io.sphere",
-  scalaVersion := "2.13.3",
-  crossScalaVersions := Seq("2.12.12", scalaVersion.value),
   licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html")),
   logBuffered := false,
   scalacOptions ++= Seq(
