@@ -1,3 +1,27 @@
+## 0.12.1 (2020-01-05)
+
+* Update joda-time to 2.10.9 (#259) @scala-steward
+* Update sbt to 1.4.6 (#258) @scala-steward
+* Migrate to GitHub actions (#257) @yanns
+* Update cats-core to 2.3.1 (#256) @scala-steward
+* Update scalacheck to 1.15.2 (#255) @scala-steward
+* Update sbt to 1.4.5 (#254) @scala-steward
+* Update cats-core to 2.3.0 (#252) @scala-steward
+* Update jackson-databind to 2.12.0 (#253) @scala-steward
+* Update sbt to 1.4.4 (#251) @scala-steward
+* Update sbt-bintray to 0.6.1 (#245) @scala-steward
+* Update sbt to 1.4.3 (#250) @scala-steward
+* Update scalatest to 3.2.3 (#249) @scala-steward
+* Update scalacheck to 1.15.1 (#248) @scala-steward
+* Fix error message in case of invalid enum value (#247) @balazs-kossovics-ct
+* Update scalacheck to 1.15.0 (#244) @scala-steward
+* Update sbt-bintray to 0.6.0 (#243) @scala-steward
+* Update joda-time to 2.10.8 (#242) @scala-steward
+* Update joda-time to 2.10.7 (#241) @scala-steward
+* Update sbt to 1.4.1 (#240) @scala-steward
+* Update sbt to 1.4.0 (#238) @scala-steward
+* Update jackson-databind to 2.11.3 (#237) @scala-steward
+
 ## 0.11.20 (2020-09-13)
 
 * target jvm 8 bytecode (#232) @yanns
