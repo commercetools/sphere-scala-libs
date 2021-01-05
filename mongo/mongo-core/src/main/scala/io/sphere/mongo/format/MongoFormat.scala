@@ -10,6 +10,7 @@ trait MongoFormat[@specialized A] extends Serializable {
   def toMongoValue(a: A): Any
   def fromMongoValue(any: Any): A
   def default: Option[A] = None
+
   /** needed JSON fields - ignored if empty */
   val fields: Set[String] = MongoFormat.emptyFieldsSet
 }
@@ -25,7 +26,8 @@ object MongoFormat {
     *
     * @param dbo The BSONObject into which to put ''value'' under ''name''.
     * @tparam A The value type, for which there must exist a MongoFormat[A] instance.
-    * @return The passed dbo with the new key-value pair added. */
+    * @return The passed dbo with the new key-value pair added.
+    */
   def put[A: MongoFormat](dbo: BSONObject)(name: String, value: A): BSONObject = {
     // Ignore None's, we don't ever want to store or use nulls.
     if (value != None) dbo.put(name, MongoFormat[A].toMongoValue(value))

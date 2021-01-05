@@ -10,33 +10,27 @@ import org.scalatest.wordspec.AnyWordSpec
 import scala.util.Try
 
 object MongoEmbeddedSpec {
-  case class Embedded(
-     value1: String,
-     @MongoKey("_value2") value2: Int)
+  case class Embedded(value1: String, @MongoKey("_value2") value2: Int)
 
   object Embedded {
     implicit val mongo: MongoFormat[Embedded] = deriveMongoFormat
   }
 
-  case class Test1(
-    name: String,
-    @MongoEmbedded embedded: Embedded)
+  case class Test1(name: String, @MongoEmbedded embedded: Embedded)
 
   object Test1 {
     implicit val mongo: MongoFormat[Test1] = deriveMongoFormat
   }
 
-  case class Test2(
-    name: String,
-    @MongoEmbedded embedded: Option[Embedded] = None)
+  case class Test2(name: String, @MongoEmbedded embedded: Option[Embedded] = None)
 
   object Test2 {
     implicit val mongo: MongoFormat[Test2] = deriveMongoFormat
   }
 
   case class Test3(
-    @MongoIgnore name: String = "default",
-    @MongoEmbedded embedded: Option[Embedded] = None)
+      @MongoIgnore name: String = "default",
+      @MongoEmbedded embedded: Option[Embedded] = None)
 
   object Test3 {
     implicit val mongo: MongoFormat[Test3] = deriveMongoFormat
@@ -77,7 +71,7 @@ class MongoEmbeddedSpec extends AnyWordSpec with Matchers with OptionValues {
         "name" -> "ze name",
         "value1" -> "ze value1"
       )
-      Try(MongoFormat[Test1].fromMongoValue(dbo)).isFailure must be (true)
+      Try(MongoFormat[Test1].fromMongoValue(dbo)).isFailure must be(true)
     }
 
     "support optional embedded attribute" in {
@@ -145,7 +139,7 @@ class MongoEmbeddedSpec extends AnyWordSpec with Matchers with OptionValues {
         "name" -> "ze name",
         "value1" -> "ze value1"
       )
-      Try(MongoFormat[Test2].fromMongoValue(dbo)).isFailure must be (true)
+      Try(MongoFormat[Test2].fromMongoValue(dbo)).isFailure must be(true)
     }
   }
 }

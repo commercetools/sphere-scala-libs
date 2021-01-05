@@ -7,8 +7,7 @@ class ValidatedFlatMap[E, A](val v: Validated[E, A]) extends AnyVal {
     v.andThen(f)
 }
 
-/**
-  * Cats [[Validated]] does not provide `flatMap` because its purpose is
+/** Cats [[Validated]] does not provide `flatMap` because its purpose is
   * to accumulate errors.
   *
   * To combine [[Validated]] in for-comprehension, it is possible to import
@@ -19,7 +18,8 @@ class ValidatedFlatMap[E, A](val v: Validated[E, A]) extends AnyVal {
 object ValidatedFlatMapFeature {
   import scala.language.implicitConversions
 
-  @inline implicit def ValidationFlatMapRequested[E, A](d: Validated[E, A]): ValidatedFlatMap[E, A] =
+  @inline implicit def ValidationFlatMapRequested[E, A](
+      d: Validated[E, A]): ValidatedFlatMap[E, A] =
     new ValidatedFlatMap(d)
 
 }

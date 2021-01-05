@@ -15,15 +15,19 @@ object Reflect extends Logging {
     *       (nesting inside other objects is fine).
     * Note: Only a single default value is obtained for each field. Thus avoid default
     *       values that are different on each invocation (e.g. new DateTime()). In other words,
-    *       the case class constructors should be pure functions. */
+    *       the case class constructors should be pure functions.
+    */
   val getCaseClassMeta = new Memoizer[Class[_], CaseClassMeta](clazz => {
-    logger.trace("Initializing reflection metadata for case class or object %s".format(clazz.getName))
+    logger.trace(
+      "Initializing reflection metadata for case class or object %s".format(clazz.getName))
     CaseClassMeta(getCaseClassFieldMeta(clazz))
   })
 
-  private def getCompanionClass(clazz: Class[_]): Class[_] = Class.forName(clazz.getName + "$", true, clazz.getClassLoader)
-  private def getCompanionObject(companionClass: Class[_]): Object = companionClass.getField("MODULE$").get(null)
-  private def getCaseClassFieldMeta(clazz: Class[_]): IndexedSeq[CaseClassFieldMeta] = {
+  private def getCompanionClass(clazz: Class[_]): Class[_] =
+    Class.forName(clazz.getName + "$", true, clazz.getClassLoader)
+  private def getCompanionObject(companionClass: Class[_]): Object =
+    companionClass.getField("MODULE$").get(null)
+  private def getCaseClassFieldMeta(clazz: Class[_]): IndexedSeq[CaseClassFieldMeta] =
     if (clazz.getName.endsWith("$")) IndexedSeq.empty[CaseClassFieldMeta]
     else {
       val companionClass = getCompanionClass(clazz)
@@ -37,23 +41,23 @@ object Reflect extends Logging {
           topSymbol.flatMap(_.symbols.collectFirst { case s: ClassSymbol if s.name == name => s })
       }
 
-      val sym = maybeSym getOrElse {
-        throw new IllegalArgumentException("Unable to find class symbol through ScalaSigParser for class %s."
-          .format(clazz.getName))
+      val sym = maybeSym.getOrElse {
+        throw new IllegalArgumentException(
+          "Unable to find class symbol through ScalaSigParser for class %s."
+            .format(clazz.getName))
       }
 
-      sym.children
-        .iterator
+      sym.children.iterator
         .collect { case m: MethodSymbol if m.isCaseAccessor && !m.isPrivate => m }
         .zipWithIndex
         .map { case (ms, idx) =>
-          val defaultValue = try {
-            Some(companionClass.getMethod("apply$default$" + (idx + 1)).invoke(companionObject))
-          } catch {
-            case _: NoSuchMethodException => None
-          }
+          val defaultValue =
+            try Some(companionClass.getMethod("apply$default$" + (idx + 1)).invoke(companionObject))
+            catch {
+              case _: NoSuchMethodException => None
+            }
           CaseClassFieldMeta(ms.name, defaultValue)
-        }.toIndexedSeq
+        }
+        .toIndexedSeq
     }
-  }
 }

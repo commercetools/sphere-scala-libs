@@ -12,7 +12,6 @@ import org.scalacheck._
 
 import scala.math.BigDecimal.RoundingMode
 
-
 object JSONProperties extends Properties("JSON") {
   private def check[A: FromJSON: ToJSON: Eq](a: A): Boolean = {
     val json = s"""[${toJSON(a)}]"""
@@ -32,16 +31,14 @@ object JSONProperties extends Properties("JSON") {
     } yield NonEmptyList(a, l))
 
   implicit def arbitraryCurrency: Arbitrary[Currency] =
-    Arbitrary(Gen.oneOf(
-      Currency.getInstance("EUR"),
-      Currency.getInstance("USD"),
-      Currency.getInstance("JPY")))
+    Arbitrary(Gen
+      .oneOf(Currency.getInstance("EUR"), Currency.getInstance("USD"), Currency.getInstance("JPY")))
 
   implicit def arbitraryLocale: Arbitrary[Locale] = {
     // Filter because OS X thinks that 'C' and 'POSIX' are valid locales...
     val locales = Locale.getAvailableLocales().filter(_.toLanguageTag() != "und")
     Arbitrary(for {
-      i <- Gen.choose(0, locales.length-1)
+      i <- Gen.choose(0, locales.length - 1)
     } yield locales(i))
   }
 
@@ -84,8 +81,8 @@ object JSONProperties extends Properties("JSON") {
     def eqv(l1: Locale, l2: Locale) = l1.toLanguageTag == l2.toLanguageTag
   }
   implicit val moneyEqual = new Eq[Money] {
-  override def eqv(x: Money, y: Money): Boolean = x == y
-}
+    override def eqv(x: Money, y: Money): Boolean = x == y
+  }
   implicit val dateTimeEqual = new Eq[DateTime] {
     def eqv(dt1: DateTime, dt2: DateTime) = dt1 == dt2
   }
@@ -100,21 +97,42 @@ object JSONProperties extends Properties("JSON") {
   }
 
   private def checkC[C[_]](name: String)(implicit
-    jri: FromJSON[C[Int]], jwi: ToJSON[C[Int]], arbi: Arbitrary[C[Int]], eqi: Eq[C[Int]],
-    jrs: FromJSON[C[Short]], jws: ToJSON[C[Short]], arbs: Arbitrary[C[Short]], eqs: Eq[C[Short]],
-    jrl: FromJSON[C[Long]], jwl: ToJSON[C[Long]], arbl: Arbitrary[C[Long]], eql: Eq[C[Long]],
-    jrss: FromJSON[C[String]], jwss: ToJSON[C[String]], arbss: Arbitrary[C[String]], eqss: Eq[C[String]],
-    jrf: FromJSON[C[Float]], jwf: ToJSON[C[Float]], arbf: Arbitrary[C[Float]], eqf: Eq[C[Float]],
-    jrd: FromJSON[C[Double]], jwd: ToJSON[C[Double]], arbd: Arbitrary[C[Double]], eqd: Eq[C[Double]],
-    jrb: FromJSON[C[Boolean]], jwb: ToJSON[C[Boolean]], arbb: Arbitrary[C[Boolean]], eqb: Eq[C[Boolean]]
+      jri: FromJSON[C[Int]],
+      jwi: ToJSON[C[Int]],
+      arbi: Arbitrary[C[Int]],
+      eqi: Eq[C[Int]],
+      jrs: FromJSON[C[Short]],
+      jws: ToJSON[C[Short]],
+      arbs: Arbitrary[C[Short]],
+      eqs: Eq[C[Short]],
+      jrl: FromJSON[C[Long]],
+      jwl: ToJSON[C[Long]],
+      arbl: Arbitrary[C[Long]],
+      eql: Eq[C[Long]],
+      jrss: FromJSON[C[String]],
+      jwss: ToJSON[C[String]],
+      arbss: Arbitrary[C[String]],
+      eqss: Eq[C[String]],
+      jrf: FromJSON[C[Float]],
+      jwf: ToJSON[C[Float]],
+      arbf: Arbitrary[C[Float]],
+      eqf: Eq[C[Float]],
+      jrd: FromJSON[C[Double]],
+      jwd: ToJSON[C[Double]],
+      arbd: Arbitrary[C[Double]],
+      eqd: Eq[C[Double]],
+      jrb: FromJSON[C[Boolean]],
+      jwb: ToJSON[C[Boolean]],
+      arbb: Arbitrary[C[Boolean]],
+      eqb: Eq[C[Boolean]]
   ) = {
-    property(s"read/write $name of Ints") = Prop.forAll { (l: C[Int]) => check(l) }
-    property(s"read/write $name of Shorts") = Prop.forAll { (l: C[Short]) => check(l) }
-    property(s"read/write $name of Longs") = Prop.forAll { (l: C[Long]) => check(l) }
-    property(s"read/write $name of Strings") = Prop.forAll { (l: C[String]) => check(l) }
-    property(s"read/write $name of Floats") = Prop.forAll { (l: C[Float]) => check(l) }
-    property(s"read/write $name of Doubles") = Prop.forAll { (l: C[Double]) => check(l) }
-    property(s"read/write $name of Booleans") = Prop.forAll { (l: C[Boolean]) => check(l) }
+    property(s"read/write $name of Ints") = Prop.forAll((l: C[Int]) => check(l))
+    property(s"read/write $name of Shorts") = Prop.forAll((l: C[Short]) => check(l))
+    property(s"read/write $name of Longs") = Prop.forAll((l: C[Long]) => check(l))
+    property(s"read/write $name of Strings") = Prop.forAll((l: C[String]) => check(l))
+    property(s"read/write $name of Floats") = Prop.forAll((l: C[Float]) => check(l))
+    property(s"read/write $name of Doubles") = Prop.forAll((l: C[Double]) => check(l))
+    property(s"read/write $name of Booleans") = Prop.forAll((l: C[Boolean]) => check(l))
   }
 
   checkC[List]("List")
@@ -122,15 +140,15 @@ object JSONProperties extends Properties("JSON") {
   checkC[Set]("Set")
   checkC[NonEmptyList]("NonEmptyList")
   checkC[Option]("Option")
-  checkC[({type l[v]=Map[String,v]})#l]("Map")
+  checkC[({ type l[v] = Map[String, v] })#l]("Map")
 
-  property("read/write Unit") = Prop.forAll { (u: Unit) => check(u) }
-  property("read/write Currency") = Prop.forAll { (c: Currency) => check(c) }
-  property("read/write Money") = Prop.forAll { (m: Money) => check(m) }
-  property("read/write Locale") = Prop.forAll { (l: Locale) => check(l) }
-  property("read/write UUID") = Prop.forAll { (u: UUID) => check(u) }
-  property("read/write DateTime") = Prop.forAll { (u: DateTime) => check(u) }
-  property("read/write LocalDate") = Prop.forAll { (u: LocalDate) => check(u) }
-  property("read/write LocalTime") = Prop.forAll { (u: LocalTime) => check(u) }
-  property("read/write YearMonth") = Prop.forAll { (u: YearMonth) => check(u) }
+  property("read/write Unit") = Prop.forAll((u: Unit) => check(u))
+  property("read/write Currency") = Prop.forAll((c: Currency) => check(c))
+  property("read/write Money") = Prop.forAll((m: Money) => check(m))
+  property("read/write Locale") = Prop.forAll((l: Locale) => check(l))
+  property("read/write UUID") = Prop.forAll((u: UUID) => check(u))
+  property("read/write DateTime") = Prop.forAll((u: DateTime) => check(u))
+  property("read/write LocalDate") = Prop.forAll((u: LocalDate) => check(u))
+  property("read/write LocalTime") = Prop.forAll((u: LocalTime) => check(u))
+  property("read/write YearMonth") = Prop.forAll((u: YearMonth) => check(u))
 }

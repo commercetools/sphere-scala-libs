@@ -13,16 +13,13 @@ object OptionReaderSpec {
     implicit val json: JSON[SimpleClass] = jsonProduct(apply _)
   }
 
-  case class ComplexClass(
-    name: String,
-    simpleClass: Option[SimpleClass])
+  case class ComplexClass(name: String, simpleClass: Option[SimpleClass])
 
   object ComplexClass {
     implicit val json: JSON[ComplexClass] = jsonProduct(apply _)
   }
 
 }
-
 
 class OptionReaderSpec extends AnyWordSpec with Matchers with OptionValues {
   import OptionReaderSpec._
@@ -55,7 +52,7 @@ class OptionReaderSpec extends AnyWordSpec with Matchers with OptionValues {
 
     "handle presence of not all the fields" in {
       val json = """{ "value1": "a" }"""
-      fromJSON[Option[SimpleClass]](json).isInvalid must be (true)
+      fromJSON[Option[SimpleClass]](json).isInvalid must be(true)
     }
 
     "handle absence of all fields" in {

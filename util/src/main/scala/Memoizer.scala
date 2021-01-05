@@ -17,7 +17,8 @@ final class Memoizer[K, V](action: K => V) extends (K => V) {
           ft.run()
         }
       }
-      try { return f.get } catch {
+      try return f.get
+      catch {
         case _: CancellationException => cache.remove(k, f)
         case e: ExecutionException => throw e.getCause
       }

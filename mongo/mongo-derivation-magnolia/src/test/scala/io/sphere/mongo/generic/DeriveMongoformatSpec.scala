@@ -15,52 +15,46 @@ class DeriveMongoformatSpec extends AnyWordSpec with Matchers {
       val user = fromMongo[UserWithPicture](
         dbObj(
           "userId" -> "foo-123",
-          "pictureSize" -> dbObj(
-            "type" -> "Medium"),
+          "pictureSize" -> dbObj("type" -> "Medium"),
           "pictureUrl" -> "http://example.com"))
 
-      user must be (UserWithPicture("foo-123", Medium, "http://example.com"))
+      user must be(UserWithPicture("foo-123", Medium, "http://example.com"))
     }
 
     "read custom singleton values" in {
       val user = fromMongo[UserWithPicture](
         dbObj(
           "userId" -> "foo-123",
-          "pictureSize" -> dbObj(
-            "type" -> "bar",
-            "width" -> 23,
-            "height" -> 30),
+          "pictureSize" -> dbObj("type" -> "bar", "width" -> 23, "height" -> 30),
           "pictureUrl" -> "http://example.com"))
 
-      user must be (UserWithPicture("foo-123", Custom(23, 30), "http://example.com"))
+      user must be(UserWithPicture("foo-123", Custom(23, 30), "http://example.com"))
     }
 
     "fail to read if singleton value is unknown" in {
-      a [Exception] must be thrownBy fromMongo[UserWithPicture](
+      a[Exception] must be thrownBy fromMongo[UserWithPicture](
         dbObj(
           "userId" -> "foo-123",
-          "pictureSize" -> dbObj(
-            "type" -> "Unknown"),
+          "pictureSize" -> dbObj("type" -> "Unknown"),
           "pictureUrl" -> "http://example.com"))
     }
 
     "write normal singleton values" in {
       val dbo = toMongo[UserWithPicture](UserWithPicture("foo-123", Medium, "http://example.com"))
-      dbo must be (dbObj(
+      dbo must be(
+        dbObj(
           "userId" -> "foo-123",
-          "pictureSize" -> dbObj(
-            "type" -> "Medium"),
+          "pictureSize" -> dbObj("type" -> "Medium"),
           "pictureUrl" -> "http://example.com"))
     }
 
     "write custom singleton values" in {
-      val dbo = toMongo[UserWithPicture](UserWithPicture("foo-123", Custom(23, 30), "http://example.com"))
-      dbo must be (dbObj(
+      val dbo =
+        toMongo[UserWithPicture](UserWithPicture("foo-123", Custom(23, 30), "http://example.com"))
+      dbo must be(
+        dbObj(
           "userId" -> "foo-123",
-          "pictureSize" -> dbObj(
-            "type" -> "bar",
-            "width" -> 23,
-            "height" -> 30),
+          "pictureSize" -> dbObj("type" -> "bar", "width" -> 23, "height" -> 30),
           "pictureUrl" -> "http://example.com"))
     }
 
@@ -68,26 +62,29 @@ class DeriveMongoformatSpec extends AnyWordSpec with Matchers {
       val originalUser = UserWithPicture("foo-123", Medium, "http://exmple.com")
       val newUser = fromMongo[UserWithPicture](toMongo[UserWithPicture](originalUser))
 
-      newUser must be (originalUser)
+      newUser must be(originalUser)
     }
 
     "read and write sealed trait with only one subtype" in {
       val dbo = dbObj(
-          "userId" -> "foo-123",
-          "pictureSize" -> dbObj(
-            "type" -> "Medium"),
-          "pictureUrl" -> "http://example.com",
-          "access" -> dbObj(
-            "type" -> "Authorized",
-            "project" -> "internal"))
+        "userId" -> "foo-123",
+        "pictureSize" -> dbObj("type" -> "Medium"),
+        "pictureUrl" -> "http://example.com",
+        "access" -> dbObj("type" -> "Authorized", "project" -> "internal")
+      )
       val user = fromMongo[UserWithPicture](dbo)
 
-      user must be (UserWithPicture("foo-123", Medium, "http://example.com", Some(Access.Authorized("internal"))))
+      user must be(
+        UserWithPicture(
+          "foo-123",
+          Medium,
+          "http://example.com",
+          Some(Access.Authorized("internal"))))
       val newDbo = toMongo[UserWithPicture](user)
-      newDbo must be (dbo)
+      newDbo must be(dbo)
 
       val newUser = fromMongo[UserWithPicture](newDbo)
-      newUser must be (user)
+      newUser must be(user)
     }
   }
 }
@@ -113,10 +110,10 @@ object DeriveMongoformatSpec {
   }
 
   case class UserWithPicture(
-    userId: String,
-    pictureSize: PictureSize,
-    pictureUrl: String,
-    access: Option[Access] = None)
+      userId: String,
+      pictureSize: PictureSize,
+      pictureUrl: String,
+      access: Option[Access] = None)
 
   object UserWithPicture {
     implicit val mongo: MongoFormat[UserWithPicture] = deriveMongoFormat

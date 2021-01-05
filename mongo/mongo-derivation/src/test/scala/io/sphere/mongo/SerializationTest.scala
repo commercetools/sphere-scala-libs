@@ -25,7 +25,7 @@ class SerializationTest extends AnyWordSpec with Matchers {
 
       val mongoFormat: MongoFormat[Something] = io.sphere.mongo.generic.deriveMongoFormat
       val something = mongoFormat.fromMongoValue(dbo)
-      something must be (Something(Some(3), 4))
+      something must be(Something(Some(3), 4))
     }
 
     "generate a format that serializes optional fields with value None as BSON objects without that field" in {
@@ -45,7 +45,7 @@ class SerializationTest extends AnyWordSpec with Matchers {
 
       val mongoFormat: MongoFormat[Something] = io.sphere.mongo.generic.deriveMongoFormat
       val something = mongoFormat.fromMongoValue(dbo)
-      something must be (Something(Some(3), 2))
+      something must be(Something(Some(3), 2))
     }
   }
 
@@ -55,10 +55,10 @@ class SerializationTest extends AnyWordSpec with Matchers {
 
       // mongo java driver knows how to encode/decode Strings
       val serializedObject = mongo.toMongoValue(Color.Red).asInstanceOf[String]
-      serializedObject must be ("Red")
+      serializedObject must be("Red")
 
       val enumValue = mongo.fromMongoValue(serializedObject)
-      enumValue must be (Color.Red)
+      enumValue must be(Color.Red)
     }
   }
 

@@ -11,8 +11,7 @@ import org.scalatest.wordspec.AnyWordSpec
 class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
   "DeriveSingletonJSON" must {
     "read normal singleton values" in {
-      val user = getFromJSON[UserWithPicture](
-        """
+      val user = getFromJSON[UserWithPicture]("""
           {
             "userId": "foo-123",
             "pictureSize": "Medium",
@@ -20,12 +19,11 @@ class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
           }
         """)
 
-      user must be (UserWithPicture("foo-123", Medium, "http://exmple.com"))
+      user must be(UserWithPicture("foo-123", Medium, "http://exmple.com"))
     }
 
     "fail to read if singleton value is unknown" in {
-      a [JSONException] must be thrownBy getFromJSON[UserWithPicture](
-        """
+      a[JSONException] must be thrownBy getFromJSON[UserWithPicture]("""
           {
             "userId": "foo-123",
             "pictureSize": "foo",
@@ -45,12 +43,11 @@ class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
         }
         """)
 
-      filter(userJson) must be (expectedJson)
+      filter(userJson) must be(expectedJson)
     }
 
     "read custom singleton values" in {
-      val user = getFromJSON[UserWithPicture](
-        """
+      val user = getFromJSON[UserWithPicture]("""
           {
             "userId": "foo-123",
             "pictureSize": "bar",
@@ -58,7 +55,7 @@ class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
           }
         """)
 
-      user must be (UserWithPicture("foo-123", Custom, "http://exmple.com"))
+      user must be(UserWithPicture("foo-123", Custom, "http://exmple.com"))
     }
 
     "write custom singleton values" in {
@@ -72,14 +69,14 @@ class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
         }
         """)
 
-      filter(userJson) must be (expectedJson)
+      filter(userJson) must be(expectedJson)
     }
 
     "write and consequently read, which must produce the original value" in {
       val originalUser = UserWithPicture("foo-123", Medium, "http://exmple.com")
       val newUser = getFromJSON[UserWithPicture](compact(render(toJValue(originalUser))))
 
-      newUser must be (originalUser)
+      newUser must be(originalUser)
     }
 
     "read and write sealed trait with only one subtype" in {
@@ -96,13 +93,18 @@ class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
       """
       val user = getFromJSON[UserWithPicture](json)
 
-      user must be (UserWithPicture("foo-123", Medium, "http://example.com", Some(Access.Authorized("internal"))))
+      user must be(
+        UserWithPicture(
+          "foo-123",
+          Medium,
+          "http://example.com",
+          Some(Access.Authorized("internal"))))
 
       val newJson = toJValue[UserWithPicture](user)
-      Valid(newJson) must be (parseJSON(json))
+      Valid(newJson) must be(parseJSON(json))
 
       val Valid(newUser) = fromJValue[UserWithPicture](newJson)
-      newUser must be (user)
+      newUser must be(user)
     }
   }
 
@@ -134,12 +136,11 @@ object Access {
   implicit val json: JSON[Access] = deriveJSON
 }
 
-
 case class UserWithPicture(
-  userId: String,
-  pictureSize: PictureSize,
-  pictureUrl: String,
-  access: Option[Access] = None)
+    userId: String,
+    pictureSize: PictureSize,
+    pictureUrl: String,
+    access: Option[Access] = None)
 
 object UserWithPicture {
   implicit val json: JSON[UserWithPicture] = deriveJSON[UserWithPicture]

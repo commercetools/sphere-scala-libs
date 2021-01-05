@@ -22,7 +22,8 @@ package object json extends Logging {
     SphereJsonParser.parse(json, useBigDecimalForDouble = false, useBigIntForLong = false)
 
   def parseJSON(json: JsonInput): JValidation[JValue] =
-    try Valid(parseJsonUnsafe(json)) catch {
+    try Valid(parseJsonUnsafe(json))
+    catch {
       case e: ParseException => jsonParseError(e.getMessage)
       case e: JsonMappingException => jsonParseError(e.getOriginalMessage)
       case e: JsonParseException => jsonParseError(e.getOriginalMessage)
@@ -49,10 +50,11 @@ package object json extends Logging {
   }
 
   /** Parses a JSON string into a type A.
-   *  Throws a [[JSONException]] on failure.
-   *
-   * @param json The JSON string to parse.
-   * @return An instance of type A. */
+    *  Throws a [[JSONException]] on failure.
+    *
+    * @param json The JSON string to parse.
+    * @return An instance of type A.
+    */
   def getFromJSON[A: FromJSON](json: JsonInput): A =
     getFromJValue[A](parseJsonUnsafe(json))
 
@@ -75,24 +77,31 @@ package object json extends Logging {
     *
     * @param name The name of the field.
     * @param jObject The JObject from which to extract the field.
-    * @return A success with a value of type A or a non-empty list of errors. */
+    * @return A success with a value of type A or a non-empty list of errors.
+    */
   def field[A](
-    name: String,
-    default: Option[A] = None
+      name: String,
+      default: Option[A] = None
   )(jObject: JObject)(implicit jsonr: FromJSON[A]): JValidation[A] = {
     val fields = jObject.obj
     // Perf note: avoiding Some(f) with fields.indexWhere and then constant time access is not faster
     fields.find(f => f._1 == name && f._2 != JNull && f._2 != JNothing) match {
       case Some(f) =>
-        jsonr.read(f._2).leftMap(
-          errs => errs map {
-            case JSONParseError(msg) => JSONFieldError(name :: Nil, msg)
-            case JSONFieldError(path, msg) => JSONFieldError(name :: path, msg)
-          })
+        jsonr
+          .read(f._2)
+          .leftMap(errs =>
+            errs.map {
+              case JSONParseError(msg) => JSONFieldError(name :: Nil, msg)
+              case JSONFieldError(path, msg) => JSONFieldError(name :: path, msg)
+            })
       case None =>
-        default.map(Valid(_))
-          .orElse(jsonr.read(JNothing).fold(_ => None, x => Some(Valid(x)))) // orElse(jsonr.default)
-          .getOrElse(Invalid(NonEmptyList.one(JSONFieldError(name :: Nil, "Missing required value"))))
+        default
+          .map(Valid(_))
+          .orElse(
+            jsonr.read(JNothing).fold(_ => None, x => Some(Valid(x)))
+          ) // orElse(jsonr.default)
+          .getOrElse(
+            Invalid(NonEmptyList.one(JSONFieldError(name :: Nil, "Missing required value"))))
     }
   }
 }

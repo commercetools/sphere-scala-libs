@@ -12,20 +12,20 @@ class DefaultValuesSpec extends AnyWordSpec with Matchers {
     "handle default values" in {
       val json = "{}"
       val test = getFromJSON[Test](json)
-      test.value1 must be ("hello")
-      test.value2 must be (None)
-      test.value3 must be (None)
-      test.value4 must be (Some("hi"))
+      test.value1 must be("hello")
+      test.value2 must be(None)
+      test.value3 must be(None)
+      test.value4 must be(Some("hi"))
     }
   }
 }
 
 object DefaultValuesSpec {
   case class Test(
-    value1: String = "hello",
-    value2: Option[String],
-    value3: Option[String] = None,
-    value4: Option[String] = Some("hi")
+      value1: String = "hello",
+      value2: Option[String],
+      value3: Option[String] = None,
+      value4: Option[String] = Some("hi")
   )
   object Test {
     implicit val mongo: JSON[Test] = jsonProduct(apply _)

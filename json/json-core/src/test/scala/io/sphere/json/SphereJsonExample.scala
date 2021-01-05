@@ -18,17 +18,17 @@ class SphereJsonExample extends AnyWordSpec with Matchers {
 
       def read(jval: JValue): ValidatedNel[JSONError, User] = jval match {
         case o: JObject =>
-          (field[String]("name")(o),
-           field[Int]("age")(o),
-           field[String]("location")(o)).mapN(User.apply)
+          (field[String]("name")(o), field[Int]("age")(o), field[String]("location")(o))
+            .mapN(User.apply)
         case _ => fail("JSON object expected.")
       }
 
-      def write(u: User): JValue = JObject(List(
-        "name" -> toJValue(u.name),
-        "age" -> toJValue(u.age),
-        "location" -> toJValue(u.location)
-      ))
+      def write(u: User): JValue = JObject(
+        List(
+          "name" -> toJValue(u.name),
+          "age" -> toJValue(u.age),
+          "location" -> toJValue(u.location)
+        ))
     }
   }
 
@@ -36,10 +36,10 @@ class SphereJsonExample extends AnyWordSpec with Matchers {
     "serialize and deserialize an user" in {
       val user = User("name", 23, "earth")
       val json = toJSON(user)
-      parseJSON(json).isValid should be (true)
+      parseJSON(json).isValid should be(true)
 
       val newUser = getFromJSON[User](json)
-      newUser should be (user)
+      newUser should be(user)
     }
   }
 

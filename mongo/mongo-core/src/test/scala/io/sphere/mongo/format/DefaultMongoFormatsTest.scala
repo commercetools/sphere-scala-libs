@@ -29,7 +29,10 @@ object DefaultMongoFormatsTest {
   }
 }
 
-class DefaultMongoFormatsTest extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks {
+class DefaultMongoFormatsTest
+    extends AnyWordSpec
+    with Matchers
+    with ScalaCheckDrivenPropertyChecks {
   import DefaultMongoFormatsTest._
 
   "DefaultMongoFormats" must {
@@ -39,9 +42,9 @@ class DefaultMongoFormatsTest extends AnyWordSpec with Matchers with ScalaCheckD
 
       forAll(list) { l =>
         val dbo = format.toMongoValue(l)
-        dbo.asInstanceOf[BasicBSONList].asScala.toList must be (l)
+        dbo.asInstanceOf[BasicBSONList].asScala.toList must be(l)
         val resultList = format.fromMongoValue(dbo)
-        resultList must be (l)
+        resultList must be(l)
       }
     }
 
@@ -58,9 +61,9 @@ class DefaultMongoFormatsTest extends AnyWordSpec with Matchers with ScalaCheckD
 
       forAll(vector) { v =>
         val dbo = format.toMongoValue(v)
-        dbo.asInstanceOf[BasicBSONList].asScala.toVector must be (v)
+        dbo.asInstanceOf[BasicBSONList].asScala.toVector must be(v)
         val resultVector = format.fromMongoValue(dbo)
-        resultVector must be (v)
+        resultVector must be(v)
       }
     }
 
@@ -77,9 +80,9 @@ class DefaultMongoFormatsTest extends AnyWordSpec with Matchers with ScalaCheckD
 
       forAll(set) { s =>
         val dbo = format.toMongoValue(s)
-        dbo.asInstanceOf[BasicBSONList].asScala.toSet must be (s)
+        dbo.asInstanceOf[BasicBSONList].asScala.toSet must be(s)
         val resultSet = format.fromMongoValue(dbo)
-        resultSet must be (s)
+        resultSet must be(s)
       }
     }
 
@@ -92,45 +95,49 @@ class DefaultMongoFormatsTest extends AnyWordSpec with Matchers with ScalaCheckD
 
     "support Map[String, String]" in {
       val format = mapFormat[String]
-      val map = Gen.listOf {
-        for {
-          key <- Gen.alphaNumStr
-          value <- Gen.alphaNumStr
-        } yield (key, value)
-      }.map(_.toMap)
+      val map = Gen
+        .listOf {
+          for {
+            key <- Gen.alphaNumStr
+            value <- Gen.alphaNumStr
+          } yield (key, value)
+        }
+        .map(_.toMap)
 
       forAll(map) { m =>
         val dbo = format.toMongoValue(m)
-        dbo.asInstanceOf[BasicBSONObject].asScala must be (m)
+        dbo.asInstanceOf[BasicBSONObject].asScala must be(m)
         val resultMap = format.fromMongoValue(dbo)
-        resultMap must be (m)
+        resultMap must be(m)
       }
     }
 
     "support Map[String, A: MongoFormat]" in {
       val format = mapFormat[User]
-      val map = Gen.listOf {
-        for {
-          key <- Gen.alphaNumStr
-          value <- Gen.alphaNumStr.map(User.apply)
-        } yield (key, value)
-      }.map(_.toMap)
+      val map = Gen
+        .listOf {
+          for {
+            key <- Gen.alphaNumStr
+            value <- Gen.alphaNumStr.map(User.apply)
+          } yield (key, value)
+        }
+        .map(_.toMap)
 
       check(map, format)
     }
 
     "support Java Locale" in {
-      Locale.getAvailableLocales.filter(_.toLanguageTag != LangTag.UNDEFINED).foreach{ l: Locale =>
-        localeFormat.fromMongoValue(localeFormat.toMongoValue(l)).toLanguageTag must be (l.toLanguageTag)
+      Locale.getAvailableLocales.filter(_.toLanguageTag != LangTag.UNDEFINED).foreach { l: Locale =>
+        localeFormat.fromMongoValue(localeFormat.toMongoValue(l)).toLanguageTag must be(
+          l.toLanguageTag)
       }
     }
   }
 
-  private def check[A](gen: Gen[A], format: MongoFormat[A]) = {
+  private def check[A](gen: Gen[A], format: MongoFormat[A]) =
     forAll(gen) { value =>
       val dbo = format.toMongoValue(value)
       val result = format.fromMongoValue(dbo)
-      result must be (value)
+      result must be(value)
     }
-  }
 }

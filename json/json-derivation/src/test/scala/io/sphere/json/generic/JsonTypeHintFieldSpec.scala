@@ -12,14 +12,14 @@ class JsonTypeHintFieldSpec extends AnyWordSpec with Matchers {
   "JSONTypeHintField" must {
     "allow to set another field to distinguish between types (toMongo)" in {
       val user = UserWithPicture("foo-123", Medium, "http://example.com")
-      val expected = JObject(List(
-        "userId" -> JString("foo-123"),
-        "pictureSize" -> JObject(List(
-          "pictureType" -> JString("Medium"))),
-        "pictureUrl" -> JString("http://example.com")))
+      val expected = JObject(
+        List(
+          "userId" -> JString("foo-123"),
+          "pictureSize" -> JObject(List("pictureType" -> JString("Medium"))),
+          "pictureUrl" -> JString("http://example.com")))
 
       val json = toJValue[UserWithPicture](user)
-      json must be (expected)
+      json must be(expected)
     }
 
     "allow to set another field to distinguish between types (fromMongo)" in {
@@ -34,7 +34,7 @@ class JsonTypeHintFieldSpec extends AnyWordSpec with Matchers {
 
       val Valid(user) = fromJSON[UserWithPicture](json)
 
-      user must be (UserWithPicture("foo-123", Medium, "http://example.com"))
+      user must be(UserWithPicture("foo-123", Medium, "http://example.com"))
     }
   }
 
@@ -55,10 +55,7 @@ object JsonTypeHintFieldSpec {
     implicit val json: JSON[PictureSize] = deriveJSON[PictureSize]
   }
 
-  case class UserWithPicture(
-    userId: String,
-    pictureSize: PictureSize,
-    pictureUrl: String)
+  case class UserWithPicture(userId: String, pictureSize: PictureSize, pictureUrl: String)
 
   object UserWithPicture {
     implicit val json: JSON[UserWithPicture] = jsonProduct(apply _)

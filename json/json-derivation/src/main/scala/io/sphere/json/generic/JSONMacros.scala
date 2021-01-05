@@ -6,7 +6,8 @@ import io.sphere.json.JSON
 import scala.reflect.macros.blackbox
 
 private[generic] object JSONMacros {
-  private def collectKnownSubtypes(c: blackbox.Context)(s: c.universe.Symbol): Set[c.universe.Symbol] = {
+  private def collectKnownSubtypes(c: blackbox.Context)(
+      s: c.universe.Symbol): Set[c.universe.Symbol] =
     if (s.isModule || s.isModuleClass) Set(s)
     else if (s.isClass) {
       val cs = s.asClass
@@ -15,9 +16,10 @@ private[generic] object JSONMacros {
         cs.knownDirectSubclasses.flatMap(collectKnownSubtypes(c)(_))
       else Set.empty
     } else Set.empty
-  }
 
-  def jsonProductApply(c: blackbox.Context)(tpe: c.universe.Type, classSym: c.universe.ClassSymbol): c.universe.Tree = {
+  def jsonProductApply(c: blackbox.Context)(
+      tpe: c.universe.Type,
+      classSym: c.universe.ClassSymbol): c.universe.Tree = {
     import c.universe._
 
     if (classSym.isCaseClass && !classSym.isModuleClass) {
@@ -31,10 +33,12 @@ private[generic] object JSONMacros {
         (argTree, Ident(termName))
       }).unzip
 
-      val applyBlock = Block(Nil, Function(
-        argDefs,
-        Apply(Select(Ident(classSym.companion), TermName("apply")), args)
-      ))
+      val applyBlock = Block(
+        Nil,
+        Function(
+          argDefs,
+          Apply(Select(Ident(classSym.companion), TermName("apply")), args)
+        ))
       Apply(
         Select(
           reify(io.sphere.json.generic.`package`).tree,
@@ -79,10 +83,10 @@ private[generic] object JSONMacros {
       } else c.abort(c.enclosingPosition, "Only case Objects are supported.")
 
     if (!symbol.isClass)
-      c.abort(c.enclosingPosition, "Can only enumerate values of a sealed trait or class."
-    ) else if (!symbol.asClass.isSealed)
-      c.abort(c.enclosingPosition, "Can only enumerate values of a sealed trait or class."
-    ) else {
+      c.abort(c.enclosingPosition, "Can only enumerate values of a sealed trait or class.")
+    else if (!symbol.asClass.isSealed)
+      c.abort(c.enclosingPosition, "Can only enumerate values of a sealed trait or class.")
+    else {
       val subtypes = collectKnownSubtypes(c)(symbol)
 
       val idents = Ident(symbol.name) :: subtypes.map { s =>
@@ -95,7 +99,9 @@ private[generic] object JSONMacros {
         val instanceDefs = subtypes.zipWithIndex.collect {
           case (symbol, i) if symbol.isClass && symbol.asClass.isModuleClass =>
             if (symbol.asClass.typeParams.nonEmpty)
-              c.abort(c.enclosingPosition, "Types with type parameters cannot (yet) be derived as part of a sum type")
+              c.abort(
+                c.enclosingPosition,
+                "Types with type parameters cannot (yet) be derived as part of a sum type")
             else {
               ValDef(
                 Modifiers(Flag.IMPLICIT),
@@ -136,25 +142,30 @@ private[generic] object JSONMacros {
 
     if (tpe <:< weakTypeOf[Enumeration#Value]) {
       val TypeRef(pre, _, _) = tpe
-      c.Expr[JSON[A]](Apply(
-        Select(
-          reify(io.sphere.json.generic.`package`).tree,
-          TermName("jsonEnum")
-        ),
-        Ident(pre.typeSymbol.name.toTermName) :: Nil
-      ))
+      c.Expr[JSON[A]](
+        Apply(
+          Select(
+            reify(io.sphere.json.generic.`package`).tree,
+            TermName("jsonEnum")
+          ),
+          Ident(pre.typeSymbol.name.toTermName) :: Nil
+        ))
     } else if (symbol.isClass && (symbol.asClass.isCaseClass || symbol.asClass.isModuleClass))
       // product type or singleton
       c.Expr[JSON[A]](jsonProductApply(c)(tpe, symbol.asClass))
     else {
       // sum type
-      if (!symbol.isClass) c.abort(
-        c.enclosingPosition,
-        "Can only enumerate values of a sealed trait or class."
-      ) else if (!symbol.asClass.isSealed) c.abort(
-        c.enclosingPosition,
-        "Can only enumerate values of a sealed trait or class."
-      ) else {
+      if (!symbol.isClass)
+        c.abort(
+          c.enclosingPosition,
+          "Can only enumerate values of a sealed trait or class."
+        )
+      else if (!symbol.asClass.isSealed)
+        c.abort(
+          c.enclosingPosition,
+          "Can only enumerate values of a sealed trait or class."
+        )
+      else {
         val subtypes = collectKnownSubtypes(c)(symbol)
         val idents = Ident(symbol.name) :: subtypes.map { s =>
           if (s.isModuleClass) New(TypeTree(s.asClass.toType)) else Ident(s.name)
@@ -166,7 +177,9 @@ private[generic] object JSONMacros {
           val instanceDefs = subtypes.zipWithIndex.collect {
             case (symbol, i) if symbol.isClass && symbol.asClass.isCaseClass =>
               if (symbol.asClass.typeParams.nonEmpty) {
-                c.abort(c.enclosingPosition, "Types with type parameters cannot (yet) be derived as part of a sum type")
+                c.abort(
+                  c.enclosingPosition,
+                  "Types with type parameters cannot (yet) be derived as part of a sum type")
               } else {
                 ValDef(
                   Modifiers(Flag.IMPLICIT),
@@ -178,7 +191,7 @@ private[generic] object JSONMacros {
                   jsonProductApply(c)(tpe, symbol.asClass)
                 )
               }
-            }.toList
+          }.toList
 
           c.Expr[JSON[A]](
             Block(
