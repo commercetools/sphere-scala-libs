@@ -11,7 +11,7 @@ class SphereJsonExample extends AnyWordSpec with Matchers {
 
   object User {
 
-    // update https://github.com/sphereio/sphere-scala-libs/blob/master/json/README.md in case of changed
+    // update https://github.com/commercetools/sphere-scala-libs/blob/master/json/README.md in case of changed
     implicit val json: JSON[User] = new JSON[User] {
       import cats.data.ValidatedNel
       import cats.syntax.apply._

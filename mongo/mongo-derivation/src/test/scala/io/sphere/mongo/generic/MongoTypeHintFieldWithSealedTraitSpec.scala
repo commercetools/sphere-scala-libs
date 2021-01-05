@@ -41,7 +41,7 @@ class MongoTypeHintFieldWithSealedTraitSpec extends AnyWordSpec with Matchers {
 
 object MongoTypeHintFieldWithSealedTraitSpec {
 
-  // issue https://github.com/sphereio/sphere-scala-libs/issues/10
+  // issue https://github.com/commercetools/sphere-scala-libs/issues/10
   // @MongoTypeHintField must be repeated for all sub-classes
   @MongoTypeHintField(value = "pictureType")
   sealed trait PictureSize
