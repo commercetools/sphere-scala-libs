@@ -17,9 +17,9 @@ class JSONCatsInstancesTest extends AnyWordSpec with Matchers {
     "allow imaping a default format" in {
       val myId = MyId("test")
       val json = toJValue(myId)
-      json must be (JString("test"))
+      json must be(JString("test"))
       val myNewId = getFromJValue[MyId](json)
-      myNewId must be (myId)
+      myNewId must be(myId)
     }
   }
 
@@ -27,9 +27,9 @@ class JSONCatsInstancesTest extends AnyWordSpec with Matchers {
     "allow mapping and contramapping a default format" in {
       val myId = MyId2("test")
       val json = toJValue(myId)
-      json must be (JString("test"))
+      json must be(JString("test"))
       val myNewId = getFromJValue[MyId2](json)
-      myNewId must be (myId)
+      myNewId must be(myId)
     }
   }
 }

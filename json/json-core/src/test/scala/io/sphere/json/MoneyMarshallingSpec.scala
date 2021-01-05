@@ -16,7 +16,7 @@ class MoneyMarshallingSpec extends AnyWordSpec with Matchers {
       val jsonAsString = compactJson(jsonAst)
       val Valid(readAst) = parseJSON(jsonAsString)
 
-      jsonAst should equal (readAst)
+      jsonAst should equal(readAst)
     }
 
     "decode with type info" in {
@@ -29,7 +29,7 @@ class MoneyMarshallingSpec extends AnyWordSpec with Matchers {
         }
         """
 
-      fromJSON[BaseMoney](json) should be (Valid(Money.USD(BigDecimal("32.98"))))
+      fromJSON[BaseMoney](json) should be(Valid(Money.USD(BigDecimal("32.98"))))
     }
 
     "decode without type info" in {
@@ -41,7 +41,7 @@ class MoneyMarshallingSpec extends AnyWordSpec with Matchers {
         }
         """
 
-      fromJSON[BaseMoney](json) should be (Valid(Money.USD(BigDecimal("32.98"))))
+      fromJSON[BaseMoney](json) should be(Valid(Money.USD(BigDecimal("32.98"))))
     }
   }
 
@@ -56,9 +56,9 @@ class MoneyMarshallingSpec extends AnyWordSpec with Matchers {
       val Valid(decodedMoney) = fromJSON[HighPrecisionMoney](jsonAsString)
       val Valid(decodedBaseMoney) = fromJSON[BaseMoney](jsonAsString)
 
-      jsonAst should equal (readAst)
-      decodedMoney should equal (money)
-      decodedBaseMoney should equal (money)
+      jsonAst should equal(readAst)
+      decodedMoney should equal(money)
+      decodedBaseMoney should equal(money)
     }
 
     "decode with type info" in {
@@ -72,13 +72,12 @@ class MoneyMarshallingSpec extends AnyWordSpec with Matchers {
         }
         """
 
-      fromJSON[BaseMoney](json) should be (Valid(
-        HighPrecisionMoney.USD(BigDecimal("0.0042"), Some(4))))
+      fromJSON[BaseMoney](json) should be(
+        Valid(HighPrecisionMoney.USD(BigDecimal("0.0042"), Some(4))))
     }
 
     "decode with centAmount" in {
-      val Valid(json) = parseJSON(
-        """
+      val Valid(json) = parseJSON("""
         {
           "type": "highPrecision",
           "currencyCode": "USD",
@@ -90,7 +89,7 @@ class MoneyMarshallingSpec extends AnyWordSpec with Matchers {
 
       val Valid(parsed) = fromJValue[BaseMoney](json)
 
-      toJValue(parsed) should be (json)
+      toJValue(parsed) should be(json)
     }
 
     "validate data when decoded from JSON" in {
@@ -104,7 +103,7 @@ class MoneyMarshallingSpec extends AnyWordSpec with Matchers {
         }
         """
 
-      fromJSON[BaseMoney](json).isValid should be (false)
+      fromJSON[BaseMoney](json).isValid should be(false)
     }
   }
 

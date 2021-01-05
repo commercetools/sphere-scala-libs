@@ -22,41 +22,45 @@ object ToJSON {
 
   @inline def apply[A](implicit instance: ToJSON[A]): ToJSON[A] = instance
 
-  /**
-    * construct an instance from a function
+  /** construct an instance from a function
     */
   def instance[T](toJson: T => JValue): ToJSON[T] = new ToJSON[T] {
     override def write(value: T): JValue = toJson(value)
   }
 
-  implicit def optionWriter[@specialized A](implicit c: ToJSON[A]): ToJSON[Option[A]] = new ToJSON[Option[A]] {
-    def write(opt: Option[A]): JValue = opt match {
-      case Some(a) => c.write(a)
-      case None => JNothing
+  implicit def optionWriter[@specialized A](implicit c: ToJSON[A]): ToJSON[Option[A]] =
+    new ToJSON[Option[A]] {
+      def write(opt: Option[A]): JValue = opt match {
+        case Some(a) => c.write(a)
+        case None => JNothing
+      }
     }
-  }
 
-  implicit def listWriter[@specialized A](implicit w: ToJSON[A]): ToJSON[List[A]] = new ToJSON[List[A]] {
-    def write(l: List[A]): JValue = JArray(l map w.write)
-  }
-
-  implicit def nonEmptyListWriter[A](implicit w: ToJSON[A]): ToJSON[NonEmptyList[A]] = new ToJSON[NonEmptyList[A]] {
-    def write(l: NonEmptyList[A]): JValue = JArray(l.toList map w.write)
-  }
-
-  implicit def seqWriter[@specialized A](implicit w: ToJSON[A]): ToJSON[Seq[A]] = new ToJSON[Seq[A]] {
-    def write(s: Seq[A]): JValue = JArray(s.iterator.map(w.write).toList)
-  }
-
-  implicit def setWriter[@specialized A](implicit w: ToJSON[A]): ToJSON[Set[A]] = new ToJSON[Set[A]] {
-    def write(s: Set[A]): JValue = JArray(s.iterator.map(w.write).toList)
-  }
-
-  implicit def vectorWriter[@specialized A](implicit w: ToJSON[A]): ToJSON[Vector[A]] = new ToJSON[Vector[A]] {
-    def write(v: Vector[A]): JValue = {
-      JArray(v.iterator.map(w.write).toList)
+  implicit def listWriter[@specialized A](implicit w: ToJSON[A]): ToJSON[List[A]] =
+    new ToJSON[List[A]] {
+      def write(l: List[A]): JValue = JArray(l.map(w.write))
     }
-  }
+
+  implicit def nonEmptyListWriter[A](implicit w: ToJSON[A]): ToJSON[NonEmptyList[A]] =
+    new ToJSON[NonEmptyList[A]] {
+      def write(l: NonEmptyList[A]): JValue = JArray(l.toList.map(w.write))
+    }
+
+  implicit def seqWriter[@specialized A](implicit w: ToJSON[A]): ToJSON[Seq[A]] =
+    new ToJSON[Seq[A]] {
+      def write(s: Seq[A]): JValue = JArray(s.iterator.map(w.write).toList)
+    }
+
+  implicit def setWriter[@specialized A](implicit w: ToJSON[A]): ToJSON[Set[A]] =
+    new ToJSON[Set[A]] {
+      def write(s: Set[A]): JValue = JArray(s.iterator.map(w.write).toList)
+    }
+
+  implicit def vectorWriter[@specialized A](implicit w: ToJSON[A]): ToJSON[Vector[A]] =
+    new ToJSON[Vector[A]] {
+      def write(v: Vector[A]): JValue =
+        JArray(v.iterator.map(w.write).toList)
+    }
 
   implicit val intWriter: ToJSON[Int] = new ToJSON[Int] {
     def write(i: Int): JValue = JLong(i)
@@ -91,7 +95,9 @@ object ToJSON {
   }
 
   implicit def mapWriter[A: ToJSON]: ToJSON[Map[String, A]] = new ToJSON[Map[String, A]] {
-    def write(m: Map[String, A]) = JObject(m.iterator.map { case (k, v) => JField(k, toJValue(v)) }.toList)
+    def write(m: Map[String, A]) = JObject(m.iterator.map { case (k, v) =>
+      JField(k, toJValue(v))
+    }.toList)
   }
 
   implicit val moneyWriter: ToJSON[Money] = new ToJSON[Money] {
@@ -99,24 +105,25 @@ object ToJSON {
 
     def write(m: Money): JValue = JObject(
       JField(BaseMoney.TypeField, toJValue(m.`type`)) ::
-      JField(CurrencyCodeField, toJValue(m.currency)) ::
-      JField(CentAmountField, toJValue(m.centAmount)) ::
-      JField(FractionDigitsField, toJValue(m.currency.getDefaultFractionDigits)) ::
-      Nil
+        JField(CurrencyCodeField, toJValue(m.currency)) ::
+        JField(CentAmountField, toJValue(m.centAmount)) ::
+        JField(FractionDigitsField, toJValue(m.currency.getDefaultFractionDigits)) ::
+        Nil
     )
   }
 
-  implicit val highPrecisionMoneyWriter: ToJSON[HighPrecisionMoney] = new ToJSON[HighPrecisionMoney] {
-    import HighPrecisionMoney._
-    def write(m: HighPrecisionMoney): JValue = JObject(
-      JField(BaseMoney.TypeField, toJValue(m.`type`)) ::
-      JField(CurrencyCodeField, toJValue(m.currency)) ::
-      JField(CentAmountField, toJValue(m.centAmount)) ::
-      JField(PreciseAmountField, toJValue(m.preciseAmountAsLong)) ::
-      JField(FractionDigitsField, toJValue(m.fractionDigits)) ::
-      Nil
-    )
-  }
+  implicit val highPrecisionMoneyWriter: ToJSON[HighPrecisionMoney] =
+    new ToJSON[HighPrecisionMoney] {
+      import HighPrecisionMoney._
+      def write(m: HighPrecisionMoney): JValue = JObject(
+        JField(BaseMoney.TypeField, toJValue(m.`type`)) ::
+          JField(CurrencyCodeField, toJValue(m.currency)) ::
+          JField(CentAmountField, toJValue(m.centAmount)) ::
+          JField(PreciseAmountField, toJValue(m.preciseAmountAsLong)) ::
+          JField(FractionDigitsField, toJValue(m.fractionDigits)) ::
+          Nil
+      )
+    }
 
   implicit val baseMoneyWriter: ToJSON[BaseMoney] = new ToJSON[BaseMoney] {
     def write(m: BaseMoney): JValue = m match {
@@ -142,7 +149,8 @@ object ToJSON {
   }
 
   implicit val dateTimeWriter: ToJSON[DateTime] = new ToJSON[DateTime] {
-    def write(dt: DateTime): JValue = JString(ISODateTimeFormat.dateTime.print(dt.withZone(DateTimeZone.UTC)))
+    def write(dt: DateTime): JValue = JString(
+      ISODateTimeFormat.dateTime.print(dt.withZone(DateTimeZone.UTC)))
   }
 
   implicit val timeWriter: ToJSON[LocalTime] = new ToJSON[LocalTime] {

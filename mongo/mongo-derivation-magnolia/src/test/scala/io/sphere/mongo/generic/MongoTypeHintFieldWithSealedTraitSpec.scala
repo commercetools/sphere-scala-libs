@@ -14,27 +14,25 @@ class MongoTypeHintFieldWithSealedTraitSpec extends AnyWordSpec with Matchers {
       val user = UserWithPicture("foo-123", Medium, "http://example.com")
       val expected = dbObj(
         "userId" -> "foo-123",
-        "pictureSize" -> dbObj(
-          "pictureType" -> "Medium"),
+        "pictureSize" -> dbObj("pictureType" -> "Medium"),
         "pictureUrl" -> "http://example.com")
 
       val dbo = toMongo[UserWithPicture](user)
-      dbo must be (expected)
+      dbo must be(expected)
     }
 
     "allow to set another field to distinguish between types (fromMongo)" in {
       val initialDbo = dbObj(
         "userId" -> "foo-123",
-        "pictureSize" -> dbObj(
-          "pictureType" -> "Medium"),
+        "pictureSize" -> dbObj("pictureType" -> "Medium"),
         "pictureUrl" -> "http://example.com")
 
       val user = fromMongo[UserWithPicture](initialDbo)
 
-      user must be (UserWithPicture("foo-123", Medium, "http://example.com"))
+      user must be(UserWithPicture("foo-123", Medium, "http://example.com"))
 
       val dbo = toMongo[UserWithPicture](user)
-      dbo must be (initialDbo)
+      dbo must be(initialDbo)
     }
   }
 }
@@ -51,10 +49,7 @@ object MongoTypeHintFieldWithSealedTraitSpec {
     implicit val mongo: MongoFormat[PictureSize] = deriveMongoFormat[PictureSize]
   }
 
-  case class UserWithPicture(
-    userId: String,
-    pictureSize: PictureSize,
-    pictureUrl: String)
+  case class UserWithPicture(userId: String, pictureSize: PictureSize, pictureUrl: String)
 
   object UserWithPicture {
     implicit val mongo: MongoFormat[UserWithPicture] = deriveMongoFormat

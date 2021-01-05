@@ -15,16 +15,13 @@ object OptionMongoFormatSpec {
     implicit val mongo: MongoFormat[SimpleClass] = mongoProduct(apply _)
   }
 
-  case class ComplexClass(
-    name: String,
-    simpleClass: Option[SimpleClass])
+  case class ComplexClass(name: String, simpleClass: Option[SimpleClass])
 
   object ComplexClass {
     implicit val mongo: MongoFormat[ComplexClass] = mongoProduct(apply _)
   }
 
 }
-
 
 class OptionMongoFormatSpec extends AnyWordSpec with Matchers with OptionValues {
   import OptionMongoFormatSpec._
@@ -53,7 +50,7 @@ class OptionMongoFormatSpec extends AnyWordSpec with Matchers with OptionValues 
 
     "handle presence of not all the fields" in {
       val dbo = dbObj("value1" -> "a")
-      an[Exception] mustBe thrownBy (MongoFormat[Option[SimpleClass]].fromMongoValue(dbo))
+      an[Exception] mustBe thrownBy(MongoFormat[Option[SimpleClass]].fromMongoValue(dbo))
     }
 
     "handle absence of all fields" in {

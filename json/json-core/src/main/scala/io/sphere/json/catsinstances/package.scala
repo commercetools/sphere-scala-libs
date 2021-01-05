@@ -3,9 +3,8 @@ package io.sphere.json
 import _root_.cats.{Contravariant, Functor, Invariant}
 import org.json4s.JValue
 
-/**
- * Cats instances for [[JSON]], [[FromJSON]] and [[ToJSON]]
- */
+/** Cats instances for [[JSON]], [[FromJSON]] and [[ToJSON]]
+  */
 package object catsinstances extends JSONInstances
 
 trait JSONInstances {

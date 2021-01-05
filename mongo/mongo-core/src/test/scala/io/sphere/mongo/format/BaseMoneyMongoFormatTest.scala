@@ -1,6 +1,5 @@
 package io.sphere.mongo.format
 
-
 import java.util.Currency
 
 import io.sphere.util.{BaseMoney, HighPrecisionMoney, Money}
@@ -21,7 +20,7 @@ class BaseMoneyMongoFormatTest extends AnyWordSpec with Matchers {
       val dbo = f.toMongoValue(money)
       val readMoney = f.fromMongoValue(dbo)
 
-      money should be (readMoney)
+      money should be(readMoney)
     }
 
     "decode with type info" in {
@@ -31,7 +30,7 @@ class BaseMoneyMongoFormatTest extends AnyWordSpec with Matchers {
         "centAmount" -> 3298
       )
 
-      MongoFormat[BaseMoney].fromMongoValue(dbo) should be (Money.USD(BigDecimal("32.98")))
+      MongoFormat[BaseMoney].fromMongoValue(dbo) should be(Money.USD(BigDecimal("32.98")))
     }
 
     "decode without type info" in {
@@ -40,7 +39,7 @@ class BaseMoneyMongoFormatTest extends AnyWordSpec with Matchers {
         "centAmount" -> 3298
       )
 
-      MongoFormat[BaseMoney].fromMongoValue(dbo) should be (Money.USD(BigDecimal("32.98")))
+      MongoFormat[BaseMoney].fromMongoValue(dbo) should be(Money.USD(BigDecimal("32.98")))
     }
   }
 
@@ -54,8 +53,8 @@ class BaseMoneyMongoFormatTest extends AnyWordSpec with Matchers {
       val decodedMoney = MongoFormat[HighPrecisionMoney].fromMongoValue(dbo)
       val decodedBaseMoney = MongoFormat[BaseMoney].fromMongoValue(dbo)
 
-      decodedMoney should equal (money)
-      decodedBaseMoney should equal (money)
+      decodedMoney should equal(money)
+      decodedBaseMoney should equal(money)
     }
 
     "decode with type info" in {
@@ -66,7 +65,7 @@ class BaseMoneyMongoFormatTest extends AnyWordSpec with Matchers {
         "fractionDigits" -> 4
       )
 
-      MongoFormat[BaseMoney].fromMongoValue(dbo) should be (
+      MongoFormat[BaseMoney].fromMongoValue(dbo) should be(
         HighPrecisionMoney.USD(BigDecimal("0.0042"), Some(4)))
     }
 
@@ -80,7 +79,7 @@ class BaseMoneyMongoFormatTest extends AnyWordSpec with Matchers {
       )
 
       val parsed = MongoFormat[BaseMoney].fromMongoValue(dbo)
-      MongoFormat[BaseMoney].toMongoValue(parsed).asInstanceOf[BSONObject].toMap.asScala should be (
+      MongoFormat[BaseMoney].toMongoValue(parsed).asInstanceOf[BSONObject].toMap.asScala should be(
         dbo.toMap.asScala)
     }
 
@@ -92,7 +91,7 @@ class BaseMoneyMongoFormatTest extends AnyWordSpec with Matchers {
         "fractionDigits" -> 1
       )
 
-      an[Exception] shouldBe thrownBy (MongoFormat[BaseMoney].fromMongoValue(dbo))
+      an[Exception] shouldBe thrownBy(MongoFormat[BaseMoney].fromMongoValue(dbo))
     }
   }
 

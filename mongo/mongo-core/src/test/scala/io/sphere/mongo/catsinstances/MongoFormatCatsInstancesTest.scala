@@ -13,9 +13,9 @@ class MongoFormatCatsInstancesTest extends AnyWordSpec with Matchers {
     "allow imaping a default format" in {
       val myId = MyId("test")
       val dbo = toMongo(myId)
-      dbo.asInstanceOf[String] must be ("test")
+      dbo.asInstanceOf[String] must be("test")
       val myNewId = fromMongo[MyId](dbo)
-      myNewId must be (myId)
+      myNewId must be(myId)
     }
   }
 }

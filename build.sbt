@@ -26,11 +26,9 @@ lazy val standardSettings = Defaults.coreDefaultSettings ++ publishSettings ++ S
     "-feature"
   ),
   javacOptions ++= Seq("-deprecation", "-Xlint:unchecked"),
-
   // targets Java 8 bytecode (scalac & javac)
   scalacOptions in ThisBuild += "-target:jvm-1.8",
   javacOptions in ThisBuild ++= Seq("-source", "8", "-target", "8"),
-
   testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "3.2.3" % Test,
@@ -43,11 +41,10 @@ lazy val standardSettings = Defaults.coreDefaultSettings ++ publishSettings ++ S
   }
 )
 
-lazy val `sphere-libs` = project.in(file("."))
+lazy val `sphere-libs` = project
+  .in(file("."))
   .settings(standardSettings: _*)
-  .settings(
-    publishArtifact := false,
-    publish := {})
+  .settings(publishArtifact := false, publish := {})
   .disablePlugins(BintrayPlugin)
   .aggregate(
     `sphere-util`,
@@ -57,53 +54,60 @@ lazy val `sphere-libs` = project.in(file("."))
     `sphere-mongo`,
     `sphere-mongo-core`,
     `sphere-mongo-derivation`,
-    `sphere-mongo-derivation-magnolia`)
+    `sphere-mongo-derivation-magnolia`
+  )
 
-lazy val `sphere-util` = project.in(file("./util"))
+lazy val `sphere-util` = project
+  .in(file("./util"))
   .settings(standardSettings: _*)
   .settings(homepage := Some(url("https://github.com/commercetools/sphere-scala-libs/README.md")))
 
-
-lazy val `sphere-json-core` = project.in(file("./json/json-core"))
+lazy val `sphere-json-core` = project
+  .in(file("./json/json-core"))
   .settings(standardSettings: _*)
   .dependsOn(`sphere-util`)
 
-lazy val `sphere-json-derivation` = project.in(file("./json/json-derivation"))
+lazy val `sphere-json-derivation` = project
+  .in(file("./json/json-derivation"))
   .settings(standardSettings: _*)
   .settings(Fmpp.settings: _*)
   .dependsOn(`sphere-json-core`)
 
-lazy val `sphere-json` = project.in(file("./json"))
+lazy val `sphere-json` = project
+  .in(file("./json"))
   .settings(standardSettings: _*)
-  .settings(homepage := Some(url("https://github.com/commercetools/sphere-scala-libs/blob/master/json/README.md")))
+  .settings(homepage := Some(
+    url("https://github.com/commercetools/sphere-scala-libs/blob/master/json/README.md")))
   .dependsOn(`sphere-json-core`, `sphere-json-derivation`)
 
-
-lazy val `sphere-mongo-core` = project.in(file("./mongo/mongo-core"))
+lazy val `sphere-mongo-core` = project
+  .in(file("./mongo/mongo-core"))
   .settings(standardSettings: _*)
   .dependsOn(`sphere-util`)
 
-lazy val `sphere-mongo-derivation` = project.in(file("./mongo/mongo-derivation"))
+lazy val `sphere-mongo-derivation` = project
+  .in(file("./mongo/mongo-derivation"))
   .settings(standardSettings: _*)
   .settings(Fmpp.settings: _*)
   .dependsOn(`sphere-mongo-core`)
 
-lazy val `sphere-mongo-derivation-magnolia` = project.in(file("./mongo/mongo-derivation-magnolia"))
+lazy val `sphere-mongo-derivation-magnolia` = project
+  .in(file("./mongo/mongo-derivation-magnolia"))
   .settings(standardSettings: _*)
   .dependsOn(`sphere-mongo-core`)
 
-lazy val `sphere-mongo` = project.in(file("./mongo"))
+lazy val `sphere-mongo` = project
+  .in(file("./mongo"))
   .settings(standardSettings: _*)
-  .settings(homepage := Some(url("https://github.com/commercetools/sphere-scala-libs/blob/master/mongo/README.md")))
+  .settings(homepage := Some(
+    url("https://github.com/commercetools/sphere-scala-libs/blob/master/mongo/README.md")))
   .dependsOn(`sphere-mongo-core`, `sphere-mongo-derivation`)
 
 // benchmarks
 
 lazy val benchmarks = project
   .settings(standardSettings: _*)
-  .settings(
-    publishArtifact := false,
-    publish := {})
+  .settings(publishArtifact := false, publish := {})
   .enablePlugins(JmhPlugin)
   .disablePlugins(BintrayPlugin)
   .dependsOn(`sphere-util`, `sphere-json`, `sphere-mongo`)

@@ -17,21 +17,31 @@ class TypesSwitchSpec extends AnyWordSpec with Matchers {
         TypeB.ClassB2(Seq("a23", "c62")))
 
       val jsons = m.map(Message.json.write)
-      jsons must be (List(
-        JObject("number" -> JLong(23), "type" -> JString("ClassA1")),
-        JObject("name" -> JString("world"), "type" -> JString("ClassA2")),
-        JObject("valid" -> JBool(false), "type" -> JString("ClassB1")),
-        JObject("references" -> JArray(List(JString("a23"), JString("c62"))), "type" -> JString("ClassB2"))))
+      jsons must be(
+        List(
+          JObject("number" -> JLong(23), "type" -> JString("ClassA1")),
+          JObject("name" -> JString("world"), "type" -> JString("ClassA2")),
+          JObject("valid" -> JBool(false), "type" -> JString("ClassB1")),
+          JObject(
+            "references" -> JArray(List(JString("a23"), JString("c62"))),
+            "type" -> JString("ClassB2"))
+        ))
 
       val messages = jsons.map(Message.json.read).map(_.toOption.get)
-      messages must be (m)
+      messages must be(m)
     }
   }
 
   "TypeSelectorContainer" must {
     "have information about type value discriminators" in {
       val selectors = Message.json.typeSelectors
-      selectors.map(_.typeValue) must contain.allOf("ClassA1", "ClassA2", "TypeA", "ClassB1", "ClassB2", "TypeB")
+      selectors.map(_.typeValue) must contain.allOf(
+        "ClassA1",
+        "ClassA2",
+        "TypeA",
+        "ClassB1",
+        "ClassB2",
+        "TypeB")
 
       // I don't think it's useful to allow different type fields. How is it possible to deserialize one json
       // if different type fields are used?

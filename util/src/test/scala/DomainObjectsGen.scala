@@ -13,8 +13,9 @@ object DomainObjectsGen {
 
   val money: Gen[Money] = for {
     currency <- currency
-    amount <- Gen.chooseNum[Int](Int.MinValue, Int.MaxValue).map(i =>
-      BigDecimal(i, currency.getDefaultFractionDigits))
+    amount <- Gen
+      .chooseNum[Int](Int.MinValue, Int.MaxValue)
+      .map(i => BigDecimal(i, currency.getDefaultFractionDigits))
   } yield Money(amount, currency)
 
   val highPrecisionMoney: Gen[HighPrecisionMoney] = for {

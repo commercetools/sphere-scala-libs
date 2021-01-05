@@ -8,13 +8,13 @@ class BigNumberParsingSpec extends AnyWordSpec with Matchers {
 
   "parsing a big number" should {
     "not take much time when parsed as Double" in {
-      fromJSON[Double](bigNumberAsString).isValid should be (false)
+      fromJSON[Double](bigNumberAsString).isValid should be(false)
     }
     "not take much time when parsed as Long" in {
-      fromJSON[Long](bigNumberAsString).isValid should be (false)
+      fromJSON[Long](bigNumberAsString).isValid should be(false)
     }
     "not take much time when parsed as Int" in {
-      fromJSON[Int](bigNumberAsString).isValid should be (false)
+      fromJSON[Int](bigNumberAsString).isValid should be(false)
     }
   }
 }
