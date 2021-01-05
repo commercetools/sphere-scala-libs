@@ -58,7 +58,7 @@ lazy val `sphere-libs` = project.in(file("."))
 
 lazy val `sphere-util` = project.in(file("./util"))
   .settings(standardSettings: _*)
-  .settings(homepage := Some(url("https://github.com/sphereio/sphere-scala-libs/README.md")))
+  .settings(homepage := Some(url("https://github.com/commercetools/sphere-scala-libs/README.md")))
 
 
 lazy val `sphere-json-core` = project.in(file("./json/json-core"))
@@ -72,7 +72,7 @@ lazy val `sphere-json-derivation` = project.in(file("./json/json-derivation"))
 
 lazy val `sphere-json` = project.in(file("./json"))
   .settings(standardSettings: _*)
-  .settings(homepage := Some(url("https://github.com/sphereio/sphere-scala-libs/blob/master/json/README.md")))
+  .settings(homepage := Some(url("https://github.com/commercetools/sphere-scala-libs/blob/master/json/README.md")))
   .dependsOn(`sphere-json-core`, `sphere-json-derivation`)
 
 
@@ -91,7 +91,7 @@ lazy val `sphere-mongo-derivation-magnolia` = project.in(file("./mongo/mongo-der
 
 lazy val `sphere-mongo` = project.in(file("./mongo"))
   .settings(standardSettings: _*)
-  .settings(homepage := Some(url("https://github.com/sphereio/sphere-scala-libs/blob/master/mongo/README.md")))
+  .settings(homepage := Some(url("https://github.com/commercetools/sphere-scala-libs/blob/master/mongo/README.md")))
   .dependsOn(`sphere-mongo-core`, `sphere-mongo-derivation`)
 
 // benchmarks
