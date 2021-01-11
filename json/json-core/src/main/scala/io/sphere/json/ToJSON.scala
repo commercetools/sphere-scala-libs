@@ -4,11 +4,13 @@ import cats.data.NonEmptyList
 import java.util.{Currency, Locale, UUID}
 
 import io.sphere.util.{BaseMoney, HighPrecisionMoney, Money}
-import org.json4s.JsonAST._
 import org.joda.time._
 import org.joda.time.format.ISODateTimeFormat
+import org.json4s.JValue
+import org.json4s.JsonAST._
 
 import scala.annotation.implicitNotFound
+import scala.util.chaining._
 
 /** Type class for types that can be written to JSON. */
 @implicitNotFound("Could not find an instance of ToJSON for ${A}")
@@ -26,6 +28,34 @@ object ToJSON {
     */
   def instance[T](toJson: T => JValue): ToJSON[T] = new ToJSON[T] {
     override def write(value: T): JValue = toJson(value)
+  }
+
+  /** Creates a new `ToJSON`` that taps a given `ToJSON`.
+    * This may for instance be useful to collect statistics on the JSON writes.
+    *
+    * @param every whenever `write` has been called this number of times `sideEffect` will be called
+    * @param onWrite side effect to be called on `every` n-th `write`
+    * @param delegate the ToJSON that this ToJSON delegates `write` to
+    * @return a new `ToJSON` based on the tapped `delegate`
+    */
+  def tapped[T](every: Int)(onWrite: (JValue, Int) => Unit)(implicit
+      delegate: ToJSON[T]): ToJSON[T] = {
+    require(every > 0, "'every' must be positive")
+
+    new ToJSON[T] {
+      private var writeCount = 0
+      private var tapCount = 0
+
+      def write(r: T): JValue =
+        delegate.write(r).tap { json =>
+          writeCount = writeCount + 1 // an overflow won't do any real harm
+          if (writeCount % every == 0) {
+            tapCount = tapCount + 1
+            onWrite(json, tapCount)
+            writeCount = 0
+          }
+        }
+    }
   }
 
   implicit def optionWriter[@specialized A](implicit c: ToJSON[A]): ToJSON[Option[A]] =
