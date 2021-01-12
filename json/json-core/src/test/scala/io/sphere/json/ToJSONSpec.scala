@@ -39,7 +39,7 @@ class ToJSONSpec extends AnyWordSpec with Matchers {
       val firstName = "Ann"
 
       var tapCount = 0
-      def tappedEncoder: ToJSON[User] = ToJSON.tapped[User](2) { (json, count) =>
+      def tappedEncoder: ToJSON[User] = ToJSON.tapped[User](2) { json =>
         json mustBe
           JObject(
             List(
@@ -47,7 +47,7 @@ class ToJSONSpec extends AnyWordSpec with Matchers {
               "first_name" -> JString(firstName),
               "age" -> JLong(1)
             ))
-        tapCount = count
+        tapCount = tapCount + 1
       }(User.encoder)
       implicit lazy val encoder: ToJSON[User] = tappedEncoder
 

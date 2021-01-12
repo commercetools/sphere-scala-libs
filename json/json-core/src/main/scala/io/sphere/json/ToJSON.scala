@@ -38,21 +38,18 @@ object ToJSON {
     * @param delegate the ToJSON that this ToJSON delegates `write` to
     * @return a new `ToJSON` based on the tapped `delegate`
     */
-  def tapped[T](every: Int)(onWrite: (JValue, Int) => Unit)(implicit
-      delegate: ToJSON[T]): ToJSON[T] = {
+  def tapped[T](every: Int)(onWrite: JValue => Unit)(implicit delegate: ToJSON[T]): ToJSON[T] = {
     require(every > 0, "'every' must be positive")
 
     new ToJSON[T] {
       private var writeCount = 0
-      private var tapCount = 0
 
       def write(r: T): JValue =
         delegate.write(r).tap { json =>
-          writeCount = writeCount + 1 // an overflow won't do any real harm
-          if (writeCount % every == 0) {
-            tapCount = tapCount + 1
-            onWrite(json, tapCount)
+          writeCount = writeCount + 1
+          if (writeCount == every) {
             writeCount = 0
+            onWrite(json)
           }
         }
     }
