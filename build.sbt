@@ -1,7 +1,7 @@
 import pl.project13.scala.sbt.JmhPlugin
 
 // sbt-github-actions needs configuration in `ThisBuild`
-ThisBuild / crossScalaVersions := Seq("2.12.12", "2.13.3")
+ThisBuild / crossScalaVersions := Seq("2.12.13", "2.13.3")
 ThisBuild / scalaVersion := crossScalaVersions.value.last
 ThisBuild / githubWorkflowPublishTargetBranches := List()
 ThisBuild / githubWorkflowJavaVersions := List("adopt@1.15")
