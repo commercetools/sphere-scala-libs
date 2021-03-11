@@ -21,3 +21,4 @@ plugins-ide.sbt
 src_managed
 *.deb
 *.changes
+.bsp

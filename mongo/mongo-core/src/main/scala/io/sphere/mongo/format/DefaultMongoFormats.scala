@@ -2,9 +2,8 @@ package io.sphere.mongo.format
 
 import java.util.{Currency, Locale, UUID}
 import java.util.regex.Pattern
-
 import io.sphere.util.{BaseMoney, HighPrecisionMoney, LangTag, Money}
-import org.bson.{BSONObject, BasicBSONObject}
+import org.bson.{BSONObject, BasicBSONObject, BsonBinary, UuidRepresentation}
 import org.bson.types.{BasicBSONList, ObjectId}
 
 import scala.collection.immutable.VectorBuilder
@@ -27,7 +26,17 @@ trait DefaultMongoFormats {
     def fromMongoValue(any: Any): A = any.asInstanceOf[A]
   }
 
-  implicit val uuidFormat: MongoFormat[UUID] = new NativeMongoFormat[UUID]
+  implicit val uuidFormat: MongoFormat[UUID] = new MongoFormat[UUID] {
+    // due to deprecation of the default JAVA_LEGACY as uuid representation for BSON we have to manually do that
+    // otherwise the mongo db client might insert the correct uuid format (if configured), but functions like
+    // equals toJson and toString will fail on DBObjects
+    // https://mongodb.github.io/mongo-java-driver/4.2/upgrading/
+    override def toMongoValue(a: UUID): Any = new BsonBinary(a, UuidRepresentation.JAVA_LEGACY)
+    override def fromMongoValue(any: Any): UUID = any match {
+      case i: UUID => i
+      case b: BsonBinary => b.asUuid(UuidRepresentation.JAVA_LEGACY)
+    }
+  }
   implicit val objectIdFormat: MongoFormat[ObjectId] = new NativeMongoFormat[ObjectId]
   implicit val stringFormat: MongoFormat[String] = new NativeMongoFormat[String]
   implicit val shortFormat: MongoFormat[Short] = new NativeMongoFormat[Short]

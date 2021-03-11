@@ -1,7 +1,6 @@
 package io.sphere.mongo.format
 
-import java.util.Locale
-
+import java.util.{Locale, UUID}
 import com.mongodb.DBObject
 import io.sphere.mongo.MongoUtils
 import io.sphere.mongo.format.DefaultMongoFormats._
@@ -131,6 +130,31 @@ class DefaultMongoFormatsTest
         localeFormat.fromMongoValue(localeFormat.toMongoValue(l)).toLanguageTag must be(
           l.toLanguageTag)
       }
+    }
+
+    "support UUID" in {
+      val format = uuidFormat
+      val uuids = Gen.uuid
+
+      check(uuids, format)
+    }
+
+    "support uuids nested in sets" in {
+      // This fails when not using BsonBinary for uuids with the 4.x.x mongo version.
+      // It failed as the format for `Set` needed equality and equality on BasicDBObject
+      // throws an: "The uuidRepresentation has not been specified, so the UUID cannot be encoded."
+      // when UUIDs are passed in natively.
+      case class TestObj(id: UUID)
+      def format: MongoFormat[Set[TestObj]] = setFormat[TestObj](new MongoFormat[TestObj] {
+        override def toMongoValue(a: TestObj): Any =
+          MongoUtils.dbObj("id" -> uuidFormat.toMongoValue(a.id))
+
+        override def fromMongoValue(any: Any): TestObj =
+          TestObj(uuidFormat.fromMongoValue(any.asInstanceOf[DBObject].get("id")))
+      })
+      val testObjects = Gen.listOf(Gen.uuid.map(TestObj)).map(_.toSet)
+
+      check(testObjects, format)
     }
   }
 
