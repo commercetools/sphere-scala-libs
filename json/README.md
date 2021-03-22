@@ -27,8 +27,6 @@ Therefore, you might want to use this library if:
 
 ## Repository
 
-Until the artifacts are released to Maven Central, please use our public repo:
-
 [![latest release](https://img.shields.io/maven-central/v/com.commercetools/sphere-json_2.13.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:com.commercetools%20AND%20a:sphere-json*)
 
 ## Basic Usage
