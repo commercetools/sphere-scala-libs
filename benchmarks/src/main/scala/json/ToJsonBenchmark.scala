@@ -41,18 +41,15 @@ ToJsonBenchmark.vectorWriter                  thrpt   10   70,300 ±  1,833  ops
   }
 
   @Benchmark
-  def vectorWriter(): Unit = {
+  def vectorWriter(): Unit =
     toJSON[Vector[Int]](JsonBenchmark.lotsOfIntsVector)
-  }
 
   @Benchmark
-  def listWriter(): Unit = {
+  def listWriter(): Unit =
     toJSON[List[Int]](JsonBenchmark.lotsOfIntsList)
-  }
 
   @Benchmark
-  def seqWriter(): Unit = {
+  def seqWriter(): Unit =
     toJSON[Seq[Int]](JsonBenchmark.lotsOfIntsSeq)
-  }
 
 }

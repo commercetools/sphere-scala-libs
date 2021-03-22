@@ -7,25 +7,18 @@ Just some Scala libraries that started out as internal projects as part of the [
 
 ## Download
 
-sphere-json: [ ![Download](https://api.bintray.com/packages/commercetools/maven/sphere-json/images/download.svg) ](https://bintray.com/commercetools/maven/sphere-json/_latestVersion)
+sphere-json: [![latest release](https://img.shields.io/maven-central/v/com.commercetools/sphere-json_2.13.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:com.commercetools%20AND%20a:sphere-json*)
 
-sphere-util: [ ![Download](https://api.bintray.com/packages/commercetools/maven/sphere-util/images/download.svg) ](https://bintray.com/commercetools/maven/sphere-util/_latestVersion)
 
-sphere-mongo: [ ![Download](https://api.bintray.com/packages/commercetools/maven/sphere-mongo/images/download.svg) ](https://bintray.com/commercetools/maven/sphere-mongo/_latestVersion)
+sphere-util: [![latest release](https://img.shields.io/maven-central/v/com.commercetools/sphere-util_2.13.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:com.commercetools%20AND%20a:sphere-util*)
+
+
+sphere-mongo: [![latest release](https://img.shields.io/maven-central/v/com.commercetools/sphere-mongo_2.13.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:com.commercetools%20AND%20a:sphere-mongo*)
+
 
 ## Documentation
 
 [sphere-json](json/README.md)
-
-## Including in the build
-
-The library is published to the [Bintray](https://bintray.com/commercetools/maven):
-
-    resolvers += Resolver.bintrayRepo("commercetools", "maven")
-    
-    libraryDependencies += "io.sphere" %% "sphere-util" % "0.12.1"
-    libraryDependencies += "io.sphere" %% "sphere-json" % "0.12.1"
-    libraryDependencies += "io.sphere" %% "sphere-mongo" % "0.12.1"
 
 ## License
 

@@ -27,7 +27,8 @@ case class Price(id: String, value: BaseMoney, validUntil: DateTime)
 object Price {
   // the lib does not ship a `MongoFormat[DateTime]`
   implicit val dateTimeAsIsoStringFormat: MongoFormat[DateTime] = new MongoFormat[DateTime] {
-    override def toMongoValue(dt: DateTime): Any = ISODateTimeFormat.dateTime.print(dt.withZone(DateTimeZone.UTC))
+    override def toMongoValue(dt: DateTime): Any =
+      ISODateTimeFormat.dateTime.print(dt.withZone(DateTimeZone.UTC))
     override def fromMongoValue(any: Any): DateTime = any match {
       case s: String => new DateTime(s, DateTimeZone.UTC)
       case _ => sys.error("String expected")
@@ -46,10 +47,10 @@ object ProductVariant {
 }
 
 case class Product(
-  id: UUID,
-  version: Long,
-  productType: Reference,
-  variants: Vector[ProductVariant])
+    id: UUID,
+    version: Long,
+    productType: Reference,
+    variants: Vector[ProductVariant])
 
 object Product {
   implicit val json: JSON[Product] = jsonProduct(apply _)
@@ -66,8 +67,9 @@ object JsonBenchmark {
   val bigMap: Map[String, String] = lotsOfIntsList.map(i => s"key$i" -> s"value$i").toMap
   val bigMapMongoValue = toMongo(bigMap)
 
-  val prices = for (i <- 1 to 200) yield
-    s"""
+  val prices =
+    for (i <- 1 to 200)
+      yield s"""
        |{
        |  "id": "$i",
        |  "value": {
@@ -81,9 +83,9 @@ object JsonBenchmark {
   val customAttributes =
     (for (i <- 1 to 80) yield s""" "field-$i": "value $i" """).mkString("{", ",", "}")
 
-
-  val variants = for (i <- 1 to 100) yield
-    s"""{
+  val variants =
+    for (i <- 1 to 100)
+      yield s"""{
         |  "id": $i,
         |  "prices": ${prices.mkString("[", ",", "]")},
         |  "images": [],
@@ -103,7 +105,7 @@ object JsonBenchmark {
         |  "categories":[],
         |  "categoryOrderHints":{},
         |  "slug": {"en":"product_slug_1_4ff4aaa3-2dc9-4aca-8db9-1c68a341de13"},
-        |  "variants": ${variants.mkString("[", ",",  "]")},
+        |  "variants": ${variants.mkString("[", ",", "]")},
         |  "searchKeywords":{},
         |  "hasStagedChanges":false,
         |  "published":true,

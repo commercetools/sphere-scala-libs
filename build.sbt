@@ -9,16 +9,27 @@ ThisBuild / githubWorkflowBuildPreamble ++= List(
   WorkflowStep.Sbt(List("scalafmtCheckAll"), name = Some("Check formatting"))
 )
 
-lazy val publishSettings = Seq(
-  releaseCrossBuild := true,
-  UpdateVersionInFiles("sphere-util", file("README.md")),
-  UpdateVersionInFiles("sphere-json", file("README.md"), file("json/README.md")),
-  UpdateVersionInFiles("sphere-mongo", file("README.md"), file("mongo/README.md"))
-) ++ BintrayPlugin.bintraySettings
+// Release
 
-lazy val standardSettings = Defaults.coreDefaultSettings ++ publishSettings ++ Seq(
-  organization := "io.sphere",
+inThisBuild(List(
+  organization := "com.commercetools",
   licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html")),
+  homepage := Some(url("https://github.com/commercetools/sphere-scala-libs")),
+  developers := List(Developer(id = "commercetools", name = "commercetools", email = "ondemand@commercetools.com", url = url("https://commercetools.com"))),
+  githubWorkflowTargetTags ++= Seq("v*"),
+  githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v"))),
+  githubWorkflowPublish := Seq(WorkflowStep.Sbt(
+    List("ci-release"),
+    env = Map(
+      "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
+      "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}",
+      "SONATYPE_PASSWORD" -> "${{ secrets.SONATYPE_PASSWORD }}",
+      "SONATYPE_USERNAME" -> "${{ secrets.SONATYPE_USERNAME }}"
+    )
+  ))
+))
+
+lazy val standardSettings = Defaults.coreDefaultSettings ++ Seq(
   logBuffered := false,
   scalacOptions ++= Seq(
     "-deprecation",
@@ -45,7 +56,6 @@ lazy val `sphere-libs` = project
   .in(file("."))
   .settings(standardSettings: _*)
   .settings(publishArtifact := false, publish := {})
-  .disablePlugins(BintrayPlugin)
   .aggregate(
     `sphere-util`,
     `sphere-json`,
@@ -54,7 +64,8 @@ lazy val `sphere-libs` = project
     `sphere-mongo`,
     `sphere-mongo-core`,
     `sphere-mongo-derivation`,
-    `sphere-mongo-derivation-magnolia`
+    `sphere-mongo-derivation-magnolia`,
+    `benchmarks`
   )
 
 lazy val `sphere-util` = project
@@ -109,5 +120,4 @@ lazy val benchmarks = project
   .settings(standardSettings: _*)
   .settings(publishArtifact := false, publish := {})
   .enablePlugins(JmhPlugin)
-  .disablePlugins(BintrayPlugin)
   .dependsOn(`sphere-util`, `sphere-json`, `sphere-mongo`)
