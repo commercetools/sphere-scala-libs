@@ -2,7 +2,16 @@ package json
 
 import io.sphere.mongo.format.fromMongo
 import io.sphere.mongo.format.DefaultMongoFormats._
-import org.openjdk.jmh.annotations.{Benchmark, BenchmarkMode, Fork, Measurement, Mode, Scope, State, Warmup}
+import org.openjdk.jmh.annotations.{
+  Benchmark,
+  BenchmarkMode,
+  Fork,
+  Measurement,
+  Mode,
+  Scope,
+  State,
+  Warmup
+}
 
 @State(Scope.Benchmark)
 @BenchmarkMode(Array(Mode.Throughput))
@@ -20,7 +29,7 @@ FromMongoBenchmark.mongoValueToCaseClass  thrpt   10    25,306 ±  0,832  ops/s
 FromMongoBenchmark.mongoValueToList       thrpt   10   521,449 ± 17,672  ops/s
 FromMongoBenchmark.mongoValueToMap        thrpt   10    51,554 ±  0,648  ops/s
 FromMongoBenchmark.mongoValueToVector     thrpt   10  1334,286 ± 21,065  ops/s
- */
+   */
 
   @Benchmark
   def mongoValueToCaseClass(): Unit = {

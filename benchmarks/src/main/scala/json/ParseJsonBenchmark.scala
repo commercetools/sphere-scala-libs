@@ -29,4 +29,3 @@ ParseJsonBenchmark.parseFromStringToJValue    thrpt   10   72,156 ± 0,403  ops/
     assert(jvalue != null)
   }
 }
-

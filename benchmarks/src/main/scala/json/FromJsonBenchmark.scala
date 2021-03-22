@@ -35,19 +35,15 @@ FromJsonBenchmark.vectorReader                thrpt   10   72,016 ±  0,552  ops
   }
 
   @Benchmark
-  def vectorReader(): Unit = {
+  def vectorReader(): Unit =
     fromJSON[Vector[Int]](JsonBenchmark.lotsOfIntsAsJson)
-  }
 
   @Benchmark
-  def listReader(): Unit = {
+  def listReader(): Unit =
     fromJSON[List[Int]](JsonBenchmark.lotsOfIntsAsJson)
-  }
 
   @Benchmark
-  def seqReader(): Unit = {
+  def seqReader(): Unit =
     fromJSON[Seq[Int]](JsonBenchmark.lotsOfIntsAsJson)
-  }
 
 }
-
