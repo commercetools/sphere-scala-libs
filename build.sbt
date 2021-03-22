@@ -64,7 +64,8 @@ lazy val `sphere-libs` = project
     `sphere-mongo`,
     `sphere-mongo-core`,
     `sphere-mongo-derivation`,
-    `sphere-mongo-derivation-magnolia`
+    `sphere-mongo-derivation-magnolia`,
+    `benchmarks`
   )
 
 lazy val `sphere-util` = project
