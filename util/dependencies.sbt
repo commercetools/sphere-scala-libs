@@ -1,5 +1,5 @@
 libraryDependencies ++= Seq(
-  "com.typesafe.scala-logging"  %% "scala-logging"  % "3.9.2",
+  "com.typesafe.scala-logging"  %% "scala-logging"  % "3.9.3",
   "joda-time"                   %  "joda-time"      % "2.10.10",
   "org.joda"                    %  "joda-convert"   % "2.2.1",
   "org.typelevel"               %% "cats-core"      % "2.4.2",
