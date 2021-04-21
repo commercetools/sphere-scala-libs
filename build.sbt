@@ -11,23 +11,29 @@ ThisBuild / githubWorkflowBuildPreamble ++= List(
 
 // Release
 
-inThisBuild(List(
-  organization := "com.commercetools",
-  licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html")),
-  homepage := Some(url("https://github.com/commercetools/sphere-scala-libs")),
-  developers := List(Developer(id = "commercetools", name = "commercetools", email = "ondemand@commercetools.com", url = url("https://commercetools.com"))),
-  githubWorkflowTargetTags ++= Seq("v*"),
-  githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v"))),
-  githubWorkflowPublish := Seq(WorkflowStep.Sbt(
-    List("ci-release"),
-    env = Map(
-      "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
-      "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}",
-      "SONATYPE_PASSWORD" -> "${{ secrets.SONATYPE_PASSWORD }}",
-      "SONATYPE_USERNAME" -> "${{ secrets.SONATYPE_USERNAME }}"
-    )
+inThisBuild(
+  List(
+    organization := "com.commercetools",
+    licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html")),
+    homepage := Some(url("https://github.com/commercetools/sphere-scala-libs")),
+    developers := List(
+      Developer(
+        id = "commercetools",
+        name = "commercetools",
+        email = "ondemand@commercetools.com",
+        url = url("https://commercetools.com"))),
+    githubWorkflowTargetTags ++= Seq("v*"),
+    githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v"))),
+    githubWorkflowPublish := Seq(WorkflowStep.Sbt(
+      List("ci-release"),
+      env = Map(
+        "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
+        "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}",
+        "SONATYPE_PASSWORD" -> "${{ secrets.SONATYPE_PASSWORD }}",
+        "SONATYPE_USERNAME" -> "${{ secrets.SONATYPE_USERNAME }}"
+      )
+    ))
   ))
-))
 
 lazy val standardSettings = Defaults.coreDefaultSettings ++ Seq(
   logBuffered := false,
