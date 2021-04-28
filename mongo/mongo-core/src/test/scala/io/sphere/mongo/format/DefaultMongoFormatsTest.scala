@@ -1,7 +1,6 @@
 package io.sphere.mongo.format
 
 import java.util.Locale
-
 import com.mongodb.DBObject
 import io.sphere.mongo.MongoUtils
 import io.sphere.mongo.format.DefaultMongoFormats._
@@ -131,6 +130,13 @@ class DefaultMongoFormatsTest
         localeFormat.fromMongoValue(localeFormat.toMongoValue(l)).toLanguageTag must be(
           l.toLanguageTag)
       }
+    }
+
+    "support UUID" in {
+      val format = uuidFormat
+      val uuids = Gen.uuid
+
+      check(uuids, format)
     }
   }
 
