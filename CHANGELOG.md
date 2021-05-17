@@ -1,3 +1,7 @@
+## 0.12.3 (2020-04-28)
+
+* Update mongodb-driver-core to 4.2.3
+
 ## 0.12.1 (2020-01-05)
 
 * Update joda-time to 2.10.9 (#259) @scala-steward
