@@ -5,7 +5,7 @@ addSbtPlugin("io.spray" % "sbt-boilerplate" % "0.6.1")
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.2")
 
 // https://github.com/djspiewak/sbt-github-actions/releases
-addSbtPlugin("com.codecommit" % "sbt-github-actions" % "0.10.1")
+addSbtPlugin("com.codecommit" % "sbt-github-actions" % "0.11.0")
 
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.2")
 
