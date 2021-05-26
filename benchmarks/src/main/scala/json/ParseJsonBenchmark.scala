@@ -25,7 +25,7 @@ ParseJsonBenchmark.parseFromStringToJValue    thrpt   10   72,156 ± 0,403  ops/
 
   @Benchmark
   def parseFromStringToJValue(): Unit = {
-    val jvalue = parseJson(StringInput(JsonBenchmark.json))
+    val jvalue = parseJson(JsonBenchmark.json)
     assert(jvalue != null)
   }
 }
