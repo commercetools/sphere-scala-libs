@@ -5,13 +5,17 @@ import org.json4s.JValue
 
 /** Cats instances for [[JSON]], [[FromJSON]] and [[ToJSON]]
   */
-package object catsinstances extends JSONInstances
+package object catsinstances extends JSONInstances with FromJSONInstances with ToJSONInstances
 
 trait JSONInstances {
   implicit val catsInvariantForJSON: Invariant[JSON] = new JSONInvariant
+}
 
+trait FromJSONInstances {
   implicit val catsFunctorForFromJSON: Functor[FromJSON] = new FromJSONFunctor
+}
 
+trait ToJSONInstances {
   implicit val catsContravariantForToJSON: Contravariant[ToJSON] = new ToJSONContravariant
 }
 

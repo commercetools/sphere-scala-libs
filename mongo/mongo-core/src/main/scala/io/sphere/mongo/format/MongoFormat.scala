@@ -1,5 +1,6 @@
 package io.sphere.mongo.format
 
+import io.sphere.mongo.MongoFormatInstances
 import org.bson.BSONObject
 
 import scala.annotation.implicitNotFound
@@ -15,7 +16,7 @@ trait MongoFormat[@specialized A] extends Serializable {
   val fields: Set[String] = MongoFormat.emptyFieldsSet
 }
 
-object MongoFormat {
+object MongoFormat extends MongoFormatInstances {
 
   private[MongoFormat] val emptyFieldsSet: Set[String] = Set.empty
 

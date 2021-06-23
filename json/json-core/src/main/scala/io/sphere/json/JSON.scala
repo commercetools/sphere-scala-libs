@@ -7,7 +7,7 @@ import scala.annotation.implicitNotFound
 @implicitNotFound("Could not find an instance of JSON for ${A}")
 trait JSON[A] extends FromJSON[A] with ToJSON[A]
 
-object JSON extends JSONLowPriorityImplicits {
+object JSON extends JSONInstances with JSONLowPriorityImplicits {
   @inline def apply[A](implicit instance: JSON[A]): JSON[A] = instance
 }
 
