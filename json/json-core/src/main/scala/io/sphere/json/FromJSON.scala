@@ -26,7 +26,7 @@ trait FromJSON[@specialized A] extends Serializable {
   val fields: Set[String] = FromJSON.emptyFieldsSet
 }
 
-object FromJSON {
+object FromJSON extends FromJSONInstances {
 
   private[FromJSON] val emptyFieldsSet: Set[String] = Set.empty
 
