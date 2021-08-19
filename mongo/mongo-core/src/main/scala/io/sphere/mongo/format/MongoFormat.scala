@@ -22,12 +22,15 @@ object MongoFormat extends MongoFormatInstances {
 
   @inline def apply[A](implicit instance: MongoFormat[A]): MongoFormat[A] = instance
 
-  /** Puts `value` under `name` into the given `BSONObject`, thereby requiring and applying
-    * a MongoFormat for the value type `A`. If ''value'' is ''None'' it is (intentionally) ignored.
+  /** Puts `value` under `name` into the given `BSONObject`, thereby requiring and applying a
+    * MongoFormat for the value type `A`. If ''value'' is ''None'' it is (intentionally) ignored.
     *
-    * @param dbo The BSONObject into which to put ''value'' under ''name''.
-    * @tparam A The value type, for which there must exist a MongoFormat[A] instance.
-    * @return The passed dbo with the new key-value pair added.
+    * @param dbo
+    *   The BSONObject into which to put ''value'' under ''name''.
+    * @tparam A
+    *   The value type, for which there must exist a MongoFormat[A] instance.
+    * @return
+    *   The passed dbo with the new key-value pair added.
     */
   def put[A: MongoFormat](dbo: BSONObject)(name: String, value: A): BSONObject = {
     // Ignore None's, we don't ever want to store or use nulls.

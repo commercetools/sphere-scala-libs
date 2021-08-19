@@ -6,16 +6,14 @@ object Reflect extends Logging {
   case class CaseClassMeta(fields: IndexedSeq[CaseClassFieldMeta])
   case class CaseClassFieldMeta(name: String, default: Option[Any] = None)
 
-  /** Obtains minimal meta information about a case class or object via scalap.
-    * The meta information contains a list of names and default values which
-    * represent the arguments of the case class constructor and their default values,
-    * in the order they are defined.
+  /** Obtains minimal meta information about a case class or object via scalap. The meta information
+    * contains a list of names and default values which represent the arguments of the case class
+    * constructor and their default values, in the order they are defined.
     *
-    * Note: Does not work for case classes or objects nested in other classes or traits
-    *       (nesting inside other objects is fine).
-    * Note: Only a single default value is obtained for each field. Thus avoid default
-    *       values that are different on each invocation (e.g. new DateTime()). In other words,
-    *       the case class constructors should be pure functions.
+    * Note: Does not work for case classes or objects nested in other classes or traits (nesting
+    * inside other objects is fine). Note: Only a single default value is obtained for each field.
+    * Thus avoid default values that are different on each invocation (e.g. new DateTime()). In
+    * other words, the case class constructors should be pure functions.
     */
   val getCaseClassMeta = new Memoizer[Class[_], CaseClassMeta](clazz => {
     logger.trace(

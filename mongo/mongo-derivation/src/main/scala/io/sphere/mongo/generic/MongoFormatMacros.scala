@@ -4,7 +4,8 @@ import io.sphere.mongo.format.MongoFormat
 
 import scala.reflect.macros.blackbox
 
-/** copy/paste from https://github.com/sphereio/sphere-scala-libs/blob/master/json/src/main/scala/generic/JSONMacros.scala,
+/** copy/paste from
+  * https://github.com/sphereio/sphere-scala-libs/blob/master/json/src/main/scala/generic/JSONMacros.scala,
   * adapted to `MongoFormat`.
   */
 private[generic] object MongoFormatMacros {

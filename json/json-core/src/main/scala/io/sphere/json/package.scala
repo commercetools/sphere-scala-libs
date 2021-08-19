@@ -49,11 +49,12 @@ package object json extends Logging {
     case jval => compactJson(jval)
   }
 
-  /** Parses a JSON string into a type A.
-    *  Throws a [[JSONException]] on failure.
+  /** Parses a JSON string into a type A. Throws a [[JSONException]] on failure.
     *
-    * @param json The JSON string to parse.
-    * @return An instance of type A.
+    * @param json
+    *   The JSON string to parse.
+    * @return
+    *   An instance of type A.
     */
   def getFromJSON[A: FromJSON](json: JsonInput): A =
     getFromJValue[A](parseJsonUnsafe(json))
@@ -75,9 +76,12 @@ package object json extends Logging {
 
   /** Extracts a JSON value of type A from a named field of a JSON object.
     *
-    * @param name The name of the field.
-    * @param jObject The JObject from which to extract the field.
-    * @return A success with a value of type A or a non-empty list of errors.
+    * @param name
+    *   The name of the field.
+    * @param jObject
+    *   The JObject from which to extract the field.
+    * @return
+    *   A success with a value of type A or a non-empty list of errors.
     */
   def field[A](
       name: String,

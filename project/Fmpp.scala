@@ -17,14 +17,17 @@ object Fmpp {
     libraryDependencies += "net.sourceforge.fmpp" % "fmpp" % "0.9.16" % FmppConfig.name,
     ivyConfigurations += FmppConfig,
     fmppOptions := "--ignore-temporary-files" :: Nil,
-    fullClasspath in FmppConfig := update.value select configurationFilter(FmppConfig.name) map Attributed.blank
+    fullClasspath in FmppConfig := update.value
+      .select(configurationFilter(FmppConfig.name))
+      .map(Attributed.blank)
   )
 
-  private def fmppConfigSettings(c: Configuration): Seq[Setting[_]] = inConfig(c)(Seq(
-    sourceGenerators in Compile += fmpp.taskValue,
-    fmpp := fmppTask.value,
-    sources := managedSources.value
-  ))
+  private def fmppConfigSettings(c: Configuration): Seq[Setting[_]] = inConfig(c)(
+    Seq(
+      sourceGenerators in Compile += fmpp.taskValue,
+      fmpp := fmppTask.value,
+      sources := managedSources.value
+    ))
 
   private val fmppTask = Def.task {
     val cp = (fullClasspath in FmppConfig).value
@@ -35,13 +38,15 @@ object Fmpp {
     val cache = s.cacheDirectory
 
     val cached = FileFunction.cached(cache / "fmpp", FilesInfo.lastModified, FilesInfo.exists) {
-      (in: Set[File]) => {
+      (in: Set[File]) =>
         IO.delete(output)
-        val arguments = "-U" +: "all" +: "-S" +: srcRoot.getAbsolutePath +: "-O" +: output.getAbsolutePath +:
-          "-M" +: "ignore(test/**,it/**),execute(**/*.fmpp.scala),copy(**/*)" +: Seq.empty
-        r.run("fmpp.tools.CommandLine", cp.files, arguments, s.log).failed foreach (sys error _.getMessage)
+        val arguments =
+          "-U" +: "all" +: "-S" +: srcRoot.getAbsolutePath +: "-O" +: output.getAbsolutePath +:
+            "-M" +: "ignore(test/**,it/**),execute(**/*.fmpp.scala),copy(**/*)" +: Seq.empty
+        r.run("fmpp.tools.CommandLine", cp.files, arguments, s.log)
+          .failed
+          .foreach(sys error _.getMessage)
         (output ** "*.scala").get.toSet ++ (output ** "*.java").get.toSet
-      }
     }
     cached((srcRoot ** "*.*").get.toSet).toSeq
   }

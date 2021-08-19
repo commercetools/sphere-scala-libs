@@ -7,12 +7,10 @@ class ValidatedFlatMap[E, A](val v: Validated[E, A]) extends AnyVal {
     v.andThen(f)
 }
 
-/** Cats [[Validated]] does not provide `flatMap` because its purpose is
-  * to accumulate errors.
+/** Cats [[Validated]] does not provide `flatMap` because its purpose is to accumulate errors.
   *
-  * To combine [[Validated]] in for-comprehension, it is possible to import
-  * this implicit conversion - with the knowledge that the `flatMap`
-  * short-circuits errors.
+  * To combine [[Validated]] in for-comprehension, it is possible to import this implicit conversion
+  * - with the knowledge that the `flatMap` short-circuits errors.
   * http://typelevel.org/cats/datatypes/validated.html
   */
 object ValidatedFlatMapFeature {

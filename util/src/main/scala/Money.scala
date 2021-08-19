@@ -25,13 +25,9 @@ sealed trait BaseMoney {
 
   /** Normalized representation.
     *
-    * for centPrecision:
-    *   centAmount: 1234 EUR
-    *   amount:     12.34
+    * for centPrecision: centAmount: 1234 EUR amount: 12.34
     *
-    * for highPrecision:
-    *   preciseAmount: 123456 EUR (with fractionDigits = 4)
-    *   amount:        12.3456
+    * for highPrecision: preciseAmount: 123456 EUR (with fractionDigits = 4) amount: 12.3456
     */
   def amount: BigDecimal
 
@@ -73,13 +69,15 @@ object BaseMoney {
 
 /** Represents an amount of money in a certain currency.
   *
-  * This implementation does not support fractional money units (eg a tenth cent).
-  * Amounts are always rounded to the nearest, smallest unit of the respective currency.
-  * The rounding mode can be specified using an implicit `BigDecimal.RoundingMode`.
+  * This implementation does not support fractional money units (eg a tenth cent). Amounts are
+  * always rounded to the nearest, smallest unit of the respective currency. The rounding mode can
+  * be specified using an implicit `BigDecimal.RoundingMode`.
   *
-  * @param amount The amount as a decimal value. The scale must be equal to or less than the
-  *               number of fractional digits of the currency.
-  * @param currency The currency of the amount.
+  * @param amount
+  *   The amount as a decimal value. The scale must be equal to or less than the number of
+  *   fractional digits of the currency.
+  * @param currency
+  *   The currency of the amount.
   */
 case class Money private (amount: BigDecimal, currency: Currency)
     extends BaseMoney
@@ -110,8 +108,8 @@ case class Money private (amount: BigDecimal, currency: Currency)
   def toHighPrecisionMoney(fractionDigits: Int): HighPrecisionMoney =
     HighPrecisionMoney.fromMoney(this, fractionDigits)
 
-  /** Creates a new Money instance with the same currency and the amount conforming
-    * to the given MathContext (scale and rounding mode).
+  /** Creates a new Money instance with the same currency and the amount conforming to the given
+    * MathContext (scale and rounding mode).
     */
   def apply(mc: MathContext): Money =
     fromDecimalAmount(this.amount(mc), this.currency)(RoundingMode.HALF_EVEN)
@@ -190,9 +188,9 @@ case class Money private (amount: BigDecimal, currency: Currency)
   def unary_- : Money =
     fromDecimalAmount(-this.amount, this.currency)(BigDecimal.RoundingMode.UNNECESSARY)
 
-  /** Partitions this amount of money into several parts where the size of the individual
-    * parts are defined by the given ratios. The partitioning takes care of not losing or gaining
-    * any money by distributing any remaining "cents" evenly across the partitions.
+  /** Partitions this amount of money into several parts where the size of the individual parts are
+    * defined by the given ratios. The partitioning takes care of not losing or gaining any money by
+    * distributing any remaining "cents" evenly across the partitions.
     *
     * <p>Example: (0.05 EUR) partition (3,7) == Seq(0.02 EUR, 0.03 EUR)</p>
     */
@@ -410,9 +408,9 @@ case class HighPrecisionMoney private (
     fromDecimalAmount(-this.amount, this.fractionDigits, this.currency)(
       BigDecimal.RoundingMode.UNNECESSARY)
 
-  /** Partitions this amount of money into several parts where the size of the individual
-    * parts are defined by the given ratios. The partitioning takes care of not losing or gaining
-    * any money by distributing any remaining "cents" evenly across the partitions.
+  /** Partitions this amount of money into several parts where the size of the individual parts are
+    * defined by the given ratios. The partitioning takes care of not losing or gaining any money by
+    * distributing any remaining "cents" evenly across the partitions.
     *
     * <p>Example: (0.05 EUR) partition (3,7) == Seq(0.02 EUR, 0.03 EUR)</p>
     */
