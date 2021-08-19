@@ -44,16 +44,16 @@ lazy val standardSettings = Defaults.coreDefaultSettings ++ Seq(
   ),
   javacOptions ++= Seq("-deprecation", "-Xlint:unchecked"),
   // targets Java 8 bytecode (scalac & javac)
-  scalacOptions in ThisBuild += "-target:jvm-1.8",
-  javacOptions in ThisBuild ++= Seq("-source", "8", "-target", "8"),
-  testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
+  ThisBuild / scalacOptions += "-target:jvm-1.8",
+  ThisBuild / javacOptions ++= Seq("-source", "8", "-target", "8"),
+  Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "3.2.9" % Test,
     "org.scalatestplus" %% "scalacheck-1-14" % "3.2.2.0" % Test,
     "org.scalacheck" %% "scalacheck" % "1.15.4" % Test,
     "ch.qos.logback" % "logback-classic" % "1.2.5" % Test
   ),
-  shellPrompt in ThisBuild := { state ⇒
+  ThisBuild / shellPrompt := { state ⇒
     scala.Console.CYAN + Project.extract(state).currentRef.project + "> " + scala.Console.RESET
   }
 )

@@ -16,19 +16,18 @@ object Fmpp {
   lazy val settings = fmppConfigSettings(Compile) ++ Seq(
     libraryDependencies += "net.sourceforge.fmpp" % "fmpp" % "0.9.16" % FmppConfig.name,
     ivyConfigurations += FmppConfig,
-    fmppOptions := "--ignore-temporary-files" :: Nil,
-    fullClasspath in FmppConfig := update.value select configurationFilter(FmppConfig.name) map Attributed.blank
+    FmppConfig / fullClasspath := update.value select configurationFilter(FmppConfig.name) map Attributed.blank
   )
 
   private def fmppConfigSettings(c: Configuration): Seq[Setting[_]] = inConfig(c)(Seq(
-    sourceGenerators in Compile += fmpp.taskValue,
+    Compile / sourceGenerators += fmpp.taskValue,
     fmpp := fmppTask.value,
     sources := managedSources.value
   ))
 
   private val fmppTask = Def.task {
-    val cp = (fullClasspath in FmppConfig).value
-    val r = (runner in fmpp).value
+    val cp = (FmppConfig / fullClasspath).value
+    val r = (fmpp / runner).value
     val srcRoot = baseDirectory.value / (Defaults.prefix(configuration.value.name) + "src")
     val output = sourceManaged.value
     val s = streams.value
