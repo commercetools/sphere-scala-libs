@@ -83,30 +83,21 @@ object BaseMoney {
   * @param currency
   *   The currency of the amount.
   */
-case class Money private (amount: BigDecimal, currency: Currency)
+case class Money private (centAmount: Long, currency: Currency)
     extends BaseMoney
     with Ordered[Money] {
   import Money._
 
-  require(
-    amount.scale == currency.getDefaultFractionDigits,
-    "The scale of the given amount does not match the scale of the provided currency." +
-      " - " + amount.scale + " <-> " + currency.getDefaultFractionDigits
-  )
-
   private val centFactor: Double = 1 / pow(10, currency.getDefaultFractionDigits)
-
-  lazy val centAmount: Long = (amount / centFactor).toLong
-
   private val backwardsCompatibleRoundingModeForOperations = BigDecimal.RoundingMode.HALF_EVEN
 
   val `type`: String = TypeName
 
-  lazy val fractionDigits: Int = currency.getDefaultFractionDigits
+  override lazy val fractionDigits: Int = currency.getDefaultFractionDigits
+  override lazy val amount: BigDecimal = BigDecimal(centAmount) * cachedCentFactor(fractionDigits)
 
   def withCentAmount(centAmount: Long): Money = {
-    val newAmount = BigDecimal(centAmount) * centFactor
-    copy(amount = newAmount.setScale(currency.getDefaultFractionDigits))
+    copy(centAmount = centAmount)
   }
 
   def toHighPrecisionMoney(fractionDigits: Int): HighPrecisionMoney =
@@ -120,9 +111,7 @@ case class Money private (amount: BigDecimal, currency: Currency)
 
   def +(m: Money)(implicit mode: RoundingMode): Money = {
     BaseMoney.requireSameCurrency(this, m)
-
-    fromDecimalAmount(this.amount + m.amount, this.currency)(
-      backwardsCompatibleRoundingModeForOperations)
+    copy(centAmount = centAmount + m.centAmount)
   }
 
   def +(m: HighPrecisionMoney)(implicit mode: RoundingMode): HighPrecisionMoney =
@@ -138,7 +127,7 @@ case class Money private (amount: BigDecimal, currency: Currency)
 
   def -(m: Money)(implicit mode: RoundingMode): Money = {
     BaseMoney.requireSameCurrency(this, m)
-    fromDecimalAmount(this.amount - m.amount, this.currency)
+    copy(this.centAmount - m.centAmount)
   }
 
   def -(money: BaseMoney)(implicit mode: RoundingMode): BaseMoney = money match {
@@ -200,7 +189,7 @@ case class Money private (amount: BigDecimal, currency: Currency)
     */
   def partition(ratios: Int*): Seq[Money] = {
     val total = ratios.sum
-    val amountInCents = (this.amount / centFactor).toBigInt
+    val amountInCents = BigInt(this.centAmount)
     val amounts = ratios.map(amountInCents * _ / total)
     var remainder = amounts.foldLeft(amountInCents)(_ - _)
     amounts.map { amount =>
@@ -215,7 +204,7 @@ case class Money private (amount: BigDecimal, currency: Currency)
 
   def compare(that: Money): Int = {
     BaseMoney.requireSameCurrency(this, that)
-    this.amount.compare(that.amount)
+    this.centAmount.compare(that.centAmount)
   }
 
   override def toString: String =
@@ -253,17 +242,46 @@ object Money {
   def GBP(amount: BigDecimal): Money = decimalAmountWithCurrencyAndHalfEvenRounding(amount, "GBP")
   def JPY(amount: BigDecimal): Money = decimalAmountWithCurrencyAndHalfEvenRounding(amount, "JPY")
 
-  val CurrencyCodeField: String = "currencyCode"
-  val CentAmountField: String = "centAmount"
-  val FractionDigitsField: String = "fractionDigits"
-  val TypeName: String = "centPrecision"
+  final val CurrencyCodeField: String = "currencyCode"
+  final val CentAmountField: String = "centAmount"
+  final val FractionDigitsField: String = "fractionDigits"
+  final val TypeName: String = "centPrecision"
 
   def fromDecimalAmount(amount: BigDecimal, currency: Currency)(implicit
-      mode: RoundingMode): Money =
-    Money(amount.setScale(currency.getDefaultFractionDigits, mode), currency)
+      mode: RoundingMode): Money = {
+    val fractionDigits = currency.getDefaultFractionDigits
+    val centAmountBigDecimal = (amount * cachedCentPower(fractionDigits))
+    val centAmount = centAmountBigDecimal.setScale(0, mode).longValue
+    Money(centAmount, currency)
+  }
 
-  val bdOne: BigDecimal = BigDecimal(1)
-  val bdTen: BigDecimal = BigDecimal(10)
+  def apply(amount: BigDecimal, currency: Currency): Money = {
+        require(
+          amount.scale == currency.getDefaultFractionDigits,
+          "The scale of the given amount does not match the scale of the provided currency." +
+            " - " + amount.scale + " <-> " + currency.getDefaultFractionDigits
+        )
+    fromDecimalAmount(amount, currency)(BigDecimal.RoundingMode.HALF_EVEN)
+  }
+
+  private final val bdOne: BigDecimal = BigDecimal(1)
+  final val bdTen: BigDecimal = BigDecimal(10)
+
+  private final val centPowerZeroFractionDigit = bdOne
+  private final  val centPowerOneFractionDigit = bdTen.pow(1)
+  private final val centPowerTwoFractionDigit = bdTen.pow(2)
+  private final val centPowerThreeFractionDigit = bdTen.pow(3)
+  private final val centPowerFourFractionDigit = bdTen.pow(4)
+
+  private[util] def cachedCentPower(currencyFractionDigits: Int): BigDecimal =
+    currencyFractionDigits match {
+      case 0 => centPowerZeroFractionDigit
+      case 1 => centPowerOneFractionDigit
+      case 2 => centPowerTwoFractionDigit
+      case 3 => centPowerThreeFractionDigit
+      case 4 => centPowerFourFractionDigit
+      case other => bdTen.pow(other)
+    }
 
   private val centFactorZeroFractionDigit = bdOne / bdTen.pow(0)
   private val centFactorOneFractionDigit = bdOne / bdTen.pow(1)
@@ -281,13 +299,8 @@ object Money {
       case other => bdOne / bdTen.pow(other)
     }
 
-  def fromCentAmount(centAmount: Long, currency: Currency): Money = {
-    val currencyFractionDigits = currency.getDefaultFractionDigits
-    val centFactor = cachedCentFactor(currencyFractionDigits)
-    val amount = BigDecimal(centAmount) * centFactor
-
-    fromDecimalAmount(amount, currency)(BigDecimal.RoundingMode.UNNECESSARY)
-  }
+  def fromCentAmount(centAmount: Long, currency: Currency): Money =
+    new Money(centAmount, currency)
 
   private val cachedZeroEUR = fromCentAmount(0L, Currency.getInstance("EUR"))
   private val cachedZeroUSD = fromCentAmount(0L, Currency.getInstance("USD"))
