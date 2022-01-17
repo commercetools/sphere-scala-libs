@@ -15,12 +15,7 @@ import scala.math.BigDecimal.RoundingMode
 import ValidatedFlatMapFeature._
 
 sealed trait BaseMoneyOperation {
-  def `type`: String
-
   def currency: Currency
-
-  // Use with CAUTION! will loose precision in case of a high precision money value
-  def centAmount: Long
 
   /** Normalized representation.
     *
@@ -35,8 +30,6 @@ sealed trait BaseMoneyOperation {
   def amount: BigDecimal
 
   def fractionDigits: Int
-
-  def toMoneyOperationWithPrecisionLoss: MoneyOperation
 
   def +(m: MoneyOperation)(implicit mode: RoundingMode): BaseMoneyOperation
   def +(m: HighPrecisionMoneyOperation)(implicit mode: RoundingMode): BaseMoneyOperation
@@ -55,8 +48,6 @@ sealed trait BaseMoneyOperation {
 }
 
 object BaseMoneyOperation {
-  val TypeField: String = "type"
-
   def requireSameCurrency(m1: BaseMoneyOperation, m2: BaseMoneyOperation): Unit =
     require(m1.currency eq m2.currency, s"${m1.currency} != ${m2.currency}")
 
@@ -97,11 +88,7 @@ case class MoneyOperation private (amount: BigDecimal, currency: Currency)
 
   private val centFactor: Double = 1 / pow(10, currency.getDefaultFractionDigits)
 
-  lazy val centAmount: Long = (amount / centFactor).toLong
-
   private val backwardsCompatibleRoundingModeForOperations = BigDecimal.RoundingMode.HALF_EVEN
-
-  val `type`: String = TypeName
 
   lazy val fractionDigits: Int = currency.getDefaultFractionDigits
 
@@ -259,11 +246,6 @@ object MoneyOperation {
   def JPY(amount: BigDecimal): MoneyOperation =
     decimalAmountWithCurrencyAndHalfEvenRounding(amount, "JPY")
 
-  val CurrencyCodeField: String = "currencyCode"
-  val CentAmountField: String = "centAmount"
-  val FractionDigitsField: String = "fractionDigits"
-  val TypeName: String = "centPrecision"
-
   def fromDecimalAmount(amount: BigDecimal, currency: Currency)(implicit
       mode: RoundingMode): MoneyOperation =
     MoneyOperation(amount.setScale(currency.getDefaultFractionDigits, mode), currency)
@@ -321,7 +303,6 @@ object MoneyOperation {
 case class HighPrecisionMoneyOperation private (
     amount: BigDecimal,
     fractionDigits: Int,
-    centAmount: Long,
     currency: Currency)
     extends BaseMoneyOperation
     with Ordered[MoneyOperation] {
@@ -337,19 +318,11 @@ case class HighPrecisionMoneyOperation private (
     fractionDigits >= currency.getDefaultFractionDigits,
     "`fractionDigits` should be  >= than the default fraction digits of the currency.")
 
-  val `type`: String = TypeName
-
-  lazy val preciseAmountAsLong: Long =
-    (amount * Money.bdTen.pow(fractionDigits)).toLongExact // left side could be cached if necessary
-
   def withFractionDigits(fd: Int)(implicit mode: RoundingMode): HighPrecisionMoneyOperation = {
     val newAmount = amount.setScale(fd, mode)
 
-    HighPrecisionMoneyOperation(newAmount, fd, roundToCents(newAmount, currency), currency)
+    HighPrecisionMoneyOperation(newAmount, fd, currency)
   }
-
-  def updateCentAmountWithRoundingMode(implicit mode: RoundingMode): HighPrecisionMoneyOperation =
-    copy(centAmount = roundToCents(amount, currency))
 
   def +(other: HighPrecisionMoneyOperation)(implicit
       mode: RoundingMode): HighPrecisionMoneyOperation =
@@ -452,9 +425,6 @@ case class HighPrecisionMoneyOperation private (
     }
   }
 
-  def toMoneyOperationWithPrecisionLoss: MoneyOperation =
-    MoneyOperation.fromCentAmount(this.centAmount, currency)
-
   def compare(other: MoneyOperation): Int = {
     BaseMoneyOperation.requireSameCurrency(this, other)
 
@@ -514,12 +484,6 @@ object HighPrecisionMoneyOperation {
   def JPY(amount: BigDecimal, fractionDigits: Option[Int] = None): HighPrecisionMoneyOperation =
     simpleValueMeantToBeUsedOnlyInTests(amount, "JPY", fractionDigits)
 
-  val CurrencyCodeField: String = "currencyCode"
-  val CentAmountField: String = "centAmount"
-  val PreciseAmountField: String = "preciseAmount"
-  val FractionDigitsField: String = "fractionDigits"
-
-  val TypeName: String = "highPrecision"
   val MaxFractionDigits = 20
 
   private def simpleValueMeantToBeUsedOnlyInTests(
@@ -567,11 +531,7 @@ object HighPrecisionMoneyOperation {
       mode: RoundingMode): HighPrecisionMoneyOperation = {
     val scaledAmount = amount.setScale(fractionDigits, mode)
 
-    HighPrecisionMoneyOperation(
-      scaledAmount,
-      fractionDigits,
-      roundToCents(scaledAmount, currency),
-      currency)
+    HighPrecisionMoneyOperation(scaledAmount, fractionDigits, currency)
   }
 
   def fromCentAmount(
@@ -583,7 +543,6 @@ object HighPrecisionMoneyOperation {
     HighPrecisionMoneyOperation(
       amount.setScale(fractionDigits, BigDecimal.RoundingMode.UNNECESSARY),
       fractionDigits,
-      centAmount,
       currency)
   }
 
@@ -594,17 +553,21 @@ object HighPrecisionMoneyOperation {
   def fromPreciseAmount(
       preciseAmount: Long,
       fractionDigits: Int,
-      currency: Currency,
-      centAmount: Option[Long]): ValidatedNel[String, HighPrecisionMoneyOperation] =
+      currency: Currency): ValidatedNel[String, HighPrecisionMoneyOperation] =
     for {
       fd <- validateFractionDigits(fractionDigits, currency)
       amount = BigDecimal(preciseAmount) * factor(fd)
       scaledAmount = amount.setScale(fd, BigDecimal.RoundingMode.UNNECESSARY)
-      ca <- validateCentAmount(scaledAmount, centAmount, currency)
-      // TODO: revisit this part! the rounding mode might be dynamic and configured elsewhere
-      actualCentAmount = ca.getOrElse(
-        roundToCents(scaledAmount, currency)(BigDecimal.RoundingMode.HALF_EVEN))
-    } yield HighPrecisionMoneyOperation(scaledAmount, fd, actualCentAmount, currency)
+    } yield HighPrecisionMoneyOperation(scaledAmount, fd, currency)
+
+  def fromHighPrecisionMoney(
+      preciseAmount: Long,
+      fractionDigits: Int,
+      currency: Currency): HighPrecisionMoneyOperation = {
+    val amount = BigDecimal(preciseAmount) * factor(fractionDigits)
+    val scaledAmount = amount.setScale(fractionDigits, BigDecimal.RoundingMode.UNNECESSARY)
+    HighPrecisionMoneyOperation(scaledAmount, fractionDigits, currency)
+  }
 
   private def validateFractionDigits(
       fractionDigits: Int,
@@ -638,7 +601,6 @@ object HighPrecisionMoneyOperation {
     HighPrecisionMoneyOperation(
       money.amount.setScale(fractionDigits, RoundingMode.UNNECESSARY),
       fractionDigits,
-      money.centAmount,
       money.currency)
 
   def monoid(fractionDigits: Int, c: Currency)(implicit

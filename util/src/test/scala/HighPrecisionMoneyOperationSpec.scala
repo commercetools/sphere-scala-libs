@@ -30,7 +30,7 @@ class HighPrecisionMoneyOperationSpec
 
     it("should not allow creation of high precision money without sufficient scale") {
       val thrown = intercept[IllegalArgumentException] {
-        HighPrecisionMoneyOperation(amount = 1, fractionDigits = 2, centAmount = 1, Euro)
+        HighPrecisionMoneyOperation(amount = 1, fractionDigits = 2, Euro)
       }
 
       assert(
@@ -45,14 +45,6 @@ class HighPrecisionMoneyOperationSpec
 
       assert(
         thrown.getMessage == "requirement failed: `fractionDigits` should be  >= than the default fraction digits of the currency.")
-    }
-
-    it("should convert precise amount to long value correctly") {
-      "0.0001".EUR_PRECISE(4).preciseAmountAsLong must equal(1)
-    }
-
-    it("should reduce fraction digits as expected") {
-      "0.0001".EUR_PRECISE(4).withFractionDigits(2).preciseAmountAsLong must equal(0)
     }
 
     it("should support the unary '-' operator.") {
@@ -146,24 +138,16 @@ class HighPrecisionMoneyOperationSpec
     }
 
     it("should validate fractionDigits (min)") {
-      val Invalid(errors) = HighPrecisionMoneyOperation.fromPreciseAmount(123456L, 1, Euro, None)
+      val Invalid(errors) = HighPrecisionMoneyOperation.fromPreciseAmount(123456L, 1, Euro)
 
       errors.toList must be(
         List("fractionDigits must be > 2 (default fraction digits defined by currency EUR)."))
     }
 
     it("should validate fractionDigits (max)") {
-      val Invalid(errors) = HighPrecisionMoneyOperation.fromPreciseAmount(123456L, 100, Euro, None)
+      val Invalid(errors) = HighPrecisionMoneyOperation.fromPreciseAmount(123456L, 100, Euro)
 
       errors.toList must be(List("fractionDigits must be <= 20."))
-    }
-
-    it("should validate centAmount") {
-      val Invalid(errors) = HighPrecisionMoneyOperation.fromPreciseAmount(123456L, 4, Euro, Some(1))
-
-      errors.toList must be(
-        List(
-          "centAmount must be correctly rounded preciseAmount (a number between 1234 and 1235)."))
     }
 
     it("should provide convenient toString") {

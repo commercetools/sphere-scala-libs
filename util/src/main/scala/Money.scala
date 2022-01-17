@@ -38,6 +38,7 @@ sealed trait BaseMoney {
   def fractionDigits: Int
 
   def toMoneyWithPrecisionLoss: Money
+  def operation: BaseMoneyOperation
 
   def +(m: Money)(implicit mode: RoundingMode): BaseMoney
   def +(m: HighPrecisionMoney)(implicit mode: RoundingMode): BaseMoney
@@ -103,6 +104,8 @@ case class Money private (amount: BigDecimal, currency: Currency)
   val `type`: String = TypeName
 
   lazy val fractionDigits: Int = currency.getDefaultFractionDigits
+
+  override def operation: BaseMoneyOperation = MoneyOperation.fromCentAmount(centAmount, currency)
 
   def withCentAmount(centAmount: Long): Money = {
     val newAmount = BigDecimal(centAmount) * centFactor
@@ -333,6 +336,14 @@ case class HighPrecisionMoney private (
 
   lazy val preciseAmountAsLong: Long =
     (amount * Money.bdTen.pow(fractionDigits)).toLongExact // left side could be cached if necessary
+
+  override def operation: BaseMoneyOperation =
+    HighPrecisionMoneyOperation
+      .fromHighPrecisionMoney(
+        preciseAmountAsLong,
+        fractionDigits,
+        currency
+      )
 
   def withFractionDigits(fd: Int)(implicit mode: RoundingMode): HighPrecisionMoney = {
     val newAmount = amount.setScale(fd, mode)
