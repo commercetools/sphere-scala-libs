@@ -23,37 +23,10 @@ sealed trait BaseMoney {
   // Use with CAUTION! will loose precision in case of a high precision money value
   def centAmount: Long
 
-  /** Normalized representation.
-    *
-    * for centPrecision:
-    *   - centAmount: 1234 EUR
-    *   - amount: 12.34
-    *
-    * for highPrecision: preciseAmount:
-    *   - 123456 EUR (with fractionDigits = 4)
-    *   - amount: 12.3456
-    */
-  def amount: BigDecimal
-
   def fractionDigits: Int
 
   def toMoneyWithPrecisionLoss: Money
   def operation: BaseMoneyOperation
-
-  def +(m: Money)(implicit mode: RoundingMode): BaseMoney
-  def +(m: HighPrecisionMoney)(implicit mode: RoundingMode): BaseMoney
-  def +(m: BaseMoney)(implicit mode: RoundingMode): BaseMoney
-  def +(m: BigDecimal)(implicit mode: RoundingMode): BaseMoney
-
-  def -(m: Money)(implicit mode: RoundingMode): BaseMoney
-  def -(m: HighPrecisionMoney)(implicit mode: RoundingMode): BaseMoney
-  def -(m: BaseMoney)(implicit mode: RoundingMode): BaseMoney
-  def -(m: BigDecimal)(implicit mode: RoundingMode): BaseMoney
-
-  def *(m: Money)(implicit mode: RoundingMode): BaseMoney
-  def *(m: HighPrecisionMoney)(implicit mode: RoundingMode): BaseMoney
-  def *(m: BaseMoney)(implicit mode: RoundingMode): BaseMoney
-  def *(m: BigDecimal)(implicit mode: RoundingMode): BaseMoney
 }
 
 object BaseMoney {
@@ -64,12 +37,6 @@ object BaseMoney {
 
   def toScalaRoundingMode(mode: java.math.RoundingMode): RoundingMode =
     BigDecimal.RoundingMode(mode.ordinal())
-
-  implicit def baseMoneyMonoid(implicit c: Currency, mode: RoundingMode): Monoid[BaseMoney] =
-    new Monoid[BaseMoney] {
-      def combine(x: BaseMoney, y: BaseMoney): BaseMoney = x + y
-      val empty: BaseMoney = Money.zero(c)
-    }
 }
 
 /** Represents an amount of money in a certain currency.
@@ -105,7 +72,7 @@ case class Money private (amount: BigDecimal, currency: Currency)
 
   lazy val fractionDigits: Int = currency.getDefaultFractionDigits
 
-  override def operation: BaseMoneyOperation = MoneyOperation.fromCentAmount(centAmount, currency)
+  override def operation: MoneyOperation = MoneyOperation.fromCentAmount(centAmount, currency)
 
   def withCentAmount(centAmount: Long): Money = {
     val newAmount = BigDecimal(centAmount) * centFactor
@@ -120,99 +87,6 @@ case class Money private (amount: BigDecimal, currency: Currency)
     */
   def apply(mc: MathContext): Money =
     fromDecimalAmount(this.amount(mc), this.currency)(RoundingMode.HALF_EVEN)
-
-  def +(m: Money)(implicit mode: RoundingMode): Money = {
-    BaseMoney.requireSameCurrency(this, m)
-
-    fromDecimalAmount(this.amount + m.amount, this.currency)(
-      backwardsCompatibleRoundingModeForOperations)
-  }
-
-  def +(m: HighPrecisionMoney)(implicit mode: RoundingMode): HighPrecisionMoney =
-    this.toHighPrecisionMoney(m.fractionDigits) + m
-
-  def +(money: BaseMoney)(implicit mode: RoundingMode): BaseMoney = money match {
-    case m: Money => this + m
-    case m: HighPrecisionMoney => this + m
-  }
-
-  def +(m: BigDecimal)(implicit mode: RoundingMode): Money =
-    this + fromDecimalAmount(m, this.currency)
-
-  def -(m: Money)(implicit mode: RoundingMode): Money = {
-    BaseMoney.requireSameCurrency(this, m)
-    fromDecimalAmount(this.amount - m.amount, this.currency)
-  }
-
-  def -(money: BaseMoney)(implicit mode: RoundingMode): BaseMoney = money match {
-    case m: Money => this - m
-    case m: HighPrecisionMoney => this - m
-  }
-
-  def -(m: HighPrecisionMoney)(implicit mode: RoundingMode): HighPrecisionMoney =
-    this.toHighPrecisionMoney(m.fractionDigits) - m
-
-  def -(m: BigDecimal)(implicit mode: RoundingMode): Money =
-    this - fromDecimalAmount(m, this.currency)
-
-  def *(m: Money)(implicit mode: RoundingMode): Money = {
-    BaseMoney.requireSameCurrency(this, m)
-    this * m.amount
-  }
-
-  def *(m: HighPrecisionMoney)(implicit mode: RoundingMode): HighPrecisionMoney =
-    this.toHighPrecisionMoney(m.fractionDigits) * m
-
-  def *(money: BaseMoney)(implicit mode: RoundingMode): BaseMoney = money match {
-    case m: Money => this * m
-    case m: HighPrecisionMoney => this * m
-  }
-
-  def *(m: BigDecimal)(implicit mode: RoundingMode): Money =
-    fromDecimalAmount((this.amount * m).setScale(this.amount.scale, mode), this.currency)
-
-  /** Divide to integral value + remainder */
-  def /%(m: BigDecimal)(implicit mode: RoundingMode): (Money, Money) = {
-    val (result, remainder) = this.amount /% m
-
-    (fromDecimalAmount(result, this.currency), fromDecimalAmount(remainder, this.currency))
-  }
-
-  def %(m: Money)(implicit mode: RoundingMode): Money = this.remainder(m)
-
-  def %(m: BigDecimal)(implicit mode: RoundingMode): Money =
-    this.remainder(fromDecimalAmount(m, this.currency))
-
-  def remainder(m: Money)(implicit mode: RoundingMode): Money = {
-    BaseMoney.requireSameCurrency(this, m)
-
-    fromDecimalAmount(this.amount.remainder(m.amount), this.currency)
-  }
-
-  def remainder(m: BigDecimal)(implicit mode: RoundingMode): Money =
-    this.remainder(fromDecimalAmount(m, this.currency)(RoundingMode.HALF_EVEN))
-
-  def unary_- : Money =
-    fromDecimalAmount(-this.amount, this.currency)(BigDecimal.RoundingMode.UNNECESSARY)
-
-  /** Partitions this amount of money into several parts where the size of the individual parts are
-    * defined by the given ratios. The partitioning takes care of not losing or gaining any money by
-    * distributing any remaining "cents" evenly across the partitions.
-    *
-    * <p>Example: (0.05 EUR) partition (3,7) == Seq(0.02 EUR, 0.03 EUR)</p>
-    */
-  def partition(ratios: Int*): Seq[Money] = {
-    val total = ratios.sum
-    val amountInCents = (this.amount / centFactor).toBigInt
-    val amounts = ratios.map(amountInCents * _ / total)
-    var remainder = amounts.foldLeft(amountInCents)(_ - _)
-    amounts.map { amount =>
-      remainder -= 1
-      fromDecimalAmount(
-        BigDecimal(amount + (if (remainder >= 0) 1 else 0)) * centFactor,
-        this.currency)(backwardsCompatibleRoundingModeForOperations)
-    }
-  }
 
   def toMoneyWithPrecisionLoss: Money = this
 
@@ -305,12 +179,6 @@ object Money {
       case "JPY" => cachedZeroJPY
       case _ => fromCentAmount(0L, currency)
     }
-
-  implicit def moneyMonoid(implicit c: Currency, mode: RoundingMode): Monoid[Money] =
-    new Monoid[Money] {
-      def combine(x: Money, y: Money): Money = x + y
-      val empty: Money = Money.zero(c)
-    }
 }
 
 case class HighPrecisionMoney private (
@@ -337,7 +205,7 @@ case class HighPrecisionMoney private (
   lazy val preciseAmountAsLong: Long =
     (amount * Money.bdTen.pow(fractionDigits)).toLongExact // left side could be cached if necessary
 
-  override def operation: BaseMoneyOperation =
+  override def operation: HighPrecisionMoneyOperation =
     HighPrecisionMoneyOperation
       .fromHighPrecisionMoney(
         preciseAmountAsLong,
@@ -353,98 +221,6 @@ case class HighPrecisionMoney private (
 
   def updateCentAmountWithRoundingMode(implicit mode: RoundingMode): HighPrecisionMoney =
     copy(centAmount = roundToCents(amount, currency))
-
-  def +(other: HighPrecisionMoney)(implicit mode: RoundingMode): HighPrecisionMoney =
-    calc(this, other, _ + _)
-
-  def +(m: Money)(implicit mode: RoundingMode): HighPrecisionMoney =
-    this + m.toHighPrecisionMoney(fractionDigits)
-
-  def +(money: BaseMoney)(implicit mode: RoundingMode): HighPrecisionMoney = money match {
-    case m: Money => this + m
-    case m: HighPrecisionMoney => this + m
-  }
-
-  def +(other: BigDecimal)(implicit mode: RoundingMode): HighPrecisionMoney =
-    this + fromDecimalAmount(other, this.fractionDigits, this.currency)
-
-  def -(other: HighPrecisionMoney)(implicit mode: RoundingMode): HighPrecisionMoney =
-    calc(this, other, _ - _)
-
-  def -(m: Money)(implicit mode: RoundingMode): HighPrecisionMoney =
-    this - m.toHighPrecisionMoney(fractionDigits)
-
-  def -(money: BaseMoney)(implicit mode: RoundingMode): HighPrecisionMoney = money match {
-    case m: Money => this - m
-    case m: HighPrecisionMoney => this - m
-  }
-
-  def -(other: BigDecimal)(implicit mode: RoundingMode): HighPrecisionMoney =
-    this - fromDecimalAmount(other, this.fractionDigits, this.currency)
-
-  def *(other: HighPrecisionMoney)(implicit mode: RoundingMode): HighPrecisionMoney =
-    calc(this, other, _ * _)
-
-  def *(m: Money)(implicit mode: RoundingMode): HighPrecisionMoney =
-    this * m.toHighPrecisionMoney(fractionDigits)
-
-  def *(money: BaseMoney)(implicit mode: RoundingMode): HighPrecisionMoney = money match {
-    case m: Money => this * m
-    case m: HighPrecisionMoney => this * m
-  }
-
-  def *(other: BigDecimal)(implicit mode: RoundingMode): HighPrecisionMoney =
-    this * fromDecimalAmount(other, this.fractionDigits, this.currency)
-
-  /** Divide to integral value + remainder */
-  def /%(m: BigDecimal)(implicit mode: RoundingMode): (HighPrecisionMoney, HighPrecisionMoney) = {
-    val (result, remainder) = this.amount /% m
-
-    fromDecimalAmount(result, fractionDigits, this.currency) ->
-      fromDecimalAmount(remainder, fractionDigits, this.currency)
-  }
-
-  def %(other: HighPrecisionMoney)(implicit mode: RoundingMode): HighPrecisionMoney =
-    this.remainder(other)
-
-  def %(m: Money)(implicit mode: RoundingMode): HighPrecisionMoney =
-    this.remainder(m.toHighPrecisionMoney(fractionDigits))
-
-  def %(other: BigDecimal)(implicit mode: RoundingMode): HighPrecisionMoney =
-    this.remainder(fromDecimalAmount(other, this.fractionDigits, this.currency))
-
-  def remainder(other: HighPrecisionMoney)(implicit mode: RoundingMode): HighPrecisionMoney =
-    calc(this, other, _ remainder _)
-
-  def remainder(other: BigDecimal)(implicit mode: RoundingMode): HighPrecisionMoney =
-    this.remainder(fromDecimalAmount(other, this.fractionDigits, this.currency))
-
-  def unary_- : HighPrecisionMoney =
-    fromDecimalAmount(-this.amount, this.fractionDigits, this.currency)(
-      BigDecimal.RoundingMode.UNNECESSARY)
-
-  /** Partitions this amount of money into several parts where the size of the individual parts are
-    * defined by the given ratios. The partitioning takes care of not losing or gaining any money by
-    * distributing any remaining "cents" evenly across the partitions.
-    *
-    * <p>Example: (0.05 EUR) partition (3,7) == Seq(0.02 EUR, 0.03 EUR)</p>
-    */
-  def partition(ratios: Int*)(implicit mode: RoundingMode): Seq[HighPrecisionMoney] = {
-    val total = ratios.sum
-    val factor = Money.cachedCentFactor(fractionDigits)
-    val amountAsInt = (this.amount / factor).toBigInt
-    val portionAmounts = ratios.map(amountAsInt * _ / total)
-    var remainder = portionAmounts.foldLeft(amountAsInt)(_ - _)
-
-    portionAmounts.map { portionAmount =>
-      remainder -= 1
-
-      fromDecimalAmount(
-        BigDecimal(portionAmount + (if (remainder >= 0) 1 else 0)) * factor,
-        this.fractionDigits,
-        this.currency)
-    }
-  }
 
   def toMoneyWithPrecisionLoss: Money =
     Money.fromCentAmount(this.centAmount, currency)
@@ -628,10 +404,4 @@ object HighPrecisionMoney {
       fractionDigits,
       money.centAmount,
       money.currency)
-
-  def monoid(fractionDigits: Int, c: Currency)(implicit
-      mode: RoundingMode): Monoid[HighPrecisionMoney] = new Monoid[HighPrecisionMoney] {
-    def combine(x: HighPrecisionMoney, y: HighPrecisionMoney): HighPrecisionMoney = x + y
-    val empty: HighPrecisionMoney = HighPrecisionMoney.zero(fractionDigits, c)
-  }
 }

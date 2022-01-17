@@ -52,87 +52,89 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
       "0.0001".EUR_PRECISE(4).withFractionDigits(2).preciseAmountAsLong must equal(0)
     }
 
-    it("should support the unary '-' operator.") {
-      -"0.01".EUR_PRECISE(2) must equal("-0.01".EUR_PRECISE(2))
-    }
-
-    it("should support the binary '+' operator.") {
-      ("0.001".EUR_PRECISE(3)) + ("0.002".EUR_PRECISE(3)) must equal(
-        "0.003".EUR_PRECISE(3)
-      )
-
-      ("0.005".EUR_PRECISE(3)) + Money.fromDecimalAmount(BigDecimal("0.01"), Euro) must equal(
-        "0.015".EUR_PRECISE(3)
-      )
-
-      ("0.005".EUR_PRECISE(3)) + BigDecimal("0.005") must equal(
-        "0.010".EUR_PRECISE(3)
-      )
-    }
-
-    it("should support the binary '-' operator.") {
-      ("0.002".EUR_PRECISE(3)) - ("0.001".EUR_PRECISE(3)) must equal(
-        "0.001".EUR_PRECISE(3)
-      )
-
-      ("0.015".EUR_PRECISE(3)) - Money.fromDecimalAmount(BigDecimal("0.01"), Euro) must equal(
-        "0.005".EUR_PRECISE(3)
-      )
-
-      ("0.005".EUR_PRECISE(3)) - BigDecimal("0.005") must equal(
-        "0.000".EUR_PRECISE(3)
-      )
-    }
-
-    it("should support the binary '*' operator.") {
-      ("0.002".EUR_PRECISE(3)) * ("5.00".EUR_PRECISE(2)) must equal(
-        "0.010".EUR_PRECISE(3)
-      )
-
-      ("0.015".EUR_PRECISE(3)) * Money.fromDecimalAmount(BigDecimal("100.00"), Euro) must equal(
-        "1.500".EUR_PRECISE(3)
-      )
-
-      ("0.005".EUR_PRECISE(3)) * BigDecimal("0.005") must equal(
-        "0.000".EUR_PRECISE(3)
-      )
-    }
-
-    it("should support the binary '%' operator.") {
-      ("0.010".EUR_PRECISE(3)) % ("5.00".EUR_PRECISE(2)) must equal(
-        "0.010".EUR_PRECISE(3)
-      )
-
-      ("100.000".EUR_PRECISE(3)) % Money.fromDecimalAmount(BigDecimal("100.00"), Euro) must equal(
-        "0.000".EUR_PRECISE(3)
-      )
-
-      ("0.015".EUR_PRECISE(3)) % BigDecimal("0.002") must equal(
-        "0.001".EUR_PRECISE(3)
-      )
-    }
-
-    it("should support the binary '/%' operator.") {
-      "10.000".EUR_PRECISE(3)./%(3.00) must equal(
-        ("3.000".EUR_PRECISE(3), "1.000".EUR_PRECISE(3))
-      )
-    }
-
-    it("should support the remainder operator.") {
-      "10.000".EUR_PRECISE(3).remainder(3.00) must equal("1.000".EUR_PRECISE(3))
-
-      "10.000".EUR_PRECISE(3).remainder("3.000".EUR_PRECISE(3)) must equal("1.000".EUR_PRECISE(3))
-    }
-
-    it("should partition the value properly.") {
-      "10.000".EUR_PRECISE(3).partition(1, 2, 3) must equal(
-        ArrayBuffer(
-          "1.667".EUR_PRECISE(3),
-          "3.333".EUR_PRECISE(3),
-          "5.000".EUR_PRECISE(3)
-        )
-      )
-    }
+//    it("should support the unary '-' operator.") {
+//      -("0.01".EUR_PRECISE(2).operation) must equal("-0.01".EUR_PRECISE(2).operation)
+//    }
+//
+//    it("should support the binary '+' operator.") {
+//      "0.001".EUR_PRECISE(3).operation + "0.002".EUR_PRECISE(3).operation must equal(
+//        "0.003".EUR_PRECISE(3).operation
+//      )
+//
+//      "0.005".EUR_PRECISE(3).operation + Money.fromDecimalAmount(
+//        BigDecimal("0.01"),
+//        Euro) must equal(
+//        "0.015".EUR_PRECISE(3).operation
+//      )
+//
+//      ("0.005".EUR_PRECISE(3).operation) + BigDecimal("0.005") must equal(
+//        "0.010".EUR_PRECISE(3)
+//      )
+//    }
+//
+//    it("should support the binary '-' operator.") {
+//      ("0.002".EUR_PRECISE(3)) - ("0.001".EUR_PRECISE(3)) must equal(
+//        "0.001".EUR_PRECISE(3)
+//      )
+//
+//      ("0.015".EUR_PRECISE(3)) - Money.fromDecimalAmount(BigDecimal("0.01"), Euro) must equal(
+//        "0.005".EUR_PRECISE(3)
+//      )
+//
+//      ("0.005".EUR_PRECISE(3)) - BigDecimal("0.005") must equal(
+//        "0.000".EUR_PRECISE(3)
+//      )
+//    }
+//
+//    it("should support the binary '*' operator.") {
+//      ("0.002".EUR_PRECISE(3)) * ("5.00".EUR_PRECISE(2)) must equal(
+//        "0.010".EUR_PRECISE(3)
+//      )
+//
+//      ("0.015".EUR_PRECISE(3)) * Money.fromDecimalAmount(BigDecimal("100.00"), Euro) must equal(
+//        "1.500".EUR_PRECISE(3)
+//      )
+//
+//      ("0.005".EUR_PRECISE(3)) * BigDecimal("0.005") must equal(
+//        "0.000".EUR_PRECISE(3)
+//      )
+//    }
+//
+//    it("should support the binary '%' operator.") {
+//      ("0.010".EUR_PRECISE(3)) % ("5.00".EUR_PRECISE(2)) must equal(
+//        "0.010".EUR_PRECISE(3)
+//      )
+//
+//      ("100.000".EUR_PRECISE(3)) % Money.fromDecimalAmount(BigDecimal("100.00"), Euro) must equal(
+//        "0.000".EUR_PRECISE(3)
+//      )
+//
+//      ("0.015".EUR_PRECISE(3)) % BigDecimal("0.002") must equal(
+//        "0.001".EUR_PRECISE(3)
+//      )
+//    }
+//
+//    it("should support the binary '/%' operator.") {
+//      "10.000".EUR_PRECISE(3)./%(3.00) must equal(
+//        ("3.000".EUR_PRECISE(3), "1.000".EUR_PRECISE(3))
+//      )
+//    }
+//
+//    it("should support the remainder operator.") {
+//      "10.000".EUR_PRECISE(3).remainder(3.00) must equal("1.000".EUR_PRECISE(3))
+//
+//      "10.000".EUR_PRECISE(3).remainder("3.000".EUR_PRECISE(3)) must equal("1.000".EUR_PRECISE(3))
+//    }
+//
+//    it("should partition the value properly.") {
+//      "10.000".EUR_PRECISE(3).partition(1, 2, 3) must equal(
+//        ArrayBuffer(
+//          "1.667".EUR_PRECISE(3),
+//          "3.333".EUR_PRECISE(3),
+//          "5.000".EUR_PRECISE(3)
+//        )
+//      )
+//    }
 
     it("should validate fractionDigits (min)") {
       val Invalid(errors) = HighPrecisionMoney.fromPreciseAmount(123456L, 1, Euro, None)
