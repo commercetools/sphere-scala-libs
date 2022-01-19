@@ -31,6 +31,8 @@ sealed trait BaseMoneyOperation {
 
   def fractionDigits: Int
 
+  def toMoney()(implicit mode: RoundingMode): BaseMoney
+
   def +(m: MoneyOperation)(implicit mode: RoundingMode): BaseMoneyOperation
   def +(m: HighPrecisionMoneyOperation)(implicit mode: RoundingMode): BaseMoneyOperation
   def +(m: BaseMoneyOperation)(implicit mode: RoundingMode): BaseMoneyOperation
@@ -91,6 +93,9 @@ case class MoneyOperation private (amount: BigDecimal, currency: Currency)
   private val backwardsCompatibleRoundingModeForOperations = BigDecimal.RoundingMode.HALF_EVEN
 
   lazy val fractionDigits: Int = currency.getDefaultFractionDigits
+
+  override def toMoney()(implicit mode: RoundingMode): Money =
+    Money.fromDecimalAmount(amount, currency)
 
   def withCentAmount(centAmount: Long): MoneyOperation = {
     val newAmount = BigDecimal(centAmount) * centFactor
@@ -317,6 +322,9 @@ case class HighPrecisionMoneyOperation private (
   require(
     fractionDigits >= currency.getDefaultFractionDigits,
     "`fractionDigits` should be  >= than the default fraction digits of the currency.")
+
+  override def toMoney()(implicit mode: RoundingMode): HighPrecisionMoney =
+    HighPrecisionMoney.fromDecimalAmount(amount, fractionDigits, currency)
 
   def withFractionDigits(fd: Int)(implicit mode: RoundingMode): HighPrecisionMoneyOperation = {
     val newAmount = amount.setScale(fd, mode)
