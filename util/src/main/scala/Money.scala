@@ -287,7 +287,7 @@ object Money {
   final val bdTen: BigDecimal = BigDecimal(10)
 
   private final val centPowerZeroFractionDigit = bdOne
-  private final val centPowerOneFractionDigit = bdTen.pow(1)
+  private final val centPowerOneFractionDigit = bdTen
   private final val centPowerTwoFractionDigit = bdTen.pow(2)
   private final val centPowerThreeFractionDigit = bdTen.pow(3)
   private final val centPowerFourFractionDigit = bdTen.pow(4)
