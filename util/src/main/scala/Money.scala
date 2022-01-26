@@ -212,11 +212,11 @@ case class Money private (centAmount: Long, currency: Currency)
     val centAmountString = this.centAmount.toString
     val formattedString = new StringBuilder()
     val centAmountLength = centAmountString.length
-    val digits = this.fractionDigits
-    val missing = digits - centAmountLength
+    val decimals = this.fractionDigits
+    val missing = decimals - centAmountLength
     if (missing >= 0) {
       formattedString.append("0.")
-      for (_ <- 1 to (digits - centAmountLength))
+      for (_ <- 1 to missing)
         formattedString.append('0')
     }
 
@@ -224,7 +224,7 @@ case class Money private (centAmount: Long, currency: Currency)
     centAmountString.iterator.foreach { c =>
       formattedString.append(c)
       i += 1
-      if (centAmountLength - i == digits) formattedString.append(".")
+      if (centAmountLength - i == decimals) formattedString.append(".")
     }
     formattedString.result() + " " + this.currency.getCurrencyCode
   }
