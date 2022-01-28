@@ -280,7 +280,7 @@ object Money {
       "The scale of the given amount does not match the scale of the provided currency." +
         " - " + amount.scale + " <-> " + currency.getDefaultFractionDigits
     )
-    fromDecimalAmount(amount, currency)(BigDecimal.RoundingMode.HALF_EVEN)
+    fromDecimalAmount(amount, currency)(BigDecimal.RoundingMode.UNNECESSARY)
   }
 
   private final val bdOne: BigDecimal = BigDecimal(1)
