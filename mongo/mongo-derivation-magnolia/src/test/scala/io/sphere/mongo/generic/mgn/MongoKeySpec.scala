@@ -1,10 +1,11 @@
-package io.sphere.mongo.generic
+package io.sphere.mongo.generic.mgn
 
-import io.sphere.mongo.format.DefaultMongoFormats._
 import io.sphere.mongo.format.MongoFormat
 import org.bson.BSONObject
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import io.sphere.mongo.generic.mgn.deriveMongoFormat
+import io.sphere.mongo.format.DefaultMongoFormats._
 
 import scala.collection.JavaConverters._
 

@@ -1,15 +1,16 @@
-package io.sphere.mongo.generic
+package io.sphere.mongo.generic.mgn
 
 import io.sphere.mongo.MongoUtils.dbObj
 import io.sphere.mongo.format.{MongoFormat, fromMongo, toMongo}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import io.sphere.mongo.generic.mgn.deriveMongoFormat
 import io.sphere.mongo.format.DefaultMongoFormats._
 
-class MongoTypeHintFieldWithSealedTraitSpec extends AnyWordSpec with Matchers {
-  import MongoTypeHintFieldWithSealedTraitSpec._
+class MongoTypeHintFieldWithAbstractClassSpec extends AnyWordSpec with Matchers {
+  import MongoTypeHintFieldWithAbstractClassSpec._
 
-  "MongoTypeHintField (with sealed trait)" must {
+  "MongoTypeHintField (with abstract class)" must {
     "allow to set another field to distinguish between types (toMongo)" in {
       val user = UserWithPicture("foo-123", Medium, "http://example.com")
       val expected = dbObj(
@@ -37,10 +38,10 @@ class MongoTypeHintFieldWithSealedTraitSpec extends AnyWordSpec with Matchers {
   }
 }
 
-object MongoTypeHintFieldWithSealedTraitSpec {
+object MongoTypeHintFieldWithAbstractClassSpec {
 
   @MongoTypeHintField(value = "pictureType")
-  sealed trait PictureSize
+  sealed abstract class PictureSize
   case object Small extends PictureSize
   case object Medium extends PictureSize
   case object Big extends PictureSize

@@ -4,6 +4,7 @@ import com.mongodb.{BasicDBObject, DBObject}
 import org.scalatest.matchers.must.Matchers
 import io.sphere.mongo.format.MongoFormat
 import io.sphere.mongo.format.DefaultMongoFormats._
+import io.sphere.mongo.generic.mgn.deriveMongoFormat
 import org.scalatest.wordspec.AnyWordSpec
 
 object SerializationTest {
@@ -23,13 +24,13 @@ class SerializationTest extends AnyWordSpec with Matchers {
       dbo.put("a", Integer.valueOf(3))
       dbo.put("b", Integer.valueOf(4))
 
-      val mongoFormat: MongoFormat[Something] = io.sphere.mongo.generic.deriveMongoFormat
+      val mongoFormat: MongoFormat[Something] = deriveMongoFormat
       val something = mongoFormat.fromMongoValue(dbo)
       something must be(Something(Some(3), 4))
     }
 
     "generate a format that serializes optional fields with value None as BSON objects without that field" in {
-      val testFormat: MongoFormat[Something] = io.sphere.mongo.generic.deriveMongoFormat[Something]
+      val testFormat: MongoFormat[Something] = deriveMongoFormat[Something]
       val serializedObject = testFormat.toMongoValue(Something(None, 1)).asInstanceOf[DBObject]
       serializedObject.keySet().contains("b") must be(true)
       serializedObject.keySet().contains("a") must be(false)
@@ -39,7 +40,7 @@ class SerializationTest extends AnyWordSpec with Matchers {
       val dbo = new BasicDBObject()
       dbo.put("a", Integer.valueOf(3))
 
-      val mongoFormat: MongoFormat[Something] = io.sphere.mongo.generic.deriveMongoFormat
+      val mongoFormat: MongoFormat[Something] = deriveMongoFormat
       val something = mongoFormat.fromMongoValue(dbo)
       something must be(Something(Some(3), 2))
     }
@@ -47,7 +48,7 @@ class SerializationTest extends AnyWordSpec with Matchers {
 
   "mongoEnum" must {
     "serialize and deserialize enums" in {
-      val mongo: MongoFormat[Color.Value] = generic.mongoEnum(Color)
+      val mongo: MongoFormat[Color.Value] = generic.mgn.mongoEnum(Color)
 
       // mongo java driver knows how to encode/decode Strings
       val serializedObject = mongo.toMongoValue(Color.Red).asInstanceOf[String]

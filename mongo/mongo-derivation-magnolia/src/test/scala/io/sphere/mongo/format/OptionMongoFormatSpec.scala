@@ -6,6 +6,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import io.sphere.mongo.MongoUtils._
 import DefaultMongoFormats._
+import io.sphere.mongo.generic.mgn.deriveMongoFormat
 
 object OptionMongoFormatSpec {
 

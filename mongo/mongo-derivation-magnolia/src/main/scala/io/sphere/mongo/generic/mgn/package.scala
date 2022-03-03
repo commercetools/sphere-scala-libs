@@ -1,4 +1,4 @@
-package io.sphere.mongo
+package io.sphere.mongo.generic
 
 import com.mongodb.{BasicDBObject, DBObject}
 import io.sphere.mongo.format.{MongoFormat, MongoNothing, toMongo}
@@ -8,7 +8,7 @@ import org.bson.BSONObject
 
 import scala.language.experimental.macros
 
-package object generic extends Logging {
+package object mgn extends Logging {
 
   /** Creates a MongoFormat instance for an Enumeration type that encodes the `toString`
     * representations of the enumeration values.
@@ -153,8 +153,8 @@ package object generic extends Logging {
       val typeHintFieldAnnot: Option[MongoTypeHintField] = annotations.collectFirst {
         case h: MongoTypeHintField => h
       }
-      val typeHintAnnot: Option[generic.MongoTypeHint] = annotations.collectFirst {
-        case h: generic.MongoTypeHint => h
+      val typeHintAnnot: Option[MongoTypeHint] = annotations.collectFirst { case h: MongoTypeHint =>
+        h
       }
       val typeField = typeHintFieldAnnot.map(_.value)
       val typeValue = typeHintAnnot.map(hintVal(caseClass.typeName))
@@ -180,8 +180,8 @@ package object generic extends Logging {
       val typeHintFieldAnnot: Option[MongoTypeHintField] = annotations.collectFirst {
         case h: MongoTypeHintField => h
       }
-      val typeHintAnnot: Option[generic.MongoTypeHint] = annotations.collectFirst {
-        case h: generic.MongoTypeHint => h
+      val typeHintAnnot: Option[MongoTypeHint] = annotations.collectFirst { case h: MongoTypeHint =>
+        h
       }
       val typeField = typeHintFieldAnnot.map(_.value)
       val typeValue = typeHintAnnot.map(hintVal(subType.typeName))
@@ -270,7 +270,7 @@ package object generic extends Logging {
     new TypeSelector[A](typeField, typeValue, subType)
   }
 
-  private def hintVal(typeName: TypeName)(h: generic.MongoTypeHint): String =
+  private def hintVal(typeName: TypeName)(h: MongoTypeHint): String =
     if (h.value.trim.isEmpty) defaultTypeValue(typeName)
     else h.value
 

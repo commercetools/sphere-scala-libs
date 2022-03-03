@@ -1,12 +1,12 @@
-package io.sphere.mongo.generic
+package io.sphere.mongo.generic.mgn
 
 import com.mongodb.DBObject
-import org.scalatest.matchers.must.Matchers
-import org.scalatest.wordspec.AnyWordSpec
 import io.sphere.mongo.MongoUtils.dbObj
-import io.sphere.mongo.format.DefaultMongoFormats._
 import io.sphere.mongo.format.MongoFormat
 import org.scalatest.Assertion
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
+import io.sphere.mongo.format.DefaultMongoFormats._
 
 class SumTypesDerivingSpec extends AnyWordSpec with Matchers {
   import SumTypesDerivingSpec._

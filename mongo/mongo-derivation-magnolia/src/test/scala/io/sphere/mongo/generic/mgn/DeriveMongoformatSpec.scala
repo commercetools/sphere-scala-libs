@@ -1,11 +1,11 @@
-package io.sphere.mongo.generic
+package io.sphere.mongo.generic.mgn
 
-import io.sphere.mongo.format.MongoFormat
+import io.sphere.mongo.MongoUtils._
 import io.sphere.mongo.format._
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import io.sphere.mongo.format.DefaultMongoFormats._
-import io.sphere.mongo.MongoUtils._
+import io.sphere.mongo.generic.mgn.deriveMongoFormat
+import DefaultMongoFormats._
 
 class DeriveMongoformatSpec extends AnyWordSpec with Matchers {
   import DeriveMongoformatSpec._

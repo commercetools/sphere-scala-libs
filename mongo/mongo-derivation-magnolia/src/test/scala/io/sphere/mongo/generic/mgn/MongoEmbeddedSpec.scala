@@ -1,11 +1,12 @@
-package io.sphere.mongo.generic
+package io.sphere.mongo.generic.mgn
 
+import io.sphere.mongo.MongoUtils._
 import io.sphere.mongo.format.MongoFormat
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
-import io.sphere.mongo.format.DefaultMongoFormats._
-import io.sphere.mongo.MongoUtils._
 import org.scalatest.wordspec.AnyWordSpec
+import io.sphere.mongo.generic.mgn.deriveMongoFormat
+import io.sphere.mongo.format.DefaultMongoFormats._
 
 import scala.util.Try
 
