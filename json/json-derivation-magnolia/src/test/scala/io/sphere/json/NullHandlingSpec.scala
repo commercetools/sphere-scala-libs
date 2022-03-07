@@ -1,3 +1,4 @@
+/*
 package io.sphere.json
 
 import io.sphere.json.generic._
@@ -66,3 +67,4 @@ case class Jeans(
 object Jeans {
   implicit val json: JSON[Jeans] = deriveJSON[Jeans]
 }
+*/

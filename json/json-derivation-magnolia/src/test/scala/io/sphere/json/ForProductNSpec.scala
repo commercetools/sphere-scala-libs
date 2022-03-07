@@ -1,3 +1,4 @@
+/*
 package io.sphere.json
 
 import java.util.UUID
@@ -33,3 +34,4 @@ class ForProductNSpec extends AnyWordSpec with Matchers {
   }
 
 }
+*/

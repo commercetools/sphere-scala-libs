@@ -1,3 +1,4 @@
+/*
 package io.sphere.mongo.generic
 
 import io.sphere.json._
@@ -43,3 +44,4 @@ object JSONKeySpec {
     implicit val mongo: JSON[Test] = jsonProduct(apply _)
   }
 }
+*/

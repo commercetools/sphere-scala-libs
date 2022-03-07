@@ -1,3 +1,4 @@
+/*
 package io.sphere.json
 
 import io.sphere.json.generic.{TypeSelectorContainer, deriveJSON, jsonTypeSwitch}
@@ -85,3 +86,4 @@ object TypesSwitchSpec {
     implicit val json: JSON[TypeB] = deriveJSON[TypeB]
   }
 }
+*/

@@ -1,3 +1,4 @@
+/*
 package io.sphere.json
 
 import cats.data.Validated.Valid
@@ -145,3 +146,4 @@ case class UserWithPicture(
 object UserWithPicture {
   implicit val json: JSON[UserWithPicture] = deriveJSON[UserWithPicture]
 }
+*/

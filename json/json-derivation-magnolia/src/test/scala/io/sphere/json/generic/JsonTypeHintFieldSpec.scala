@@ -1,3 +1,4 @@
+/*
 package io.sphere.json.generic
 
 import cats.data.Validated.Valid
@@ -61,3 +62,4 @@ object JsonTypeHintFieldSpec {
     implicit val json: JSON[UserWithPicture] = jsonProduct(apply _)
   }
 }
+*/

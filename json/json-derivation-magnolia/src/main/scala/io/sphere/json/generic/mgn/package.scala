@@ -18,13 +18,16 @@ import io.sphere.json.{
 }
 import io.sphere.util.{Logging, Memoizer, Reflect}
 import magnolia._
+import org.json4s.DefaultFormats
 import org.json4s.JsonAST.{JField, JObject, JString, JValue}
-
+import org.json4s.jackson.compactJson
+import org.json4s.JsonDSL._
 import scala.language.experimental.macros
-
 import scala.collection.mutable.ListBuffer
 
 package object mgn extends Logging {
+
+  type Typeclass[T] = JSON[T]
 
   def deriveJSON[A]: JSON[A] = macro Magnolia.gen[A]
   // def deriveSingletonJSON[A]: JSON[A] = macro JSONMacros.deriveSingletonJSON_impl[A]
@@ -33,6 +36,7 @@ package object mgn extends Logging {
 
   def combine[T](caseClass: CaseClass[JSON, T]): JSON[T] = new JSON[T] {
     private val jsonClass = getJSONClassMeta(caseClass)
+    private val _fields = jsonClass.fields
 
     override def read(jval: JValue): JValidation[T] = jval match {
       case o: JObject =>
@@ -60,9 +64,92 @@ package object mgn extends Logging {
       JObject(buf.toList)
     }
 
-    override val fields: Set[String] = ???
+    // TODO extract into common magnolia module
+    override val fields: Set[String] = calculateFields()
+    private def calculateFields(): Set[String] = {
+      val builder = Set.newBuilder[String]
+      var i = 0
+      caseClass.parameters.foreach { p =>
+        val f = _fields(i)
+        if (!f.ignored) {
+          if (f.embedded)
+            builder ++= p.typeclass.fields
+          else
+            builder += f.name
+        }
+        i += 1
+      }
+      builder.result()
+    }
   }
-  def dispatch[T](sealedTrait: SealedTrait[JSON, T]): JSON[T] = ???
+  def dispatch[T](sealedTrait: SealedTrait[JSON, T]): JSON[T] = {
+    val allSelectors = sealedTrait.subtypes.map { subType =>
+      typeSelector(subType)
+    }
+    val readMapBuilder = Map.newBuilder[String, TypeSelector[_]]
+    val writeMapBuilder = Map.newBuilder[TypeName, TypeSelector[_]]
+    allSelectors.foreach { s =>
+      readMapBuilder += (s.typeValue -> s)
+      writeMapBuilder += (s.subType.typeName -> s)
+    }
+    val readMap = readMapBuilder.result()
+    val writeMap = writeMapBuilder.result()
+    val typeField = sealedTrait.annotations
+      .collectFirst { case a: JSONTypeHintField =>
+        a.value
+      }
+      .getOrElse(defaultTypeFieldName)
+
+    new JSON[T] {
+      override def write(value: T): JValue = sealedTrait.dispatch(value) { subtype =>
+        writeMap.get(subtype.typeName) match {
+          case Some(ts) =>
+            subtype.typeclass.write(subtype.cast(value)) match {
+              case o @ JObject(obj) if obj.exists(_._1 == ts.typeField) => o
+              case j: JObject => j ~ JField(ts.typeField, JString(ts.typeValue))
+              case j =>
+                throw new IllegalStateException("The json is not an object but a " + j.getClass)
+            }
+          case None =>
+            throw new IllegalStateException("Can't find a serializer for a class " + value.getClass)
+        }
+      }
+
+      override def read(jval: JValue): JValidation[T] = jval match {
+        case o: JObject =>
+          findTypeValue(o, typeField) match {
+            case Some(t) =>
+              readMap.get(t) match {
+                case Some(ts) => ts.subType.typeclass.read(o).asInstanceOf[JValidation[T]]
+                case None =>
+                  jsonParseError("Invalid type value '" + t + "' in '%s'".format(compactJson(o)))
+              }
+            case None =>
+              jsonParseError(
+                "Missing type field '" + typeField + "' in '%s'".format(compactJson(o)))
+          }
+        case _ => jsonParseError("JSON object expected.")
+      }
+    }
+  }
+
+  private def findTypeValue(o: JObject, typeField: String): Option[String] = {
+    implicit val formats = DefaultFormats
+    o.obj.find(_._1 == typeField).flatMap(_._2.extractOpt[String])
+  }
+
+  private case class TypeSelector[A](
+      val typeField: String,
+      val typeValue: String,
+      subType: Subtype[JSON, A])
+
+  private def typeSelector[A](subType: Subtype[JSON, A]): TypeSelector[A] = {
+    val (typeField, typeValue) = getJSONClassMetaFromSubType(subType).typeHint match {
+      case Some(hint) => (hint.field, hint.value)
+      case None => (defaultTypeFieldName, defaultTypeValue(subType.typeName))
+    }
+    new TypeSelector[A](typeField, typeValue, subType)
+  }
 
   private def getJSONFields(caseClass: CaseClass[JSON, _]): IndexedSeq[JSONFieldMeta] =
     caseClass.parameters.map(fieldMeta).toIndexedSeq
@@ -112,6 +199,33 @@ package object mgn extends Logging {
       fields = getJSONFields(caseClass)
     )
   })
+
+  private val getJSONClassMetaFromSubType =
+    new Memoizer[Subtype[JSON, _], JSONClassMeta](subType => {
+      log.trace("Initializing Mongo metadata for %s".format(subType.typeName.full))
+
+      val annotations = subType.annotations
+
+      val typeHintFieldAnnot: Option[JSONTypeHintField] = annotations.collectFirst {
+        case h: JSONTypeHintField => h
+      }
+      val typeHintAnnot: Option[JSONTypeHint] = annotations.collectFirst { case h: JSONTypeHint =>
+        h
+      }
+      val typeField = typeHintFieldAnnot.map(_.value)
+      val typeValue = typeHintAnnot.map(hintVal(subType.typeName))
+
+      JSONClassMeta(
+        typeHint = (typeField, typeValue) match {
+          case (Some(field), Some(hint)) => Some(JSONClassMeta.TypeHint(field, hint))
+          case (None, Some(hint)) => Some(JSONClassMeta.TypeHint(defaultTypeFieldName, hint))
+          case (Some(field), None) =>
+            Some(JSONClassMeta.TypeHint(field, defaultTypeValue(subType.typeName)))
+          case (None, None) => None
+        },
+        fields = IndexedSeq[JSONFieldMeta]()
+      )
+    })
 
   private val defaultTypeFieldName: String = JSONTypeHintField.defaultValue
 

@@ -1,3 +1,4 @@
+/*
 package io.sphere.json
 
 import io.sphere.json.generic._
@@ -129,3 +130,4 @@ class JSONEmbeddedSpec extends AnyWordSpec with Matchers with OptionValues {
   }
 
 }
+*/

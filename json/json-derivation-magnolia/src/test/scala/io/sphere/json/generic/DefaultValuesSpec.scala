@@ -1,3 +1,4 @@
+/*
 package io.sphere.mongo.generic
 
 import io.sphere.json._
@@ -31,3 +32,4 @@ object DefaultValuesSpec {
     implicit val mongo: JSON[Test] = jsonProduct(apply _)
   }
 }
+*/
