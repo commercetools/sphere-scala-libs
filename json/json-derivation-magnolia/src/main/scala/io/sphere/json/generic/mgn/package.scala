@@ -22,8 +22,10 @@ import org.json4s.DefaultFormats
 import org.json4s.JsonAST.{JField, JObject, JString, JValue}
 import org.json4s.jackson.compactJson
 import org.json4s.JsonDSL._
+
 import scala.language.experimental.macros
 import scala.collection.mutable.ListBuffer
+import scala.reflect.ClassTag
 
 package object mgn extends Logging {
 
@@ -271,5 +273,21 @@ package object mgn extends Logging {
       else
         buf += JField(field.name, toJValue(e))
     }
+
+  def jsonEnum(e: Enumeration): JSON[e.Value] = new Typeclass[e.Value] {
+    override def write(value: e.Value): JValue = JString(value.toString)
+
+    override def read(jval: JValue): JValidation[e.Value] = jval match {
+      case JString(s) =>
+        e.values
+          .find(_.toString == s)
+          .toValidNel(
+            JSONParseError(
+              "Invalid enum value: '%s'. Expected one of: %s"
+                .format(s, e.values.mkString("'", "','", "'")))
+          )
+      case _ => jsonParseError("JSON String expected.")
+    }
+  }
 
 }
