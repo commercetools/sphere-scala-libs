@@ -97,6 +97,12 @@ lazy val `sphere-json` = project
     url("https://github.com/commercetools/sphere-scala-libs/blob/master/json/README.md")))
   .dependsOn(`sphere-json-core`, `sphere-json-derivation`)
 
+lazy val `sphere-json-derivation-magnolia` = project
+  .in(file("./json/json-derivation-magnolia"))
+  .settings(standardSettings: _*)
+  .settings(Fmpp.settings: _*)
+  .dependsOn(`sphere-json-core`)
+
 lazy val `sphere-mongo-core` = project
   .in(file("./mongo/mongo-core"))
   .settings(standardSettings: _*)
