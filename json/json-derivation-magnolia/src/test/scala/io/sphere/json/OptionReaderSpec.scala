@@ -1,7 +1,6 @@
-/*
 package io.sphere.json
 
-import io.sphere.json.generic._
+import io.sphere.json.generic.mgn.deriveJSON
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -11,13 +10,13 @@ object OptionReaderSpec {
   case class SimpleClass(value1: String, value2: Int)
 
   object SimpleClass {
-    implicit val json: JSON[SimpleClass] = jsonProduct(apply _)
+    implicit val json: JSON[SimpleClass] = deriveJSON[SimpleClass]
   }
 
   case class ComplexClass(name: String, simpleClass: Option[SimpleClass])
 
   object ComplexClass {
-    implicit val json: JSON[ComplexClass] = jsonProduct(apply _)
+    implicit val json: JSON[ComplexClass] = deriveJSON[ComplexClass]
   }
 
 }
@@ -102,4 +101,3 @@ class OptionReaderSpec extends AnyWordSpec with Matchers with OptionValues {
   }
 
 }
-*/
