@@ -1,7 +1,6 @@
-/*
 package io.sphere.json
 
-import io.sphere.json.generic._
+import io.sphere.json.generic.mgn.{JSONEmbedded, deriveJSON}
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -11,29 +10,29 @@ object JSONEmbeddedSpec {
   case class Embedded(value1: String, value2: Int)
 
   object Embedded {
-    implicit val json: JSON[Embedded] = jsonProduct(apply _)
+    implicit val json: JSON[Embedded] = deriveJSON[Embedded]
   }
 
   case class Test1(name: String, @JSONEmbedded embedded: Embedded)
 
   object Test1 {
-    implicit val json: JSON[Test1] = jsonProduct(apply _)
+    implicit val json: JSON[Test1] = deriveJSON[Test1]
   }
 
   case class Test2(name: String, @JSONEmbedded embedded: Option[Embedded] = None)
 
   object Test2 {
-    implicit val json: JSON[Test2] = jsonProduct(apply _)
+    implicit val json: JSON[Test2] = deriveJSON[Test2]
   }
 
   case class SubTest4(@JSONEmbedded embedded: Embedded)
   object SubTest4 {
-    implicit val json: JSON[SubTest4] = jsonProduct(apply _)
+    implicit val json: JSON[SubTest4] = deriveJSON[SubTest4]
   }
 
   case class Test4(subField: Option[SubTest4] = None)
   object Test4 {
-    implicit val json: JSON[Test4] = jsonProduct(apply _)
+    implicit val json: JSON[Test4] = deriveJSON[Test4]
   }
 }
 
@@ -130,4 +129,3 @@ class JSONEmbeddedSpec extends AnyWordSpec with Matchers with OptionValues {
   }
 
 }
-*/
