@@ -1,7 +1,7 @@
 package io.sphere.json
 
 import io.sphere.json.generic._
-import io.sphere.json.generic.mgn.deriveJSON
+import io.sphere.json.generic.JSONMagnoliaDerivation.deriveJSON
 import org.json4s.JsonAST.{JNothing, JObject}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec

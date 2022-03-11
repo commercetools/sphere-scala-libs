@@ -1,4 +1,4 @@
-package io.sphere.json.generic.mgn
+package io.sphere.json.generic
 
 import scala.annotation.StaticAnnotation
 

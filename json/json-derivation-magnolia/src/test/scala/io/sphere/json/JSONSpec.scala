@@ -11,7 +11,7 @@ import org.joda.time._
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.funspec.AnyFunSpec
 
-import mgn._
+import JSONMagnoliaDerivation._
 
 object JSONSpec {
   case class Project(nr: Int, name: String, version: Int = 1, milestones: List[Milestone] = Nil)

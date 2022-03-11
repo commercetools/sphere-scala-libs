@@ -1,6 +1,6 @@
 package io.sphere.json
 
-import io.sphere.json.generic.mgn.deriveJSON
+import io.sphere.json.generic.JSONMagnoliaDerivation.deriveJSON
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
