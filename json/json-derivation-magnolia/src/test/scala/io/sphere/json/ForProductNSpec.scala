@@ -1,6 +1,6 @@
 /*
 package io.sphere.json
-
+//TODO not used anywhere
 import java.util.UUID
 
 import io.sphere.json.ToJSONProduct._

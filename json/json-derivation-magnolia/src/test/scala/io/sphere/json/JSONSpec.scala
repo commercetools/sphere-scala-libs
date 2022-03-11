@@ -189,8 +189,8 @@ class JSONSpec extends AnyFunSpec with Matchers {
       }
     }
 
-    /*  it("must handle subclasses correctly in `jsonTypeSwitch`") {
-      implicit val jsonImpl = TestSubjectBase.json
+    /*   it("must handle subclasses correctly in `jsonTypeSwitch`") {
+      implicit val jsonImpl = deriveJSON[TestSubjectBase]
 
       val testSubjects = List[TestSubjectBase](
         TestSubjectConcrete1("testSubject1"),
@@ -243,16 +243,19 @@ class JSONSpec extends AnyFunSpec with Matchers {
       }
     }
 
-    /*            it("must provide derived instances for scala.Enumeration") {
-               implicit val toScalaEnumJSON = toJsonEnum(ScalaEnum)
-               implicit val fromScalaEnumJSON = fromJsonEnum(ScalaEnum)
-               ScalaEnum.values.foreach { v =>
-                 val json = s"""[${toJSON(v)}]"""
-                 withClue(json) {
-                   fromJSON[Seq[ScalaEnum.Value]](json) must equal(Valid(Seq(v)))
-                 }
-               }
-             }*/
+    /*
+//TODO doesnt seem used in sphere
+    it("must provide derived instances for scala.Enumeration") {
+      implicit val toScalaEnumJSON = toJsonEnum(ScalaEnum)
+      implicit val fromScalaEnumJSON = fromJsonEnum(ScalaEnum)
+      ScalaEnum.values.foreach { v =>
+        val json = s"""[${toJSON(v)}]"""
+        withClue(json) {
+          fromJSON[Seq[ScalaEnum.Value]](json) must equal(Valid(Seq(v)))
+        }
+      }
+    }
+     */
 
     /*    it("must handle subclasses correctly in `jsonTypeSwitch`") {
       // TODO each works on its own, combined for TestSubjectBase they dont, why is it even neccessary
