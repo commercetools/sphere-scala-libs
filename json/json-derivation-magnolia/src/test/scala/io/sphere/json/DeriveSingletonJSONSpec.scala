@@ -1,16 +1,37 @@
 package io.sphere.json
 
 import cats.data.Validated.Valid
-import io.sphere.json.generic.JSONMagnoliaDerivation.deriveJSON
 import org.json4s.JValue
 import org.json4s.JsonAST.JNothing
 import org.json4s.jackson.JsonMethods.{compact, render}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import io.sphere.json.generic.JSONTypeHint
+import io.sphere.json.generic.{JSONMagnoliaSingletonDerivation, JSONTypeHint}
+import io.sphere.json.generic.JSONMagnoliaDerivation.deriveJSON
 
 class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
   "DeriveSingletonJSON" must {
+
+    /*  "dasdasd" in {
+      object Singl
+      implicit val format = deriveJSON[Singl.type]
+
+      println(s"PRINTANJE ${format.write(Singl)}")
+      succeed
+    }*/
+
+    "write normal singleton values" in {
+      println(
+        deriveJSON[UserWithPicture].write(UserWithPicture("foo-123", Custom, "http://exmple.com"))
+      )
+      println("=====================")
+      println("=====================")
+      println("=====================")
+      println(
+        deriveJSON[UserWithPicture].write(UserWithPicture("foo-123", Medium, "http://exmple.com"))
+      )
+      succeed
+    }
 
     /*    "read normal singleton values" in {
       val user = getFromJSON[UserWithPicture]("""
@@ -127,7 +148,8 @@ case object Big extends PictureSize(1024, 2048)
 case object Custom extends PictureSize(1, 2)
 
 object PictureSize {
-  implicit val json: JSON[PictureSize] = deriveJSON[PictureSize]
+  // implicit val json: JSON[PictureSize] = deriveJSON[PictureSize]
+  implicit val json: JSON[PictureSize] = JSONMagnoliaSingletonDerivation.deriveJSON[PictureSize]
 }
 
 sealed trait Access

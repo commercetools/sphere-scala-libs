@@ -3,7 +3,6 @@ package io.sphere.json.generic
 import cats.data.Validated.Valid
 import cats.data.{NonEmptyList, Validated, ValidatedNel}
 import cats.implicits._
-import io.sphere.json.generic.JSONMagnoliaDerivation.{JSONParseResult, log}
 import io.sphere.json.{
   FromJSON,
   JSON,
@@ -28,6 +27,8 @@ import scala.collection.mutable.ListBuffer
 import scala.language.experimental.macros
 
 abstract class MagnoliaUtils {
+
+  type JSONParseResult[A] = ValidatedNel[JSONError, A]
 
   def findTypeValue(o: JObject, typeField: String): Option[String] = {
     implicit val formats = DefaultFormats
@@ -159,16 +160,100 @@ abstract class MagnoliaUtils {
 
 }
 
-object JSONMagnoliaDerivation extends MagnoliaUtils with Logging {
+trait BaseJSONMagnoliaDerivation extends MagnoliaUtils with Logging {
 
   type Typeclass[T] = JSON[T]
 
+  def combine[T](caseClass: CaseClass[JSON, T]): JSON[T]
+
+  def dispatch[T](sealedTrait: SealedTrait[JSON, T]): JSON[T] = {
+    val allSelectors = sealedTrait.subtypes.map { subType =>
+      typeSelector(subType)
+    }
+    val readMapBuilder = Map.newBuilder[String, TypeSelector[_]]
+    val writeMapBuilder = Map.newBuilder[TypeName, TypeSelector[_]]
+    allSelectors.foreach { s =>
+      readMapBuilder += (s.typeValue -> s)
+      writeMapBuilder += (s.subType.typeName -> s)
+    }
+    val readMap = readMapBuilder.result()
+    val writeMap = writeMapBuilder.result()
+    val typeField = sealedTrait.annotations
+      .collectFirst { case a: JSONTypeHintField =>
+        a.value
+      }
+      .getOrElse(defaultTypeFieldName)
+
+    new JSON[T] {
+      override def write(value: T): JValue = sealedTrait.dispatch(value) { subtype =>
+        writeMap.get(subtype.typeName) match {
+          case Some(ts) =>
+            subtype.typeclass.write(subtype.cast(value)) match {
+              // TODO if T is a singleton, write should return String (either value or typehint), so this should just forward it
+              case o @ JObject(obj) if obj.exists(_._1 == ts.typeField) => o
+              case s: JString => s
+              case j: JObject =>
+                j ~ JField(ts.typeField, JString(ts.typeValue))
+              case j =>
+                throw new IllegalStateException("The json is not an object but a " + j.getClass)
+            }
+          case None =>
+            throw new IllegalStateException("Can't find a serializer for a class " + value.getClass)
+        }
+      }
+
+      override def read(jval: JValue): JValidation[T] = jval match {
+        case o: JObject =>
+          findTypeValue(o, typeField) match {
+            case Some(t) =>
+              readMap.get(t) match {
+                case Some(ts) => ts.subType.typeclass.read(o).asInstanceOf[JValidation[T]]
+                case None =>
+                  jsonParseError("Invalid type value '" + t + "' in '%s'".format(compactJson(o)))
+              }
+            case None =>
+              jsonParseError(
+                "Missing type field '" + typeField + "' in '%s'".format(compactJson(o)))
+          }
+        case _ =>
+          jsonParseError("JSON object expected.")
+      }
+    }
+  }
+
+  def writeField[A: ToJSON](buf: ListBuffer[JField], field: JSONFieldMeta, e: A): Unit =
+    if (!field.ignored) {
+      if (field.embedded)
+        toJValue(e) match {
+          case o: JObject => buf ++= o.obj
+          case _ => // no update on buf
+        }
+      else
+        buf += JField(field.name, toJValue(e))
+    }
+
+  def jsonEnum(e: Enumeration): JSON[e.Value] = new Typeclass[e.Value] {
+    override def write(value: e.Value): JValue = JString(value.toString)
+
+    override def read(jval: JValue): JValidation[e.Value] = jval match {
+      case JString(s) =>
+        e.values
+          .find(_.toString == s)
+          .toValidNel(
+            JSONParseError(
+              "Invalid enum value: '%s'. Expected one of: %s"
+                .format(s, e.values.mkString("'", "','", "'")))
+          )
+      case _ => jsonParseError("JSON String expected.")
+    }
+  }
+}
+
+object JSONMagnoliaDerivation extends BaseJSONMagnoliaDerivation {
   def deriveJSON[A]: JSON[A] = macro Magnolia.gen[A]
   // def deriveSingletonJSON[A]: JSON[A] = macro JSONMacros.deriveSingletonJSON_impl[A]
 
-  type JSONParseResult[A] = ValidatedNel[JSONError, A]
-
-  def combine[T](caseClass: CaseClass[JSON, T]): JSON[T] = new JSON[T] {
+  override def combine[T](caseClass: CaseClass[JSON, T]): JSON[T] = new JSON[T] {
     private val jsonClass = getJSONClassMeta(caseClass)
     private val _fields = jsonClass.fields
 
@@ -177,7 +262,6 @@ object JSONMagnoliaDerivation extends MagnoliaUtils with Logging {
         val instance: Either[NonEmptyList[JSONParseError], T] = caseClass
           .constructEither { param =>
             val field = fieldMeta(param)
-            println(field.name)
             readField(field, o)(param.typeclass).toEither
           }
           .leftMap(_ => NonEmptyList.one(JSONParseError("JSON object expected.")))
@@ -186,6 +270,7 @@ object JSONMagnoliaDerivation extends MagnoliaUtils with Logging {
       case _ => jsonParseError("JSON object expected.")
     }
 
+    // TODO if T is a singleton, it should output String (value or typehint)
     override def write(value: T): JValue = {
       val buf = new ListBuffer[JField]
       val hintField: JField = jsonClass.typeHint match {
@@ -217,85 +302,52 @@ object JSONMagnoliaDerivation extends MagnoliaUtils with Logging {
       builder.result()
     }
   }
-  def dispatch[T](sealedTrait: SealedTrait[JSON, T]): JSON[T] = {
-    println("DISPATCHING")
-    val allSelectors = sealedTrait.subtypes.map { subType =>
-      typeSelector(subType)
-    }
-    val readMapBuilder = Map.newBuilder[String, TypeSelector[_]]
-    val writeMapBuilder = Map.newBuilder[TypeName, TypeSelector[_]]
-    allSelectors.foreach { s =>
-      readMapBuilder += (s.typeValue -> s)
-      writeMapBuilder += (s.subType.typeName -> s)
-    }
-    val readMap = readMapBuilder.result()
-    val writeMap = writeMapBuilder.result()
-    val typeField = sealedTrait.annotations
-      .collectFirst { case a: JSONTypeHintField =>
-        a.value
-      }
-      .getOrElse(defaultTypeFieldName)
+}
 
-    new JSON[T] {
-      override def write(value: T): JValue = sealedTrait.dispatch(value) { subtype =>
-        writeMap.get(subtype.typeName) match {
-          case Some(ts) =>
-            subtype.typeclass.write(subtype.cast(value)) match {
-              case o @ JObject(obj) if obj.exists(_._1 == ts.typeField) => o
-              case j: JObject => j ~ JField(ts.typeField, JString(ts.typeValue))
-              case j =>
-                throw new IllegalStateException("The json is not an object but a " + j.getClass)
-            }
-          case None =>
-            throw new IllegalStateException("Can't find a serializer for a class " + value.getClass)
-        }
-      }
+object JSONMagnoliaSingletonDerivation extends BaseJSONMagnoliaDerivation {
+  def deriveJSON[A]: JSON[A] = macro Magnolia.gen[A]
+  // def deriveSingletonJSON[A]: JSON[A] = macro JSONMacros.deriveSingletonJSON_impl[A]
 
-      override def read(jval: JValue): JValidation[T] = jval match {
-        case o: JObject =>
-          findTypeValue(o, typeField) match {
-            case Some(t) =>
-              readMap.get(t) match {
-                case Some(ts) => ts.subType.typeclass.read(o).asInstanceOf[JValidation[T]]
-                case None =>
-                  jsonParseError("Invalid type value '" + t + "' in '%s'".format(compactJson(o)))
-              }
-            case None =>
-              jsonParseError(
-                "Missing type field '" + typeField + "' in '%s'".format(compactJson(o)))
+  override def combine[T](caseClass: CaseClass[JSON, T]): JSON[T] = new JSON[T] {
+    private val jsonClass = getJSONClassMeta(caseClass)
+    private val _fields = jsonClass.fields
+
+    override def read(jval: JValue): JValidation[T] = jval match {
+      case o: JObject =>
+        val instance: Either[NonEmptyList[JSONParseError], T] = caseClass
+          .constructEither { param =>
+            val field = fieldMeta(param)
+            readField(field, o)(param.typeclass).toEither
           }
-        case _ =>
-          println("DSSAD")
-          jsonParseError("JSON object expected.")
+          .leftMap(_ => NonEmptyList.one(JSONParseError("JSON object expected.")))
+
+        Validated.fromEither(instance)
+      case _ => jsonParseError("JSON object expected.")
+    }
+
+    // TODO if T is a singleton, it should output String (value or typehint)
+    override def write(value: T): JValue =
+      jsonClass.typeHint match {
+        case Some(th) => JString(th.value)
+        case None => JString(value.toString) // TODO
       }
-    }
-  }
 
-  private def writeField[A: ToJSON](buf: ListBuffer[JField], field: JSONFieldMeta, e: A): Unit =
-    if (!field.ignored) {
-      if (field.embedded)
-        toJValue(e) match {
-          case o: JObject => buf ++= o.obj
-          case _ => // no update on buf
+    // TODO All of this is repeated
+    override val fields: Set[String] = calculateFields()
+    private def calculateFields(): Set[String] = {
+      val builder = Set.newBuilder[String]
+      var i = 0
+      caseClass.parameters.foreach { p =>
+        val f = _fields(i)
+        if (!f.ignored) {
+          if (f.embedded)
+            builder ++= p.typeclass.fields
+          else
+            builder += f.name
         }
-      else
-        buf += JField(field.name, toJValue(e))
-    }
-
-  def jsonEnum(e: Enumeration): JSON[e.Value] = new Typeclass[e.Value] {
-    override def write(value: e.Value): JValue = JString(value.toString)
-
-    override def read(jval: JValue): JValidation[e.Value] = jval match {
-      case JString(s) =>
-        e.values
-          .find(_.toString == s)
-          .toValidNel(
-            JSONParseError(
-              "Invalid enum value: '%s'. Expected one of: %s"
-                .format(s, e.values.mkString("'", "','", "'")))
-          )
-      case _ => jsonParseError("JSON String expected.")
+        i += 1
+      }
+      builder.result()
     }
   }
-
 }

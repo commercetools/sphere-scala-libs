@@ -87,12 +87,10 @@ package object json extends Logging {
       name: String,
       default: Option[A] = None
   )(jObject: JObject)(implicit jsonr: FromJSON[A]): JValidation[A] = {
-    println(s"name $name     object $jObject")
     val fields = jObject.obj
     // Perf note: avoiding Some(f) with fields.indexWhere and then constant time access is not faster
     fields.find(f => f._1 == name && f._2 != JNull && f._2 != JNothing) match {
       case Some(f) =>
-        println(s"${f._1}   ${f._2}")
         jsonr
           .read(f._2)
           .leftMap(errs =>
