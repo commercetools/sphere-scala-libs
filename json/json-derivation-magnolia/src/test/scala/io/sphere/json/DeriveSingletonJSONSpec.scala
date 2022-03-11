@@ -12,27 +12,6 @@ import io.sphere.json.generic.JSONMagnoliaDerivation.deriveJSON
 class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
   "DeriveSingletonJSON" must {
 
-    /*  "dasdasd" in {
-      object Singl
-      implicit val format = deriveJSON[Singl.type]
-
-      println(s"PRINTANJE ${format.write(Singl)}")
-      succeed
-    }*/
-
-    /*    "write normal singleton values" in {
-      println(
-        deriveJSON[UserWithPicture].write(UserWithPicture("foo-123", Custom, "http://exmple.com"))
-      )
-      println("=====================")
-      println("=====================")
-      println("=====================")
-      println(
-        deriveJSON[UserWithPicture].write(UserWithPicture("foo-123", Medium, "http://exmple.com"))
-      )
-      succeed
-    }*/
-
     "read normal singleton values" in {
       val user = getFromJSON[UserWithPicture]("""
           {
