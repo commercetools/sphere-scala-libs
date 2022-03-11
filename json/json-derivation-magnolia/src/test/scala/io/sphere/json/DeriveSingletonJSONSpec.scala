@@ -20,7 +20,7 @@ class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
       succeed
     }*/
 
-    "write normal singleton values" in {
+    /*    "write normal singleton values" in {
       println(
         deriveJSON[UserWithPicture].write(UserWithPicture("foo-123", Custom, "http://exmple.com"))
       )
@@ -31,9 +31,9 @@ class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
         deriveJSON[UserWithPicture].write(UserWithPicture("foo-123", Medium, "http://exmple.com"))
       )
       succeed
-    }
+    }*/
 
-    /*    "read normal singleton values" in {
+    "read normal singleton values" in {
       val user = getFromJSON[UserWithPicture]("""
           {
             "userId": "foo-123",
@@ -43,9 +43,9 @@ class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
         """)
 
       user must be(UserWithPicture("foo-123", Medium, "http://exmple.com"))
-    }*/
+    }
 
-    /*    "fail to read if singleton value is unknown" in {
+    "fail to read if singleton value is unknown" in {
       a[JSONException] must be thrownBy getFromJSON[UserWithPicture]("""
           {
             "userId": "foo-123",
@@ -59,24 +59,24 @@ class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
       val userJson = toJValue(UserWithPicture("foo-123", Medium, "http://exmple.com"))
 
       val Valid(expectedJson) = parseJSON("""
-        {
-          "userId": "foo-123",
-          "pictureSize": "Medium",
-          "pictureUrl": "http://exmple.com"
-        }
-        """)
+            {
+              "userId": "foo-123",
+              "pictureSize": "Medium",
+              "pictureUrl": "http://exmple.com"
+            }
+            """)
 
       filter(userJson) must be(expectedJson)
     }
 
     "read custom singleton values" in {
       val user = getFromJSON[UserWithPicture]("""
-          {
-            "userId": "foo-123",
-            "pictureSize": "bar",
-            "pictureUrl": "http://exmple.com"
-          }
-        """)
+               {
+                 "userId": "foo-123",
+                 "pictureSize": "bar",
+                 "pictureUrl": "http://exmple.com"
+               }
+             """)
 
       user must be(UserWithPicture("foo-123", Custom, "http://exmple.com"))
     }
@@ -85,16 +85,15 @@ class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
       val userJson = toJValue(UserWithPicture("foo-123", Custom, "http://exmple.com"))
 
       val Valid(expectedJson) = parseJSON("""
-        {
-          "userId": "foo-123",
-          "pictureSize": "bar",
-          "pictureUrl": "http://exmple.com"
-        }
-        """)
+               {
+                 "userId": "foo-123",
+                 "pictureSize": "bar",
+                 "pictureUrl": "http://exmple.com"
+               }
+               """)
 
       filter(userJson) must be(expectedJson)
     }
-
     "write and consequently read, which must produce the original value" in {
       val originalUser = UserWithPicture("foo-123", Medium, "http://exmple.com")
       val newUser = getFromJSON[UserWithPicture](compact(render(toJValue(originalUser))))
@@ -104,16 +103,16 @@ class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
 
     "read and write sealed trait with only one subtype" in {
       val json = """
-        {
-          "userId": "foo-123",
-          "pictureSize": "Medium",
-          "pictureUrl": "http://example.com",
-          "access": {
-             "type": "Authorized",
-             "project": "internal"
-          }
-        }
-      """
+                 {
+                   "userId": "foo-123",
+                   "pictureSize": "Medium",
+                   "pictureUrl": "http://example.com",
+                   "access": {
+                      "type": "Authorized",
+                      "project": "internal"
+                   }
+                 }
+               """
       val user = getFromJSON[UserWithPicture](json)
 
       user must be(
@@ -128,7 +127,7 @@ class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
 
       val Valid(newUser) = fromJValue[UserWithPicture](newJson)
       newUser must be(user)
-    }*/
+    }
   }
 
   private def filter(jvalue: JValue): JValue =
@@ -148,7 +147,6 @@ case object Big extends PictureSize(1024, 2048)
 case object Custom extends PictureSize(1, 2)
 
 object PictureSize {
-  // implicit val json: JSON[PictureSize] = deriveJSON[PictureSize]
   implicit val json: JSON[PictureSize] = JSONMagnoliaSingletonDerivation.deriveJSON[PictureSize]
 }
 

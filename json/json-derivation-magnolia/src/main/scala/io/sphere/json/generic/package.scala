@@ -189,7 +189,6 @@ trait BaseJSONMagnoliaDerivation extends MagnoliaUtils with Logging {
         writeMap.get(subtype.typeName) match {
           case Some(ts) =>
             subtype.typeclass.write(subtype.cast(value)) match {
-              // TODO if T is a singleton, write should return String (either value or typehint), so this should just forward it
               case o @ JObject(obj) if obj.exists(_._1 == ts.typeField) => o
               case s: JString => s
               case j: JObject =>
@@ -215,8 +214,14 @@ trait BaseJSONMagnoliaDerivation extends MagnoliaUtils with Logging {
               jsonParseError(
                 "Missing type field '" + typeField + "' in '%s'".format(compactJson(o)))
           }
+        case s @ JString(typeName) =>
+          readMap.get(typeName) match {
+            case Some(ts) =>
+              ts.subType.typeclass.read(s).asInstanceOf[ValidatedNel[JSONError, T]]
+            case None => jsonParseError("Invalid value '" + typeName + "'.")
+          }
         case _ =>
-          jsonParseError("JSON object expected.")
+          jsonParseError("JSON object expected  6.")
       }
     }
   }
@@ -251,7 +256,6 @@ trait BaseJSONMagnoliaDerivation extends MagnoliaUtils with Logging {
 
 object JSONMagnoliaDerivation extends BaseJSONMagnoliaDerivation {
   def deriveJSON[A]: JSON[A] = macro Magnolia.gen[A]
-  // def deriveSingletonJSON[A]: JSON[A] = macro JSONMacros.deriveSingletonJSON_impl[A]
 
   override def combine[T](caseClass: CaseClass[JSON, T]): JSON[T] = new JSON[T] {
     private val jsonClass = getJSONClassMeta(caseClass)
@@ -264,10 +268,10 @@ object JSONMagnoliaDerivation extends BaseJSONMagnoliaDerivation {
             val field = fieldMeta(param)
             readField(field, o)(param.typeclass).toEither
           }
-          .leftMap(_ => NonEmptyList.one(JSONParseError("JSON object expected.")))
+          .leftMap(_ => NonEmptyList.one(JSONParseError("JSON object expected 3.")))
 
         Validated.fromEither(instance)
-      case _ => jsonParseError("JSON object expected.")
+      case _ => jsonParseError("JSON object expected 4.")
     }
 
     // TODO if T is a singleton, it should output String (value or typehint)
@@ -306,7 +310,6 @@ object JSONMagnoliaDerivation extends BaseJSONMagnoliaDerivation {
 
 object JSONMagnoliaSingletonDerivation extends BaseJSONMagnoliaDerivation {
   def deriveJSON[A]: JSON[A] = macro Magnolia.gen[A]
-  // def deriveSingletonJSON[A]: JSON[A] = macro JSONMacros.deriveSingletonJSON_impl[A]
 
   override def combine[T](caseClass: CaseClass[JSON, T]): JSON[T] = new JSON[T] {
     private val jsonClass = getJSONClassMeta(caseClass)
@@ -319,10 +322,11 @@ object JSONMagnoliaSingletonDerivation extends BaseJSONMagnoliaDerivation {
             val field = fieldMeta(param)
             readField(field, o)(param.typeclass).toEither
           }
-          .leftMap(_ => NonEmptyList.one(JSONParseError("JSON object expected.")))
-
+          .leftMap(_ => NonEmptyList.one(JSONParseError("JSON object expected   2.")))
         Validated.fromEither(instance)
-      case _ => jsonParseError("JSON object expected.")
+      case _: JString =>
+        Validated.Valid(caseClass.rawConstruct(Seq.empty))
+      case _ => jsonParseError("JSON object expected   1.")
     }
 
     // TODO if T is a singleton, it should output String (value or typehint)
