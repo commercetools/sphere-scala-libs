@@ -51,8 +51,8 @@ object FromJSON extends FromJSONInstances {
       def read(jval: JValue): JValidation[List[A]] = jval match {
         case JArray(l) =>
           // "imperative" style for performances
-          val errors = new ListBuffer[JSONError]()
-          val valids = new ListBuffer[A]()
+          val errors = new ListBuffer[JSONError]
+          val valids = new ListBuffer[A]
           var failedOnce: Boolean = false
           l.foreach { jval =>
             r.read(jval) match {
@@ -92,8 +92,8 @@ object FromJSON extends FromJSONInstances {
       def read(jval: JValue): JValidation[Vector[A]] = jval match {
         case JArray(l) =>
           // "imperative" style for performances
-          val errors = new ListBuffer[JSONError]()
-          val valids = new VectorBuilder[A]()
+          val errors = new ListBuffer[JSONError]
+          val valids = new VectorBuilder[A]
           var failedOnce: Boolean = false
           l.foreach { jval =>
             r.read(jval) match {

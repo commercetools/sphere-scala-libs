@@ -82,8 +82,8 @@ package object generic extends Logging {
     private val readMapBuilder = Map.newBuilder[String, TypeSelector[_]]
     private val writeMapBuilder = Map.newBuilder[TypeName, TypeSelector[_]]
     allSelectors.foreach { s =>
-      readMapBuilder += (s.typeValue -> s)
-      writeMapBuilder += (s.subType.typeName -> s)
+      readMapBuilder += s.typeValue -> s
+      writeMapBuilder += s.subType.typeName -> s
     }
     private val readMap = readMapBuilder.result()
     private val writeMap = writeMapBuilder.result()

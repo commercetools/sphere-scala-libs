@@ -3,7 +3,7 @@ package io.sphere.util
 import java.util.concurrent._
 
 /** Straight port from the Java impl. of "Java Concurrency in Practice". */
-final class Memoizer[K, V](action: K => V) extends (K => V) {
+final class Memoizer[K, V](action: K => V) extends K => V {
   private val cache = new ConcurrentHashMap[K, Future[V]]
   def apply(k: K): V = {
     while (true) {

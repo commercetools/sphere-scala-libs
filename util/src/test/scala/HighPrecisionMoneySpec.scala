@@ -22,7 +22,7 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
   describe("High Precision Money") {
 
     it("should allow creation of high precision money") {
-      ("0.01".EUR) must equal("0.01".EUR)
+      "0.01".EUR must equal("0.01".EUR)
     }
 
     it("should not allow creation of high precision money without sufficient scale") {
@@ -57,57 +57,57 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
     }
 
     it("should support the binary '+' operator.") {
-      ("0.001".EUR_PRECISE(3)) + ("0.002".EUR_PRECISE(3)) must equal(
+      "0.001".EUR_PRECISE(3) + "0.002".EUR_PRECISE(3) must equal(
         "0.003".EUR_PRECISE(3)
       )
 
-      ("0.005".EUR_PRECISE(3)) + Money.fromDecimalAmount(BigDecimal("0.01"), Euro) must equal(
+      "0.005".EUR_PRECISE(3) + Money.fromDecimalAmount(BigDecimal("0.01"), Euro) must equal(
         "0.015".EUR_PRECISE(3)
       )
 
-      ("0.005".EUR_PRECISE(3)) + BigDecimal("0.005") must equal(
+      "0.005".EUR_PRECISE(3) + BigDecimal("0.005") must equal(
         "0.010".EUR_PRECISE(3)
       )
     }
 
     it("should support the binary '-' operator.") {
-      ("0.002".EUR_PRECISE(3)) - ("0.001".EUR_PRECISE(3)) must equal(
+      "0.002".EUR_PRECISE(3) - "0.001".EUR_PRECISE(3) must equal(
         "0.001".EUR_PRECISE(3)
       )
 
-      ("0.015".EUR_PRECISE(3)) - Money.fromDecimalAmount(BigDecimal("0.01"), Euro) must equal(
+      "0.015".EUR_PRECISE(3) - Money.fromDecimalAmount(BigDecimal("0.01"), Euro) must equal(
         "0.005".EUR_PRECISE(3)
       )
 
-      ("0.005".EUR_PRECISE(3)) - BigDecimal("0.005") must equal(
+      "0.005".EUR_PRECISE(3) - BigDecimal("0.005") must equal(
         "0.000".EUR_PRECISE(3)
       )
     }
 
     it("should support the binary '*' operator.") {
-      ("0.002".EUR_PRECISE(3)) * ("5.00".EUR_PRECISE(2)) must equal(
+      "0.002".EUR_PRECISE(3) * "5.00".EUR_PRECISE(2) must equal(
         "0.010".EUR_PRECISE(3)
       )
 
-      ("0.015".EUR_PRECISE(3)) * Money.fromDecimalAmount(BigDecimal("100.00"), Euro) must equal(
+      "0.015".EUR_PRECISE(3) * Money.fromDecimalAmount(BigDecimal("100.00"), Euro) must equal(
         "1.500".EUR_PRECISE(3)
       )
 
-      ("0.005".EUR_PRECISE(3)) * BigDecimal("0.005") must equal(
+      "0.005".EUR_PRECISE(3) * BigDecimal("0.005") must equal(
         "0.000".EUR_PRECISE(3)
       )
     }
 
     it("should support the binary '%' operator.") {
-      ("0.010".EUR_PRECISE(3)) % ("5.00".EUR_PRECISE(2)) must equal(
+      "0.010".EUR_PRECISE(3) % "5.00".EUR_PRECISE(2) must equal(
         "0.010".EUR_PRECISE(3)
       )
 
-      ("100.000".EUR_PRECISE(3)) % Money.fromDecimalAmount(BigDecimal("100.00"), Euro) must equal(
+      "100.000".EUR_PRECISE(3) % Money.fromDecimalAmount(BigDecimal("100.00"), Euro) must equal(
         "0.000".EUR_PRECISE(3)
       )
 
-      ("0.015".EUR_PRECISE(3)) % BigDecimal("0.002") must equal(
+      "0.015".EUR_PRECISE(3) % BigDecimal("0.002") must equal(
         "0.001".EUR_PRECISE(3)
       )
     }

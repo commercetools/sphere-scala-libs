@@ -80,7 +80,7 @@ trait DefaultMongoFormats {
     new MongoFormat[Vector[A]] {
       import scala.collection.JavaConverters._
       override def toMongoValue(a: Vector[A]) = {
-        val m = new BasicBSONList()
+        val m = new BasicBSONList
         m.addAll(a.map(f.toMongoValue(_).asInstanceOf[AnyRef]).asJavaCollection)
         m
       }
@@ -102,7 +102,7 @@ trait DefaultMongoFormats {
     new MongoFormat[List[A]] {
       import scala.collection.JavaConverters._
       override def toMongoValue(a: List[A]) = {
-        val m = new BasicBSONList()
+        val m = new BasicBSONList
         m.addAll(a.map(f.toMongoValue(_).asInstanceOf[AnyRef]).asJavaCollection)
         m
       }
@@ -124,7 +124,7 @@ trait DefaultMongoFormats {
     new MongoFormat[Set[A]] {
       import scala.collection.JavaConverters._
       override def toMongoValue(a: Set[A]) = {
-        val m = new BasicBSONList()
+        val m = new BasicBSONList
         m.addAll(a.map(f.toMongoValue(_).asInstanceOf[AnyRef]).asJavaCollection)
         m
       }
@@ -140,7 +140,7 @@ trait DefaultMongoFormats {
     new MongoFormat[Map[String, A]] {
       override def toMongoValue(map: Map[String, A]): Any =
         // Perf note: new BasicBSONObject(map.size) is much slower for some reason
-        map.foldLeft(new BasicBSONObject()) { case (dbo, (k, v)) =>
+        map.foldLeft(new BasicBSONObject) { case (dbo, (k, v)) =>
           dbo.append(k, f.toMongoValue(v))
         }
 
@@ -158,7 +158,7 @@ trait DefaultMongoFormats {
           val entry = iter.next()
           val k = entry.getKey.asInstanceOf[String]
           val v = f.fromMongoValue(entry.getValue)
-          builder += (k -> v)
+          builder += k -> v
         }
         builder.result()
       }
@@ -185,7 +185,7 @@ trait DefaultMongoFormats {
     override val fields = Set(CentAmountField, CurrencyCodeField)
 
     override def toMongoValue(m: Money): Any =
-      new BasicBSONObject()
+      new BasicBSONObject
         .append(BaseMoney.TypeField, m.`type`)
         .append(CurrencyCodeField, currencyFormat.toMongoValue(m.currency))
         .append(CentAmountField, longFormat.toMongoValue(m.centAmount))
@@ -207,7 +207,7 @@ trait DefaultMongoFormats {
       override val fields = Set(PreciseAmountField, CurrencyCodeField, FractionDigitsField)
 
       override def toMongoValue(m: HighPrecisionMoney): Any =
-        new BasicBSONObject()
+        new BasicBSONObject
           .append(BaseMoney.TypeField, m.`type`)
           .append(CurrencyCodeField, currencyFormat.toMongoValue(m.currency))
           .append(CentAmountField, longFormat.toMongoValue(m.centAmount))

@@ -19,7 +19,7 @@ class SerializationTest extends AnyWordSpec with Matchers {
 
   "mongoProduct" must {
     "deserialize mongo object" in {
-      val dbo = new BasicDBObject()
+      val dbo = new BasicDBObject
       dbo.put("a", Integer.valueOf(3))
       dbo.put("b", Integer.valueOf(4))
 
@@ -40,7 +40,7 @@ class SerializationTest extends AnyWordSpec with Matchers {
     }
 
     "generate a format that use default values" in {
-      val dbo = new BasicDBObject()
+      val dbo = new BasicDBObject
       dbo.put("a", Integer.valueOf(3))
 
       val mongoFormat: MongoFormat[Something] = io.sphere.mongo.generic.deriveMongoFormat

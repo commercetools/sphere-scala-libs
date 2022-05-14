@@ -210,7 +210,7 @@ case class Money private (centAmount: Long, currency: Currency)
 
   override def toString: String = {
     val centAmountString = this.centAmount.toString
-    val formattedString = new StringBuilder()
+    val formattedString = new StringBuilder
     val centAmountLength = centAmountString.length
     val decimals = this.fractionDigits
     val missing = decimals - centAmountLength
