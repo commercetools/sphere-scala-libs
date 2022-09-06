@@ -34,6 +34,20 @@ object JSONEmbeddedSpec {
   object Test4 {
     implicit val json: JSON[Test4] = jsonProduct(apply _)
   }
+
+  @JSONTypeHintField
+  sealed abstract class TypeHintEnum
+  case object Varialtion1 extends TypeHintEnum
+  case object Varialtion2 extends TypeHintEnum
+
+  object TypeHintEnum {
+    implicit val json: JSON[TypeHintEnum] = deriveJSON[TypeHintEnum]
+  }
+
+  case class Test5(name: String, @JSONEmbedded embedded: Option[TypeHintEnum])
+  object Test5 {
+    implicit val json: JSON[Test5] = jsonProduct(apply _)
+  }
 }
 
 class JSONEmbeddedSpec extends AnyWordSpec with Matchers with OptionValues {
@@ -120,6 +134,13 @@ class JSONEmbeddedSpec extends AnyWordSpec with Matchers with OptionValues {
       val test2 = getFromJSON[Test2](json)
       test2.name mustEqual "ze name"
       test2.embedded mustEqual None
+    }
+
+    "support the absence of optional embedded type hinted attributes" in {
+      val json = """{ "name": "ze name" }"""
+      val test5 = getFromJSON[Test5](json)
+      test5.name mustEqual "ze name"
+      test5.embedded mustEqual None
     }
 
     "validate the absence of some embedded attributes" in {

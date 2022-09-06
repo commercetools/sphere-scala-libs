@@ -45,6 +45,19 @@ object MongoEmbeddedSpec {
   object Test4 {
     implicit val mongo: MongoFormat[Test4] = mongoProduct(apply _)
   }
+ 
+
+  @MongoTypeHintField("myType")
+  sealed trait SumType
+  object SumType{
+  @MongoTypeHint("variation1") case object Variation1 extends SumType
+  @MongoTypeHint("variation2") case class Variation2(name: String) extends SumType
+    implicit val mongoSumType: MongoFormat[SumType] = deriveMongoFormat[SumType]
+  }
+  case class Test5(@MongoEmbedded myType: SumType)
+  object Test5 {
+    implicit val mongo: MongoFormat[Test5] = deriveMongoFormat[Test5]
+  }
 }
 
 class MongoEmbeddedSpec extends AnyWordSpec with Matchers with OptionValues {
@@ -140,6 +153,14 @@ class MongoEmbeddedSpec extends AnyWordSpec with Matchers with OptionValues {
         "value1" -> "ze value1"
       )
       Try(MongoFormat[Test2].fromMongoValue(dbo)).isFailure must be(true)
+    }
+    "embed sum types with expected type hint fields" in {
+      val dbo = dbObj(
+        "myType" -> "variation1"
+      )
+      val test5 = MongoFormat[SumType].fromMongoValue(dbo)
+      test5 mustEqual  SumType.Variation1
+
     }
   }
 }
