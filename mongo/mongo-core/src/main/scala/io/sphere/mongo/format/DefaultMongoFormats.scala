@@ -81,19 +81,22 @@ trait DefaultMongoFormats {
       import scala.collection.JavaConverters._
       override def toMongoValue(a: Vector[A]) = {
         val m = new BasicBSONList()
-        m.addAll(a.map(f.toMongoValue(_).asInstanceOf[AnyRef]).asJavaCollection)
+        if (a.nonEmpty) m.addAll(a.map(f.toMongoValue(_).asInstanceOf[AnyRef]).asJavaCollection)
         m
       }
       override def fromMongoValue(any: Any): Vector[A] =
         any match {
           case l: BasicBSONList =>
-            val builder = new VectorBuilder[A]
-            val iter = l.iterator()
-            while (iter.hasNext) {
-              val element = iter.next()
-              builder += f.fromMongoValue(element)
+            if (l.isEmpty) Vector.empty
+            else {
+              val builder = new VectorBuilder[A]
+              val iter = l.iterator()
+              while (iter.hasNext) {
+                val element = iter.next()
+                builder += f.fromMongoValue(element)
+              }
+              builder.result()
             }
-            builder.result()
           case _ => throw new Exception(s"cannot read value from ${any.getClass.getName}")
         }
     }
@@ -103,19 +106,22 @@ trait DefaultMongoFormats {
       import scala.collection.JavaConverters._
       override def toMongoValue(a: List[A]) = {
         val m = new BasicBSONList()
-        m.addAll(a.map(f.toMongoValue(_).asInstanceOf[AnyRef]).asJavaCollection)
+        if (a.nonEmpty) m.addAll(a.map(f.toMongoValue(_).asInstanceOf[AnyRef]).asJavaCollection)
         m
       }
       override def fromMongoValue(any: Any): List[A] =
         any match {
           case l: BasicBSONList =>
-            val builder = new ListBuffer[A]
-            val iter = l.iterator()
-            while (iter.hasNext) {
-              val element = iter.next()
-              builder += f.fromMongoValue(element)
+            if (l.isEmpty) Nil
+            else {
+              val builder = new ListBuffer[A]
+              val iter = l.iterator()
+              while (iter.hasNext) {
+                val element = iter.next()
+                builder += f.fromMongoValue(element)
+              }
+              builder.result()
             }
-            builder.result()
           case _ => throw new Exception(s"cannot read value from ${any.getClass.getName}")
         }
     }
@@ -125,13 +131,14 @@ trait DefaultMongoFormats {
       import scala.collection.JavaConverters._
       override def toMongoValue(a: Set[A]) = {
         val m = new BasicBSONList()
-        m.addAll(a.map(f.toMongoValue(_).asInstanceOf[AnyRef]).asJavaCollection)
+        if (a.nonEmpty) m.addAll(a.map(f.toMongoValue(_).asInstanceOf[AnyRef]).asJavaCollection)
         m
       }
       override def fromMongoValue(any: Any): Set[A] =
         any match {
           case l: BasicBSONList =>
-            l.iterator().asScala.map(f.fromMongoValue).toSet
+            if (l.isEmpty) Set.empty
+            else l.iterator().asScala.map(f.fromMongoValue).toSet
           case _ => throw new Exception(s"cannot read value from ${any.getClass.getName}")
         }
     }

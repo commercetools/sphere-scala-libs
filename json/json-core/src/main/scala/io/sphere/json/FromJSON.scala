@@ -33,6 +33,11 @@ object FromJSON extends FromJSONInstances {
   @inline def apply[A](implicit instance: FromJSON[A]): FromJSON[A] = instance
 
   private val validNone = Valid(None)
+  private val validNil = Valid(Nil)
+  private val validEmptyAnyVector: Valid[Vector[Any]] = Valid(Vector.empty)
+  private def validList[A]: Valid[List[A]] = validNil
+  private def validEmptyVector[A]: Valid[Vector[A]] =
+    validEmptyAnyVector.asInstanceOf[Valid[Vector[A]]]
 
   implicit def optionReader[@specialized A](implicit c: FromJSON[A]): FromJSON[Option[A]] =
     new FromJSON[Option[A]] {
@@ -50,24 +55,27 @@ object FromJSON extends FromJSONInstances {
 
       def read(jval: JValue): JValidation[List[A]] = jval match {
         case JArray(l) =>
-          // "imperative" style for performances
-          val errors = new ListBuffer[JSONError]()
-          val valids = new ListBuffer[A]()
-          var failedOnce: Boolean = false
-          l.foreach { jval =>
-            r.read(jval) match {
-              case Valid(s) if !failedOnce =>
-                valids += s
-              case Invalid(nel) =>
-                errors ++= nel.toList
-                failedOnce = true
-              case _ => ()
+          if (l.isEmpty) validList[A]
+          else {
+            // "imperative" style for performances
+            val errors = new ListBuffer[JSONError]()
+            val valids = new ListBuffer[A]()
+            var failedOnce: Boolean = false
+            l.foreach { jval =>
+              r.read(jval) match {
+                case Valid(s) if !failedOnce =>
+                  valids += s
+                case Invalid(nel) =>
+                  errors ++= nel.toList
+                  failedOnce = true
+                case _ => ()
+              }
             }
+            if (errors.isEmpty)
+              Valid(valids.result())
+            else
+              Invalid(NonEmptyList.fromListUnsafe(errors.result()))
           }
-          if (errors.isEmpty)
-            Valid(valids.result())
-          else
-            Invalid(NonEmptyList.fromListUnsafe(errors.result()))
         case _ => fail("JSON Array expected.")
       }
     }
@@ -80,7 +88,9 @@ object FromJSON extends FromJSONInstances {
   implicit def setReader[@specialized A](implicit r: FromJSON[A]): FromJSON[Set[A]] =
     new FromJSON[Set[A]] {
       def read(jval: JValue): JValidation[Set[A]] = jval match {
-        case JArray(_) => listReader(r).read(jval).map(Set.apply(_: _*))
+        case JArray(l) =>
+          if (l.isEmpty) Valid(Set.empty)
+          else listReader(r).read(jval).map(Set.apply(_: _*))
         case _ => fail("JSON Array expected.")
       }
     }
@@ -91,24 +101,27 @@ object FromJSON extends FromJSONInstances {
 
       def read(jval: JValue): JValidation[Vector[A]] = jval match {
         case JArray(l) =>
-          // "imperative" style for performances
-          val errors = new ListBuffer[JSONError]()
-          val valids = new VectorBuilder[A]()
-          var failedOnce: Boolean = false
-          l.foreach { jval =>
-            r.read(jval) match {
-              case Valid(s) if !failedOnce =>
-                valids += s
-              case Invalid(nel) =>
-                errors ++= nel.toList
-                failedOnce = true
-              case _ => ()
+          if (l.isEmpty) validEmptyVector
+          else {
+            // "imperative" style for performances
+            val errors = new ListBuffer[JSONError]()
+            val valids = new VectorBuilder[A]()
+            var failedOnce: Boolean = false
+            l.foreach { jval =>
+              r.read(jval) match {
+                case Valid(s) if !failedOnce =>
+                  valids += s
+                case Invalid(nel) =>
+                  errors ++= nel.toList
+                  failedOnce = true
+                case _ => ()
+              }
             }
+            if (errors.isEmpty)
+              Valid(valids.result())
+            else
+              Invalid(NonEmptyList.fromListUnsafe(errors.result()))
           }
-          if (errors.isEmpty)
-            Valid(valids.result())
-          else
-            Invalid(NonEmptyList.fromListUnsafe(errors.result()))
         case _ => fail("JSON Array expected.")
       }
     }
