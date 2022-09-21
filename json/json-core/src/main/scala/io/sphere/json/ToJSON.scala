@@ -20,6 +20,9 @@ class JSONWriteException(msg: String) extends JSONException(msg)
 
 object ToJSON extends ToJSONInstances {
 
+  private val emptyJArray = JArray(Nil)
+  private val emptyJObject = JObject(Nil)
+
   @inline def apply[A](implicit instance: ToJSON[A]): ToJSON[A] = instance
 
   /** construct an instance from a function
@@ -38,7 +41,9 @@ object ToJSON extends ToJSONInstances {
 
   implicit def listWriter[@specialized A](implicit w: ToJSON[A]): ToJSON[List[A]] =
     new ToJSON[List[A]] {
-      def write(l: List[A]): JValue = JArray(l.map(w.write))
+      def write(l: List[A]): JValue =
+        if (l.isEmpty) emptyJArray
+        else JArray(l.map(w.write))
     }
 
   implicit def nonEmptyListWriter[A](implicit w: ToJSON[A]): ToJSON[NonEmptyList[A]] =
@@ -48,18 +53,23 @@ object ToJSON extends ToJSONInstances {
 
   implicit def seqWriter[@specialized A](implicit w: ToJSON[A]): ToJSON[Seq[A]] =
     new ToJSON[Seq[A]] {
-      def write(s: Seq[A]): JValue = JArray(s.iterator.map(w.write).toList)
+      def write(s: Seq[A]): JValue =
+        if (s.isEmpty) emptyJArray
+        else JArray(s.iterator.map(w.write).toList)
     }
 
   implicit def setWriter[@specialized A](implicit w: ToJSON[A]): ToJSON[Set[A]] =
     new ToJSON[Set[A]] {
-      def write(s: Set[A]): JValue = JArray(s.iterator.map(w.write).toList)
+      def write(s: Set[A]): JValue =
+        if (s.isEmpty) emptyJArray
+        else JArray(s.iterator.map(w.write).toList)
     }
 
   implicit def vectorWriter[@specialized A](implicit w: ToJSON[A]): ToJSON[Vector[A]] =
     new ToJSON[Vector[A]] {
       def write(v: Vector[A]): JValue =
-        JArray(v.iterator.map(w.write).toList)
+        if (v.isEmpty) emptyJArray
+        else JArray(v.iterator.map(w.write).toList)
     }
 
   implicit val intWriter: ToJSON[Int] = new ToJSON[Int] {
@@ -95,9 +105,12 @@ object ToJSON extends ToJSONInstances {
   }
 
   implicit def mapWriter[A: ToJSON]: ToJSON[Map[String, A]] = new ToJSON[Map[String, A]] {
-    def write(m: Map[String, A]) = JObject(m.iterator.map { case (k, v) =>
-      JField(k, toJValue(v))
-    }.toList)
+    def write(m: Map[String, A]) =
+      if (m.isEmpty) emptyJObject
+      else
+        JObject(m.iterator.map { case (k, v) =>
+          JField(k, toJValue(v))
+        }.toList)
   }
 
   implicit val moneyWriter: ToJSON[Money] = new ToJSON[Money] {
