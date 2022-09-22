@@ -60,6 +60,7 @@ object FromJSON extends FromJSONInstances {
             // "imperative" style for performances
             val errors = new ListBuffer[JSONError]()
             val valids = new ListBuffer[A]()
+            valids.sizeHint(l.length)
             var failedOnce: Boolean = false
             l.foreach { jval =>
               r.read(jval) match {
@@ -106,6 +107,7 @@ object FromJSON extends FromJSONInstances {
             // "imperative" style for performances
             val errors = new ListBuffer[JSONError]()
             val valids = new VectorBuilder[A]()
+            valids.sizeHint(l.length)
             var failedOnce: Boolean = false
             l.foreach { jval =>
               r.read(jval) match {

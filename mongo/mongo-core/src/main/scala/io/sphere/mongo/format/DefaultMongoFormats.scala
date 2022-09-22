@@ -90,6 +90,7 @@ trait DefaultMongoFormats {
             if (l.isEmpty) Vector.empty
             else {
               val builder = new VectorBuilder[A]
+              builder.sizeHint(l.size())
               val iter = l.iterator()
               while (iter.hasNext) {
                 val element = iter.next()
@@ -115,6 +116,7 @@ trait DefaultMongoFormats {
             if (l.isEmpty) Nil
             else {
               val builder = new ListBuffer[A]
+              builder.sizeHint(l.size())
               val iter = l.iterator()
               while (iter.hasNext) {
                 val element = iter.next()
@@ -160,6 +162,7 @@ trait DefaultMongoFormats {
           case other => throw new Exception(s"cannot read value from ${other.getClass.getName}")
         }
         val builder = Map.newBuilder[String, A]
+        builder.sizeHint(map.size())
         val iter = map.entrySet().iterator()
         while (iter.hasNext) {
           val entry = iter.next()
