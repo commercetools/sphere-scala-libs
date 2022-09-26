@@ -25,15 +25,6 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
       ("0.01".EUR) must equal("0.01".EUR)
     }
 
-    it("should not allow creation of high precision money without sufficient scale") {
-      val thrown = intercept[IllegalArgumentException] {
-        HighPrecisionMoney(amount = 1, fractionDigits = 2, centAmount = 1, Euro)
-      }
-
-      assert(
-        thrown.getMessage == "requirement failed: The scale of the given amount does not match the scale of the provided currency. - 0 <-> 2")
-    }
-
     it(
       "should not allow creation of high precision money with less fraction digits than the currency has") {
       val thrown = intercept[IllegalArgumentException] {
@@ -45,11 +36,11 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
     }
 
     it("should convert precise amount to long value correctly") {
-      "0.0001".EUR_PRECISE(4).preciseAmountAsLong must equal(1)
+      "0.0001".EUR_PRECISE(4).preciseAmount must equal(1)
     }
 
     it("should reduce fraction digits as expected") {
-      "0.0001".EUR_PRECISE(4).withFractionDigits(2).preciseAmountAsLong must equal(0)
+      "0.0001".EUR_PRECISE(4).withFractionDigits(2).preciseAmount must equal(0)
     }
 
     it("should support the unary '-' operator.") {

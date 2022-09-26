@@ -218,7 +218,7 @@ trait DefaultMongoFormats {
           .append(BaseMoney.TypeField, m.`type`)
           .append(CurrencyCodeField, currencyFormat.toMongoValue(m.currency))
           .append(CentAmountField, longFormat.toMongoValue(m.centAmount))
-          .append(PreciseAmountField, longFormat.toMongoValue(m.preciseAmountAsLong))
+          .append(PreciseAmountField, longFormat.toMongoValue(m.preciseAmount))
           .append(FractionDigitsField, m.fractionDigits)
       override def fromMongoValue(any: Any): HighPrecisionMoney = any match {
         case dbo: BSONObject =>
