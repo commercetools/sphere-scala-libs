@@ -155,5 +155,18 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
         m.toString
       }
     }
+
+    it("asdasd") {
+
+      val m = DomainObjectsGen.highPrecisionMoney.sample.get
+      val r1 = HighPrecisionMoney.roundToCents(m.amount, m.currency)
+
+      val r2 = m.preciseAmount / Math
+        .pow(10, m.fractionDigits - m.currency.getDefaultFractionDigits)
+        .toLong
+      println(m)
+      println(r1)
+      println(r2)
+    }
   }
 }

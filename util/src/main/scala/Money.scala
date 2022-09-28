@@ -605,12 +605,14 @@ object HighPrecisionMoney {
       centAmount: Option[Long]): ValidatedNel[String, HighPrecisionMoney] =
     for {
       fd <- validateFractionDigits(fractionDigits, currency)
-      amount = BigDecimal(preciseAmount) * factor(fd)
-      scaledAmount = amount.setScale(fd, BigDecimal.RoundingMode.UNNECESSARY)
-      ca <- validateCentAmount(scaledAmount, centAmount, currency)
+//      amount = BigDecimal(preciseAmount) * factor(fd)
+//      scaledAmount = amount.setScale(fd, BigDecimal.RoundingMode.UNNECESSARY)
+//      ca <- validateCentAmount(scaledAmount, centAmount, currency)
       // TODO: revisit this part! the rounding mode might be dynamic and configured elsewhere
-      actualCentAmount = ca.getOrElse(
-        roundToCents(scaledAmount, currency)(BigDecimal.RoundingMode.HALF_EVEN))
+      actualCentAmount = centAmount.getOrElse(
+        preciseAmount / Math
+          .pow(10, fractionDigits - currency.getDefaultFractionDigits)
+          .toLong)
     } yield HighPrecisionMoney(preciseAmount, fd, actualCentAmount, currency)
 
   private def validateFractionDigits(
