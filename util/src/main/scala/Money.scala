@@ -343,7 +343,7 @@ object Money {
 }
 
 case class HighPrecisionMoney private (
-    amount: BigDecimal,
+    preciseAmount: Long,
     fractionDigits: Int,
     centAmount: Long,
     currency: Currency)
@@ -352,24 +352,18 @@ case class HighPrecisionMoney private (
   import HighPrecisionMoney._
 
   require(
-    amount.scale == fractionDigits,
-    "The scale of the given amount does not match the scale of the provided currency." +
-      " - " + amount.scale + " <-> " + fractionDigits
-  )
-
-  require(
     fractionDigits >= currency.getDefaultFractionDigits,
     "`fractionDigits` should be  >= than the default fraction digits of the currency.")
 
   val `type`: String = TypeName
 
-  lazy val preciseAmountAsLong: Long =
-    (amount * Money.bdTen.pow(fractionDigits)).toLongExact // left side could be cached if necessary
+  lazy val amount: BigDecimal =
+    (BigDecimal(preciseAmount) * factor(fractionDigits)).setScale(fractionDigits)
 
   def withFractionDigits(fd: Int)(implicit mode: RoundingMode): HighPrecisionMoney = {
-    val newAmount = amount.setScale(fd, mode)
-
-    HighPrecisionMoney(newAmount, fd, roundToCents(newAmount, currency), currency)
+    val scaledAmount = amount.setScale(fd, mode)
+    val newCentAmount = roundToCents(scaledAmount, currency)
+    HighPrecisionMoney(amountToPreciseAmount(scaledAmount, fd), fd, newCentAmount, currency)
   }
 
   def updateCentAmountWithRoundingMode(implicit mode: RoundingMode): HighPrecisionMoney =
@@ -576,12 +570,19 @@ object HighPrecisionMoney {
   def factor(fractionDigits: Int): BigDecimal = Money.cachedCentFactor(fractionDigits)
   def centFactor(currency: Currency): BigDecimal = factor(currency.getDefaultFractionDigits)
 
+  private def amountToPreciseAmount(amount: BigDecimal, fractionDigits: Int): Long =
+    (amount * Money.cachedCentPower(fractionDigits)).toLongExact
+
   def fromDecimalAmount(amount: BigDecimal, fractionDigits: Int, currency: Currency)(implicit
       mode: RoundingMode): HighPrecisionMoney = {
     val scaledAmount = amount.setScale(fractionDigits, mode)
-
-    HighPrecisionMoney(scaledAmount, fractionDigits, roundToCents(scaledAmount, currency), currency)
+    val preciseAmount = amountToPreciseAmount(scaledAmount, fractionDigits)
+    val newCentAmount = roundToCents(scaledAmount, currency)
+    HighPrecisionMoney(preciseAmount, fractionDigits, newCentAmount, currency)
   }
+
+  private def centToPreciseAmount(centAmount: Long, fractionDigits: Int, currency: Currency): Long =
+    Math.pow(10, fractionDigits - currency.getDefaultFractionDigits).toLong * centAmount
 
   def fromCentAmount(
       centAmount: Long,
@@ -590,7 +591,7 @@ object HighPrecisionMoney {
     val amount = BigDecimal(centAmount) * centFactor(currency)
 
     HighPrecisionMoney(
-      amount.setScale(fractionDigits, BigDecimal.RoundingMode.UNNECESSARY),
+      centToPreciseAmount(centAmount, fractionDigits, currency),
       fractionDigits,
       centAmount,
       currency)
@@ -613,7 +614,7 @@ object HighPrecisionMoney {
       // TODO: revisit this part! the rounding mode might be dynamic and configured elsewhere
       actualCentAmount = ca.getOrElse(
         roundToCents(scaledAmount, currency)(BigDecimal.RoundingMode.HALF_EVEN))
-    } yield HighPrecisionMoney(scaledAmount, fd, actualCentAmount, currency)
+    } yield HighPrecisionMoney(preciseAmount, fd, actualCentAmount, currency)
 
   private def validateFractionDigits(
       fractionDigits: Int,
@@ -645,7 +646,7 @@ object HighPrecisionMoney {
 
   def fromMoney(money: Money, fractionDigits: Int): HighPrecisionMoney =
     HighPrecisionMoney(
-      money.amount.setScale(fractionDigits, RoundingMode.UNNECESSARY),
+      centToPreciseAmount(money.centAmount, fractionDigits, money.currency),
       fractionDigits,
       money.centAmount,
       money.currency)
