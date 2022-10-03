@@ -587,15 +587,12 @@ object HighPrecisionMoney {
   def fromCentAmount(
       centAmount: Long,
       fractionDigits: Int,
-      currency: Currency): HighPrecisionMoney = {
-    val amount = BigDecimal(centAmount) * centFactor(currency)
-
+      currency: Currency): HighPrecisionMoney =
     HighPrecisionMoney(
       centToPreciseAmount(centAmount, fractionDigits, currency),
       fractionDigits,
       centAmount,
       currency)
-  }
 
   def zero(fractionDigits: Int, currency: Currency): HighPrecisionMoney =
     fromCentAmount(0L, fractionDigits, currency)
