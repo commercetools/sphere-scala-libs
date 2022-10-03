@@ -685,9 +685,9 @@ object HighPrecisionMoney {
       else loop(remainder, newAcc)
     }
     val digits = loop(remainder, List.empty)
-    // If we have fewer digits we have a fractional starting with at least 1 zero -> 0XX
-    // We don't care about the fractional in this case
-    if (digits.lengthIs <= fractionDigits) digits
+    // If we have fewer digits we have a fractional starting with at least 1 zero -> 0XXX
+    // We don't care about the fractional in this case, because it's practically 0
+    if (digits.length == fractionDigits) digits
     else zeroList
   }
 
