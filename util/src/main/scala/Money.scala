@@ -4,7 +4,6 @@ import language.implicitConversions
 import java.math.MathContext
 import java.text.NumberFormat
 import java.util.{Currency, Locale}
-
 import cats.Monoid
 import cats.data.ValidatedNel
 import cats.syntax.validated._
@@ -14,6 +13,8 @@ import BigDecimal.RoundingMode._
 import scala.math.BigDecimal.RoundingMode
 import ValidatedFlatMapFeature._
 import io.sphere.util.Money.ImplicitsDecimal.MoneyNotation
+
+import scala.annotation.tailrec
 
 sealed trait BaseMoney {
   def `type`: String
@@ -571,7 +572,7 @@ object HighPrecisionMoney {
   def centFactor(currency: Currency): BigDecimal = factor(currency.getDefaultFractionDigits)
 
   private def amountToPreciseAmount(amount: BigDecimal, fractionDigits: Int): Long =
-    (amount * Money.cachedCentPower(fractionDigits)).toLongExact
+    (amount * Money.cachedCentPower(fractionDigits)).toLong
 
   def fromDecimalAmount(amount: BigDecimal, fractionDigits: Int, currency: Currency)(implicit
       mode: RoundingMode): HighPrecisionMoney = {
@@ -605,14 +606,10 @@ object HighPrecisionMoney {
       centAmount: Option[Long]): ValidatedNel[String, HighPrecisionMoney] =
     for {
       fd <- validateFractionDigits(fractionDigits, currency)
-//      amount = BigDecimal(preciseAmount) * factor(fd)
-//      scaledAmount = amount.setScale(fd, BigDecimal.RoundingMode.UNNECESSARY)
-//      ca <- validateCentAmount(scaledAmount, centAmount, currency)
+      ca <- validateCentAmount(preciseAmount, fractionDigits, centAmount, currency)
       // TODO: revisit this part! the rounding mode might be dynamic and configured elsewhere
-      actualCentAmount = centAmount.getOrElse(
-        preciseAmount / Math
-          .pow(10, fractionDigits - currency.getDefaultFractionDigits)
-          .toLong)
+      actualCentAmount = ca.getOrElse(
+        roundHalfEven(preciseAmount, fractionDigits, currency.getDefaultFractionDigits))
     } yield HighPrecisionMoney(preciseAmount, fd, actualCentAmount, currency)
 
   private def validateFractionDigits(
@@ -626,13 +623,14 @@ object HighPrecisionMoney {
       fractionDigits.validNel
 
   private def validateCentAmount(
-      amount: BigDecimal,
+      preciseAmount: Long,
+      fractionDigits: Int,
       centAmount: Option[Long],
       currency: Currency): ValidatedNel[String, Option[Long]] =
     centAmount match {
       case Some(actual) =>
-        val min = roundToCents(amount, currency)(RoundingMode.FLOOR)
-        val max = roundToCents(amount, currency)(RoundingMode.CEILING)
+        val min = roundFloor(preciseAmount, fractionDigits, currency.getDefaultFractionDigits)
+        val max = roundCeiling(preciseAmount, fractionDigits, currency.getDefaultFractionDigits)
 
         if (actual < min || actual > max)
           s"centAmount must be correctly rounded preciseAmount (a number between $min and $max).".invalidNel
@@ -654,5 +652,67 @@ object HighPrecisionMoney {
       mode: RoundingMode): Monoid[HighPrecisionMoney] = new Monoid[HighPrecisionMoney] {
     def combine(x: HighPrecisionMoney, y: HighPrecisionMoney): HighPrecisionMoney = x + y
     val empty: HighPrecisionMoney = HighPrecisionMoney.zero(fractionDigits, c)
+  }
+
+  @tailrec
+  private def pow10(n: Int, acc: Long = 1): Long = if (n <= 0) acc else pow10(n - 1, acc * 10)
+
+  def roundFloor(preciseAmount: Long, fractionDigits: Int, currencyDigits: Int): Long =
+    if (preciseAmount < 0) {
+      val power = pow10(fractionDigits - currencyDigits)
+      val floor = preciseAmount / power
+      val remainder = preciseAmount % power
+      if (remainder == 0) floor else floor - 1
+    } else
+      preciseAmount / pow10(fractionDigits - currencyDigits)
+
+  def roundCeiling(preciseAmount: Long, fractionDigits: Int, currencyDigits: Int): Long =
+    if (preciseAmount < 0) preciseAmount / pow10(fractionDigits - currencyDigits)
+    else {
+      val power = pow10(fractionDigits - currencyDigits)
+      val floor = preciseAmount / power
+      val remainder = preciseAmount % power
+      if (remainder == 0) floor else floor + 1
+    }
+
+  def getFractionDigits(remainder: Long, fractionDigits: Int): List[Int] = {
+    @tailrec
+    def loop(frac: Long, acc: List[Int]): List[Int] = {
+      val lastDigit = (frac % 10).toInt
+      val remainder = frac / 10
+      val newAcc = lastDigit :: acc
+      if (remainder == 0) newAcc
+      else loop(remainder, newAcc)
+    }
+    val digits = loop(remainder, List.empty)
+    // If we have fewer digits we have a fractional starting with at least 1 zero -> 0XX
+    // We don't care about the fractional in this case
+    if (digits.lengthIs <= fractionDigits) digits
+    else zeroList
+  }
+
+  private val zeroList = 0 :: Nil
+
+  def roundHalfEven(preciseAmount: Long, fractionDigits: Int, currencyDigits: Int): Long = {
+    val centFractionDigits = fractionDigits - currencyDigits
+    val power = pow10(centFractionDigits)
+    val floor = preciseAmount / power
+    val remainder = preciseAmount % power
+
+    val leastSignificantDigitOfInt = floor % 10
+
+    val fractionDigitsList = getFractionDigits(remainder, centFractionDigits)
+    val mostSignificantDigitOfFraction :: rest = fractionDigitsList
+
+    if (mostSignificantDigitOfFraction == 5 && rest.forall(_ == 0))
+      if (leastSignificantDigitOfInt % 2 == 0) floor else floor + 1
+    else if (mostSignificantDigitOfFraction >= 5)
+      floor + 1
+    else if (mostSignificantDigitOfFraction == -5 && rest.forall(_ == 0))
+      if (leastSignificantDigitOfInt % 2 == 0) floor else floor - 1
+    else if (mostSignificantDigitOfFraction <= -5)
+      floor - 1
+    else
+      floor
   }
 }

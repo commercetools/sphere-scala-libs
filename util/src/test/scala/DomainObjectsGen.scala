@@ -4,7 +4,7 @@ import java.util.Currency
 
 import org.scalacheck.Gen
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object DomainObjectsGen {
 
@@ -18,7 +18,9 @@ object DomainObjectsGen {
 
   val highPrecisionMoney: Gen[HighPrecisionMoney] = for {
     money <- money
-  } yield HighPrecisionMoney.fromMoney(money, money.currency.getDefaultFractionDigits)
+    defaultFD = money.currency.getDefaultFractionDigits
+    fd <- Gen.oneOf(defaultFD to 10)
+  } yield HighPrecisionMoney.fromMoney(money, fd)
 
   val baseMoney: Gen[BaseMoney] = Gen.oneOf(money, highPrecisionMoney)
 

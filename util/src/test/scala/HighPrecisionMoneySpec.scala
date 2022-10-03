@@ -1,15 +1,16 @@
 package io.sphere.util
 
-import java.util.Currency
-
 import cats.data.Validated.Invalid
-
 import org.scalatest.funspec.AnyFunSpec
-import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import org.scalatest.matchers.must.Matchers
+import org.scalatest.prop.TableDrivenPropertyChecks
+import org.scalatest.prop.TableDrivenPropertyChecks.Table
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
+import java.util.Currency
 import scala.collection.mutable.ArrayBuffer
 import scala.language.postfixOps
+import scala.math.BigDecimal.RoundingMode
 
 class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDrivenPropertyChecks {
   import HighPrecisionMoney.ImplicitsString._
@@ -138,14 +139,6 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
       errors.toList must be(List("fractionDigits must be <= 20."))
     }
 
-//    it("should validate centAmount") {
-//      val Invalid(errors) = HighPrecisionMoney.fromPreciseAmount(123456L, 4, Euro, Some(1))
-//
-//      errors.toList must be(
-//        List(
-//          "centAmount must be correctly rounded preciseAmount (a number between 1234 and 1235)."))
-//    }
-
     it("should provide convenient toString") {
       "10.000".EUR_PRECISE(3).toString must be("10.000 EUR")
     }
@@ -156,17 +149,74 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
       }
     }
 
-    it("asdasd") {
-
-      val m = DomainObjectsGen.highPrecisionMoney.sample.get
-      val r1 = HighPrecisionMoney.roundToCents(m.amount, m.currency)
-
-      val r2 = m.preciseAmount / Math
-        .pow(10, m.fractionDigits - m.currency.getDefaultFractionDigits)
-        .toLong
-      println(m)
-      println(r1)
-      println(r2)
+    it("roundFloor should behave similarly to BigDecimal rounding") {
+      ScalaCheckDrivenPropertyChecks.forAll(DomainObjectsGen.highPrecisionMoney) { h =>
+        val bdRes = HighPrecisionMoney.roundToCents(h.amount, h.currency)(RoundingMode.FLOOR)
+        val longRes =
+          HighPrecisionMoney.roundFloor(
+            h.preciseAmount,
+            h.fractionDigits,
+            h.currency.getDefaultFractionDigits)
+        bdRes must be(longRes)
+      }
     }
+
+    it("roundCeiling should behave similarly to BigDecimal rounding") {
+      ScalaCheckDrivenPropertyChecks.forAll(DomainObjectsGen.highPrecisionMoney) { h =>
+        val bdRes = HighPrecisionMoney.roundToCents(h.amount, h.currency)(RoundingMode.CEILING)
+        val longRes =
+          HighPrecisionMoney.roundCeiling(
+            h.preciseAmount,
+            h.fractionDigits,
+            h.currency.getDefaultFractionDigits)
+        bdRes must be(longRes)
+      }
+    }
+
+    it("roundHalfEven should behave similarly to BigDecimal rounding") {
+      // I used random generated values later, but I needed these very specific values too to check the
+      // edge cases of the half even rounding
+      val data = Table(
+        ("preciseAmount", "fraction", "currency"),
+        (1119, 3, Euro),
+        (1111, 3, Euro),
+        (1115, 3, Euro),
+        (1125, 3, Euro),
+        (112500, 5, Euro),
+        (11250001, 7, Euro),
+        (11000004, 7, Euro),
+        (11249999, 7, Euro),
+        (-1119, 3, Euro),
+        (-1111, 3, Euro),
+        (-1115, 3, Euro),
+        (-1125, 3, Euro),
+        (-112500, 5, Euro)
+      )
+
+      TableDrivenPropertyChecks.forAll(data) { (preciseAmount, fd, cur) =>
+        val h = HighPrecisionMoney.fromPreciseAmount(preciseAmount, fd, cur, None).getOrElse(null)
+
+        val bdRes = HighPrecisionMoney.roundToCents(h.amount, cur)(RoundingMode.HALF_EVEN)
+
+        val longRes =
+          HighPrecisionMoney.roundHalfEven(preciseAmount, fd, cur.getDefaultFractionDigits)
+
+        bdRes must be(longRes)
+      }
+
+      ScalaCheckDrivenPropertyChecks.forAll(DomainObjectsGen.highPrecisionMoney) { h =>
+        val bdRes = HighPrecisionMoney.roundToCents(h.amount, h.currency)(RoundingMode.HALF_EVEN)
+
+        val longRes =
+          HighPrecisionMoney.roundHalfEven(
+            h.preciseAmount,
+            h.fractionDigits,
+            h.currency.getDefaultFractionDigits)
+
+        bdRes must be(longRes)
+      }
+
+    }
+
   }
 }
