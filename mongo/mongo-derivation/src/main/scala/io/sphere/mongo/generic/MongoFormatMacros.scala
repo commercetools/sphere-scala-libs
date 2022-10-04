@@ -15,9 +15,16 @@ private[generic] object MongoFormatMacros {
     else if (s.isClass) {
       val cs = s.asClass
       if (cs.isCaseClass) Set(cs)
-      else if ((cs.isTrait || cs.isAbstract) && cs.isSealed)
-        cs.knownDirectSubclasses.flatMap(collectKnownSubtypes(c)(_))
-      else Set.empty
+      else if (cs.isTrait || cs.isAbstract) {
+        if (cs.isSealed) {
+          cs.knownDirectSubclasses.flatMap(collectKnownSubtypes(c)(_))
+        } else {
+          c.abort(
+            c.enclosingPosition,
+            s"Can only enumerate values of a sealed trait or class, failed on: '${cs.name}'"
+          )
+        }
+      } else Set.empty
     } else Set.empty
 
   def mongoFormatProductApply(c: blackbox.Context)(
