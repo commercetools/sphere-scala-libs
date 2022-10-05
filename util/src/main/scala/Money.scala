@@ -77,9 +77,9 @@ object BaseMoney {
   * always rounded to the nearest, smallest unit of the respective currency. The rounding mode can
   * be specified using an implicit `BigDecimal.RoundingMode`.
   *
-  * @param amount
-  *   The amount as a decimal value. The scale must be equal to or less than the number of
-  *   fractional digits of the currency.
+  * @param centAmount
+  *   The amount in the smallest indivisible unit of the respective currency represented as a single
+  *   Long value.
   * @param currency
   *   The currency of the amount.
   */
