@@ -132,7 +132,7 @@ object ToJSON extends ToJSONInstances {
         JField(BaseMoney.TypeField, toJValue(m.`type`)) ::
           JField(CurrencyCodeField, toJValue(m.currency)) ::
           JField(CentAmountField, toJValue(m.centAmount)) ::
-          JField(PreciseAmountField, toJValue(m.preciseAmountAsLong)) ::
+          JField(PreciseAmountField, toJValue(m.preciseAmount)) ::
           JField(FractionDigitsField, toJValue(m.fractionDigits)) ::
           Nil
       )
