@@ -86,6 +86,15 @@ class DeriveMongoformatSpec extends AnyWordSpec with Matchers {
       val newUser = fromMongo[UserWithPicture](newDbo)
       newUser must be(user)
     }
+
+    "fail to derive if trait is not sealed" in {
+      // Sealed
+      "implicit val mongo: MongoFormat[SealedSub] = deriveMongoFormat[SealedSub]" must compile
+      // Not sealed
+      "implicit val mongo: MongoFormat[NotSealed] = deriveMongoFormat[NotSealed]" mustNot compile
+      // Sealed, but child is not sealed
+      "implicit val mongo: MongoFormat[SealedParent] = deriveMongoFormat[SealedParent]" mustNot compile
+    }
   }
 }
 
@@ -118,4 +127,14 @@ object DeriveMongoformatSpec {
   object UserWithPicture {
     implicit val mongo: MongoFormat[UserWithPicture] = mongoProduct(apply _)
   }
+
+  sealed trait SealedParent
+
+  sealed trait SealedSub extends SealedParent
+  case class Sub1(x: String) extends SealedSub
+  case class Sub2(y: Int) extends SealedSub
+
+  trait NotSealed extends SealedParent
+  case class Sub3(x: String) extends NotSealed
+  case class Sub4(y: Int) extends NotSealed
 }
