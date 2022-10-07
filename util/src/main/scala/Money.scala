@@ -441,7 +441,7 @@ case class HighPrecisionMoney private (
   def partition(ratios: Int*)(implicit mode: RoundingMode): Seq[HighPrecisionMoney] = {
     val total = ratios.sum
     val factor = Money.cachedCentFactor(fractionDigits)
-    val amountAsInt = (this.amount / factor).toBigInt
+    val amountAsInt = BigInt(this.preciseAmount)
     val portionAmounts = ratios.map(amountAsInt * _ / total)
     var remainder = portionAmounts.foldLeft(amountAsInt)(_ - _)
 
