@@ -158,5 +158,14 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
         m.toString
       }
     }
+
+    it("should fail on too big fraction decimal") {
+      val thrown = intercept[IllegalArgumentException] {
+        val tooManyDigits = Euro.getDefaultFractionDigits + 19
+        HighPrecisionMoney.fromCentAmount(100003, tooManyDigits, Euro)
+      }
+
+      assert(thrown.getMessage == "Cannot represent number bigger than 10^19 with a Long")
+    }
   }
 }

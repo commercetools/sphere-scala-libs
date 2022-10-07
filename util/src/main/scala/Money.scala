@@ -564,7 +564,7 @@ object HighPrecisionMoney {
   def centFactor(currency: Currency): BigDecimal = factor(currency.getDefaultFractionDigits)
 
   private def amountToPreciseAmount(amount: BigDecimal, fractionDigits: Int): Long =
-    (amount * Money.cachedCentPower(fractionDigits)).toLongExact
+    (amount * Money.cachedCentPower(fractionDigits)).toLong
 
   def fromDecimalAmount(amount: BigDecimal, fractionDigits: Int, currency: Currency)(implicit
       mode: RoundingMode): HighPrecisionMoney = {
@@ -574,8 +574,16 @@ object HighPrecisionMoney {
     HighPrecisionMoney(preciseAmount, fractionDigits, newCentAmount, currency)
   }
 
-  private def centToPreciseAmount(centAmount: Long, fractionDigits: Int, currency: Currency): Long =
-    Math.pow(10, fractionDigits - currency.getDefaultFractionDigits).toLong * centAmount
+  private def centToPreciseAmount(
+      centAmount: Long,
+      fractionDigits: Int,
+      currency: Currency): Long = {
+    val centDigits = fractionDigits - currency.getDefaultFractionDigits
+    if (centDigits >= 19)
+      throw new IllegalArgumentException("Cannot represent number bigger than 10^19 with a Long")
+    else
+      Math.pow(10, centDigits).toLong * centAmount
+  }
 
   def fromCentAmount(
       centAmount: Long,
