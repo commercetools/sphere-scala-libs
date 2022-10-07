@@ -106,6 +106,7 @@ class MoneySpec extends AnyFunSpec with Matchers with ScalaCheckDrivenPropertyCh
     }
 
     it("should provide convenient toString") {
+      (1 JPY).toString must be("1 JPY")
       (1.00 EUR).toString must be("1.00 EUR")
       (0.10 EUR).toString must be("0.10 EUR")
       (0.01 EUR).toString must be("0.01 EUR")

@@ -1,9 +1,7 @@
 package io.sphere.util
 
 import java.util.Currency
-
 import cats.data.Validated.Invalid
-
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import org.scalatest.matchers.must.Matchers
@@ -148,6 +146,11 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
 
     it("should provide convenient toString") {
       "10.000".EUR_PRECISE(3).toString must be("10.000 EUR")
+      "0.100".EUR_PRECISE(3).toString must be("0.100 EUR")
+      "0.010".EUR_PRECISE(3).toString must be("0.010 EUR")
+      "0.000".EUR_PRECISE(3).toString must be("0.000 EUR")
+      "94.500".EUR_PRECISE(3).toString must be("94.500 EUR")
+      "94".JPY_PRECISE(0).toString must be("94 JPY")
     }
 
     it("should not fail on toString") {

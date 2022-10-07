@@ -208,26 +208,7 @@ case class Money private (centAmount: Long, currency: Currency)
     this.centAmount.compare(that.centAmount)
   }
 
-  override def toString: String = {
-    val centAmountString = this.centAmount.toString
-    val formattedString = new StringBuilder()
-    val centAmountLength = centAmountString.length
-    val decimals = this.fractionDigits
-    val missing = decimals - centAmountLength
-    if (missing >= 0) {
-      formattedString.append("0.")
-      for (_ <- 1 to missing)
-        formattedString.append('0')
-    }
-
-    var i = 0
-    centAmountString.iterator.foreach { c =>
-      formattedString.append(c)
-      i += 1
-      if (centAmountLength - i == decimals) formattedString.append(".")
-    }
-    formattedString.result() + " " + this.currency.getCurrencyCode
-  }
+  override def toString: String = Money.toString(centAmount, fractionDigits, currency)
 
   def toString(nf: NumberFormat, locale: Locale): String = {
     require(nf.getCurrency eq this.currency)
@@ -340,6 +321,19 @@ object Money {
       def combine(x: Money, y: Money): Money = x + y
       val empty: Money = Money.zero(c)
     }
+
+  def toString(amount: Long, fractionDigits: Int, currency: Currency): String = {
+    val amountDigits = amount.toString.toList
+    val leadingZerosLength = fractionDigits - amountDigits.length + 1
+    val leadingZeros = List.fill(leadingZerosLength)('0')
+    val allDigits = leadingZeros ::: amountDigits
+    val radixPosition = allDigits.length - fractionDigits
+    val (integer, fractional) = allDigits.splitAt(radixPosition)
+    if (fractional.nonEmpty)
+      s"${integer.mkString}.${fractional.mkString} ${currency.getCurrencyCode}"
+    else
+      s"${integer.mkString} ${currency.getCurrencyCode}"
+  }
 }
 
 case class HighPrecisionMoney private (
@@ -470,8 +464,7 @@ case class HighPrecisionMoney private (
     this.amount.compare(other.amount)
   }
 
-  override def toString: String =
-    this.amount.bigDecimal.toPlainString + " " + this.currency.getCurrencyCode
+  override def toString: String = Money.toString(preciseAmount, fractionDigits, currency)
 
   def toString(nf: NumberFormat, locale: Locale): String = {
     require(nf.getCurrency eq this.currency)
@@ -495,11 +488,11 @@ object HighPrecisionMoney {
       def EUR_PRECISE(precision: Int): HighPrecisionMoney =
         HighPrecisionMoney.EUR(amount, Some(precision))
       def USD_PRECISE(precision: Int): HighPrecisionMoney =
-        HighPrecisionMoney.EUR(amount, Some(precision))
+        HighPrecisionMoney.USD(amount, Some(precision))
       def GBP_PRECISE(precision: Int): HighPrecisionMoney =
-        HighPrecisionMoney.EUR(amount, Some(precision))
+        HighPrecisionMoney.GBP(amount, Some(precision))
       def JPY_PRECISE(precision: Int): HighPrecisionMoney =
-        HighPrecisionMoney.EUR(amount, Some(precision))
+        HighPrecisionMoney.JPY(amount, Some(precision))
     }
   }
 
