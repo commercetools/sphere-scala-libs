@@ -53,7 +53,7 @@ object MoneyRounding {
   }
 
   /** @return
-    *   half even rounded (preciseAmount, fractionDigits) to the cent value of the given currency
+    *   Half even rounded (preciseAmount, fractionDigits) to the cent value of the given currency
     */
   def roundHalfEven(preciseAmount: Long, fractionDigits: Int, currency: Currency): Long = {
     val centFractionDigits = fractionDigits - currency.getDefaultFractionDigits

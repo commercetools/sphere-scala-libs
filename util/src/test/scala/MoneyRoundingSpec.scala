@@ -14,9 +14,12 @@ class MoneyRoundingSpec extends AnyFunSpec with Matchers with ScalaCheckDrivenPr
   val ZWL: Currency = Currency.getInstance("ZWL")
   val JPY: Currency = Currency.getInstance("JPY")
 
+  private implicit val genConfig: PropertyCheckConfiguration =
+    PropertyCheckConfiguration(minSuccessful = 50)
+
   describe("Money Rounding") {
     it("roundFloor should behave similarly to BigDecimal rounding") {
-      ScalaCheckDrivenPropertyChecks.forAll(DomainObjectsGen.highPrecisionMoney) { h =>
+      forAll(DomainObjectsGen.highPrecisionMoney) { h =>
         val bdRes = HighPrecisionMoney.roundToCents(h.amount, h.currency)(RoundingMode.FLOOR)
         val longRes =
           MoneyRounding.roundFloor(h.preciseAmount, h.fractionDigits, h.currency)
@@ -25,7 +28,7 @@ class MoneyRoundingSpec extends AnyFunSpec with Matchers with ScalaCheckDrivenPr
     }
 
     it("roundCeiling should behave similarly to BigDecimal rounding") {
-      ScalaCheckDrivenPropertyChecks.forAll(DomainObjectsGen.highPrecisionMoney) { h =>
+      forAll(DomainObjectsGen.highPrecisionMoney) { h =>
         val bdRes = HighPrecisionMoney.roundToCents(h.amount, h.currency)(RoundingMode.CEILING)
         val longRes =
           MoneyRounding.roundCeiling(h.preciseAmount, h.fractionDigits, h.currency)
@@ -65,7 +68,7 @@ class MoneyRoundingSpec extends AnyFunSpec with Matchers with ScalaCheckDrivenPr
         bdRes must be(longRes)
       }
 
-      ScalaCheckDrivenPropertyChecks.forAll(DomainObjectsGen.highPrecisionMoney) { h =>
+      forAll(DomainObjectsGen.highPrecisionMoney) { h =>
         val bdRes = HighPrecisionMoney.roundToCents(h.amount, h.currency)(RoundingMode.HALF_EVEN)
 
         val longRes =
