@@ -11,7 +11,7 @@ object MoneyRounding {
   private def pow10(n: Int): Long = Math.pow(10, n).toLong
 
   /** @return
-    *   The (preciseAmount, fractionDigits) floor rounded to the cent value of the given currency
+    *   Floor rounded (preciseAmount, fractionDigits) to the cent value of the given currency
     */
   def roundFloor(preciseAmount: Long, fractionDigits: Int, currency: Currency): Long =
     if (preciseAmount < 0L) {
@@ -23,7 +23,7 @@ object MoneyRounding {
       preciseAmount / pow10(fractionDigits - currency.getDefaultFractionDigits)
 
   /** @return
-    *   The (preciseAmount, fractionDigits) ceiling rounded to the cent value of the given currency
+    *   Ceiling rounded (preciseAmount, fractionDigits) to the cent value of the given currency
     */
   def roundCeiling(preciseAmount: Long, fractionDigits: Int, currency: Currency): Long =
     if (preciseAmount < 0L)
@@ -53,8 +53,7 @@ object MoneyRounding {
   }
 
   /** @return
-    *   The (preciseAmount, fractionDigits) half even rounded to the cent value of the given
-    *   currency
+    *   half even rounded (preciseAmount, fractionDigits) to the cent value of the given currency
     */
   def roundHalfEven(preciseAmount: Long, fractionDigits: Int, currency: Currency): Long = {
     val centFractionDigits = fractionDigits - currency.getDefaultFractionDigits
