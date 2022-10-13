@@ -18,7 +18,8 @@ object DomainObjectsGen {
 
   val highPrecisionMoney: Gen[HighPrecisionMoney] = for {
     money <- money
-  } yield HighPrecisionMoney.fromMoney(money, money.currency.getDefaultFractionDigits)
+    fractionDigits <- Gen.oneOf(money.currency.getDefaultFractionDigits to 10)
+  } yield HighPrecisionMoney.fromMoney(money, fractionDigits)
 
   val baseMoney: Gen[BaseMoney] = Gen.oneOf(money, highPrecisionMoney)
 
