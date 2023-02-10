@@ -8,13 +8,13 @@ import org.openjdk.jmh.annotations._
 import java.util.concurrent.TimeUnit
 import scala.annotation.nowarn
 
-
 object FewCasesEnum extends Enumeration {
   val First, Middle, End = Value
 }
 
-object ManyCasesEnum extends Enumeration{
-  val First, A, B, C, D, E, F, G, H, I, J, K, L, Middle, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, End = Value
+object ManyCasesEnum extends Enumeration {
+  val First, A, B, C, D, E, F, G, H, I, J, K, L, Middle, N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
+      End = Value
 }
 
 @State(Scope.Benchmark)
@@ -26,7 +26,6 @@ object ManyCasesEnum extends Enumeration{
 class EnumFromJSONBenchmark {
   private val fromJSONForManyCases: FromJSON[ManyCasesEnum.Value] = fromJsonEnum(ManyCasesEnum)
   private val fromJSONForFewCases: FromJSON[FewCasesEnum.Value] = fromJsonEnum(FewCasesEnum)
-
 
   @Param(
     Array(
@@ -44,7 +43,6 @@ class EnumFromJSONBenchmark {
   @Benchmark
   final def enumWithManyCasesFromJson(): JValidation[ManyCasesEnum.Value] =
     fromJSONForManyCases.read(json)
-
 
   @Benchmark
   final def enumWithFewCasesFromJson(): JValidation[FewCasesEnum.Value] =
