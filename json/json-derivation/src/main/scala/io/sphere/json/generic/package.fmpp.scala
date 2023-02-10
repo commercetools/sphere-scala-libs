@@ -4,9 +4,9 @@ package io.sphere.json
 import cats.data.Validated.Valid
 import cats.data.ValidatedNel
 import cats.syntax.apply._
-import cats.syntax.option._
-
+import cats.syntax.validated._
 import scala.annotation.meta.getter
+import scala.collection.mutable.AnyRefMap
 import scala.collection.mutable.ListBuffer
 import scala.language.experimental.macros
 import scala.reflect.{ClassTag, classTag}
@@ -46,12 +46,23 @@ package object generic extends Logging {
 
   /** Creates a FromJSON instance for an Enumeration type that encodes the `toString`
     * representations of the enumeration values. */
-  def fromJsonEnum(e: Enumeration): FromJSON[e.Value] = new FromJSON[e.Value] {
-    def read(jval: JValue): ValidatedNel[JSONError, e.Value] = jval match {
-      case JString(s) => e.values.find(_.toString == s).toValidNel(
-        JSONParseError("Invalid enum value: '%s'. Expected one of: %s".format(s, e.values.mkString("'", "','", "'")))
-      )
-      case _ => jsonParseError("JSON String expected.")
+  def fromJsonEnum(e: Enumeration): FromJSON[e.Value] = {
+    // We're using an AnyRefMap for performance, it's not for mutability.
+    val validRepresentations = AnyRefMap(
+      e.values.iterator.map { value =>
+        value.toString -> value.validNel[JSONError]
+      }.toSeq:_*
+    )
+
+    val allowedValues = e.values.mkString("'", "','", "'")
+
+    new FromJSON[e.Value] {
+      override def read(json: JValue): JValidation[e.Value] =
+        json match {
+          case JString(string) =>
+            validRepresentations.getOrElse(string, jsonParseError("Invalid enum value: '%s'. Expected one of: %s".format(string, allowedValues)))
+          case _ => jsonParseError("JSON String expected.")
+        }
     }
   }
 
