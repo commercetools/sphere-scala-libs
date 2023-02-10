@@ -49,9 +49,9 @@ package object generic extends Logging {
   def fromJsonEnum(e: Enumeration): FromJSON[e.Value] = {
     // We're using an AnyRefMap for performance, it's not for mutability.
     val validRepresentations = AnyRefMap(
-      e.values.toList.map { value =>
+      e.values.iterator.map { value =>
         value.toString -> value.validNel[JSONError]
-      }:_*
+      }.toSeq:_*
     )
 
     val allowedValues = e.values.mkString("'", "','", "'")
