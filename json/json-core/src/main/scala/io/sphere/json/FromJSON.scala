@@ -317,7 +317,27 @@ object FromJSON extends FromJSONInstances {
     }
   }
 
-  implicit val dateTimeReader: FromJSON[DateTime] = new FromJSON[DateTime] {
+  private val simpleFastDateTimeReader: FromJSON[DateTime] = new FromJSON[DateTime] {
+    private val DateTimeParts = raw"(\d+)-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})\.(\d{3})Z".r
+    private val error = jsonParseError[DateTime](s"Expected a string with format $DateTimeParts)")
+
+    override def read(jval: JValue): JValidation[DateTime] = jval match {
+      case JString(DateTimeParts(year, month, days, hours, minutes, seconds, millis)) =>
+        Valid(
+          new DateTime(
+            year.toInt,
+            month.toInt,
+            days.toInt,
+            hours.toInt,
+            minutes.toInt,
+            seconds.toInt,
+            millis.toInt,
+            DateTimeZone.UTC))
+      case _ => error
+    }
+  }
+
+  private val fullDateTimeReader: FromJSON[DateTime] = new FromJSON[DateTime] {
     def read(jval: JValue): JValidation[DateTime] = jval match {
       case JString(s) =>
         try Valid(new DateTime(s, DateTimeZone.UTC))
@@ -327,6 +347,11 @@ object FromJSON extends FromJSONInstances {
       case _ => fail("JSON string expected.")
     }
   }
+
+  private def withFallback[T](primary: FromJSON[T], fallback: FromJSON[T]): FromJSON[T] =
+    (jval: JValue) => primary.read(jval).orElse(fallback.read(jval))
+
+  implicit val dateTimeReader = withFallback(simpleFastDateTimeReader, fullDateTimeReader)
 
   implicit val timeReader: FromJSON[LocalTime] = new FromJSON[LocalTime] {
     def read(jval: JValue): JValidation[LocalTime] = jval match {
