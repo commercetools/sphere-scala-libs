@@ -325,8 +325,7 @@ object FromJSON extends FromJSONInstances {
     }
   }
 
-  //TODO_JP: Naming
-  private def parseStringsRejectingNonFatalErrorsWith[T](errorMessageTemplate: String)(fromString: String => T): FromJSON[T] =
+  private def fromJsonString[T](errorMessageTemplate: String)(fromString: String => T): FromJSON[T] =
     new FromJSON[T] {
       def read(jval: JValue): JValidation[T] = jval match {
         case JString(s) =>
@@ -341,7 +340,7 @@ object FromJSON extends FromJSONInstances {
   implicit val dateTimeReader: FromJSON[DateTime] = {
     val DateTimeParts = raw"(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})\.(\d{3})Z".r
 
-    parseStringsRejectingNonFatalErrorsWith("Failed to parse date/time: %s") {
+    fromJsonString("Failed to parse date/time: %s") {
       case DateTimeParts(year, month, days, hours, minutes, seconds, millis) =>
         new DateTime(
           year.toInt,
@@ -357,21 +356,19 @@ object FromJSON extends FromJSONInstances {
     }
   }
 
-  implicit val timeReader: FromJSON[LocalTime] = parseStringsRejectingNonFatalErrorsWith("Failed to parse time: %s") {
+  implicit val timeReader: FromJSON[LocalTime] = fromJsonString("Failed to parse time: %s") {
     ISODateTimeFormat.localTimeParser.parseDateTime(_).toLocalTime
   }
 
-  implicit val dateReader: FromJSON[LocalDate] = parseStringsRejectingNonFatalErrorsWith("Failed to parse date: %s") {
+  implicit val dateReader: FromJSON[LocalDate] = fromJsonString("Failed to parse date: %s") {
     ISODateTimeFormat.localDateParser.parseDateTime(_).toLocalDate
   }
 
-  implicit val yearMonthReader: FromJSON[YearMonth] = parseStringsRejectingNonFatalErrorsWith("Failed to parse year/month: %s") {
+  implicit val yearMonthReader: FromJSON[YearMonth] = fromJsonString("Failed to parse year/month: %s") {
     new YearMonth(_)
   }
 
-  implicit val uuidReader: FromJSON[UUID] = parseStringsRejectingNonFatalErrorsWith("Invalid UUID: '%s'") {
-    UUID.fromString
-  }
+  implicit val uuidReader: FromJSON[UUID] = fromJsonString("Invalid UUID: '%s'")(UUID.fromString)
 
   implicit val localeReader: FromJSON[Locale] = new FromJSON[Locale] {
     def read(jval: JValue): JValidation[Locale] = jval match {
