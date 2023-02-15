@@ -19,7 +19,6 @@ class DateTimeFromJSONBenchmark {
     Array(
       "2025-12-14T12:50:25.070Z",
       "2022-09-05T00:18:33.994Z",
-      "2022-09-05T00:18:33.994Z"
     ))
   var rawValue: String = _
   private var json: JString = _
