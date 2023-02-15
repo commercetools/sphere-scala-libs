@@ -7,8 +7,14 @@ import org.scalatest.wordspec.AnyWordSpec
 class DateTimeParsingSpec extends AnyWordSpec with Matchers {
 
   import FromJSON.dateTimeReader
-  def jsonDateStringWith(dayOfTheMonth: Int = 23, monthOfTheYear: Int = 11, hourOfTheDay: Int = 13, minuteOfTheHour: Int = 45, secondOfTheMinute: Int = 34) : JString =
-    JString(s"2035-$monthOfTheYear-${dayOfTheMonth}T$hourOfTheDay:$minuteOfTheHour:$secondOfTheMinute.543Z")
+  def jsonDateStringWith(
+      dayOfTheMonth: Int = 23,
+      monthOfTheYear: Int = 11,
+      hourOfTheDay: Int = 13,
+      minuteOfTheHour: Int = 45,
+      secondOfTheMinute: Int = 34): JString =
+    JString(
+      s"2035-$monthOfTheYear-${dayOfTheMonth}T$hourOfTheDay:$minuteOfTheHour:$secondOfTheMinute.543Z")
 
   val beValid = be(Symbol("valid"))
 

@@ -227,8 +227,8 @@ object FromJSON extends FromJSONInstances {
           case (Valid(centAmount), Valid(currencyCode)) =>
             Valid(Money.fromCentAmount(centAmount, currencyCode))
           case (Invalid(e1), Invalid(e2)) => Invalid(e1.concat(e2.toList))
-          case (e1@Invalid(_), _) => e1
-          case (_, e2@Invalid(_)) => e2
+          case (e1 @ Invalid(_), _) => e1
+          case (_, e2 @ Invalid(_)) => e2
         }
 
       case _ => fail("JSON object expected.")
@@ -325,7 +325,8 @@ object FromJSON extends FromJSONInstances {
     }
   }
 
-  private def fromJsonString[T](errorMessageTemplate: String)(fromString: String => T): FromJSON[T] =
+  private def fromJsonString[T](errorMessageTemplate: String)(
+      fromString: String => T): FromJSON[T] =
     new FromJSON[T] {
       def read(jval: JValue): JValidation[T] = jval match {
         case JString(s) =>
@@ -364,9 +365,10 @@ object FromJSON extends FromJSONInstances {
     ISODateTimeFormat.localDateParser.parseDateTime(_).toLocalDate
   }
 
-  implicit val yearMonthReader: FromJSON[YearMonth] = fromJsonString("Failed to parse year/month: %s") {
-    new YearMonth(_)
-  }
+  implicit val yearMonthReader: FromJSON[YearMonth] =
+    fromJsonString("Failed to parse year/month: %s") {
+      new YearMonth(_)
+    }
 
   implicit val uuidReader: FromJSON[UUID] = fromJsonString("Invalid UUID: '%s'")(UUID.fromString)
 
