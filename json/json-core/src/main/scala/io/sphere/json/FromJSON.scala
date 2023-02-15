@@ -3,8 +3,7 @@ package io.sphere.json
 import scala.util.control.NonFatal
 import scala.collection.mutable.ListBuffer
 import java.util.{Currency, Locale, UUID}
-
-import cats.data.NonEmptyList
+import cats.data.{NonEmptyList, Validated}
 import cats.data.Validated.{Invalid, Valid}
 import cats.syntax.apply._
 import cats.syntax.traverse._
@@ -20,6 +19,7 @@ import scala.annotation.implicitNotFound
 @implicitNotFound("Could not find an instance of FromJSON for ${A}")
 trait FromJSON[@specialized A] extends Serializable {
   def read(jval: JValue): JValidation[A]
+
   final protected def fail(msg: String) = jsonParseError(msg)
 
   /** needed JSON fields - ignored if empty */
@@ -35,7 +35,9 @@ object FromJSON extends FromJSONInstances {
   private val validNone = Valid(None)
   private val validNil = Valid(Nil)
   private val validEmptyAnyVector: Valid[Vector[Any]] = Valid(Vector.empty)
+
   private def validList[A]: Valid[List[A]] = validNil
+
   private def validEmptyVector[A]: Valid[Vector[A]] =
     validEmptyAnyVector.asInstanceOf[Valid[Vector[A]]]
 
@@ -47,6 +49,7 @@ object FromJSON extends FromJSONInstances {
           validNone // if none of the optional fields are in the JSON
         case x => c.read(x).map(Option.apply)
       }
+
       override val fields: Set[String] = c.fields
     }
 
@@ -97,6 +100,7 @@ object FromJSON extends FromJSONInstances {
 
   implicit def vectorReader[@specialized A](implicit r: FromJSON[A]): FromJSON[Vector[A]] =
     new FromJSON[Vector[A]] {
+
       import scala.collection.immutable.VectorBuilder
 
       def read(jval: JValue): JValidation[Vector[A]] = jval match {
@@ -193,6 +197,7 @@ object FromJSON extends FromJSONInstances {
   implicit val booleanReader: FromJSON[Boolean] = new FromJSON[Boolean] {
     private val cachedTrue = Valid(true)
     private val cachedFalse = Valid(false)
+
     def read(jval: JValue): JValidation[Boolean] = jval match {
       case JBool(b) => if (b) cachedTrue else cachedFalse
       case _ => fail("JSON Boolean expected")
@@ -211,6 +216,7 @@ object FromJSON extends FromJSONInstances {
   }
 
   implicit val moneyReader: FromJSON[Money] = new FromJSON[Money] {
+
     import Money._
 
     override val fields = Set(CentAmountField, CurrencyCodeField)
@@ -221,8 +227,8 @@ object FromJSON extends FromJSONInstances {
           case (Valid(centAmount), Valid(currencyCode)) =>
             Valid(Money.fromCentAmount(centAmount, currencyCode))
           case (Invalid(e1), Invalid(e2)) => Invalid(e1.concat(e2.toList))
-          case (e1 @ Invalid(_), _) => e1
-          case (_, e2 @ Invalid(_)) => e2
+          case (e1@Invalid(_), _) => e1
+          case (_, e2@Invalid(_)) => e2
         }
 
       case _ => fail("JSON object expected.")
@@ -231,6 +237,7 @@ object FromJSON extends FromJSONInstances {
 
   implicit val highPrecisionMoneyReader: FromJSON[HighPrecisionMoney] =
     new FromJSON[HighPrecisionMoney] {
+
       import HighPrecisionMoney._
 
       override val fields = Set(PreciseAmountField, CurrencyCodeField, FractionDigitsField)
@@ -273,6 +280,7 @@ object FromJSON extends FromJSONInstances {
 
   implicit val currencyReader: FromJSON[Currency] = new FromJSON[Currency] {
     val failMsg = "ISO 4217 code JSON String expected."
+
     def failMsgFor(input: String) = s"Currency '$input' not valid as ISO 4217 code."
 
     private val cachedEUR = Valid(Currency.getInstance("EUR"))
@@ -317,84 +325,52 @@ object FromJSON extends FromJSONInstances {
     }
   }
 
-  private val simpleFastDateTimeReader: FromJSON[DateTime] = new FromJSON[DateTime] {
-    private val DateTimeParts = raw"(\d+)-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})\.(\d{3})Z".r
-    private val error = jsonParseError[DateTime](s"Expected a string with format $DateTimeParts)")
+  //TODO_JP: Naming
+  private def parseStringsRejectingNonFatalErrorsWith[T](errorMessageTemplate: String)(fromString: String => T): FromJSON[T] =
+    new FromJSON[T] {
+      def read(jval: JValue): JValidation[T] = jval match {
+        case JString(s) =>
+          try Valid(fromString(s))
+          catch {
+            case NonFatal(_) => fail(errorMessageTemplate.format(s))
+          }
+        case _ => fail("JSON string expected.")
+      }
+    }
 
-    override def read(jval: JValue): JValidation[DateTime] = jval match {
-      case JString(DateTimeParts(year, month, days, hours, minutes, seconds, millis)) =>
-        Valid(
-          new DateTime(
-            year.toInt,
-            month.toInt,
-            days.toInt,
-            hours.toInt,
-            minutes.toInt,
-            seconds.toInt,
-            millis.toInt,
-            DateTimeZone.UTC))
-      case _ => error
+  implicit val dateTimeReader: FromJSON[DateTime] = {
+    val DateTimeParts = raw"(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})\.(\d{3})Z".r
+
+    parseStringsRejectingNonFatalErrorsWith("Failed to parse date/time: %s") {
+      case DateTimeParts(year, month, days, hours, minutes, seconds, millis) =>
+        new DateTime(
+          year.toInt,
+          month.toInt,
+          days.toInt,
+          hours.toInt,
+          minutes.toInt,
+          seconds.toInt,
+          millis.toInt,
+          DateTimeZone.UTC)
+      case otherwise =>
+        new DateTime(otherwise, DateTimeZone.UTC)
     }
   }
 
-  private val fullDateTimeReader: FromJSON[DateTime] = new FromJSON[DateTime] {
-    def read(jval: JValue): JValidation[DateTime] = jval match {
-      case JString(s) =>
-        try Valid(new DateTime(s, DateTimeZone.UTC))
-        catch {
-          case NonFatal(_) => fail("Failed to parse date/time: %s".format(s))
-        }
-      case _ => fail("JSON string expected.")
-    }
+  implicit val timeReader: FromJSON[LocalTime] = parseStringsRejectingNonFatalErrorsWith("Failed to parse time: %s") {
+    ISODateTimeFormat.localTimeParser.parseDateTime(_).toLocalTime
   }
 
-  private def withFallback[T](primary: FromJSON[T], fallback: FromJSON[T]): FromJSON[T] =
-    (jval: JValue) => primary.read(jval).orElse(fallback.read(jval))
-
-  implicit val dateTimeReader = withFallback(simpleFastDateTimeReader, fullDateTimeReader)
-
-  implicit val timeReader: FromJSON[LocalTime] = new FromJSON[LocalTime] {
-    def read(jval: JValue): JValidation[LocalTime] = jval match {
-      case JString(s) =>
-        try Valid(ISODateTimeFormat.localTimeParser.parseDateTime(s).toLocalTime)
-        catch {
-          case NonFatal(_) => fail("Failed to parse time: %s".format(s))
-        }
-      case _ => fail("JSON string expected.")
-    }
+  implicit val dateReader: FromJSON[LocalDate] = parseStringsRejectingNonFatalErrorsWith("Failed to parse date: %s") {
+    ISODateTimeFormat.localDateParser.parseDateTime(_).toLocalDate
   }
 
-  implicit val dateReader: FromJSON[LocalDate] = new FromJSON[LocalDate] {
-    def read(jval: JValue): JValidation[LocalDate] = jval match {
-      case JString(s) =>
-        try Valid(ISODateTimeFormat.localDateParser.parseDateTime(s).toLocalDate)
-        catch {
-          case NonFatal(_) => fail("Failed to parse date: %s".format(s))
-        }
-      case _ => fail("JSON string expected.")
-    }
+  implicit val yearMonthReader: FromJSON[YearMonth] = parseStringsRejectingNonFatalErrorsWith("Failed to parse year/month: %s") {
+    new YearMonth(_)
   }
 
-  implicit val yearMonthReader: FromJSON[YearMonth] = new FromJSON[YearMonth] {
-    def read(jval: JValue): JValidation[YearMonth] = jval match {
-      case JString(s) =>
-        try Valid(new YearMonth(s))
-        catch {
-          case NonFatal(_) => fail("Failed to parse year/month: %s".format(s))
-        }
-      case _ => fail("JSON Object expected.")
-    }
-  }
-
-  implicit val uuidReader: FromJSON[UUID] = new FromJSON[UUID] {
-    def read(jval: JValue): JValidation[UUID] = jval match {
-      case JString(s) =>
-        try Valid(UUID.fromString(s))
-        catch {
-          case NonFatal(_) => fail("Invalid UUID: '%s'".format(s))
-        }
-      case _ => fail("JSON string expected.")
-    }
+  implicit val uuidReader: FromJSON[UUID] = parseStringsRejectingNonFatalErrorsWith("Invalid UUID: '%s'") {
+    UUID.fromString
   }
 
   implicit val localeReader: FromJSON[Locale] = new FromJSON[Locale] {
