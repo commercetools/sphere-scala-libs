@@ -3,6 +3,7 @@ package io.sphere.json
 import scala.util.control.NonFatal
 import scala.collection.mutable.ListBuffer
 import java.util.{Currency, Locale, UUID}
+
 import cats.data.NonEmptyList
 import cats.data.Validated.{Invalid, Valid}
 import cats.syntax.apply._
@@ -19,7 +20,6 @@ import scala.annotation.implicitNotFound
 @implicitNotFound("Could not find an instance of FromJSON for ${A}")
 trait FromJSON[@specialized A] extends Serializable {
   def read(jval: JValue): JValidation[A]
-
   final protected def fail(msg: String) = jsonParseError(msg)
 
   /** needed JSON fields - ignored if empty */
@@ -35,9 +35,7 @@ object FromJSON extends FromJSONInstances {
   private val validNone = Valid(None)
   private val validNil = Valid(Nil)
   private val validEmptyAnyVector: Valid[Vector[Any]] = Valid(Vector.empty)
-
   private def validList[A]: Valid[List[A]] = validNil
-
   private def validEmptyVector[A]: Valid[Vector[A]] =
     validEmptyAnyVector.asInstanceOf[Valid[Vector[A]]]
 
@@ -49,7 +47,6 @@ object FromJSON extends FromJSONInstances {
           validNone // if none of the optional fields are in the JSON
         case x => c.read(x).map(Option.apply)
       }
-
       override val fields: Set[String] = c.fields
     }
 
@@ -100,7 +97,6 @@ object FromJSON extends FromJSONInstances {
 
   implicit def vectorReader[@specialized A](implicit r: FromJSON[A]): FromJSON[Vector[A]] =
     new FromJSON[Vector[A]] {
-
       import scala.collection.immutable.VectorBuilder
 
       def read(jval: JValue): JValidation[Vector[A]] = jval match {
@@ -197,7 +193,6 @@ object FromJSON extends FromJSONInstances {
   implicit val booleanReader: FromJSON[Boolean] = new FromJSON[Boolean] {
     private val cachedTrue = Valid(true)
     private val cachedFalse = Valid(false)
-
     def read(jval: JValue): JValidation[Boolean] = jval match {
       case JBool(b) => if (b) cachedTrue else cachedFalse
       case _ => fail("JSON Boolean expected")
@@ -216,7 +211,6 @@ object FromJSON extends FromJSONInstances {
   }
 
   implicit val moneyReader: FromJSON[Money] = new FromJSON[Money] {
-
     import Money._
 
     override val fields = Set(CentAmountField, CurrencyCodeField)
@@ -237,7 +231,6 @@ object FromJSON extends FromJSONInstances {
 
   implicit val highPrecisionMoneyReader: FromJSON[HighPrecisionMoney] =
     new FromJSON[HighPrecisionMoney] {
-
       import HighPrecisionMoney._
 
       override val fields = Set(PreciseAmountField, CurrencyCodeField, FractionDigitsField)
@@ -280,7 +273,6 @@ object FromJSON extends FromJSONInstances {
 
   implicit val currencyReader: FromJSON[Currency] = new FromJSON[Currency] {
     val failMsg = "ISO 4217 code JSON String expected."
-
     def failMsgFor(input: String) = s"Currency '$input' not valid as ISO 4217 code."
 
     private val cachedEUR = Valid(Currency.getInstance("EUR"))
