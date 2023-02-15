@@ -3,7 +3,7 @@ package io.sphere.json
 import scala.util.control.NonFatal
 import scala.collection.mutable.ListBuffer
 import java.util.{Currency, Locale, UUID}
-import cats.data.{NonEmptyList, Validated}
+import cats.data.NonEmptyList
 import cats.data.Validated.{Invalid, Valid}
 import cats.syntax.apply._
 import cats.syntax.traverse._
