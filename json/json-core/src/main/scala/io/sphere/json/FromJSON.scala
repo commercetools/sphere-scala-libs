@@ -331,10 +331,10 @@ object FromJSON extends FromJSONInstances {
     }
 
   implicit val dateTimeReader: FromJSON[DateTime] = {
-    val DateTimeParts = raw"(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})\.(\d{3})Z".r
+    val UTCDateTimeComponents = raw"(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})\.(\d{3})Z".r
 
     jsonStringReader("Failed to parse date/time: %s") {
-      case DateTimeParts(year, month, days, hours, minutes, seconds, millis) =>
+      case UTCDateTimeComponents(year, month, days, hours, minutes, seconds, millis) =>
         new DateTime(
           year.toInt,
           month.toInt,
