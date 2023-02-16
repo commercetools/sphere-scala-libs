@@ -317,60 +317,52 @@ object FromJSON extends FromJSONInstances {
     }
   }
 
-  implicit val dateTimeReader: FromJSON[DateTime] = new FromJSON[DateTime] {
-    def read(jval: JValue): JValidation[DateTime] = jval match {
-      case JString(s) =>
-        try Valid(new DateTime(s, DateTimeZone.UTC))
-        catch {
-          case NonFatal(_) => fail("Failed to parse date/time: %s".format(s))
-        }
-      case _ => fail("JSON string expected.")
+  private def jsonStringReader[T](errorMessageTemplate: String)(
+      fromString: String => T): FromJSON[T] =
+    new FromJSON[T] {
+      def read(jval: JValue): JValidation[T] = jval match {
+        case JString(s) =>
+          try Valid(fromString(s))
+          catch {
+            case NonFatal(_) => fail(errorMessageTemplate.format(s))
+          }
+        case _ => fail("JSON string expected.")
+      }
+    }
+
+  implicit val dateTimeReader: FromJSON[DateTime] = {
+    val UTCDateTimeComponents = raw"(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})\.(\d{3})Z".r
+
+    jsonStringReader("Failed to parse date/time: %s") {
+      case UTCDateTimeComponents(year, month, days, hours, minutes, seconds, millis) =>
+        new DateTime(
+          year.toInt,
+          month.toInt,
+          days.toInt,
+          hours.toInt,
+          minutes.toInt,
+          seconds.toInt,
+          millis.toInt,
+          DateTimeZone.UTC)
+      case otherwise =>
+        new DateTime(otherwise, DateTimeZone.UTC)
     }
   }
 
-  implicit val timeReader: FromJSON[LocalTime] = new FromJSON[LocalTime] {
-    def read(jval: JValue): JValidation[LocalTime] = jval match {
-      case JString(s) =>
-        try Valid(ISODateTimeFormat.localTimeParser.parseDateTime(s).toLocalTime)
-        catch {
-          case NonFatal(_) => fail("Failed to parse time: %s".format(s))
-        }
-      case _ => fail("JSON string expected.")
-    }
+  implicit val timeReader: FromJSON[LocalTime] = jsonStringReader("Failed to parse time: %s") {
+    ISODateTimeFormat.localTimeParser.parseDateTime(_).toLocalTime
   }
 
-  implicit val dateReader: FromJSON[LocalDate] = new FromJSON[LocalDate] {
-    def read(jval: JValue): JValidation[LocalDate] = jval match {
-      case JString(s) =>
-        try Valid(ISODateTimeFormat.localDateParser.parseDateTime(s).toLocalDate)
-        catch {
-          case NonFatal(_) => fail("Failed to parse date: %s".format(s))
-        }
-      case _ => fail("JSON string expected.")
-    }
+  implicit val dateReader: FromJSON[LocalDate] = jsonStringReader("Failed to parse date: %s") {
+    ISODateTimeFormat.localDateParser.parseDateTime(_).toLocalDate
   }
 
-  implicit val yearMonthReader: FromJSON[YearMonth] = new FromJSON[YearMonth] {
-    def read(jval: JValue): JValidation[YearMonth] = jval match {
-      case JString(s) =>
-        try Valid(new YearMonth(s))
-        catch {
-          case NonFatal(_) => fail("Failed to parse year/month: %s".format(s))
-        }
-      case _ => fail("JSON Object expected.")
+  implicit val yearMonthReader: FromJSON[YearMonth] =
+    jsonStringReader("Failed to parse year/month: %s") {
+      new YearMonth(_)
     }
-  }
 
-  implicit val uuidReader: FromJSON[UUID] = new FromJSON[UUID] {
-    def read(jval: JValue): JValidation[UUID] = jval match {
-      case JString(s) =>
-        try Valid(UUID.fromString(s))
-        catch {
-          case NonFatal(_) => fail("Invalid UUID: '%s'".format(s))
-        }
-      case _ => fail("JSON string expected.")
-    }
-  }
+  implicit val uuidReader: FromJSON[UUID] = jsonStringReader("Invalid UUID: '%s'")(UUID.fromString)
 
   implicit val localeReader: FromJSON[Locale] = new FromJSON[Locale] {
     def read(jval: JValue): JValidation[Locale] = jval match {
