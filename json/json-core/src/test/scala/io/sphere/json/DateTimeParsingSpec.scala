@@ -8,35 +8,59 @@ class DateTimeParsingSpec extends AnyWordSpec with Matchers {
 
   import FromJSON.dateTimeReader
   def jsonDateStringWith(
-      dayOfTheMonth: Int = 23,
-      monthOfTheYear: Int = 11,
-      hourOfTheDay: Int = 13,
-      minuteOfTheHour: Int = 45,
-      secondOfTheMinute: Int = 34): JString =
+      year: String = "2035",
+      dayOfTheMonth: String = "23",
+      monthOfTheYear: String = "11",
+      hourOfTheDay: String = "13",
+      minuteOfTheHour: String = "45",
+      secondOfTheMinute: String = "34",
+      millis: String = "543"): JString =
     JString(
-      s"2035-$monthOfTheYear-${dayOfTheMonth}T$hourOfTheDay:$minuteOfTheHour:$secondOfTheMinute.543Z")
+      s"$year-$monthOfTheYear-${dayOfTheMonth}T$hourOfTheDay:$minuteOfTheHour:$secondOfTheMinute.${millis}Z")
 
   val beValid = be(Symbol("valid"))
+  val outOfIntRange = "999999999999999"
 
   "parsing a DateTime" should {
-    "reject dates with invalid days" in {
-      dateTimeReader.read(jsonDateStringWith(dayOfTheMonth = 59)) shouldNot beValid
+
+    "reject strings with invalid year" in {
+      dateTimeReader.read(jsonDateStringWith(year = "999999999")) shouldNot beValid
     }
 
-    "reject dates with invalid months" in {
-      dateTimeReader.read(jsonDateStringWith(monthOfTheYear = 39)) shouldNot beValid
+    "reject strings with years that are out of range for integers" in {
+      dateTimeReader.read(jsonDateStringWith(year = outOfIntRange)) shouldNot beValid
     }
 
-    "reject dates with invalid hours" in {
-      dateTimeReader.read(jsonDateStringWith(hourOfTheDay = 39)) shouldNot beValid
+    "reject strings that are out of range for other fields" in {
+      dateTimeReader.read(
+        jsonDateStringWith(
+          monthOfTheYear = outOfIntRange,
+          dayOfTheMonth = outOfIntRange,
+          hourOfTheDay = outOfIntRange,
+          minuteOfTheHour = outOfIntRange,
+          secondOfTheMinute = outOfIntRange,
+          millis = outOfIntRange
+        )) shouldNot beValid
     }
 
-    "reject dates with invalid minutes" in {
-      dateTimeReader.read(jsonDateStringWith(minuteOfTheHour = 87)) shouldNot beValid
+    "reject strings with invalid days" in {
+      dateTimeReader.read(jsonDateStringWith(dayOfTheMonth = "59")) shouldNot beValid
     }
 
-    "reject dates with invalid seconds" in {
-      dateTimeReader.read(jsonDateStringWith(secondOfTheMinute = 87)) shouldNot beValid
+    "reject strings with invalid months" in {
+      dateTimeReader.read(jsonDateStringWith(monthOfTheYear = "39")) shouldNot beValid
+    }
+
+    "reject strings with invalid hours" in {
+      dateTimeReader.read(jsonDateStringWith(hourOfTheDay = "39")) shouldNot beValid
+    }
+
+    "reject strings with invalid minutes" in {
+      dateTimeReader.read(jsonDateStringWith(minuteOfTheHour = "87")) shouldNot beValid
+    }
+
+    "reject strings with invalid seconds" in {
+      dateTimeReader.read(jsonDateStringWith(secondOfTheMinute = "87")) shouldNot beValid
     }
   }
 }
