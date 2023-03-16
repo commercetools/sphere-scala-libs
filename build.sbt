@@ -54,7 +54,7 @@ lazy val standardSettings = Defaults.coreDefaultSettings ++ Seq(
     "org.scalatest" %% "scalatest" % "3.2.15" % Test,
     "org.scalatestplus" %% "scalacheck-1-14" % "3.2.2.0" % Test,
     "org.scalacheck" %% "scalacheck" % "1.17.0" % Test,
-    "ch.qos.logback" % "logback-classic" % "1.4.5" % Test
+    "ch.qos.logback" % "logback-classic" % "1.4.6" % Test
   ),
   ThisBuild / shellPrompt := { state ⇒
     scala.Console.CYAN + Project.extract(state).currentRef.project + "> " + scala.Console.RESET
