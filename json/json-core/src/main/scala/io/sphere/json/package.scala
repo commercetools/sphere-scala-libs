@@ -3,7 +3,7 @@ package io.sphere
 import cats.data.Validated.{Invalid, Valid}
 import cats.data.{NonEmptyList, ValidatedNel}
 import com.fasterxml.jackson.core.JsonParseException
-import com.fasterxml.jackson.core.exc.InputCoercionException
+import com.fasterxml.jackson.core.exc.{InputCoercionException, StreamConstraintsException}
 import com.fasterxml.jackson.databind.JsonMappingException
 import io.sphere.util.Logging
 import org.json4s.{DefaultFormats, JsonInput, StringInput}
@@ -28,6 +28,7 @@ package object json extends Logging {
       case e: JsonMappingException => jsonParseError(e.getOriginalMessage)
       case e: JsonParseException => jsonParseError(e.getOriginalMessage)
       case e: InputCoercionException => jsonParseError(e.getOriginalMessage)
+      case e: StreamConstraintsException => jsonParseError(e.getOriginalMessage)
     }
 
   def parseJSON(json: String): JValidation[JValue] =
