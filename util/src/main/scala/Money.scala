@@ -15,6 +15,10 @@ import scala.math.BigDecimal.RoundingMode
 import ValidatedFlatMapFeature._
 import io.sphere.util.Money.ImplicitsDecimal.MoneyNotation
 
+final case class MoneyOverflowException(number: BigDecimal)
+    extends RuntimeException(
+      s"Money operation resulted in an overflow. $number is too big or small.")
+
 sealed trait BaseMoney {
   def `type`: String
 
@@ -251,8 +255,9 @@ object Money {
       mode: RoundingMode): Money = {
     val fractionDigits = currency.getDefaultFractionDigits
     val centAmountBigDecimal = amount * cachedCentPower(fractionDigits)
-    val centAmount = centAmountBigDecimal.setScale(0, mode).longValue
-    Money(centAmount, currency)
+    val centAmountBigDecimalZeroScale = centAmountBigDecimal.setScale(0, mode)
+    try Money(centAmountBigDecimalZeroScale.toLongExact, currency)
+    catch { case _: ArithmeticException => throw MoneyOverflowException(amount) }
   }
 
   def apply(amount: BigDecimal, currency: Currency): Money = {
