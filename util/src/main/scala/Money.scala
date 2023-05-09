@@ -13,6 +13,7 @@ import scala.math._
 import BigDecimal.RoundingMode._
 import scala.math.BigDecimal.RoundingMode
 import ValidatedFlatMapFeature._
+import io.sphere.util.BaseMoney.bigDecimalToMoneyLong
 import io.sphere.util.Money.ImplicitsDecimal.MoneyNotation
 
 final case class MoneyOverflowException(number: BigDecimal)
@@ -73,6 +74,10 @@ object BaseMoney {
       def combine(x: BaseMoney, y: BaseMoney): BaseMoney = x + y
       val empty: BaseMoney = Money.zero(c)
     }
+
+  private[util] def bigDecimalToMoneyLong(bigDecimal: BigDecimal): Long =
+    try bigDecimal.toLongExact
+    catch { case _: ArithmeticException => throw MoneyOverflowException(bigDecimal) }
 }
 
 /** Represents an amount of money in a certain currency.
@@ -256,8 +261,7 @@ object Money {
     val fractionDigits = currency.getDefaultFractionDigits
     val centAmountBigDecimal = amount * cachedCentPower(fractionDigits)
     val centAmountBigDecimalZeroScale = centAmountBigDecimal.setScale(0, mode)
-    try Money(centAmountBigDecimalZeroScale.toLongExact, currency)
-    catch { case _: ArithmeticException => throw MoneyOverflowException(amount) }
+    Money(bigDecimalToMoneyLong(centAmountBigDecimalZeroScale), currency)
   }
 
   def apply(amount: BigDecimal, currency: Currency): Money = {
@@ -540,9 +544,8 @@ object HighPrecisionMoney {
   }
 
   def roundToCents(amount: BigDecimal, currency: Currency)(implicit mode: RoundingMode): Long =
-    try
-      (amount.setScale(currency.getDefaultFractionDigits, mode) / centFactor(currency)).toLongExact
-    catch { case _: ArithmeticException => throw MoneyOverflowException(amount) }
+    bigDecimalToMoneyLong(
+      amount.setScale(currency.getDefaultFractionDigits, mode) / centFactor(currency))
 
   def sameScale(m1: HighPrecisionMoney, m2: HighPrecisionMoney): (BigDecimal, BigDecimal, Int) = {
     val newFractionDigits = math.max(m1.fractionDigits, m2.fractionDigits)
@@ -571,8 +574,7 @@ object HighPrecisionMoney {
   def centFactor(currency: Currency): BigDecimal = factor(currency.getDefaultFractionDigits)
 
   private def amountToPreciseAmount(amount: BigDecimal, fractionDigits: Int): Long =
-    try (amount * Money.cachedCentPower(fractionDigits)).toLongExact
-    catch { case _: ArithmeticException => throw MoneyOverflowException(amount) }
+    bigDecimalToMoneyLong(amount * Money.cachedCentPower(fractionDigits))
 
   def fromDecimalAmount(amount: BigDecimal, fractionDigits: Int, currency: Currency)(implicit
       mode: RoundingMode): HighPrecisionMoney = {
