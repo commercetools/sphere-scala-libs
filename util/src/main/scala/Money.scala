@@ -16,9 +16,9 @@ import ValidatedFlatMapFeature._
 import io.sphere.util.BaseMoney.bigDecimalToMoneyLong
 import io.sphere.util.Money.ImplicitsDecimal.MoneyNotation
 
-class MoneyOverflowException(number: BigDecimal)
+class MoneyOverflowException(amount: BigDecimal)
     extends RuntimeException(
-      s"Money operation resulted in an overflow. $number is too big or small.")
+      s"Money operation resulted in an overflow. $amount is too big or small.")
 
 sealed trait BaseMoney {
   def `type`: String
@@ -75,9 +75,9 @@ object BaseMoney {
       val empty: BaseMoney = Money.zero(c)
     }
 
-  private[util] def bigDecimalToMoneyLong(bigDecimal: BigDecimal): Long =
-    try bigDecimal.toLongExact
-    catch { case _: ArithmeticException => throw new MoneyOverflowException(bigDecimal) }
+  private[util] def bigDecimalToMoneyLong(amount: BigDecimal): Long =
+    try amount.toLongExact
+    catch { case _: ArithmeticException => throw new MoneyOverflowException(amount) }
 }
 
 /** Represents an amount of money in a certain currency.
