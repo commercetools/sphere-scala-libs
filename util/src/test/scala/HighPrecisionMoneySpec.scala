@@ -2,6 +2,7 @@ package io.sphere.util
 
 import java.util.Currency
 import cats.data.Validated.Invalid
+import io.sphere.util.HighPrecisionMoney.ImplicitsDecimalPrecise.HighPrecisionPreciseMoneyNotation
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import org.scalatest.matchers.must.Matchers
@@ -45,6 +46,12 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
       -"0.01".EUR_PRECISE(2) must equal("-0.01".EUR_PRECISE(2))
     }
 
+    it("should throw error on overflow in the unary '-' operator.") {
+      a[MoneyOverflowException] must be thrownBy {
+        -(BigDecimal(Long.MinValue) / 1000).EUR_PRECISE(3)
+      }
+    }
+
     it("should support the binary '+' operator.") {
       ("0.001".EUR_PRECISE(3)) + ("0.002".EUR_PRECISE(3)) must equal(
         "0.003".EUR_PRECISE(3)
@@ -57,6 +64,12 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
       ("0.005".EUR_PRECISE(3)) + BigDecimal("0.005") must equal(
         "0.010".EUR_PRECISE(3)
       )
+    }
+
+    it("should throw error on overflow in the binary '+' operator.") {
+      a[MoneyOverflowException] must be thrownBy {
+        (BigDecimal(Long.MaxValue) / 1000).EUR_PRECISE(3) + 1
+      }
     }
 
     it("should support the binary '-' operator.") {
@@ -73,6 +86,12 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
       )
     }
 
+    it("should throw error on overflow in the binary '-' operator.") {
+      a[MoneyOverflowException] must be thrownBy {
+        (BigDecimal(Long.MinValue) / 1000).EUR_PRECISE(3) - 1
+      }
+    }
+
     it("should support the binary '*' operator.") {
       ("0.002".EUR_PRECISE(3)) * ("5.00".EUR_PRECISE(2)) must equal(
         "0.010".EUR_PRECISE(3)
@@ -85,6 +104,12 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
       ("0.005".EUR_PRECISE(3)) * BigDecimal("0.005") must equal(
         "0.000".EUR_PRECISE(3)
       )
+    }
+
+    it("should throw error on overflow in the binary '*' operator.") {
+      a[MoneyOverflowException] must be thrownBy {
+        (BigDecimal(Long.MaxValue / 1000) / 2 + 1).EUR_PRECISE(3) * 2
+      }
     }
 
     it("should support the binary '%' operator.") {
@@ -101,16 +126,34 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
       )
     }
 
+    it("should throw error on overflow in the binary '%' operator.") {
+      noException must be thrownBy {
+        BigDecimal(Long.MaxValue / 1000).EUR_PRECISE(3) % 0.5
+      }
+    }
+
     it("should support the binary '/%' operator.") {
       "10.000".EUR_PRECISE(3)./%(3.00) must equal(
         ("3.000".EUR_PRECISE(3), "1.000".EUR_PRECISE(3))
       )
     }
 
+    it("should throw error on overflow in the binary '/%' operator.") {
+      a[MoneyOverflowException] must be thrownBy {
+        BigDecimal(Long.MaxValue / 1000).EUR_PRECISE(3) /% 0.5
+      }
+    }
+
     it("should support the remainder operator.") {
       "10.000".EUR_PRECISE(3).remainder(3.00) must equal("1.000".EUR_PRECISE(3))
 
       "10.000".EUR_PRECISE(3).remainder("3.000".EUR_PRECISE(3)) must equal("1.000".EUR_PRECISE(3))
+    }
+
+    it("should not overflow when getting the remainder of a division ('%').") {
+      noException must be thrownBy {
+        BigDecimal(Long.MaxValue / 1000).EUR_PRECISE(3).remainder(0.5)
+      }
     }
 
     it("should partition the value properly.") {

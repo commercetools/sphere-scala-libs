@@ -540,7 +540,9 @@ object HighPrecisionMoney {
   }
 
   def roundToCents(amount: BigDecimal, currency: Currency)(implicit mode: RoundingMode): Long =
-    (amount.setScale(currency.getDefaultFractionDigits, mode) / centFactor(currency)).toLong
+    try
+      (amount.setScale(currency.getDefaultFractionDigits, mode) / centFactor(currency)).toLongExact
+    catch { case _: ArithmeticException => throw MoneyOverflowException(amount) }
 
   def sameScale(m1: HighPrecisionMoney, m2: HighPrecisionMoney): (BigDecimal, BigDecimal, Int) = {
     val newFractionDigits = math.max(m1.fractionDigits, m2.fractionDigits)
@@ -569,7 +571,8 @@ object HighPrecisionMoney {
   def centFactor(currency: Currency): BigDecimal = factor(currency.getDefaultFractionDigits)
 
   private def amountToPreciseAmount(amount: BigDecimal, fractionDigits: Int): Long =
-    (amount * Money.cachedCentPower(fractionDigits)).toLong
+    try (amount * Money.cachedCentPower(fractionDigits)).toLongExact
+    catch { case _: ArithmeticException => throw MoneyOverflowException(amount) }
 
   def fromDecimalAmount(amount: BigDecimal, fractionDigits: Int, currency: Currency)(implicit
       mode: RoundingMode): HighPrecisionMoney = {
