@@ -16,8 +16,7 @@ import ValidatedFlatMapFeature._
 import io.sphere.util.BaseMoney.bigDecimalToMoneyLong
 import io.sphere.util.Money.ImplicitsDecimal.MoneyNotation
 
-class MoneyOverflowException
-    extends ArithmeticException("A Money operation resulted in an overflow.")
+class MoneyOverflowException extends RuntimeException("A Money operation resulted in an overflow.")
 
 sealed trait BaseMoney {
   def `type`: String
