@@ -12,6 +12,8 @@ class MoneySpec extends AnyFunSpec with Matchers with ScalaCheckDrivenPropertyCh
 
   implicit val mode = BigDecimal.RoundingMode.UNNECESSARY
 
+  def euroCents(cents: Long): Money = EUR(0).withCentAmount(cents)
+
   describe("Money") {
     it("should have value semantics.") {
       (1.23 EUR) must equal(1.23 EUR)
@@ -51,6 +53,12 @@ class MoneySpec extends AnyFunSpec with Matchers with ScalaCheckDrivenPropertyCh
       -EUR(1.00) must equal(-1.00 EUR)
     }
 
+    it("should throw error on overflow in the unary '-' operator.") {
+      a[MoneyOverflowException] must be thrownBy {
+        -euroCents(Long.MinValue)
+      }
+    }
+
     it("should support the binary '+' operator.") {
       (1.42 EUR) + (1.58 EUR) must equal(3.00 EUR)
     }
@@ -61,13 +69,31 @@ class MoneySpec extends AnyFunSpec with Matchers with ScalaCheckDrivenPropertyCh
       }
     }
 
+    it("should throw error on overflow in the binary '+' operator.") {
+      a[MoneyOverflowException] must be thrownBy {
+        euroCents(Long.MaxValue) + 1
+      }
+    }
+
     it("should support the binary '-' operator.") {
       (1.33 EUR) - (0.33 EUR) must equal(1.00 EUR)
+    }
+
+    it("should throw error on overflow in the binary '-' operator.") {
+      a[MoneyOverflowException] must be thrownBy {
+        euroCents(Long.MinValue) - 1
+      }
     }
 
     it("should support the binary '*' operator, requiring a rounding mode.") {
       implicit val mode = BigDecimal.RoundingMode.HALF_EVEN
       (1.33 EUR) * (1.33 EUR) must equal(1.77 EUR)
+    }
+
+    it("should throw error on overflow in the binary '*' operator.") {
+      a[MoneyOverflowException] must be thrownBy {
+        euroCents(Long.MaxValue / 2 + 1) * 2
+      }
     }
 
     it("should support the binary '/%' (divideAndRemainder) operator.") {
@@ -76,10 +102,22 @@ class MoneySpec extends AnyFunSpec with Matchers with ScalaCheckDrivenPropertyCh
       (1.33 EUR) /% 0.003 must equal(443.00 EUR, 0.00 EUR)
     }
 
+    it("should throw error on overflow in the binary '/%' (divideAndRemainder) operator.") {
+      a[MoneyOverflowException] must be thrownBy {
+        euroCents(Long.MaxValue) /% 0.5
+      }
+    }
+
     it("should support getting the remainder of a division ('%').") {
       implicit val mode = BigDecimal.RoundingMode.HALF_EVEN
       (1.25 EUR).remainder(1.1) must equal(0.15 EUR)
       (1.25 EUR) % 1.1 must equal(0.15 EUR)
+    }
+
+    it("should not overflow when getting the remainder of a division ('%').") {
+      noException must be thrownBy {
+        euroCents(Long.MaxValue).remainder(0.5)
+      }
     }
 
     it("should support partitioning an amount without losing or gaining money.") {
