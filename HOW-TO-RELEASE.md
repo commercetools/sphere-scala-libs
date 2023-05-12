@@ -45,8 +45,8 @@ It's important to add the public key to both key servers!
 
 Finally, update the `PGP_PASSPHRASE` and `PGP_SECRET` secrets in the [repository settings](https://github.com/commercetools/sphere-scala-libs/settings/secrets/actions).
 
-_There is no need to save the key details anywhere else because it's only used for signing and will never be verified.
+_There is no need to save the key details anywhere else, because it's only used for signing and will never be verified.
 If the credentials are lost, we can just generate a new key._
 
-If you generated the key using `gpg --gen-key`, its output included an `[expires: YYYY-MM-DD]` string.
-Please make sure to set a reminder to rotate the key before it expires.
+_Since the default key expiration timeout is 2 full years, it is not necessary to set up any rotation reminders.
+The publishing failure and this troubleshooting guide should be enough to quickly resolve the problem._
