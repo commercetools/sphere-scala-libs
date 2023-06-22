@@ -1,7 +1,7 @@
 import pl.project13.scala.sbt.JmhPlugin
 
 // sbt-github-actions needs configuration in `ThisBuild`
-ThisBuild / crossScalaVersions := Seq("2.12.17", "2.13.11")
+ThisBuild / crossScalaVersions := Seq("2.12.18", "2.13.11")
 ThisBuild / scalaVersion := crossScalaVersions.value.last
 ThisBuild / githubWorkflowPublishTargetBranches := List()
 ThisBuild / githubWorkflowJavaVersions := List(JavaSpec.temurin("17"))
@@ -54,7 +54,7 @@ lazy val standardSettings = Defaults.coreDefaultSettings ++ Seq(
     "org.scalatest" %% "scalatest" % "3.2.16" % Test,
     "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % Test,
     "org.scalacheck" %% "scalacheck" % "1.17.0" % Test,
-    "ch.qos.logback" % "logback-classic" % "1.4.7" % Test
+    "ch.qos.logback" % "logback-classic" % "1.4.8" % Test
   ),
   ThisBuild / shellPrompt := { state ⇒
     scala.Console.CYAN + Project.extract(state).currentRef.project + "> " + scala.Console.RESET
