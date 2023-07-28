@@ -13,4 +13,5 @@ import static java.lang.annotation.ElementType.TYPE;
 @Target({TYPE})
 public @interface JSONTypeHintField {
     String value() default "type";
+    String defaultType() default "";
 }

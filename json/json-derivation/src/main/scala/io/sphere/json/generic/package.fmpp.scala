@@ -373,6 +373,7 @@ package object generic extends Logging {
 
     val fieldWithJSONTypeHint = clazz.getAnnotation(classOf[JSONTypeHintField])
     val typeField = if (fieldWithJSONTypeHint != null) fieldWithJSONTypeHint.value() else defaultTypeFieldName
+    val defaultType = if (fieldWithJSONTypeHint != null) fieldWithJSONTypeHint.defaultType() else ""
 
     new FromJSON[T] with TypeSelectorFromJSONContainer {
       override def typeSelectors: List[TypeSelectorFromJSON[_]] = allSelectors
@@ -383,6 +384,10 @@ package object generic extends Logging {
             case Some(t) => readMap.get(t) match {
               case Some(ts) => ts.read(o).asInstanceOf[ValidatedNel[JSONError, T]]
               case None => jsonParseError("Invalid type value '" + t + "' in '%s'".format(compactJson(o)))
+            }
+            case None if defaultType.nonEmpty => readMap.get(defaultType) match {
+              case Some(ts) => ts.read(o).asInstanceOf[ValidatedNel[JSONError, T]]
+              case None => jsonParseError("Invalid default type value '" + defaultType + "' in '%s'".format(compactJson(o)))
             }
             case None => jsonParseError("Missing type field '" + typeField + "' in '%s'".format(compactJson(o)))
           }
