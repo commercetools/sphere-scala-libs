@@ -167,6 +167,7 @@ private[generic] object JSONMacros {
         )
       else {
         val subtypes = collectKnownSubtypes(c)(symbol)
+        c.info(c.enclosingPosition, symbol.fullName + " Subtypes: " + subtypes.mkString(", "), true)
         val idents = Ident(symbol.name) :: subtypes.map { s =>
           if (s.isModuleClass) New(TypeTree(s.asClass.toType)) else Ident(s.name)
         }.toList
