@@ -7,6 +7,6 @@ addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.6")
 // https://github.com/djspiewak/sbt-github-actions/releases
 addSbtPlugin("com.github.sbt" % "sbt-github-actions" % "0.15.0")
 
-addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.0")
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.2")
 
 addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.5.12")
