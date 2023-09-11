@@ -43,7 +43,7 @@ package object json extends Logging {
   def fromJSON[A: FromJSON](json: String): JValidation[A] =
     parseJSON(json).andThen(fromJValue[A])
 
-  private val jNothingStr = "{}"
+  private val jNothingStr = "null"
 
   def toJSON[A: ToJSON](a: A): String = toJValue(a) match {
     case JNothing => jNothingStr
