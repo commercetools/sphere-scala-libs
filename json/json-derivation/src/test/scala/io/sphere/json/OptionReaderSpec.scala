@@ -1,7 +1,7 @@
 package io.sphere.json
 
 import io.sphere.json.generic._
-import org.json4s.{JLong, JObject, JString}
+import org.json4s.{JLong, JNothing, JObject, JString}
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -75,6 +75,13 @@ class OptionReaderSpec extends AnyWordSpec with Matchers with OptionValues {
       getFromJValue[MapClass](
         JObject("id" -> JLong(1L), "map" -> JObject("a" -> JString("b")))) mustEqual
         MapClass(1L, Some(Map("a" -> "b")))
+
+      toJValue[MapClass](MapClass(1L, None)) mustEqual
+        JObject("id" -> JLong(1L), "map" -> JNothing)
+      toJValue[MapClass](MapClass(1L, Some(Map()))) mustEqual
+        JObject("id" -> JLong(1L), "map" -> JObject())
+      toJValue[MapClass](MapClass(1L, Some(Map("a" -> "b")))) mustEqual
+        JObject("id" -> JLong(1L), "map" -> JObject("a" -> JString("b")))
     }
 
     "handle absence of all fields mixed with ignored fields" in {
