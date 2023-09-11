@@ -39,6 +39,17 @@ object FromJSON extends FromJSONInstances {
   private def validEmptyVector[A]: Valid[Vector[A]] =
     validEmptyAnyVector.asInstanceOf[Valid[Vector[A]]]
 
+  implicit def optionMapReader[@specialized A](implicit
+      c: FromJSON[A]): FromJSON[Option[Map[String, A]]] =
+    new FromJSON[Option[Map[String, A]]] {
+      private val internalMapReader = mapReader[A]
+
+      def read(jval: JValue): JValidation[Option[Map[String, A]]] = jval match {
+        case JNothing | JNull => validNone
+        case x => internalMapReader.read(x).map(Some.apply)
+      }
+    }
+
   implicit def optionReader[@specialized A](implicit c: FromJSON[A]): FromJSON[Option[A]] =
     new FromJSON[Option[A]] {
       def read(jval: JValue): JValidation[Option[A]] = jval match {

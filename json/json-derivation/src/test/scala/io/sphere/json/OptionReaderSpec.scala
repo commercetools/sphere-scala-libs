@@ -1,6 +1,7 @@
 package io.sphere.json
 
 import io.sphere.json.generic._
+import org.json4s.{JArray, JLong, JNothing, JObject, JString}
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -19,6 +20,15 @@ object OptionReaderSpec {
     implicit val json: JSON[ComplexClass] = jsonProduct(apply _)
   }
 
+  case class MapClass(id: Long, map: Option[Map[String, String]])
+  object MapClass {
+    implicit val json: JSON[MapClass] = jsonProduct(apply _)
+  }
+
+  case class ListClass(id: Long, list: Option[List[String]])
+  object ListClass {
+    implicit val json: JSON[ListClass] = jsonProduct(apply _)
+  }
 }
 
 class OptionReaderSpec extends AnyWordSpec with Matchers with OptionValues {
@@ -59,6 +69,42 @@ class OptionReaderSpec extends AnyWordSpec with Matchers with OptionValues {
       val json = "{}"
       val result = getFromJSON[Option[SimpleClass]](json)
       result mustEqual None
+    }
+
+    "handle optional map" in {
+      getFromJValue[MapClass](JObject("id" -> JLong(1L))) mustEqual MapClass(1L, None)
+
+      getFromJValue[MapClass](JObject("id" -> JLong(1L), "map" -> JObject())) mustEqual
+        MapClass(1L, Some(Map.empty))
+
+      getFromJValue[MapClass](
+        JObject("id" -> JLong(1L), "map" -> JObject("a" -> JString("b")))) mustEqual
+        MapClass(1L, Some(Map("a" -> "b")))
+
+      toJValue[MapClass](MapClass(1L, None)) mustEqual
+        JObject("id" -> JLong(1L), "map" -> JNothing)
+      toJValue[MapClass](MapClass(1L, Some(Map()))) mustEqual
+        JObject("id" -> JLong(1L), "map" -> JObject())
+      toJValue[MapClass](MapClass(1L, Some(Map("a" -> "b")))) mustEqual
+        JObject("id" -> JLong(1L), "map" -> JObject("a" -> JString("b")))
+    }
+
+    "handle optional list" in {
+      getFromJValue[ListClass](
+        JObject("id" -> JLong(1L), "list" -> JArray(List(JString("hi"))))) mustEqual
+        ListClass(1L, Some(List("hi")))
+      getFromJValue[ListClass](JObject("id" -> JLong(1L), "list" -> JArray(List.empty))) mustEqual
+        ListClass(1L, Some(List()))
+      getFromJValue[ListClass](JObject("id" -> JLong(1L))) mustEqual
+        ListClass(1L, None)
+
+      toJValue(ListClass(1L, Some(List("hi")))) mustEqual JObject(
+        "id" -> JLong(1L),
+        "list" -> JArray(List(JString("hi"))))
+      toJValue(ListClass(1L, Some(List.empty))) mustEqual JObject(
+        "id" -> JLong(1L),
+        "list" -> JArray(List.empty))
+      toJValue(ListClass(1L, None)) mustEqual JObject("id" -> JLong(1L), "list" -> JNothing)
     }
 
     "handle absence of all fields mixed with ignored fields" in {
