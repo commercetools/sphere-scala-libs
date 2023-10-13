@@ -107,6 +107,7 @@ private[generic] object MongoFormatMacros {
         )
       else {
         val subtypes = collectKnownSubtypes(c)(symbol)
+        val subtypesWithNoFormatter = subtypes.filterNot(mongoFormatExists(c))
         val idents = Ident(symbol.name) :: subtypes.map { s =>
           if (s.isModuleClass) New(TypeTree(s.asClass.toType)) else Ident(s.name)
         }.toList
@@ -114,7 +115,7 @@ private[generic] object MongoFormatMacros {
         if (idents.size == 1)
           c.abort(c.enclosingPosition, "Subtypes not found.")
         else {
-          val instanceDefs = subtypes.zipWithIndex.collect {
+          val instanceDefs = subtypesWithNoFormatter.zipWithIndex.collect {
             case (symbol, i) if symbol.isClass && symbol.asClass.isCaseClass =>
               if (symbol.asClass.typeParams.nonEmpty) {
                 c.abort(
@@ -150,6 +151,16 @@ private[generic] object MongoFormatMacros {
           )
         }
       }
+    }
+  }
+
+  private def mongoFormatExists(c: blackbox.Context)(s: c.universe.Symbol) = {
+    val typeName = s.asType.toType
+    try {
+      c.typecheck(c.parse(s"implicitly[MongoFormat[$typeName]]"))
+      true
+    } catch {
+      case _: Throwable => false
     }
   }
 }
