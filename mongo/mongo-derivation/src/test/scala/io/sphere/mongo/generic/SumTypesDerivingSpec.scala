@@ -6,6 +6,7 @@ import org.scalatest.wordspec.AnyWordSpec
 import io.sphere.mongo.MongoUtils.dbObj
 import io.sphere.mongo.format.DefaultMongoFormats._
 import io.sphere.mongo.format.MongoFormat
+import org.bson.BSONObject
 import org.scalatest.Assertion
 
 class SumTypesDerivingSpec extends AnyWordSpec with Matchers {
@@ -73,6 +74,22 @@ class SumTypesDerivingSpec extends AnyWordSpec with Matchers {
 
       check(Color9.format, Color9.Custom("2356"), dbObj("type" -> "Custom", "rgb" -> "2356"))
     }
+
+    "Formatters could be overridden for objects" in {
+      check(Color10.format, Color10.Red, dbObj("type" -> "Red", "extraField" -> "panda"))
+
+      check(Color10.format, Color10.Custom("2356"), dbObj("type" -> "Custom", "rgb" -> "2356"))
+    }
+
+    "Formatters could be overridden for classes" in {
+      check(Color11.format, Color11.Red, dbObj("type" -> "Red"))
+
+      check(
+        Color11.format,
+        Color11.Custom("2356"),
+        dbObj("type" -> "Custom", "rgb" -> "2356", "extraField" -> "panda"))
+    }
+
   }
 }
 
@@ -169,6 +186,32 @@ object SumTypesDerivingSpec {
     @MongoTypeHint("  ")
     case class Custom(rgb: String) extends Color9
     val format = deriveMongoFormat[Color9]
+  }
+
+  sealed trait Color10
+  object Color10 {
+    case object Red extends Color10
+    case class Custom(rgb: String) extends Color10
+
+    implicit val redFormatter: MongoFormat[Red.type] = new MongoFormat[Red.type] {
+      override def toMongoValue(a: Red.type): Any = dbObj("type" -> "Red", "extraField" -> "panda")
+      override def fromMongoValue(any: Any): Red.type = Red
+    }
+    val format = deriveMongoFormat[Color10]
+  }
+
+  sealed trait Color11
+  object Color11 {
+    case object Red extends Color11
+    case class Custom(rgb: String) extends Color11
+
+    implicit val customFormatter: MongoFormat[Custom] = new MongoFormat[Custom] {
+      override def toMongoValue(a: Custom): Any =
+        dbObj("type" -> "Custom", "rgb" -> a.rgb, "extraField" -> "panda")
+      override def fromMongoValue(any: Any): Custom =
+        Custom(any.asInstanceOf[BSONObject].get("rgb").asInstanceOf[String])
+    }
+    val format = deriveMongoFormat[Color11]
   }
 
 }
