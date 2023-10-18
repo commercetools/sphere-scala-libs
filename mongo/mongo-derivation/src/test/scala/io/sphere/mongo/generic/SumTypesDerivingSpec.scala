@@ -208,8 +208,7 @@ object SumTypesDerivingSpec {
 
   sealed trait Color10
   object Color10 {
-    @annotations.MongoProvidedFormatter
-    case object Red extends Color10
+    @MongoProvidedFormatter case object Red extends Color10
     case class Custom(rgb: String) extends Color10
 
     implicit val redFormatter: MongoFormat[Red.type] = new MongoFormat[Red.type] {
@@ -222,8 +221,7 @@ object SumTypesDerivingSpec {
   sealed trait Color11
   object Color11 {
     case object Red extends Color11
-    @annotations.MongoProvidedFormatter
-    case class Custom(rgb: String) extends Color11
+    @MongoProvidedFormatter case class Custom(rgb: String) extends Color11
 
     implicit val customFormatter: MongoFormat[Custom] = new MongoFormat[Custom] {
       override def toMongoValue(a: Custom): Any =
@@ -242,8 +240,7 @@ object SumTypesDerivingSpec {
     case class B2(int: Int) extends Bound
 
     case object Red extends ColorUpperBound
-    @annotations.MongoProvidedFormatter
-    case class Custom[Type1 <: Bound](rgb: String) extends ColorUpperBound
+    @MongoProvidedFormatter case class Custom[Type1 <: Bound](rgb: String) extends ColorUpperBound
 
     implicit def customFormatter[A <: Bound]: MongoFormat[Custom[A]] = new MongoFormat[Custom[A]] {
       override def toMongoValue(a: Custom[A]): Any =
@@ -258,8 +255,7 @@ object SumTypesDerivingSpec {
   sealed trait ColorUnbound
   object ColorUnbound {
     case object Red extends ColorUnbound
-    @annotations.MongoProvidedFormatter
-    case class Custom[A](rgb: String) extends ColorUnbound
+    @MongoProvidedFormatter case class Custom[A](rgb: String) extends ColorUnbound
 
     implicit def customFormatter[A]: MongoFormat[Custom[A]] = new MongoFormat[Custom[A]] {
       override def toMongoValue(a: Custom[A]): Any =

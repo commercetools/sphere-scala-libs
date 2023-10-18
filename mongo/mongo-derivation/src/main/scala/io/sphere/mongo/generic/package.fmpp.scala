@@ -20,6 +20,7 @@ package object generic extends Logging {
   type MongoIgnore = io.sphere.mongo.generic.annotations.MongoIgnore @getter
   type MongoTypeHint = io.sphere.mongo.generic.annotations.MongoTypeHint
   type MongoTypeHintField = io.sphere.mongo.generic.annotations.MongoTypeHintField
+  type MongoProvidedFormatter = io.sphere.mongo.generic.annotations.MongoProvidedFormatter
 
   def deriveMongoFormat[A]: MongoFormat[A] = macro MongoFormatMacros.deriveMongoFormat_impl[A]
 
