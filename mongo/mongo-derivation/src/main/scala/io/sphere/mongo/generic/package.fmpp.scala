@@ -167,7 +167,7 @@ package object generic extends Logging {
   def mongoTypeSwitch[T: ClassTag, ${implTypeParams}](selectors: List[TypeSelector[_]]): MongoFormat[T] = mongoTypeSwitch[T, ${typeParams}](typeSelector[A${i}]() :: selectors)
   </#list>
 
-  final class TypeSelector[A: MongoFormat] private[mongo](val typeValue: String, val clazz: Class[_]) {
+  final class TypeSelector[A: MongoFormat](val typeValue: String, val clazz: Class[_]) {
     def read(any: Any): A = fromMongo[A](any)
     def write(a: Any): Any = toMongo[A](a.asInstanceOf[A])
   }
