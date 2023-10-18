@@ -1,6 +1,7 @@
 package io.sphere.mongo.generic
 
 import io.sphere.mongo.format.MongoFormat
+import io.sphere.mongo.generic.annotations.MongoProvidedFormatter
 
 import scala.reflect.macros.blackbox
 
@@ -107,8 +108,12 @@ private[generic] object MongoFormatMacros {
         )
       else {
         val subtypes = collectKnownSubtypes(c)(symbol)
-        val subtypesWithNoFormatter = subtypes.filterNot(mongoFormatExists(c))
-        val idents = Ident(symbol.name) :: subtypes.map { s =>
+
+        val (subtypesWithFormatter, subtypesWithNoFormatter) =
+          subtypes.partition(mongoFormatExists(c))
+        val singleParamTypes = subtypesWithFormatter.filter(_.asType.typeParams.length == 1)
+
+        val idents = Ident(symbol.name) :: (subtypes -- singleParamTypes).map { s =>
           if (s.isModuleClass) New(TypeTree(s.asClass.toType)) else Ident(s.name)
         }.toList
 
@@ -134,6 +139,20 @@ private[generic] object MongoFormatMacros {
               }
           }.toList
 
+          val typeSelectors = singleParamTypes.map { t =>
+            val firstTypeParam = t.asType.typeParams.head
+            // This code relies on type erasure. TypeSelectors are grouped by their Class[A]
+            // But in case A has a type parameter it's erased anyway,
+            // so the Map[Class[A[_].. currently cannot store multiple instances for a single type parameter type based on the type param
+            // Until this changes we'd need to provide an Any instance or an upper bound instance anyway
+            firstTypeParam.typeSignature match {
+              case TypeBounds(_, superType) =>
+                q"new TypeSelector[$t[$superType]](${t.name.toString}, classOf[$t[$superType]])"
+              case _ =>
+                q"new TypeSelector[$t[Any]](${t.name.toString}, classOf[$t[Any]])"
+            }
+          }.toList
+
           c.Expr[MongoFormat[A]](
             Block(
               instanceDefs,
@@ -145,7 +164,7 @@ private[generic] object MongoFormatMacros {
                   ),
                   idents
                 ),
-                reify(Nil).tree :: Nil
+                q"$typeSelectors" :: Nil
               )
             )
           )
@@ -153,14 +172,6 @@ private[generic] object MongoFormatMacros {
       }
     }
   }
-
-  private def mongoFormatExists(c: blackbox.Context)(s: c.universe.Symbol) = {
-    val typeName = s.asType.toType
-    try {
-      c.typecheck(c.parse(s"implicitly[MongoFormat[$typeName]]"))
-      true
-    } catch {
-      case _: Throwable => false
-    }
-  }
+  private def mongoFormatExists(c: blackbox.Context)(s: c.universe.Symbol) =
+    s.annotations.exists(_.tree.tpe =:= c.universe.typeOf[MongoProvidedFormatter])
 }

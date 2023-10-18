@@ -20,6 +20,7 @@ package object generic extends Logging {
   type MongoIgnore = io.sphere.mongo.generic.annotations.MongoIgnore @getter
   type MongoTypeHint = io.sphere.mongo.generic.annotations.MongoTypeHint
   type MongoTypeHintField = io.sphere.mongo.generic.annotations.MongoTypeHintField
+  type MongoProvidedFormatter = io.sphere.mongo.generic.annotations.MongoProvidedFormatter
 
   def deriveMongoFormat[A]: MongoFormat[A] = macro MongoFormatMacros.deriveMongoFormat_impl[A]
 
@@ -166,7 +167,7 @@ package object generic extends Logging {
   def mongoTypeSwitch[T: ClassTag, ${implTypeParams}](selectors: List[TypeSelector[_]]): MongoFormat[T] = mongoTypeSwitch[T, ${typeParams}](typeSelector[A${i}]() :: selectors)
   </#list>
 
-  final class TypeSelector[A: MongoFormat] private[mongo](val typeField: String, val typeValue: String, val clazz: Class[_]) {
+  final class TypeSelector[A: MongoFormat] private[mongo](val typeValue: String, val clazz: Class[_]) {
     def read(any: Any): A = fromMongo[A](any)
     def write(a: Any): Any = toMongo[A](a.asInstanceOf[A])
   }
@@ -263,7 +264,7 @@ package object generic extends Logging {
       case Some(hint) => (hint.field, hint.value)
       case None => (defaultTypeFieldName, defaultTypeValue(clazz))
     }
-    new TypeSelector[A](typeField, typeValue, clazz)
+    new TypeSelector[A](typeValue, clazz)
   }
 
   private def defaultTypeValue(clazz: Class[_]): String =
