@@ -75,18 +75,36 @@ class SumTypesDerivingSpec extends AnyWordSpec with Matchers {
       check(Color9.format, Color9.Custom("2356"), dbObj("type" -> "Custom", "rgb" -> "2356"))
     }
 
-    "Formatters could be overridden for objects" in {
+    "allow for providing custom instances for objects" in {
       check(Color10.format, Color10.Red, dbObj("type" -> "Red", "extraField" -> "panda"))
 
       check(Color10.format, Color10.Custom("2356"), dbObj("type" -> "Custom", "rgb" -> "2356"))
     }
 
-    "Formatters could be overridden for classes" in {
+    "allow for providing custom instances for classes" in {
       check(Color11.format, Color11.Red, dbObj("type" -> "Red"))
 
       check(
         Color11.format,
         Color11.Custom("2356"),
+        dbObj("type" -> "Custom", "rgb" -> "2356", "extraField" -> "panda"))
+    }
+
+    "allow for providing custom instances for classes when the class has a type parameter with an upper bound" in {
+      check(ColorUpperBound.format, ColorUpperBound.Red, dbObj("type" -> "Red"))
+
+      check(
+        ColorUpperBound.format,
+        ColorUpperBound.Custom("2356"),
+        dbObj("type" -> "Custom", "rgb" -> "2356", "extraField" -> "panda"))
+    }
+
+    "allow for providing custom instances for classes when the class has an unbounded type parameter" in {
+      check(ColorUnbound.format, ColorUnbound.Red, dbObj("type" -> "Red"))
+
+      check(
+        ColorUnbound.format,
+        ColorUnbound.Custom("2356"),
         dbObj("type" -> "Custom", "rgb" -> "2356", "extraField" -> "panda"))
     }
 
@@ -190,6 +208,7 @@ object SumTypesDerivingSpec {
 
   sealed trait Color10
   object Color10 {
+    @annotations.MongoProvidedFormatter
     case object Red extends Color10
     case class Custom(rgb: String) extends Color10
 
@@ -203,6 +222,7 @@ object SumTypesDerivingSpec {
   sealed trait Color11
   object Color11 {
     case object Red extends Color11
+    @annotations.MongoProvidedFormatter
     case class Custom(rgb: String) extends Color11
 
     implicit val customFormatter: MongoFormat[Custom] = new MongoFormat[Custom] {
@@ -214,4 +234,40 @@ object SumTypesDerivingSpec {
     val format = deriveMongoFormat[Color11]
   }
 
+  sealed trait ColorUpperBound
+  object ColorUpperBound {
+
+    sealed trait Bound
+    case object B1 extends Bound
+    case class B2(int: Int) extends Bound
+
+    case object Red extends ColorUpperBound
+    @annotations.MongoProvidedFormatter
+    case class Custom[Type1 <: Bound](rgb: String) extends ColorUpperBound
+
+    implicit def customFormatter[A <: Bound]: MongoFormat[Custom[A]] = new MongoFormat[Custom[A]] {
+      override def toMongoValue(a: Custom[A]): Any =
+        dbObj("type" -> "Custom", "rgb" -> a.rgb, "extraField" -> "panda")
+      override def fromMongoValue(any: Any): Custom[A] =
+        Custom(any.asInstanceOf[BSONObject].get("rgb").asInstanceOf[String])
+    }
+
+    val format = deriveMongoFormat[ColorUpperBound]
+  }
+
+  sealed trait ColorUnbound
+  object ColorUnbound {
+    case object Red extends ColorUnbound
+    @annotations.MongoProvidedFormatter
+    case class Custom[A](rgb: String) extends ColorUnbound
+
+    implicit def customFormatter[A]: MongoFormat[Custom[A]] = new MongoFormat[Custom[A]] {
+      override def toMongoValue(a: Custom[A]): Any =
+        dbObj("type" -> "Custom", "rgb" -> a.rgb, "extraField" -> "panda")
+      override def fromMongoValue(any: Any): Custom[A] =
+        Custom(any.asInstanceOf[BSONObject].get("rgb").asInstanceOf[String])
+    }
+
+    val format = deriveMongoFormat[ColorUnbound]
+  }
 }
