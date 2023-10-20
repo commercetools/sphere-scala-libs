@@ -147,9 +147,9 @@ private[generic] object MongoFormatMacros {
             // Until this changes we'd need to provide an Any instance or an upper bound instance anyway
             firstTypeParam.typeSignature match {
               case TypeBounds(_, superType) =>
-                q"new TypeSelector[$t[$superType]](${t.name.toString}, classOf[$t[$superType]])"
+                q"new io.sphere.mongo.generic.TypeSelector[$t[$superType]](${t.name.toString}, classOf[$t[$superType]])"
               case _ =>
-                q"new TypeSelector[$t[Any]](${t.name.toString}, classOf[$t[Any]])"
+                q"new io.sphere.mongo.generic.TypeSelector[$t[Any]](${t.name.toString}, classOf[$t[Any]])"
             }
           }.toList
 
