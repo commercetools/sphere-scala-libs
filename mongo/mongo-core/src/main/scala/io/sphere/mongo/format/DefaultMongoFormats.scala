@@ -106,7 +106,9 @@ trait DefaultMongoFormats {
     new MongoFormat[List[A]] {
       override def toMongoValue(a: List[A]) = {
         val m = new BasicBSONList()
-        m.ensureCapacity(a.length) // TODO determine whether 2 iterations due to length calculation are worth it
+        m.ensureCapacity(
+          a.length
+        ) // TODO determine whether 2 iterations due to length calculation are worth it
         a.foreach { el =>
           m.add(f.toMongoValue(el).asInstanceOf[AnyRef])
         }
