@@ -61,7 +61,7 @@ jobs:
   publish:
     name: Publish Artifacts
     needs: [build]
-    if: (github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v')) || startsWith(github.ref, 'publish-snapshot')
+    if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/snapshot'))
     strategy:
       matrix:
         os: [ubuntu-latest]
