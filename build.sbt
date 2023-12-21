@@ -22,7 +22,7 @@ inThisBuild(
         name = "commercetools",
         email = "ondemand@commercetools.com",
         url = url("https://commercetools.com"))),
-    githubWorkflowTargetTags ++= Seq("v*"),
+    githubWorkflowTargetTags ++= Seq("v*", "snapshot*"),
     githubWorkflowPublishTargetBranches := Seq(
       RefPredicate.StartsWith(Ref.Tag("v")),
       RefPredicate.StartsWith(Ref.Tag("snapshot"))),
