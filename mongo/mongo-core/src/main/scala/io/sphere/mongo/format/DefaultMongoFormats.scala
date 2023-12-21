@@ -2,7 +2,6 @@ package io.sphere.mongo.format
 
 import java.util.{Currency, Locale, UUID}
 import java.util.regex.Pattern
-
 import io.sphere.util.{BaseMoney, HighPrecisionMoney, LangTag, Money}
 import org.bson.{BSONObject, BasicBSONObject}
 import org.bson.types.{BasicBSONList, ObjectId}
@@ -78,10 +77,12 @@ trait DefaultMongoFormats {
 
   implicit def vecFormat[@specialized A](implicit f: MongoFormat[A]): MongoFormat[Vector[A]] =
     new MongoFormat[Vector[A]] {
-      import scala.collection.JavaConverters._
       override def toMongoValue(a: Vector[A]) = {
         val m = new BasicBSONList()
-        if (a.nonEmpty) m.addAll(a.map(f.toMongoValue(_).asInstanceOf[AnyRef]).asJavaCollection)
+        m.ensureCapacity(a.length)
+        a.foreach { el =>
+          m.add(f.toMongoValue(el).asInstanceOf[AnyRef])
+        }
         m
       }
       override def fromMongoValue(any: Any): Vector[A] =
@@ -103,10 +104,12 @@ trait DefaultMongoFormats {
 
   implicit def listFormat[@specialized A](implicit f: MongoFormat[A]): MongoFormat[List[A]] =
     new MongoFormat[List[A]] {
-      import scala.collection.JavaConverters._
       override def toMongoValue(a: List[A]) = {
         val m = new BasicBSONList()
-        if (a.nonEmpty) m.addAll(a.map(f.toMongoValue(_).asInstanceOf[AnyRef]).asJavaCollection)
+        m.ensureCapacity(a.length) // TODO determine whether 2 iterations due to length calculation are worth it
+        a.foreach { el =>
+          m.add(f.toMongoValue(el).asInstanceOf[AnyRef])
+        }
         m
       }
       override def fromMongoValue(any: Any): List[A] =
@@ -131,7 +134,10 @@ trait DefaultMongoFormats {
       import scala.collection.JavaConverters._
       override def toMongoValue(a: Set[A]) = {
         val m = new BasicBSONList()
-        if (a.nonEmpty) m.addAll(a.map(f.toMongoValue(_).asInstanceOf[AnyRef]).asJavaCollection)
+        m.ensureCapacity(a.size)
+        a.foreach { el =>
+          m.add(f.toMongoValue(el).asInstanceOf[AnyRef])
+        }
         m
       }
       override def fromMongoValue(any: Any): Set[A] =

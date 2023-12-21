@@ -75,7 +75,7 @@ package object generic extends Logging {
     val _withTypeHint = mongoClass.typeHint.isDefined
     new MongoFormat[T] {
       def toMongoValue(r: T): Any = {
-        val dbo = new BasicDBObject
+        val dbo = new BasicDBObject(${i})
         if (_withTypeHint) {
           val th = mongoClass.typeHint.get
           dbo.put(th.field, th.value)
