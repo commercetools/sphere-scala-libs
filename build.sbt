@@ -22,10 +22,8 @@ inThisBuild(
         name = "commercetools",
         email = "ondemand@commercetools.com",
         url = url("https://commercetools.com"))),
-    githubWorkflowTargetTags ++= Seq("v*", "snapshot*"),
-    githubWorkflowPublishTargetBranches := Seq(
-      RefPredicate.StartsWith(Ref.Tag("v")),
-      RefPredicate.StartsWith(Ref.Tag("snapshot"))),
+    githubWorkflowTargetTags ++= Seq("v*"),
+    githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v"))),
     githubWorkflowPublish := Seq(WorkflowStep.Sbt(
       List("ci-release"),
       env = Map(
