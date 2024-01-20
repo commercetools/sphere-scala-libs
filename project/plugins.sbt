@@ -1,5 +1,5 @@
 // https://github.com/sbt/sbt-boilerplate/releases
-addSbtPlugin("io.spray" % "sbt-boilerplate" % "0.6.1")
+addSbtPlugin("com.github.sbt" % "sbt-boilerplate" % "0.7.0")
 
 // https://github.com/ktoso/sbt-jmh/releases
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.7")
