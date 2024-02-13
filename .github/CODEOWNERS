@@ -1,3 +1,6 @@
 # why this file: to pick reviewers for a pull request automatically
 # doc on https://help.github.com/articles/about-codeowners/
 *       @yanns
+
+# Priceless backend team domain
+*Money*.scala @commercetools/priceless-team-be
