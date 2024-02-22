@@ -7,7 +7,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 object SerializationTest {
-//  case class Something(a: Option[Int], b: Int = 2)
+  case class Something(a: Option[Int], b: Int = 2)
 
   object Color extends Enumeration {
     val Blue, Red, Yellow = Value
@@ -15,7 +15,7 @@ object SerializationTest {
 }
 
 class SerializationTest extends AnyWordSpec with Matchers {
-  import SerializationTest.Color
+  import SerializationTest.*
 
 //  "mongoProduct" must {
 //    "deserialize mongo object" in {
@@ -51,7 +51,12 @@ class SerializationTest extends AnyWordSpec with Matchers {
 
   "mongoEnum" must {
     "serialize and deserialize enums" in {
+
+      io.sphere.mongo.generic.inspect(io.sphere.mongo.generic.mongoEnum(Color))
+
       val mongo: MongoFormat[Color.Value] = io.sphere.mongo.generic.deriveMongoFormat[Color.Value]
+      
+      
 
       // mongo java driver knows how to encode/decode Strings
       val serializedObject = mongo.toMongoValue(Color.Red).asInstanceOf[String]
