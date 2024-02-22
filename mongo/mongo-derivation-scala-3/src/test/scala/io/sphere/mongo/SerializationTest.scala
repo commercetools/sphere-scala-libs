@@ -51,12 +51,7 @@ class SerializationTest extends AnyWordSpec with Matchers {
 
   "mongoEnum" must {
     "serialize and deserialize enums" in {
-
-      io.sphere.mongo.generic.inspect(io.sphere.mongo.generic.mongoEnum(Color))
-
-      val mongo: MongoFormat[Color.Value] = io.sphere.mongo.generic.deriveMongoFormat[Color.Value]
-      
-      
+      val mongo: MongoFormat[Color.Value] = io.sphere.mongo.generic.deriveMongoFormat
 
       // mongo java driver knows how to encode/decode Strings
       val serializedObject = mongo.toMongoValue(Color.Red).asInstanceOf[String]

@@ -9,16 +9,16 @@ inline def deriveMongoFormat[A]: MongoFormat[A] = ${ deriveMongoFormatImpl }
 def deriveMongoFormatImpl[A](using Type[A], Quotes): Expr[MongoFormat[A]] = {
   val q = summon[Quotes]
   import q.reflect.*
-  val t = TypeRepr.of[A]
+  val typeRepr = TypeRepr.of[A]
 
+  if(typeRepr <:< TypeRepr.of[Enumeration#Value]) then
+    val TypeRef(enumTerm @ TermRef(_, _), _) = typeRepr
 
-
-  if(t <:< TypeRepr.of[Enumeration#Value]) then
-//    Apply(
-//      '{io.sphere.mongo.generic}
-//      Select(Select(Select(Select(Select(Ident("io"), "sphere"), "mongo"), "generic"), "generic$package"), "mongoEnum"), List(Ident(t.asTerm))
-//    )
-    '{ dummyFormat[A] }
+    val mongoEnumCall = Apply(
+      Ref(Symbol.requiredMethod("io.sphere.mongo.generic.mongoEnum")),
+      List(Ident(enumTerm))
+    )
+    mongoEnumCall.asExprOf[MongoFormat[A]]
   else
     println(".......")
     '{ dummyFormat[A] }
@@ -36,17 +36,3 @@ def mongoEnum(e: Enumeration): MongoFormat[e.Value] = new MongoFormat[e.Value] {
   def fromMongoValue(any: Any): e.Value = e.withName(any.asInstanceOf[String])
 }
 
-
-
-
-def inspectCode(x: Expr[Any])(using Quotes): Expr[Any] =
-//  val qq = summon[Quotes]
-//  import qq.reflect.*
-  import quotes.reflect.*
-
-  val tree: Tree = x.asTerm
-
-  println(s"----- ${tree.show(using Printer.TreeStructure)}")
-  x
-
-inline def inspect(inline x: Any): Any = ${ inspectCode('x) }
