@@ -9,12 +9,13 @@ import org.scalatest.matchers.must.Matchers
 
 import scala.collection.mutable.ArrayBuffer
 import scala.language.postfixOps
+import scala.math.BigDecimal
 
 class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDrivenPropertyChecks {
   import HighPrecisionMoney.ImplicitsString._
   import HighPrecisionMoney.ImplicitsStringPrecise._
 
-  implicit val defaultRoundingMode = BigDecimal.RoundingMode.HALF_EVEN
+  implicit val defaultRoundingMode: BigDecimal.RoundingMode.Value = BigDecimal.RoundingMode.HALF_EVEN
 
   val Euro: Currency = Currency.getInstance("EUR")
 

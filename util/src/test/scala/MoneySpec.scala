@@ -5,12 +5,13 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.language.postfixOps
+import scala.math.BigDecimal
 
 class MoneySpec extends AnyFunSpec with Matchers with ScalaCheckDrivenPropertyChecks {
   import Money.ImplicitsDecimal._
   import Money._
 
-  implicit val mode = BigDecimal.RoundingMode.UNNECESSARY
+  implicit val mode: BigDecimal.RoundingMode.Value = BigDecimal.RoundingMode.UNNECESSARY
 
   def euroCents(cents: Long): Money = EUR(0).withCentAmount(cents)
 

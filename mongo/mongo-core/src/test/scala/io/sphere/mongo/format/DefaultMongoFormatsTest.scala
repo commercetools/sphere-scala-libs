@@ -12,7 +12,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object DefaultMongoFormatsTest {
   case class User(name: String)
@@ -126,7 +126,7 @@ class DefaultMongoFormatsTest
     }
 
     "support Java Locale" in {
-      Locale.getAvailableLocales.filter(_.toLanguageTag != LangTag.UNDEFINED).foreach { l: Locale =>
+      Locale.getAvailableLocales.filter(_.toLanguageTag != LangTag.UNDEFINED).foreach { l =>
         localeFormat.fromMongoValue(localeFormat.toMongoValue(l)).toLanguageTag must be(
           l.toLanguageTag)
       }
