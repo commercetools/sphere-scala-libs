@@ -6,13 +6,15 @@ import scala.quoted.*
 
 inline def deriveMongoFormat[A]: MongoFormat[A] = ${ deriveMongoFormatImpl }
 
-def deriveMongoFormatImpl[A](using Type[A], Quotes): Expr[MongoFormat[A]] = {
+def deriveMongoFormatImpl[A](using Type[A], Quotes): Expr[MongoFormat[A]] =
   val q = summon[Quotes]
   import q.reflect.*
   val typeRepr = TypeRepr.of[A]
 
   if(typeRepr <:< TypeRepr.of[Enumeration#Value]) then
-    val TypeRef(enumTerm @ TermRef(_, _), _) = typeRepr
+    val enumTerm = typeRepr match
+      case TypeRef(tr: TermRef, _) => tr
+      case _ => report.errorAndAbort("no Enumeration found")
 
     val mongoEnumCall = Apply(
       Ref(Symbol.requiredMethod("io.sphere.mongo.generic.mongoEnum")),
@@ -22,9 +24,8 @@ def deriveMongoFormatImpl[A](using Type[A], Quotes): Expr[MongoFormat[A]] = {
   else
     println(".......")
     '{ dummyFormat[A] }
-}
+end deriveMongoFormatImpl
 
-//Apply(Select(Select(Select(Select(Select(Ident("io"), "sphere"), "mongo"), "generic"), "generic$package"), "mongoEnum"), List(Ident("Color")))
 
 def dummyFormat[A]: MongoFormat[A] = new MongoFormat[A]:
   override def toMongoValue(a: A): Any = ???
