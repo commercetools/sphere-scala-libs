@@ -68,7 +68,11 @@ lazy val standardSettings = Defaults.coreDefaultSettings ++ Seq(
 lazy val `sphere-libs` = project
   .in(file("."))
   .settings(standardSettings: _*)
-  .settings(publishArtifact := false, publish := {})
+  .settings(
+    crossScalaVersions := Nil,
+    publishArtifact := false,
+    publish := {}
+  )
   .aggregate(
     `sphere-util`,
     `sphere-json`,

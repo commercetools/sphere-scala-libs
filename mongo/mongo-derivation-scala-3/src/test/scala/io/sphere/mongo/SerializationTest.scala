@@ -3,31 +3,37 @@ package io.sphere.mongo
 import com.mongodb.{BasicDBObject, DBObject}
 import io.sphere.mongo.format.DefaultMongoFormats.*
 import io.sphere.mongo.format.MongoFormat
+import io.sphere.mongo.generic.inspect
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-object SerializationTest {
+object SerializationTest:
   case class Something(a: Option[Int], b: Int = 2)
 
-  object Color extends Enumeration {
+  object Color extends Enumeration:
     val Blue, Red, Yellow = Value
-  }
-}
 
-class SerializationTest extends AnyWordSpec with Matchers {
+  sealed trait PictureSize
+  case object Small extends PictureSize
+  case object Medium extends PictureSize
+
+class SerializationTest extends AnyWordSpec with Matchers:
   import SerializationTest.*
 
-//  "mongoProduct" must {
-//    "deserialize mongo object" in {
-//      val dbo = new BasicDBObject()
-//      dbo.put("a", Integer.valueOf(3))
-//      dbo.put("b", Integer.valueOf(4))
-//
+  "mongoProduct" must {
+    "deserialize mongo object" in {
+      val dbo = new BasicDBObject
+      dbo.put("a", Integer.valueOf(3))
+      dbo.put("b", Integer.valueOf(4))
+
+      val med: MongoFormat[Medium.type] = io.sphere.mongo.generic.deriveMongoFormat
+
 //      val mongoFormat: MongoFormat[Something] = io.sphere.mongo.generic.deriveMongoFormat
 //      val something = mongoFormat.fromMongoValue(dbo)
-//      something must be(Something(Some(3), 4))
-//    }
-//
+//      something mustBe Something(Some(3), 4)
+    }
+  }
+
 //    "generate a format that serializes optional fields with value None as BSON objects without that field" in {
 //      val testFormat: MongoFormat[Something] =
 //        io.sphere.mongo.generic.mongoProduct[Something, Option[Int], Int] {
@@ -61,5 +67,3 @@ class SerializationTest extends AnyWordSpec with Matchers {
       enumValue must be(Color.Red)
     }
   }
-
-}
