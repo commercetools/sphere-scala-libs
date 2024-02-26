@@ -6,8 +6,7 @@ import scala.quoted.*
 
 inline def deriveMongoFormat[A]: MongoFormat[A] = ${ deriveMongoFormatImpl }
 
-def deriveMongoFormatImpl[A](using Type[A], Quotes): Expr[MongoFormat[A]] =
-  val q = summon[Quotes]
+def deriveMongoFormatImpl[A](using tpe: Type[A], q: Quotes): Expr[MongoFormat[A]] =
   import q.reflect.*
   val typeRepr = TypeRepr.of[A]
   val symbol = TypeTree.of[A].symbol
@@ -27,7 +26,7 @@ def deriveMongoFormatImpl[A](using Type[A], Quotes): Expr[MongoFormat[A]] =
       case TermRef(_, module) => module
       case _ => report.errorAndAbort("type does not refer to a stable value")
     }
-    Apply( 
+    Apply(
       TypeApply(
         Ref(Symbol.requiredMethod("io.sphere.mongo.generic.mongoProduct0")),
         TypeIdent(typeRepr.typeSymbol) :: Nil
