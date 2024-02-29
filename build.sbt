@@ -6,7 +6,7 @@ lazy val scala3 = "3.3.2"
 
 // sbt-github-actions needs configuration in `ThisBuild`
 ThisBuild / crossScalaVersions := Seq(scala2_12, scala2_13, scala3)
-ThisBuild / scalaVersion := crossScalaVersions.value.last
+ThisBuild / scalaVersion := scala3
 ThisBuild / githubWorkflowPublishTargetBranches := List()
 ThisBuild / githubWorkflowJavaVersions := List(JavaSpec.temurin("17"))
 ThisBuild / githubWorkflowBuildPreamble ++= List(

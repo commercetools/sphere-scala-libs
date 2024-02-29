@@ -7,34 +7,41 @@ import org.scalatest.matchers.must.Matchers
 
 class DerivationSpec extends AnyWordSpec with Matchers:
 
-  "asdasd" in {
+  "MongoFormat derivation" should {
+    "support composition" in {
+      case class Container(i: Int, str: String, component: Component)
+      case class Component(i: Int)
 
-    case class Second(xx: Int)
-    case class TopLvlClass(x: Int, str: String, asd: Second)
+      val format = FakeMongoFormat[Container]
 
-    val b = FakeMongoFormat.apply[TopLvlClass]
+      val container = Container(123, "anything", Component(456))
+      val bson = format.toFakeBson(container)
+      val roundtrip = format.fromFakeBson(bson)
 
-    val a = TopLvlClass(2234, "aasdasdsd", Second(234))
-    val res = b.toFakeBson(a)
+      // println(bson)
+      // println(roundtrip)
+      roundtrip mustBe container
+    }
 
-    val res2 = b.fromFakeBson(res)
+    "support ADT" in {
+      sealed trait Root
+      case object Object1 extends Root
+      case object Object2 extends Root
+      case class Class(i: Int) extends Root
 
-    println(res2)
-    println(res2 == a)
-    println(res)
+      val format = FakeMongoFormat[Root]
 
-    sealed trait SealedTrait1
-    case object Case1 extends SealedTrait1
-    case object Case2 extends SealedTrait1
-    case class Case3(x: Int) extends SealedTrait1
+      def roundtrip(member: Root): Unit =
+        val bson = format.toFakeBson(member)
+        val roundtrip = format.fromFakeBson(bson)
 
-    val format2 = FakeMongoFormat[SealedTrait1]
+        // println(member)
+        // println(bson)
+        // println(roundtrip)
+        roundtrip mustBe member
 
-    val bson1 = format2.toFakeBson(Case2)
-
-    println(bson1)
-
-    val sum1 = format2.fromFakeBson(bson1)
-
-    println(sum1)
+      roundtrip(Object1)
+      roundtrip(Object2)
+      roundtrip(Class(0))
+    }
   }

@@ -26,7 +26,8 @@ class SerializationTest extends AnyWordSpec with Matchers:
       dbo.put("a", Integer.valueOf(3))
       dbo.put("b", Integer.valueOf(4))
 
-      val med: MongoFormat[Medium.type] = io.sphere.mongo.generic.deriveMongoFormat
+      // TODO
+      // val med: MongoFormat[Medium.type] = io.sphere.mongo.generic.deriveMongoFormat
 
 //      val mongoFormat: MongoFormat[Something] = io.sphere.mongo.generic.deriveMongoFormat
 //      val something = mongoFormat.fromMongoValue(dbo)

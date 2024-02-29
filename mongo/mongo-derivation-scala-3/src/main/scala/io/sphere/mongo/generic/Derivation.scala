@@ -75,18 +75,18 @@ object FakeMongoFormat:
   private object Derivation:
     import scala.compiletime.{constValue, constValueTuple, erasedValue, summonInline}
 
-    val typeField = "typeDiscriminator"
     inline def derived[A](using m: Mirror.Of[A]): FakeMongoFormat[A] =
       inline m match
         case s: Mirror.SumOf[A] => deriveSum(s)
         case p: Mirror.ProductOf[A] => deriveProduct(p)
 
-    inline def deriveSum[A](mirrorOfSum: Mirror.SumOf[A]): FakeMongoFormat[A] = new FakeMongoFormat[A]:
+    inline private def deriveSum[A](mirrorOfSum: Mirror.SumOf[A]): FakeMongoFormat[A] = new FakeMongoFormat[A]:
+      val typeField = "typeDiscriminator"
       val formatters = summonFormatters[mirrorOfSum.MirroredElemTypes]
       val names = constValueTuple[mirrorOfSum.MirroredElemLabels].productIterator.toVector.asInstanceOf[Vector[String]]
       val formattersByTypeName = names.zip(formatters).toMap
 
-      println(s"sum names $names")
+      // println(s"sum names $names")
 
       override def toFakeBson(a: A): FakeBson =
         // we never get a trait here, only classes
