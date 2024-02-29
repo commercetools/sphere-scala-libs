@@ -7,6 +7,7 @@ boot
 tags
 lib_managed
 *.iml
+.bsp
 .idea
 /.sbtconfig
 /tmtags
