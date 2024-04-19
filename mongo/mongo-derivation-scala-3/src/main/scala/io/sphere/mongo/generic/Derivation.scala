@@ -1,133 +1,97 @@
-//package io.sphere.mongo.generic
-//
-//import io.sphere.mongo.format.MongoFormat
-//
-//import scala.deriving.Mirror
-//
-//inline given derived[A](using Mirror.Of[A]): MongoFormat[A] = Derivation.derived
-//
-//private object Derivation:
-//  inline def derived[A](using m: Mirror.Of[A]): MongoFormat[A] =
-//    inline m match
-//      case s: Mirror.SumOf[A] => deriveSum(s)
-//      case p: Mirror.ProductOf[A] => deriveProduct(p)
-//
-//  inline def deriveSum[A](s: Mirror.SumOf[A]): MongoFormat[A] = dummyFormat[A]
-//
-//  inline def deriveProduct[A](p: Mirror.ProductOf[A]): MongoFormat[A] =  new MongoFormat[A]:
-//    val instances = summonAll[p.MirroredElemTypes].iterator
-//    override def toMongoValue(a: A): Any =
-//      val fields = a.asInstanceOf[Product].productIterator
-//      val fieldNames = a.asInstanceOf[Product].productElementNames
-//      println(s"-- ${instances.zip(fields).zip(fieldNames)}")
-//      ???
-//
-//    override def fromMongoValue(any: Any): A =
-//      p.fromTuple()
-//      ???
-//
-//
-//  inline def summonAll[T <: Tuple]: Vector[MongoFormat[Any]] =
-//    import scala.compiletime.{erasedValue, summonInline}
-//    inline erasedValue[T] match
-//      case _: EmptyTuple => Vector.empty
-//      case _: (t *: ts) => summonInline[MongoFormat[t]].asInstanceOf[MongoFormat[Any]] +: summonAll[ts]
-//
-
 package io.sphere.mongo.generic
 
+import com.mongodb.BasicDBObject
+import org.bson.types.ObjectId
+
+import java.util.UUID
+import java.util.regex.Pattern
 import scala.deriving.Mirror
 
-type FakeBson = Map[String, Any] | SingleValue | String
+type SimpleMongoType = UUID | String | ObjectId | Short | Int | Long | Float | Double | Boolean |
+  Pattern
+type MongoType = BasicDBObject | SimpleMongoType
 
-trait FakeMongoFormat[A]:
-  def toFakeBson(a: A): FakeBson
-  def fromFakeBson(bson: FakeBson): A
+trait TypedMongoFormat[A] extends Serializable {
+  def toMongoValue(a: A): MongoType
+  def fromMongoValue(mongoType: MongoType): A
+}
 
-case class SingleValue(value: Any)
+private final class NativeMongoFormat[A <: SimpleMongoType] extends TypedMongoFormat[A] {
+  def toMongoValue(a: A): MongoType = a
+  def fromMongoValue(any: MongoType): A = any.asInstanceOf[A]
+}
 
-object FakeMongoFormat:
-  inline def apply[A: FakeMongoFormat]: FakeMongoFormat[A] = summon
+object TypedMongoFormat:
+  inline def apply[A: TypedMongoFormat]: TypedMongoFormat[A] = summon
 
-  inline given derive[A](using Mirror.Of[A]): FakeMongoFormat[A] = Derivation.derived
+  inline given derive[A](using Mirror.Of[A]): TypedMongoFormat[A] = Derivation.derived
 
-  given FakeMongoFormat[Int] = new FakeMongoFormat[Int]:
-    override def toFakeBson(a: Int): FakeBson = SingleValue(a)
-    override def fromFakeBson(bson: FakeBson): Int =
-      bson match
-       case SingleValue(int: Int) => int
-       case _ => throw new Exception("not an int")
-
-  given FakeMongoFormat[String] = new FakeMongoFormat[String]:
-    override def toFakeBson(a: String): FakeBson = SingleValue(a)
-    override def fromFakeBson(bson: FakeBson): String =
-      bson match
-        case SingleValue(str: String) => str
-        case _ => throw new Exception("not a String")
-
-  given FakeMongoFormat[Boolean] = new FakeMongoFormat[Boolean]:
-    override def toFakeBson(a: Boolean): FakeBson = SingleValue(a)
-    override def fromFakeBson(bson: FakeBson): Boolean =
-      bson match
-        case SingleValue(bool: Boolean) => bool
-        case _ => throw new Exception("not a Boolean")
+  given TypedMongoFormat[Int] = new NativeMongoFormat[Int]
+  given TypedMongoFormat[String] = new NativeMongoFormat[String]
+  given TypedMongoFormat[Boolean] = new NativeMongoFormat[Boolean]
 
   private object Derivation:
     import scala.compiletime.{constValue, constValueTuple, erasedValue, summonInline}
 
-    inline def derived[A](using m: Mirror.Of[A]): FakeMongoFormat[A] =
+    inline def derived[A](using m: Mirror.Of[A]): TypedMongoFormat[A] =
       inline m match
-        case s: Mirror.SumOf[A] => deriveSum(s)
-        case p: Mirror.ProductOf[A] => deriveProduct(p)
+        case s: Mirror.SumOf[A] => deriveTrait(s)
+        case p: Mirror.ProductOf[A] => deriveCaseClass(p)
 
-    inline private def deriveSum[A](mirrorOfSum: Mirror.SumOf[A]): FakeMongoFormat[A] = new FakeMongoFormat[A]:
-      val typeField = "typeDiscriminator"
-      val formatters = summonFormatters[mirrorOfSum.MirroredElemTypes]
-      val names = constValueTuple[mirrorOfSum.MirroredElemLabels].productIterator.toVector.asInstanceOf[Vector[String]]
-      val formattersByTypeName = names.zip(formatters).toMap
+    inline private def deriveTrait[A](mirrorOfSum: Mirror.SumOf[A]): TypedMongoFormat[A] =
+      new TypedMongoFormat[A]:
+        val typeField = "typeDiscriminator"
+        val formatters = summonFormatters[mirrorOfSum.MirroredElemTypes]
+        val names = constValueTuple[mirrorOfSum.MirroredElemLabels].productIterator.toVector
+          .asInstanceOf[Vector[String]]
+        val formattersByTypeName = names.zip(formatters).toMap
 
-      // println(s"sum names $names")
+        override def toMongoValue(a: A): MongoType =
+          // we never get a trait here, only classes, it's safe to assume Product
+          val typeName = a.asInstanceOf[Product].productPrefix
+          val bson = formattersByTypeName(typeName).toMongoValue(a).asInstanceOf[BasicDBObject]
+          bson.put(typeField, typeName)
+          bson
 
-      override def toFakeBson(a: A): FakeBson =
-        // we never get a trait here, only classes
-        val typeName = a.asInstanceOf[Product].productPrefix
-        val map = formattersByTypeName(typeName).toFakeBson(a).asInstanceOf[Map[String, Any]]
-        map + (typeField -> typeName)
+        override def fromMongoValue(bson: MongoType): A =
+          bson match
+            case bson: BasicDBObject =>
+              val typeName = bson.get(typeField).asInstanceOf[String]
+              formattersByTypeName(typeName).fromMongoValue(bson).asInstanceOf[A]
+            case _ => throw new Exception("idk yet")
+    end deriveTrait
 
-      override def fromFakeBson(bson: FakeBson): A =
-        bson match
-          case map: Map[String, _] =>
-            val typeName = map(typeField).asInstanceOf[String]
-            formattersByTypeName(typeName).fromFakeBson(map).asInstanceOf[A]
-          case _ => throw new Exception("not a Map")
+    inline def deriveCaseClass[A](mirrorOfProduct: Mirror.ProductOf[A]): TypedMongoFormat[A] =
+      new TypedMongoFormat[A]:
+        val formatters = summonFormatters[mirrorOfProduct.MirroredElemTypes]
+        val fieldNames =
+          constValueTuple[mirrorOfProduct.MirroredElemLabels].productIterator.toVector
+            .asInstanceOf[Vector[String]]
 
-    end deriveSum
+        override def toMongoValue(a: A): MongoType =
+          val bson = new BasicDBObject()
+          val values = a.asInstanceOf[Product].productIterator
+          formatters.zip(values).zip(fieldNames).foreach { case ((format, value), fieldName) =>
+            bson.put(fieldName, format.toMongoValue(value))
+          }
+          bson
 
-    inline def deriveProduct[A](mirrorOfProduct: Mirror.ProductOf[A]): FakeMongoFormat[A] =  new FakeMongoFormat[A]:
-      val formatters = summonFormatters[mirrorOfProduct.MirroredElemTypes]
-      val fieldNames = constValueTuple[mirrorOfProduct.MirroredElemLabels].productIterator.toVector.asInstanceOf[Vector[String]]
+        override def fromMongoValue(mongoType: MongoType): A =
+          mongoType match
+            case bson: BasicDBObject =>
+              val fieldsAsAList = fieldNames
+                .zip(formatters)
+                .map((fieldName, format) =>
+                  format.fromMongoValue(bson.get(fieldName).asInstanceOf[MongoType]))
+              val tuple = Tuple.fromArray(fieldsAsAList.toArray)
+              mirrorOfProduct.fromTuple(tuple.asInstanceOf[mirrorOfProduct.MirroredElemTypes])
 
-      override def toFakeBson(a: A): FakeBson =
-        val values = a.asInstanceOf[Product].productIterator
-        formatters.zip(values).zip(fieldNames).map {
-          case ((format, value), fieldName) =>
-            fieldName -> format.toFakeBson(value)
-        }.toMap
+            case _ => throw new Exception("not a Map")
+    end deriveCaseClass
 
-      override def fromFakeBson(bson: FakeBson): A =
-        bson match
-          case map: Map[String, _] @unchecked =>
-            val res = fieldNames.zip(formatters).map((fn, format) => format.fromFakeBson(map(fn).asInstanceOf[FakeBson]))
-            val tuple = Tuple.fromArray(res.toArray)
-            mirrorOfProduct.fromTuple(tuple.asInstanceOf[mirrorOfProduct.MirroredElemTypes])
-
-          case _ => throw new Exception("not a Map")
-    end deriveProduct
-
-    inline private def summonFormatters[T <: Tuple]: Vector[FakeMongoFormat[Any]] =
+    inline private def summonFormatters[T <: Tuple]: Vector[TypedMongoFormat[Any]] =
       inline erasedValue[T] match
         case _: EmptyTuple => Vector.empty
-        case _: (t *: ts) => summonInline[FakeMongoFormat[t]].asInstanceOf[FakeMongoFormat[Any]] +: summonFormatters[ts]
-
-
-
+        case _: (t *: ts) =>
+          summonInline[TypedMongoFormat[t]]
+            .asInstanceOf[TypedMongoFormat[Any]] +: summonFormatters[ts]

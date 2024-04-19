@@ -3,7 +3,6 @@ package io.sphere.mongo
 import com.mongodb.{BasicDBObject, DBObject}
 import io.sphere.mongo.format.DefaultMongoFormats.*
 import io.sphere.mongo.format.MongoFormat
-import io.sphere.mongo.generic.inspect
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -27,8 +26,8 @@ class SerializationTest extends AnyWordSpec with Matchers:
       dbo.put("b", Integer.valueOf(4))
 
       // TODO
-      // val med: MongoFormat[Medium.type] = io.sphere.mongo.generic.deriveMongoFormat
-
+//       val med: MongoFormat[Medium.type] = io.sphere.mongo.generic.deriveMongoFormat
+////
 //      val mongoFormat: MongoFormat[Something] = io.sphere.mongo.generic.deriveMongoFormat
 //      val something = mongoFormat.fromMongoValue(dbo)
 //      something mustBe Something(Some(3), 4)

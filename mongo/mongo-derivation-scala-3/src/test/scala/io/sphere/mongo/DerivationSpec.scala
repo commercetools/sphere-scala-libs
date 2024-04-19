@@ -1,7 +1,7 @@
 package io.sphere.mongo
 
-import io.sphere.mongo.generic.{FakeBson, FakeMongoFormat, SingleValue}
-import io.sphere.mongo.generic.FakeMongoFormat.*
+import io.sphere.mongo.generic.TypedMongoFormat
+import io.sphere.mongo.generic.TypedMongoFormat.*
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.must.Matchers
 
@@ -12,11 +12,11 @@ class DerivationSpec extends AnyWordSpec with Matchers:
       case class Container(i: Int, str: String, component: Component)
       case class Component(i: Int)
 
-      val format = FakeMongoFormat[Container]
+      val format = TypedMongoFormat[Container]
 
       val container = Container(123, "anything", Component(456))
-      val bson = format.toFakeBson(container)
-      val roundtrip = format.fromFakeBson(bson)
+      val bson = format.toMongoValue(container)
+      val roundtrip = format.fromMongoValue(bson)
 
       // println(bson)
       // println(roundtrip)
@@ -29,11 +29,11 @@ class DerivationSpec extends AnyWordSpec with Matchers:
       case object Object2 extends Root
       case class Class(i: Int) extends Root
 
-      val format = FakeMongoFormat[Root]
+      val format = TypedMongoFormat[Root]
 
       def roundtrip(member: Root): Unit =
-        val bson = format.toFakeBson(member)
-        val roundtrip = format.fromFakeBson(bson)
+        val bson = format.toMongoValue(member)
+        val roundtrip = format.fromMongoValue(bson)
 
         // println(member)
         // println(bson)
