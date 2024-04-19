@@ -53,7 +53,7 @@ lazy val standardSettings = Defaults.coreDefaultSettings ++ Seq(
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "3.2.18" % Test,
     "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % Test,
-    "org.scalacheck" %% "scalacheck" % "1.17.1" % Test,
+    "org.scalacheck" %% "scalacheck" % "1.18.0" % Test,
     "ch.qos.logback" % "logback-classic" % "1.5.5" % Test
   ),
   ThisBuild / shellPrompt := { state ⇒
