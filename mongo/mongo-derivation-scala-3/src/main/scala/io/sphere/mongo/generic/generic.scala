@@ -4,7 +4,7 @@ import io.sphere.mongo.format.MongoFormat
 
 import scala.quoted.*
 
-inline def deriveMongoFormat[A]: MongoFormat[A] = ${ deriveMongoFormatImpl }
+//inline def deriveMongoFormat[A]: MongoFormat[A] = ${ deriveMongoFormatImpl }
 
 def deriveMongoFormatImpl[A](using tpe: Type[A], q: Quotes): Expr[MongoFormat[A]] =
   import q.reflect.*
