@@ -31,10 +31,15 @@ inline def deriveMongoFormat[A: TypedMongoFormat]: TypedMongoFormat[A] = summon
 
 object TypedMongoFormat:
   private val emptyFieldsSet: Vector[String] = Vector.empty
-  inline def readCaseClassMetaData[T]: Annotations = ${ readCaseClassMetaDataImpl[T] }
+  inline def readCaseClassMetaData[T]: CaseClassMetaData = ${ readCaseClassMetaDataImpl[T] }
 
-  private def readCaseClassMetaDataImpl[T: Type](using Quotes): Expr[Annotations] =
+  private def readCaseClassMetaDataImpl[T: Type](using Quotes): Expr[CaseClassMetaData] =
     AnnotationReader().readCaseClassMetaData[T]
+
+  inline def readTraitMetaData[T]: TraitMetaData = ${ readTraitMetaDataImpl[T] }
+
+  private def readTraitMetaDataImpl[T: Type](using Quotes): Expr[TraitMetaData] =
+    AnnotationReader().readTraitMetaData[T]
 
   inline given derive[A](using Mirror.Of[A]): TypedMongoFormat[A] = Derivation.derived
 
@@ -79,8 +84,12 @@ object TypedMongoFormat:
 
     inline private def deriveTrait[A](mirrorOfSum: Mirror.SumOf[A]): TypedMongoFormat[A] =
       new TypedMongoFormat[A]:
-        val annotations = readCaseClassMetaData[A]
-        val typeField = "typeDiscriminator"
+        val traitMetaData = readTraitMetaData[A]
+        val typeHintMap = traitMetaData.subtypes.collect {
+          case (name, classMeta) if classMeta.typeHint.isDefined =>
+            name -> classMeta.typeHint.get
+        }
+        val reverseTypeHintMap = typeHintMap.map((on, n) => (n, on))
         val formatters = summonFormatters[mirrorOfSum.MirroredElemTypes]
         val names = constValueTuple[mirrorOfSum.MirroredElemLabels].productIterator.toVector
           .asInstanceOf[Vector[String]]
@@ -88,16 +97,19 @@ object TypedMongoFormat:
 
         override def toMongoValue(a: A): MongoType =
           // we never get a trait here, only classes, it's safe to assume Product
-          val typeName = a.asInstanceOf[Product].productPrefix
-          val bson = formattersByTypeName(typeName).toMongoValue(a).asInstanceOf[BasicDBObject]
-          bson.put(typeField, typeName)
+          val originalTypeName = a.asInstanceOf[Product].productPrefix
+          val typeName = typeHintMap.getOrElse(originalTypeName, originalTypeName)
+          val bson =
+            formattersByTypeName(originalTypeName).toMongoValue(a).asInstanceOf[BasicDBObject]
+          bson.put(traitMetaData.typeDiscriminator, typeName)
           bson
 
         override def fromMongoValue(bson: MongoType): A =
           bson match
             case bson: BasicDBObject =>
-              val typeName = bson.get(typeField).asInstanceOf[String]
-              formattersByTypeName(typeName).fromMongoValue(bson).asInstanceOf[A]
+              val typeName = bson.get(traitMetaData.typeDiscriminator).asInstanceOf[String]
+              val originalTypeName = reverseTypeHintMap.getOrElse(typeName, typeName)
+              formattersByTypeName(originalTypeName).fromMongoValue(bson).asInstanceOf[A]
             case x =>
               throw new Exception(s"BsonObject is expected for a Trait subtype, instead got $x")
     end deriveTrait

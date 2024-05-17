@@ -5,35 +5,45 @@ import scala.quoted.{Expr, Quotes, Type, Varargs}
 private type MA = MongoAnnotation
 
 case class Field(name: String, embedded: Boolean, ignored: Boolean, mongoKey: Option[MongoKey]) {
-  val fieldName: String = mongoKey.map(_.newFieldName).getOrElse(name)
+  val fieldName: String = mongoKey.map(_.value).getOrElse(name)
 }
-case class Annotations(
+case class CaseClassMetaData(
     name: String,
-    forType: Vector[MA],
-    byField: Map[String, Vector[MA]],
+    typeHintRaw: Option[MongoTypeHint],
     fields: Vector[Field]
-)
+) {
+  val typeHint: Option[String] =
+    typeHintRaw.map(_.value).filterNot(_.toList.forall(_ == ' '))
+}
 
-case class AllAnnotations(
-    top: Annotations,
-    subtypes: Map[String, Annotations]
-)
+case class TraitMetaData(
+    top: CaseClassMetaData,
+    typeHintFieldRaw: Option[MongoTypeHintField],
+    subtypes: Map[String, CaseClassMetaData]
+) {
+  val typeDiscriminator: String = typeHintFieldRaw.map(_.value).getOrElse("type")
+}
 
-// TODO this can probably be simplifed later
 class AnnotationReader(using q: Quotes):
   import q.reflect.*
 
-  def readCaseClassMetaData[T: Type]: Expr[Annotations] = {
+  def readCaseClassMetaData[T: Type]: Expr[CaseClassMetaData] = {
     val sym = TypeRepr.of[T].typeSymbol
-    topAnnotations(sym)
+    caseClassMetaData(sym)
   }
 
-  def allAnnotations[T: Type]: Expr[AllAnnotations] = {
+  def readTraitMetaData[T: Type]: Expr[TraitMetaData] = {
     val sym = TypeRepr.of[T].typeSymbol
+    val typeHintField =
+      sym.annotations.map(findMongoTypeHintField).find(_.isDefined).flatten match {
+        case Some(thf) => '{ Some($thf) }
+        case None => '{ None }
+      }
 
     '{
-      AllAnnotations(
-        top = ${ topAnnotations(sym) },
+      TraitMetaData(
+        top = ${ caseClassMetaData(sym) },
+        typeHintFieldRaw = $typeHintField,
         subtypes = ${ subtypeAnnotations(sym) }
       )
     }
@@ -51,48 +61,53 @@ class AnnotationReader(using q: Quotes):
   private def findKey(tree: Tree): Option[Expr[MongoKey]] =
     Option.when(tree.isExpr)(tree.asExpr).filter(_.isExprOf[MongoKey]).map(_.asExprOf[MongoKey])
 
+  private def findTypeHint(tree: Tree): Option[Expr[MongoTypeHint]] =
+    Option
+      .when(tree.isExpr)(tree.asExpr)
+      .filter(_.isExprOf[MongoTypeHint])
+      .map(_.asExprOf[MongoTypeHint])
+
+  private def findMongoTypeHintField(tree: Tree): Option[Expr[MongoTypeHintField]] =
+    Option
+      .when(tree.isExpr)(tree.asExpr)
+      .filter(_.isExprOf[MongoTypeHintField])
+      .map(_.asExprOf[MongoTypeHintField])
+
   private def collectFieldInfo(s: Symbol): Expr[Field] =
     val embedded = Expr(s.annotations.exists(findEmbedded))
     val ignored = Expr(s.annotations.exists(findIgnored))
     val name = Expr(s.name)
-    s.annotations.map(findKey).find(_.isDefined).flatten match {
-      case Some(k) =>
-        '{ Field(name = $name, embedded = $embedded, ignored = $ignored, mongoKey = Some($k)) }
-      case None =>
-        '{ Field(name = $name, embedded = $embedded, ignored = $ignored, mongoKey = None) }
+    val mongoKey = s.annotations.map(findKey).find(_.isDefined).flatten match {
+      case Some(k) => '{ Some($k) }
+      case None => '{ None }
     }
+    '{ Field(name = $name, embedded = $embedded, ignored = $ignored, mongoKey = $mongoKey) }
 
-  private def fieldAnnotations(s: Symbol): Expr[(String, Vector[MA])] =
-    val annots = Varargs(s.annotations.flatMap(annotationTree))
-    val name = Expr(s.name)
-
-    '{ $name -> Vector($annots*) }
-  end fieldAnnotations
-
-  private def topAnnotations(sym: Symbol): Expr[Annotations] =
-    val topAnns = Varargs(sym.annotations.flatMap(annotationTree))
+  private def caseClassMetaData(sym: Symbol): Expr[CaseClassMetaData] =
     val caseParams = sym.primaryConstructor.paramSymss.take(1).flatten
-    val fieldAnns = Varargs(caseParams.map(fieldAnnotations))
     val fields = Varargs(caseParams.map(collectFieldInfo))
     val name = Expr(sym.name)
+    val typeHint = sym.annotations.map(findTypeHint).find(_.isDefined).flatten match {
+      case Some(th) => '{ Some($th) }
+      case None => '{ None }
+    }
 
     '{
-      Annotations(
+      CaseClassMetaData(
         name = $name,
-        forType = Vector($topAnns*),
-        byField = Map($fieldAnns*),
+        typeHintRaw = $typeHint,
         fields = Vector($fields*)
       )
     }
-  end topAnnotations
+  end caseClassMetaData
 
-  private def subtypeAnnotation(sym: Symbol): Expr[(String, Annotations)] =
+  private def subtypeAnnotation(sym: Symbol): Expr[(String, CaseClassMetaData)] =
     val name = Expr(sym.name)
-    val annots = topAnnotations(sym)
+    val annots = caseClassMetaData(sym)
     '{ ($name, $annots) }
   end subtypeAnnotation
 
-  private def subtypeAnnotations(sym: Symbol): Expr[Map[String, Annotations]] =
+  private def subtypeAnnotations(sym: Symbol): Expr[Map[String, CaseClassMetaData]] =
     val subtypes = Varargs(sym.children.map(subtypeAnnotation))
     '{ Map($subtypes*) }
 
