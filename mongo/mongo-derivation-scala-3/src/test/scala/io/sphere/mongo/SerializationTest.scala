@@ -28,15 +28,15 @@ class SerializationTest extends AnyWordSpec with Matchers:
       dbo.put("a", Integer.valueOf(3))
       dbo.put("b", Integer.valueOf(4))
 
-      // Using backwards-compatible `deriveMongoFormat`
-      given TypedMongoFormat[Something] = io.sphere.mongo.generic.deriveMongoFormat
+      // Using backwards-compatible `deriveMongoFormat` + `implicit`
+      implicit val x: TypedMongoFormat[Something] = io.sphere.mongo.generic.deriveMongoFormat
 
       val something = TypedMongoFormat[Something].fromMongoValue(dbo)
       something mustBe Something(Some(3), 4)
     }
 
     "generate a format that serializes optional fields with value None as BSON objects without that field" in {
-      // Using new Scala 3 `derived` special method
+      // Using new Scala 3 `derived` special method + `given`
       given TypedMongoFormat[Something] = TypedMongoFormat.derived
 
       val something = Something(None, 1)
