@@ -27,9 +27,11 @@ private final class NativeMongoFormat[A <: SimpleMongoType] extends TypedMongoFo
   def fromMongoValue(any: MongoType): A = any.asInstanceOf[A]
 }
 
-inline def deriveMongoFormat[A: TypedMongoFormat]: TypedMongoFormat[A] = summon
+inline def deriveMongoFormat[A](using Mirror.Of[A]): TypedMongoFormat[A] = TypedMongoFormat.derived
 
 object TypedMongoFormat:
+  inline def apply[A: TypedMongoFormat]: TypedMongoFormat[A] = summon
+
   private val emptyFieldsSet: Vector[String] = Vector.empty
   inline def readCaseClassMetaData[T]: CaseClassMetaData = ${ readCaseClassMetaDataImpl[T] }
 
@@ -41,7 +43,7 @@ object TypedMongoFormat:
   private def readTraitMetaDataImpl[T: Type](using Quotes): Expr[TraitMetaData] =
     AnnotationReader().readTraitMetaData[T]
 
-  inline given derive[A](using Mirror.Of[A]): TypedMongoFormat[A] = Derivation.derived
+  inline given derived[A](using Mirror.Of[A]): TypedMongoFormat[A] = Derivation.derived
 
   given TypedMongoFormat[Int] = new NativeMongoFormat[Int]
   given TypedMongoFormat[String] = new NativeMongoFormat[String]
