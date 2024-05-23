@@ -6,7 +6,11 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 object SerializationTest:
+  // For semi-automatic derivarion
   case class Something(a: Option[Int], b: Int = 2)
+
+  // For Automatic derivation with `derives`
+  case class Frunfles(a: Option[Int], b: Int = 2) derives TypedMongoFormat
 
   object Color extends Enumeration:
     val Blue, Red, Yellow = Value
@@ -24,23 +28,36 @@ class SerializationTest extends AnyWordSpec with Matchers:
       dbo.put("a", Integer.valueOf(3))
       dbo.put("b", Integer.valueOf(4))
 
-      // TODO what is this? :D
-      val med: TypedMongoFormat[Medium.type] = io.sphere.mongo.generic.deriveMongoFormat
+      // Using backwards-compatible `deriveMongoFormat`
+      given TypedMongoFormat[Something] = io.sphere.mongo.generic.deriveMongoFormat
 
-      val mongoFormat: TypedMongoFormat[Something] = io.sphere.mongo.generic.deriveMongoFormat
-      val something = mongoFormat.fromMongoValue(dbo)
+      val something = TypedMongoFormat[Something].fromMongoValue(dbo)
       something mustBe Something(Some(3), 4)
     }
 
     "generate a format that serializes optional fields with value None as BSON objects without that field" in {
-      val testFormat: TypedMongoFormat[Something] = io.sphere.mongo.generic.deriveMongoFormat
+      // Using new Scala 3 `derived` special method
+      given TypedMongoFormat[Something] = TypedMongoFormat.derived
 
       val something = Something(None, 1)
-      val serializedObject = testFormat.toMongoValue(something).asInstanceOf[BasicDBObject]
+      val serializedObject =
+        TypedMongoFormat[Something].toMongoValue(something).asInstanceOf[BasicDBObject]
+
       serializedObject.keySet().contains("b") must be(true)
       serializedObject.keySet().contains("a") must be(false)
+      TypedMongoFormat[Something].fromMongoValue(serializedObject) must be(something)
+    }
 
-      testFormat.fromMongoValue(serializedObject) must be(something)
+    "generate a format that serializes optional fields with value None as BSON objects without that field (using derives)" in {
+      // Using an automatically-derived type via new Scala 3 `derives` directive
+      val frunfles = Frunfles(None, 1)
+
+      val serializedObject =
+        TypedMongoFormat[Frunfles].toMongoValue(frunfles).asInstanceOf[BasicDBObject]
+
+      serializedObject.keySet().contains("b") must be(true)
+      serializedObject.keySet().contains("a") must be(false)
+      TypedMongoFormat[Frunfles].fromMongoValue(serializedObject) must be(frunfles)
     }
 
 //    "generate a format that use default values" in {
