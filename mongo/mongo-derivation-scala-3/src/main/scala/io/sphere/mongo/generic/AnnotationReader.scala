@@ -4,7 +4,12 @@ import scala.quoted.{Expr, Quotes, Type, Varargs}
 
 private type MA = MongoAnnotation
 
-case class Field(name: String, embedded: Boolean, ignored: Boolean, mongoKey: Option[MongoKey]) {
+case class Field(
+    name: String,
+    embedded: Boolean,
+    ignored: Boolean,
+    mongoKey: Option[MongoKey],
+    defaultArgument: Option[Any]) {
   val fieldName: String = mongoKey.map(_.value).getOrElse(name)
 }
 case class CaseClassMetaData(
@@ -85,7 +90,7 @@ class AnnotationReader(using q: Quotes):
       .filter(_.isExprOf[MongoTypeHintField])
       .map(_.asExprOf[MongoTypeHintField])
 
-  private def collectFieldInfo(s: Symbol): Expr[Field] =
+  private def collectFieldInfo(companion: Symbol)(s: Symbol, paramIdx: Int): Expr[Field] =
     val embedded = Expr(s.annotations.exists(findEmbedded))
     val ignored = Expr(s.annotations.exists(findIgnored))
     val name = Expr(s.name)
@@ -93,11 +98,26 @@ class AnnotationReader(using q: Quotes):
       case Some(k) => '{ Some($k) }
       case None => '{ None }
     }
-    '{ Field(name = $name, embedded = $embedded, ignored = $ignored, mongoKey = $mongoKey) }
+    val defArgOpt = companion
+      .methodMember(s"$$lessinit$$greater$$default$$${paramIdx + 1}")
+      .headOption
+      .map(dm => Ref(dm).asExprOf[Any]) match {
+      case Some(k) => '{ Some($k) }
+      case None => '{ None }
+    }
+
+    '{
+      Field(
+        name = $name,
+        embedded = $embedded,
+        ignored = $ignored,
+        mongoKey = $mongoKey,
+        defaultArgument = $defArgOpt)
+    }
 
   private def caseClassMetaData(sym: Symbol): Expr[CaseClassMetaData] =
     val caseParams = sym.primaryConstructor.paramSymss.take(1).flatten
-    val fields = Varargs(caseParams.map(collectFieldInfo))
+    val fields = Varargs(caseParams.zipWithIndex.map(collectFieldInfo(sym.companionModule)))
     val name = Expr(sym.name)
     val typeHint = sym.annotations.map(findTypeHint).find(_.isDefined).flatten match {
       case Some(th) => '{ Some($th) }

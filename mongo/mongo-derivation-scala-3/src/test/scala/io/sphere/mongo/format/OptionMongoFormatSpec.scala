@@ -48,8 +48,7 @@ class OptionMongoFormatSpec extends AnyWordSpec with Matchers with OptionValues 
       result.value.value2 mustEqual 45
     }
 
-    "handle presence of not all the fields" in pendingUntilFixed {
-      // TODO we need to implement default value handling to fix this
+    "handle presence of not all the fields" in {
       val dbo = dbObj("value1" -> "a")
       an[Exception] mustBe thrownBy(TypedMongoFormat[Option[SimpleClass]].fromMongoValue(dbo))
     }
