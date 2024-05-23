@@ -24,6 +24,18 @@ case class TraitMetaData(
   val typeDiscriminator: String = typeHintFieldRaw.map(_.value).getOrElse("type")
 }
 
+object AnnotationReader {
+  inline def readTraitMetaData[T]: TraitMetaData = ${ readTraitMetaDataImpl[T] }
+
+  inline def readCaseClassMetaData[T]: CaseClassMetaData = ${ readCaseClassMetaDataImpl[T] }
+
+  private def readCaseClassMetaDataImpl[T: Type](using Quotes): Expr[CaseClassMetaData] =
+    AnnotationReader().readCaseClassMetaData[T]
+
+  private def readTraitMetaDataImpl[T: Type](using Quotes): Expr[TraitMetaData] =
+    AnnotationReader().readTraitMetaData[T]
+}
+
 class AnnotationReader(using q: Quotes):
   import q.reflect.*
 

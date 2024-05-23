@@ -1,6 +1,12 @@
 package io.sphere.mongo.format
 
-import io.sphere.mongo.generic.{MongoEmbedded, MongoKey, MongoTypeHintField, TypedMongoFormat}
+import io.sphere.mongo.generic.{
+  AnnotationReader,
+  MongoEmbedded,
+  MongoKey,
+  MongoTypeHintField,
+  TypedMongoFormat
+}
 import io.sphere.mongo.generic.TypedMongoFormat.*
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.must.Matchers
@@ -49,7 +55,7 @@ class DerivationSpec extends AnyWordSpec with Matchers:
       case object Object2 extends Root
       case class Class(i: Int, @MongoEmbedded inner: InnerClass) extends Root
 
-      val res = readCaseClassMetaData[Root]
+      val res = AnnotationReader.readCaseClassMetaData[Root]
 
     }
   }

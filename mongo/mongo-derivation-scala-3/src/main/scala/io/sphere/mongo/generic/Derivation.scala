@@ -33,20 +33,11 @@ object TypedMongoFormat:
   inline def apply[A: TypedMongoFormat]: TypedMongoFormat[A] = summon
 
   private val emptyFieldsSet: Vector[String] = Vector.empty
-  inline def readCaseClassMetaData[T]: CaseClassMetaData = ${ readCaseClassMetaDataImpl[T] }
-
-  private def readCaseClassMetaDataImpl[T: Type](using Quotes): Expr[CaseClassMetaData] =
-    AnnotationReader().readCaseClassMetaData[T]
-
-  inline def readTraitMetaData[T]: TraitMetaData = ${ readTraitMetaDataImpl[T] }
-
-  private def readTraitMetaDataImpl[T: Type](using Quotes): Expr[TraitMetaData] =
-    AnnotationReader().readTraitMetaData[T]
-
-  inline given derived[A](using Mirror.Of[A]): TypedMongoFormat[A] = Derivation.derived
 
   given TypedMongoFormat[Int] = new NativeMongoFormat[Int]
+
   given TypedMongoFormat[String] = new NativeMongoFormat[String]
+
   given TypedMongoFormat[Boolean] = new NativeMongoFormat[Boolean]
 
   given [A](using TypedMongoFormat[A]): TypedMongoFormat[Option[A]] =
@@ -68,6 +59,8 @@ object TypedMongoFormat:
               else Some(summon[TypedMongoFormat[A]].fromMongoValue(bson))
             case MongoNothing => None // This can't happen, but it makes the compiler happy
 
+  inline given derived[A](using Mirror.Of[A]): TypedMongoFormat[A] = Derivation.derived
+
   private def addField(bson: BasicDBObject, field: Field, mongoType: MongoType) =
     mongoType match
       case s: SimpleMongoType => bson.put(field.fieldName, s)
@@ -86,7 +79,7 @@ object TypedMongoFormat:
 
     inline private def deriveTrait[A](mirrorOfSum: Mirror.SumOf[A]): TypedMongoFormat[A] =
       new TypedMongoFormat[A]:
-        val traitMetaData = readTraitMetaData[A]
+        val traitMetaData = AnnotationReader.readTraitMetaData[A]
         val typeHintMap = traitMetaData.subtypes.collect {
           case (name, classMeta) if classMeta.typeHint.isDefined =>
             name -> classMeta.typeHint.get
@@ -119,7 +112,7 @@ object TypedMongoFormat:
     inline private def deriveCaseClass[A](
         mirrorOfProduct: Mirror.ProductOf[A]): TypedMongoFormat[A] =
       new TypedMongoFormat[A]:
-        val caseClassMetaData = readCaseClassMetaData[A]
+        val caseClassMetaData = AnnotationReader.readCaseClassMetaData[A]
         val formatters = summonFormatters[mirrorOfProduct.MirroredElemTypes]
         val fieldsAndFormatters = caseClassMetaData.fields.zip(formatters)
 

@@ -1,7 +1,6 @@
 package io.sphere.mongo.generic
 
 import io.sphere.mongo.MongoUtils.*
-import io.sphere.mongo.format.DefaultMongoFormats.*
 import io.sphere.mongo.format.MongoFormat
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
