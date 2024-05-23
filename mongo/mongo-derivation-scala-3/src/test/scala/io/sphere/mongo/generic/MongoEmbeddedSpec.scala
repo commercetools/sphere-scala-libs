@@ -43,7 +43,7 @@ class MongoEmbeddedSpec extends AnyWordSpec with Matchers with OptionValues {
       result mustEqual dbo
     }
 
-    "validate that the db object contains all needed fields" in pendingUntilFixed {
+    "validate that the db object contains all needed fields" in {
       // TODO default field
       val dbo = dbObj(
         "name" -> "ze name",
@@ -80,17 +80,17 @@ class MongoEmbeddedSpec extends AnyWordSpec with Matchers with OptionValues {
       test2.embedded.value.value2 mustEqual 45
     }
 
-    "ignore ignored fields" in pendingUntilFixed {
-      // TODO Ignore
-      val dbo = dbObj(
-        "value1" -> "ze value1",
-        "_value2" -> 45
-      )
-      val test3 = deriveMongoFormat[Test3].fromMongoValue(dbo)
-      test3.name mustEqual "default"
-      test3.embedded.value.value1 mustEqual "ze value1"
-      test3.embedded.value.value2 mustEqual 45
-    }
+//    "ignore ignored fields" in pendingUntilFixed {
+//      // TODO Ignore
+//      val dbo = dbObj(
+//        "value1" -> "ze value1",
+//        "_value2" -> 45
+//      )
+//      val test3 = deriveMongoFormat[Test3].fromMongoValue(dbo)
+//      test3.name mustEqual "default"
+//      test3.embedded.value.value1 mustEqual "ze value1"
+//      test3.embedded.value.value2 mustEqual 45
+//    }
 
     "check for sub-fields" in {
       val dbo = dbObj(
@@ -113,7 +113,7 @@ class MongoEmbeddedSpec extends AnyWordSpec with Matchers with OptionValues {
       test2.embedded mustEqual None
     }
 
-    "validate the absence of some embedded attributes" in pendingUntilFixed {
+    "validate the absence of some embedded attributes" in {
       val dbo = dbObj(
         "name" -> "ze name",
         "value1" -> "ze value1"

@@ -20,6 +20,8 @@ trait TypedMongoFormat[A] extends Serializable {
 
 //  /** needed JSON fields - ignored if empty */
   val fieldNames: Vector[String] = TypedMongoFormat.emptyFieldsSet
+
+  def default: Option[A] = None
 }
 
 private final class NativeMongoFormat[A <: SimpleMongoType] extends TypedMongoFormat[A] {
@@ -109,10 +111,19 @@ object TypedMongoFormat:
             case bson: BasicDBObject =>
               val fieldsAsAList = fieldsAndFormatters
                 .map { (field, format) =>
-                  if (field.embedded)
-                    format.fromMongoValue(bson)
-                  else
-                    format.fromMongoValue(bson.get(field.fieldName).asInstanceOf[MongoType])
+                  if (field.embedded) format.fromMongoValue(bson)
+                  else {
+                    val value = bson.get(field.fieldName)
+                    val defaultValue = field.defaultArgument.orElse(format.default)
+
+                    if (value != null) format.fromMongoValue(value.asInstanceOf[MongoType])
+                    else
+                      defaultValue match
+                        case Some(value) => value
+                        case None =>
+                          throw new Exception(
+                            s"Missing required field '${field.fieldName}' on deserialization.")
+                  }
                 }
               val tuple = Tuple.fromArray(fieldsAsAList.toArray)
               mirrorOfProduct.fromTuple(tuple.asInstanceOf[mirrorOfProduct.MirroredElemTypes])
