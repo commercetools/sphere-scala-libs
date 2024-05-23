@@ -22,3 +22,4 @@ plugins-ide.sbt
 src_managed
 *.deb
 *.changes
+*.worksheet.sc 
