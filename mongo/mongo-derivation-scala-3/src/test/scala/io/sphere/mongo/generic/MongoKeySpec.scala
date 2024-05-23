@@ -1,6 +1,7 @@
 package io.sphere.mongo.generic
 
 import com.mongodb.BasicDBObject
+import io.sphere.mongo.generic.DefaultMongoFormats.given
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

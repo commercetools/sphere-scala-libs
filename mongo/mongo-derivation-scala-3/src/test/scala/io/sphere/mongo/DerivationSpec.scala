@@ -1,4 +1,4 @@
-package io.sphere.mongo.format
+package io.sphere.mongo
 
 import io.sphere.mongo.generic.{
   AnnotationReader,
@@ -7,6 +7,7 @@ import io.sphere.mongo.generic.{
   MongoTypeHintField,
   TypedMongoFormat
 }
+import io.sphere.mongo.generic.DefaultMongoFormats.given
 import io.sphere.mongo.generic.TypedMongoFormat.*
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.must.Matchers

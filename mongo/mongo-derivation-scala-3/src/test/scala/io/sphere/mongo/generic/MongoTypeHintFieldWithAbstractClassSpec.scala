@@ -2,6 +2,7 @@ package io.sphere.mongo.generic
 
 import io.sphere.mongo.MongoUtils.dbObj
 import io.sphere.mongo.format.{MongoFormat, fromMongo, toMongo}
+import io.sphere.mongo.generic.DefaultMongoFormats.given
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

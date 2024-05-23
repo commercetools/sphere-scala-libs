@@ -3,6 +3,7 @@ package io.sphere.mongo.generic
 import com.mongodb.DBObject
 import io.sphere.mongo.MongoUtils.dbObj
 import io.sphere.mongo.format.MongoFormat
+import io.sphere.mongo.generic.DefaultMongoFormats.given
 import org.bson.BSONObject
 import org.scalatest.Assertion
 import org.scalatest.matchers.must.Matchers
@@ -211,7 +212,8 @@ object SumTypesDerivingSpec {
     case class Custom(rgb: String) extends Color10
 
     implicit val redFormatter: TypedMongoFormat[Red.type] = new TypedMongoFormat[Red.type] {
-      override def toMongoValue(a: Red.type): MongoType = dbObj("type" -> "Red", "extraField" -> "panda")
+      override def toMongoValue(a: Red.type): MongoType =
+        dbObj("type" -> "Red", "extraField" -> "panda")
       override def fromMongoValue(any: MongoType): Red.type = Red
     }
     val format = deriveMongoFormat[Color10]
@@ -223,7 +225,7 @@ object SumTypesDerivingSpec {
     case class Custom(rgb: String) extends Color11
 
     implicit val customFormatter: TypedMongoFormat[Custom] = new TypedMongoFormat[Custom] {
-      override def toMongoValue(a: Custom): MongoType  =
+      override def toMongoValue(a: Custom): MongoType =
         dbObj("type" -> "Custom", "rgb" -> a.rgb, "extraField" -> "panda")
       override def fromMongoValue(any: MongoType): Custom =
         Custom(any.asInstanceOf[BSONObject].get("rgb").asInstanceOf[String])
@@ -241,12 +243,13 @@ object SumTypesDerivingSpec {
     case object Red extends ColorUpperBound
     case class Custom[Type1 <: Bound](rgb: String) extends ColorUpperBound
 
-    implicit def customFormatter[A <: Bound]: TypedMongoFormat[Custom[A]] = new TypedMongoFormat[Custom[A]] {
-      override def toMongoValue(a: Custom[A]): MongoType =
-        dbObj("type" -> "Custom", "rgb" -> a.rgb, "extraField" -> "panda")
-      override def fromMongoValue(any: MongoType): Custom[A] =
-        Custom(any.asInstanceOf[BSONObject].get("rgb").asInstanceOf[String])
-    }
+    implicit def customFormatter[A <: Bound]: TypedMongoFormat[Custom[A]] =
+      new TypedMongoFormat[Custom[A]] {
+        override def toMongoValue(a: Custom[A]): MongoType =
+          dbObj("type" -> "Custom", "rgb" -> a.rgb, "extraField" -> "panda")
+        override def fromMongoValue(any: MongoType): Custom[A] =
+          Custom(any.asInstanceOf[BSONObject].get("rgb").asInstanceOf[String])
+      }
 
     val format = deriveMongoFormat[ColorUpperBound]
   }
