@@ -10,15 +10,15 @@ object OptionMongoFormatSpec {
 
   case class SimpleClass(value1: String, value2: Int)
 
-//  object SimpleClass {
-//    val mongo: TypedMongoFormat[SimpleClass] = deriveMongoFormat[SimpleClass]
-//  }
+  object SimpleClass {
+    given TypedMongoFormat[SimpleClass] = deriveMongoFormat[SimpleClass]
+  }
 
   case class ComplexClass(name: String, simpleClass: Option[SimpleClass])
 
-//  object ComplexClass {
-//    val mongo: TypedMongoFormat[ComplexClass] = deriveMongoFormat[ComplexClass]
-//  }
+  object ComplexClass {
+    given TypedMongoFormat[ComplexClass] = deriveMongoFormat[ComplexClass]
+  }
 
 }
 
@@ -31,7 +31,7 @@ class OptionMongoFormatSpec extends AnyWordSpec with Matchers with OptionValues 
         "value1" -> "a",
         "value2" -> 45
       )
-      val result = deriveMongoFormat[Option[SimpleClass]].fromMongoValue(dbo)
+      val result = TypedMongoFormat[Option[SimpleClass]].fromMongoValue(dbo)
       result.value.value1 mustEqual "a"
       result.value.value2 mustEqual 45
     }
@@ -42,7 +42,7 @@ class OptionMongoFormatSpec extends AnyWordSpec with Matchers with OptionValues 
         "value2" -> 45,
         "value3" -> "b"
       )
-      val result = deriveMongoFormat[Option[SimpleClass]].fromMongoValue(dbo)
+      val result = TypedMongoFormat[Option[SimpleClass]].fromMongoValue(dbo)
       result.value.value1 mustEqual "a"
       result.value.value2 mustEqual 45
     }
@@ -50,18 +50,18 @@ class OptionMongoFormatSpec extends AnyWordSpec with Matchers with OptionValues 
     "handle presence of not all the fields" in pendingUntilFixed {
       // TODO we need to implement default value handling to fix this
       val dbo = dbObj("value1" -> "a")
-      an[Exception] mustBe thrownBy(deriveMongoFormat[Option[SimpleClass]].fromMongoValue(dbo))
+      an[Exception] mustBe thrownBy(TypedMongoFormat[Option[SimpleClass]].fromMongoValue(dbo))
     }
 
     "handle absence of all fields" in {
       val dbo = dbObj()
-      val result = deriveMongoFormat[Option[SimpleClass]].fromMongoValue(dbo)
+      val result = TypedMongoFormat[Option[SimpleClass]].fromMongoValue(dbo)
       result mustEqual None
     }
 
     "handle absence of all fields mixed with ignored fields" in {
       val dbo = dbObj("value3" -> "a")
-      val result = deriveMongoFormat[Option[SimpleClass]].fromMongoValue(dbo)
+      val result = TypedMongoFormat[Option[SimpleClass]].fromMongoValue(dbo)
       result mustEqual None
     }
 
@@ -86,11 +86,11 @@ class OptionMongoFormatSpec extends AnyWordSpec with Matchers with OptionValues 
           "value2" -> 42
         )
       )
-      val result = deriveMongoFormat[ComplexClass].fromMongoValue(dbo)
+      val result = TypedMongoFormat[ComplexClass].fromMongoValue(dbo)
       result.simpleClass.value.value1 mustEqual "value1"
       result.simpleClass.value.value2 mustEqual 42
 
-      deriveMongoFormat[ComplexClass].toMongoValue(result) mustEqual dbo
+      TypedMongoFormat[ComplexClass].toMongoValue(result) mustEqual dbo
     }
   }
 }
