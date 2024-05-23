@@ -73,14 +73,36 @@ class SerializationTest extends AnyWordSpec with Matchers:
       TypedMongoFormat[Frunfles].fromMongoValue(serializedObject) must be(frunfles)
     }
 
+    // https://stackoverflow.com/questions/68421043/type-class-derivation-accessing-default-values
     "generate a format that use default values" in {
-      // // TODO https://stackoverflow.com/questions/68421043/type-class-derivation-accessing-default-values
-      // val dbo = new BasicDBObject()
-      // dbo.put("a", Integer.valueOf(3))
+      val sthObj1 = {
+        val dbo = new BasicDBObject()
+        dbo.put("a", Integer.valueOf(3))
+        dbo
+      }
+      val s1 = TypedMongoFormat[Something].fromMongoValue(sthObj1)
+      s1 must be(Something(a = Some(3), b = 2))
 
-      // val mongoFormat: TypedMongoFormat[Something] = io.sphere.mongo.generic.deriveMongoFormat
-      // val something = mongoFormat.fromMongoValue(dbo)
-      // something must be(Something(Some(3), 2))
+      val sthObj2 = new BasicDBObject() // an empty object
+      val s2 = TypedMongoFormat[Something].fromMongoValue(sthObj2)
+      s2 must be(Something(a = None, b = 2))
+
+      val sthObj3 = {
+        val dbo = new BasicDBObject()
+        dbo.put("b", Integer.valueOf(33))
+        dbo
+      }
+      val s3 = TypedMongoFormat[Something].fromMongoValue(sthObj3)
+      s3 must be(Something(a = None, b = 33))
+
+      val sthObj4 = {
+        val dbo = new BasicDBObject()
+        dbo.put("a", Integer.valueOf(33))
+        dbo.put("b", Integer.valueOf(44))
+        dbo
+      }
+      val s4 = TypedMongoFormat[Something].fromMongoValue(sthObj4)
+      s4 must be(Something(a = Some(33), b = 44))
     }
   }
 
