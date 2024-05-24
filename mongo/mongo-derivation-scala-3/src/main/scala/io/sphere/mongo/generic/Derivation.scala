@@ -56,16 +56,15 @@ object TypedMongoFormat:
 
     inline private def deriveTrait[A](mirrorOfSum: Mirror.SumOf[A]): TypedMongoFormat[A] =
       new TypedMongoFormat[A]:
-        val traitMetaData = AnnotationReader.readTraitMetaData[A]
-        val typeHintMap = traitMetaData.subtypes.collect {
+        private val traitMetaData = AnnotationReader.readTraitMetaData[A]
+        private val typeHintMap = traitMetaData.subtypes.collect {
           case (name, classMeta) if classMeta.typeHint.isDefined =>
             name -> classMeta.typeHint.get
         }
-        val reverseTypeHintMap = typeHintMap.map((on, n) => (n, on))
-        val formatters = summonFormatters[mirrorOfSum.MirroredElemTypes]
-        val names = constValueTuple[mirrorOfSum.MirroredElemLabels].productIterator.toVector
-          .asInstanceOf[Vector[String]]
-        val formattersByTypeName = names.zip(formatters).toMap
+        private val reverseTypeHintMap = typeHintMap.map((on, n) => (n, on))
+        private val formatters = summonFormatters[mirrorOfSum.MirroredElemTypes]
+        private val names = constValueTuple[mirrorOfSum.MirroredElemLabels].productIterator.toVector.asInstanceOf[Vector[String]]
+        private val formattersByTypeName = names.zip(formatters).toMap
 
         override def toMongoValue(a: A): MongoType =
           // we never get a trait here, only classes, it's safe to assume Product
@@ -89,9 +88,9 @@ object TypedMongoFormat:
     inline private def deriveCaseClass[A](
         mirrorOfProduct: Mirror.ProductOf[A]): TypedMongoFormat[A] =
       new TypedMongoFormat[A]:
-        val caseClassMetaData = AnnotationReader.readCaseClassMetaData[A]
-        val formatters = summonFormatters[mirrorOfProduct.MirroredElemTypes]
-        val fieldsAndFormatters = caseClassMetaData.fields.zip(formatters)
+        private val caseClassMetaData = AnnotationReader.readCaseClassMetaData[A]
+        private val formatters = summonFormatters[mirrorOfProduct.MirroredElemTypes]
+        private val fieldsAndFormatters = caseClassMetaData.fields.zip(formatters)
 
         override val fieldNames: Vector[String] = fieldsAndFormatters.flatMap((field, formatter) =>
           if (field.embedded) formatter.fieldNames :+ field.name
@@ -109,26 +108,26 @@ object TypedMongoFormat:
         override def fromMongoValue(mongoType: MongoType): A =
           mongoType match
             case bson: BasicDBObject =>
-              val fieldsAsAList = fieldsAndFormatters
+              val fields = fieldsAndFormatters
                 .map { (field, format) =>
                   if (field.embedded) format.fromMongoValue(bson)
                   else {
                     val value = bson.get(field.fieldName)
-                    val defaultValue = field.defaultArgument.orElse(format.default)
-
-                    if (value != null) format.fromMongoValue(value.asInstanceOf[MongoType])
-                    else
+                    if (value ne null) format.fromMongoValue(value.asInstanceOf[MongoType])
+                    else {
+                      val defaultValue = field.defaultArgument.orElse(format.default)
                       defaultValue match
                         case Some(value) => value
                         case None =>
                           throw new Exception(
                             s"Missing required field '${field.fieldName}' on deserialization.")
+                    }
                   }
                 }
-              val tuple = Tuple.fromArray(fieldsAsAList.toArray)
+              val tuple = Tuple.fromArray(fields.toArray)
               mirrorOfProduct.fromTuple(tuple.asInstanceOf[mirrorOfProduct.MirroredElemTypes])
 
-            case x => throw new Exception(s"BsonObject is expected for a class, instead got: ${x}")
+            case x => throw new Exception(s"BasicDBObject is expected for a class, instead got: $x")
     end deriveCaseClass
 
     inline private def summonFormatters[T <: Tuple]: Vector[TypedMongoFormat[Any]] =

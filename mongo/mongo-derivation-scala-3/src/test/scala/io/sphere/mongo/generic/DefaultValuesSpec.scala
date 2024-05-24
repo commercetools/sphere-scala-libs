@@ -9,23 +9,24 @@ import org.scalatest.wordspec.AnyWordSpec
 class DefaultValuesSpec extends AnyWordSpec with Matchers:
   import DefaultValuesSpec.*
 
-  "deriving MongoFormat" must {
+  "deriving TypedMongoFormat" must {
     "handle default values" in {
       val dbo = dbObj()
-      val test = TypedMongoFormat[Test].fromMongoValue(dbo)
-      test.value1 mustBe "hello"
-      test.value2 mustBe None
-      test.value3 mustBe None
-      test.value4 mustBe Some("hi")
+      val test = TypedMongoFormat[CaseClass].fromMongoValue(dbo)
+      import test._
+      field1 mustBe "hello"
+      field2 mustBe None
+      field3 mustBe None
+      field4 mustBe Some("hi")
     }
   }
 
 object DefaultValuesSpec:
-  case class Test(
-      value1: String = "hello",
-      value2: Option[String],
-      value3: Option[String] = None,
-      value4: Option[String] = Some("hi")
+  private case class CaseClass(
+      field1: String = "hello",
+      field2: Option[String],
+      field3: Option[String] = None,
+      field4: Option[String] = Some("hi")
   )
-  object Test:
-    implicit val mongo: TypedMongoFormat[Test] = deriveMongoFormat
+  private object CaseClass:
+    implicit val mongo: TypedMongoFormat[CaseClass] = deriveMongoFormat
