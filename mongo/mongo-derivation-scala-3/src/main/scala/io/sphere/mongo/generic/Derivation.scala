@@ -63,7 +63,8 @@ object TypedMongoFormat:
         }
         private val reverseTypeHintMap = typeHintMap.map((on, n) => (n, on))
         private val formatters = summonFormatters[mirrorOfSum.MirroredElemTypes]
-        private val names = constValueTuple[mirrorOfSum.MirroredElemLabels].productIterator.toVector.asInstanceOf[Vector[String]]
+        private val names = constValueTuple[mirrorOfSum.MirroredElemLabels].productIterator.toVector
+          .asInstanceOf[Vector[String]]
         private val formattersByTypeName = names.zip(formatters).toMap
 
         override def toMongoValue(a: A): MongoType =
@@ -109,19 +110,21 @@ object TypedMongoFormat:
           mongoType match
             case bson: BasicDBObject =>
               val fields = fieldsAndFormatters
-                .map { (field, format) =>
-                  if (field.embedded) format.fromMongoValue(bson)
-                  else {
-                    val value = bson.get(field.fieldName)
-                    if (value ne null) format.fromMongoValue(value.asInstanceOf[MongoType])
-                    else {
-                      val defaultValue = field.defaultArgument.orElse(format.default)
-                      defaultValue match
-                        case Some(value) => value
-                        case None =>
-                          throw new Exception(
-                            s"Missing required field '${field.fieldName}' on deserialization.")
+                .map { case (Field(name, embedded, ignored, mongoKey, defaultArgument), format) =>
+                  def defaultValue = defaultArgument.orElse(format.default)
+                  if (ignored)
+                    default.getOrElse {
+                      throw new Exception(
+                        s"Missing default parameter value for ignored field `$name` on deserialization.")
                     }
+                  else if (embedded) format.fromMongoValue(bson)
+                  else {
+                    val value = bson.get(name)
+                    if (value ne null) format.fromMongoValue(value.asInstanceOf[MongoType])
+                    else
+                      defaultValue.getOrElse {
+                        throw new Exception(s"Missing required field '$name' on deserialization.")
+                      }
                   }
                 }
               val tuple = Tuple.fromArray(fields.toArray)

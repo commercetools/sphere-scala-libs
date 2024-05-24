@@ -9,19 +9,19 @@ import org.scalatest.wordspec.AnyWordSpec
 import scala.util.Try
 
 object MongoEmbeddedSpec {
-  case class Embedded(value1: String, @MongoKey("_value2") value2: Int)
+  private case class Embedded(value1: String, @MongoKey("_value2") value2: Int)
 
-  case class Test1(name: String, @MongoEmbedded embedded: Embedded)
+  private case class Test1(name: String, @MongoEmbedded embedded: Embedded)
 
-  case class Test2(name: String, @MongoEmbedded embedded: Option[Embedded] = None)
+  private case class Test2(name: String, @MongoEmbedded embedded: Option[Embedded] = None)
 
-  case class Test3(
+  private case class ClassWithMongoIgnore(
       @MongoIgnore name: String = "default",
       @MongoEmbedded embedded: Option[Embedded] = None)
 
-  case class SubTest4(@MongoEmbedded embedded: Embedded)
+  private case class SubTest4(@MongoEmbedded embedded: Embedded)
 
-  case class Test4(subField: Option[SubTest4] = None)
+  private case class Test4(subField: Option[SubTest4] = None)
 }
 
 class MongoEmbeddedSpec extends AnyWordSpec with Matchers with OptionValues {
@@ -80,17 +80,16 @@ class MongoEmbeddedSpec extends AnyWordSpec with Matchers with OptionValues {
       test2.embedded.value.value2 mustEqual 45
     }
 
-//    "ignore ignored fields" in pendingUntilFixed {
-//      // TODO Ignore
-//      val dbo = dbObj(
-//        "value1" -> "ze value1",
-//        "_value2" -> 45
-//      )
-//      val test3 = deriveMongoFormat[Test3].fromMongoValue(dbo)
-//      test3.name mustEqual "default"
-//      test3.embedded.value.value1 mustEqual "ze value1"
-//      test3.embedded.value.value2 mustEqual 45
-//    }
+    "ignore ignored fields" in {
+      val dbo = dbObj(
+        "value1" -> "ze value1",
+        "_value2" -> 45
+      )
+      val test3 = deriveMongoFormat[ClassWithMongoIgnore].fromMongoValue(dbo)
+      test3.name mustEqual "default"
+      test3.embedded.value.value1 mustEqual "ze value1"
+      test3.embedded.value.value2 mustEqual 45
+    }
 
     "check for sub-fields" in {
       val dbo = dbObj(
@@ -109,8 +108,8 @@ class MongoEmbeddedSpec extends AnyWordSpec with Matchers with OptionValues {
         "name" -> "ze name"
       )
       val test2 = deriveMongoFormat[Test2].fromMongoValue(dbo)
-      test2.name mustEqual "ze name"
-      test2.embedded mustEqual None
+      test2.name mustBe "ze name"
+      test2.embedded mustBe None
     }
 
     "validate the absence of some embedded attributes" in {
