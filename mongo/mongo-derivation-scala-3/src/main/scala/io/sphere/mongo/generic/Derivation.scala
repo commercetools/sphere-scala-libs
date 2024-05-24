@@ -38,13 +38,14 @@ object TypedMongoFormat:
 
   inline given derived[A](using Mirror.Of[A]): TypedMongoFormat[A] = Derivation.derived
 
-  private def addField(bson: BasicDBObject, field: Field, mongoType: MongoType) =
-    mongoType match
-      case s: SimpleMongoType => bson.put(field.name, s)
-      case innerBson: BasicDBObject =>
-        if (field.embedded) innerBson.entrySet().forEach(p => bson.put(p.getKey, p.getValue))
-        else bson.put(field.name, innerBson)
-      case MongoNothing =>
+  private def addField(bson: BasicDBObject, field: Field, mongoType: MongoType): Unit =
+    if !field.ignored then
+      mongoType match
+        case s: SimpleMongoType => bson.put(field.name, s)
+        case innerBson: BasicDBObject =>
+          if (field.embedded) innerBson.entrySet().forEach(p => bson.put(p.getKey, p.getValue))
+          else bson.put(field.name, innerBson)
+        case MongoNothing =>
 
   private object Derivation:
     import scala.compiletime.{constValue, constValueTuple, erasedValue, summonInline}
