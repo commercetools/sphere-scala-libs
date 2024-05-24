@@ -40,10 +40,10 @@ object TypedMongoFormat:
 
   private def addField(bson: BasicDBObject, field: Field, mongoType: MongoType) =
     mongoType match
-      case s: SimpleMongoType => bson.put(field.fieldName, s)
+      case s: SimpleMongoType => bson.put(field.name, s)
       case innerBson: BasicDBObject =>
         if (field.embedded) innerBson.entrySet().forEach(p => bson.put(p.getKey, p.getValue))
-        else bson.put(field.fieldName, innerBson)
+        else bson.put(field.name, innerBson)
       case MongoNothing =>
 
   private object Derivation:
@@ -94,8 +94,8 @@ object TypedMongoFormat:
         private val fieldsAndFormatters = caseClassMetaData.fields.zip(formatters)
 
         override val fieldNames: Vector[String] = fieldsAndFormatters.flatMap((field, formatter) =>
-          if (field.embedded) formatter.fieldNames :+ field.name
-          else Vector(field.name))
+          if (field.embedded) formatter.fieldNames :+ field.rawName
+          else Vector(field.rawName))
 
         override def toMongoValue(a: A): MongoType =
           val bson = new BasicDBObject()
@@ -110,20 +110,21 @@ object TypedMongoFormat:
           mongoType match
             case bson: BasicDBObject =>
               val fields = fieldsAndFormatters
-                .map { case (Field(name, embedded, ignored, mongoKey, defaultArgument), format) =>
-                  def defaultValue = defaultArgument.orElse(format.default)
-                  if (ignored)
-                    default.getOrElse {
+                .map { case (field, format) =>
+                  def defaultValue = field.defaultArgument.orElse(format.default)
+                  if (field.ignored)
+                    defaultValue.getOrElse {
                       throw new Exception(
-                        s"Missing default parameter value for ignored field `$name` on deserialization.")
+                        s"Missing default parameter value for ignored field `${field.name}` on deserialization.")
                     }
-                  else if (embedded) format.fromMongoValue(bson)
+                  else if (field.embedded) format.fromMongoValue(bson)
                   else {
-                    val value = bson.get(name)
+                    val value = bson.get(field.name)
                     if (value ne null) format.fromMongoValue(value.asInstanceOf[MongoType])
                     else
                       defaultValue.getOrElse {
-                        throw new Exception(s"Missing required field '$name' on deserialization.")
+                        throw new Exception(
+                          s"Missing required field '${field.name}' on deserialization.")
                       }
                   }
                 }

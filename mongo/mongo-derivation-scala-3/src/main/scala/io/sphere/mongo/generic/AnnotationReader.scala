@@ -5,12 +5,12 @@ import scala.quoted.{Expr, Quotes, Type, Varargs}
 private type MA = MongoAnnotation
 
 case class Field(
-    name: String,
+    rawName: String,
     embedded: Boolean,
     ignored: Boolean,
     mongoKey: Option[MongoKey],
     defaultArgument: Option[Any]) {
-  val fieldName: String = mongoKey.map(_.value).getOrElse(name)
+  val name: String = mongoKey.map(_.value).getOrElse(rawName)
 }
 case class CaseClassMetaData(
     name: String,
@@ -30,6 +30,13 @@ case class TraitMetaData(
 }
 
 object AnnotationReader {
+
+  def mongoEnum(e: Enumeration): TypedMongoFormat[e.Value] = new TypedMongoFormat[e.Value] {
+    def toMongoValue(a: e.Value): MongoType = a.toString
+
+    def fromMongoValue(any: MongoType): e.Value = e.withName(any.asInstanceOf[String])
+  }
+
   inline def readTraitMetaData[T]: TraitMetaData = ${ readTraitMetaDataImpl[T] }
 
   inline def readCaseClassMetaData[T]: CaseClassMetaData = ${ readCaseClassMetaDataImpl[T] }
@@ -108,7 +115,7 @@ class AnnotationReader(using q: Quotes):
 
     '{
       Field(
-        name = $name,
+        rawName = $name,
         embedded = $embedded,
         ignored = $ignored,
         mongoKey = $mongoKey,

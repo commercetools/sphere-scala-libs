@@ -1,10 +1,11 @@
 package io.sphere.mongo
 
 import com.mongodb.BasicDBObject
-import io.sphere.mongo.generic.{DefaultMongoFormats, TypedMongoFormat}
+import io.sphere.mongo.generic.{AnnotationReader, DefaultMongoFormats, TypedMongoFormat}
 import io.sphere.mongo.generic.DefaultMongoFormats.given
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+
 import java.util.UUID
 
 object ProductTypes:
@@ -168,13 +169,13 @@ class SerializationTest extends AnyWordSpec with Matchers:
     }
 
     "serialize and deserialize enumerations" in {
-      // val mongo: TypedMongoFormat[Color.Value] = io.sphere.mongo.generic.deriveMongoFormat
+      val mongo: TypedMongoFormat[Color.Value] = AnnotationReader.mongoEnum(Color)
 
-      // // mongo java driver knows how to encode/decode Strings
-      // val serializedObject = mongo.toMongoValue(Color.Red).asInstanceOf[String]
-      // serializedObject must be("Red")
+      // mongo java driver knows how to encode/decode Strings
+      val serializedObject = mongo.toMongoValue(Color.Red).asInstanceOf[String]
+      serializedObject must be("Red")
 
-      // val enumValue = mongo.fromMongoValue(serializedObject)
-      // enumValue must be(Color.Red)
+      val enumValue = mongo.fromMongoValue(serializedObject)
+      enumValue must be(Color.Red)
     }
   }
