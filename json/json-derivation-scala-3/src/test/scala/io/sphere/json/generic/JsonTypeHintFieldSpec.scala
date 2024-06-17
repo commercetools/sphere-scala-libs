@@ -34,7 +34,7 @@ class JsonTypeHintFieldSpec extends AnyWordSpec with Matchers {
         }
         """
 
-      val Valid(user) = fromJSON[UserWithPicture](json)
+      val Valid(user) = fromJSON[UserWithPicture](json): @unchecked
 
       user must be(UserWithPicture("foo-123", Medium, "http://example.com"))
     }

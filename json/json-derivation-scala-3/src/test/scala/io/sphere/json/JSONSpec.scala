@@ -58,7 +58,7 @@ class JSONSpec extends AnyFunSpec with Matchers {
         )
         def read(j: JValue): ValidatedNel[JSONError, Milestone] = j match {
           case o: JObject =>
-            (field[String]("name")(o), field[Option[DateTime]]("date")(o)).mapN(Milestone)
+            (field[String]("name")(o), field[Option[DateTime]]("date")(o)).mapN(Milestone.apply)
           case _ => fail("JSON object expected.")
         }
       }
@@ -94,7 +94,7 @@ class JSONSpec extends AnyFunSpec with Matchers {
       }
       """
 
-      val Invalid(errs) = fromJSON[Project](wrongTypeJSON)
+      val Invalid(errs) = fromJSON[Project](wrongTypeJSON): @unchecked
       errs.toList must equal(
         List(
           JSONFieldError(List("nr"), "JSON Number in the range of an Int expected."),
@@ -122,22 +122,22 @@ class JSONSpec extends AnyFunSpec with Matchers {
     }
 
     it("must handle empty String") {
-      val Invalid(err) = fromJSON[Int]("")
+      val Invalid(err) = fromJSON[Int](""): @unchecked
       err.toList.head mustBe a[JSONParseError]
     }
 
     it("must provide user-friendly error by empty String") {
-      val Invalid(err) = fromJSON[Int]("")
+      val Invalid(err) = fromJSON[Int](""): @unchecked
       err.toList mustEqual List(JSONParseError("No content to map due to end-of-input"))
     }
 
     it("must handle incorrect json") {
-      val Invalid(err) = fromJSON[Int]("""{"key: "value"}""")
+      val Invalid(err) = fromJSON[Int]("""{"key: "value"}"""): @unchecked
       err.toList.head mustBe a[JSONParseError]
     }
 
     it("must provide user-friendly error by incorrect json") {
-      val Invalid(err) = fromJSON[Int]("""{"key: "value"}""")
+      val Invalid(err) = fromJSON[Int]("""{"key: "value"}"""): @unchecked
       err.toList mustEqual List(JSONParseError(
         "Unexpected character ('v' (code 118)): was expecting a colon to separate field name and value"))
     }
