@@ -142,14 +142,14 @@ class JSONSpec extends AnyFunSpec with Matchers {
         "Unexpected character ('v' (code 118)): was expecting a colon to separate field name and value"))
     }
 
-//    it("must provide derived JSON instances for sum types") {
-//      import io.sphere.json.generic.JSON.derived
-//      implicit val animalJSON = deriveJSON[Animal]
-//      List(Bird("Peewee"), Dog("Hasso"), Cat("Felidae")).foreach {
-//        a: Animal =>
-//          fromJSON[Animal](toJSON(a)) must equal(Valid(a))
-//      }
-//    }
+    it("must provide derived JSON instances for sum types") {
+      import io.sphere.json.generic.JSON.derived
+      given JSON[Animal] = deriveJSON
+      List(Bird("Peewee"), Dog("Hasso"), Cat("Felidae")).foreach {
+        animal =>
+          fromJSON[Animal](toJSON(animal)) must equal(Valid(animal))
+      }
+    }
 
     it("must provide derived instances for product types with concrete type parameters") {
       import io.sphere.json.generic.JSON.derived
@@ -179,15 +179,15 @@ class JSONSpec extends AnyFunSpec with Matchers {
 //        fromJSON[SingletonEnum](toJSON(s)) must equal(Valid(s))
 //      }
 //    }
-//
-//    it("must provide derived instances for sum types with a mix of case class / object") {
-//      import io.sphere.json.generic.JSON.derived
-//      implicit val mixedJSON: JSON[Mixed] = deriveJSON[Mixed]
-//      List(SingletonMixed, RecordMixed(1)).foreach {
-//        m: Mixed =>
-//          fromJSON[Mixed](toJSON(m)) must equal(Valid(m))
-//      }
-//    }
+
+    it("must provide derived instances for sum types with a mix of case class / object") {
+      import io.sphere.json.generic.JSON.derived
+      given JSON[Mixed] = deriveJSON
+      List(SingletonMixed, RecordMixed(1)).foreach {
+        m =>
+          fromJSON[Mixed](toJSON(m)) must equal(Valid(m))
+      }
+    }
 //
 //    it("must provide derived instances for scala.Enumeration") {
 //      import io.sphere.json.generic.JSON.derived

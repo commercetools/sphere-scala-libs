@@ -71,8 +71,9 @@ object JSON:
           // we never get a trait here, only classes, it's safe to assume Product
           val originalTypeName = value.asInstanceOf[Product].productPrefix
           val typeName = typeHintMap.getOrElse(originalTypeName, originalTypeName)
-          val json = jsonsByNames(originalTypeName).write(value)
-          json ++ JObject(traitMetaData.typeDiscriminator -> JString(typeName))
+          val json = jsonsByNames(originalTypeName).write(value).asInstanceOf[JObject]
+          val typeDiscriminator = traitMetaData.typeDiscriminator -> JString(typeName)
+          JObject(typeDiscriminator :: json.obj)
 
     end deriveTrait
 
