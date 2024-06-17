@@ -14,7 +14,7 @@ import org.json4s.jackson.compactJson
 /** Provides functions for reading & writing JSON, via type classes JSON/JSONR/JSONW. */
 package object json extends Logging {
 
-  implicit val liftJsonFormats = DefaultFormats
+  implicit val liftJsonFormats: DefaultFormats = DefaultFormats
 
   type JValidation[A] = ValidatedNel[JSONError, A]
 

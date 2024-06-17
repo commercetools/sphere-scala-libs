@@ -87,6 +87,8 @@ object JSON:
           else Vector(field.name)
         }
 
+        override val fields: Set[String] = fieldNames.toSet
+
         override def write(value: A): JValue =
           val caseClassFields = value.asInstanceOf[Product].productIterator
           jsons
@@ -113,15 +115,8 @@ object JSON:
 
         private def readField(field: Field, json: JSON[Any], jObject: JObject): JValidation[Any] =
           if (field.embedded) json.read(jObject)
-          else if (jObject.values.contains(field.fieldName) && (jObject \ field.fieldName) != JNull)
-            json.read(jObject \ field.fieldName)
-          else
-            field.defaultArgument match
-              case Some(value) => Validated.valid(value)
-              case None =>
-                Validated.invalidNel(
-                  JSONParseError(
-                    s"Missing required field '${field.fieldName}' on deserialization."))
+          else io.sphere.json.field(field.fieldName, field.defaultArgument)(jObject)(json)
+
     end deriveCaseClass
 
     inline private def summonFormatters[T <: Tuple]: Vector[JSON[Any]] =

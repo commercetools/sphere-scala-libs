@@ -115,7 +115,7 @@ class JSONEmbeddedSpec extends AnyWordSpec with Matchers with OptionValues {
       test4.subField.value.embedded.value2 mustEqual 45
     }
 
-    "support the absence of optional embedded attribute" ignore  {
+    "support the absence of optional embedded attribute" in {
       val json = """{ "name": "ze name" }"""
       val test2 = getFromJSON[Test2](json)
       test2.name mustEqual "ze name"

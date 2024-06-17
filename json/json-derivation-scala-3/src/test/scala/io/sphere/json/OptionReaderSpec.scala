@@ -72,7 +72,7 @@ class OptionReaderSpec extends AnyWordSpec with Matchers with OptionValues {
       result must be(None)
     }
 
-    "handle optional map" ignore  {
+    "handle optional map" in  {
       getFromJValue[MapClass](JObject("id" -> JLong(1L))) mustEqual MapClass(1L, None)
 
       getFromJValue[MapClass](JObject("id" -> JLong(1L), "map" -> JObject())) mustEqual
@@ -90,7 +90,7 @@ class OptionReaderSpec extends AnyWordSpec with Matchers with OptionValues {
         JObject("id" -> JLong(1L), "map" -> JObject("a" -> JString("b")))
     }
 
-    "handle optional list" ignore  {
+    "handle optional list" in  {
       getFromJValue[ListClass](
         JObject("id" -> JLong(1L), "list" -> JArray(List(JString("hi"))))) mustEqual
         ListClass(1L, Some(List("hi")))
@@ -108,7 +108,7 @@ class OptionReaderSpec extends AnyWordSpec with Matchers with OptionValues {
       toJValue(ListClass(1L, None)) mustEqual JObject("id" -> JLong(1L), "list" -> JNothing)
     }
 
-    "handle absence of all fields mixed with ignored fields" ignore {
+    "handle absence of all fields mixed with ignored fields" in {
       val json = """{ "value3": "a" }"""
       val result = getFromJSON[Option[SimpleClass]](json)
       result must be(None)
