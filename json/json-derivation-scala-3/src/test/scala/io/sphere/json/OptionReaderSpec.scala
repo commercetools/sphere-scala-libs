@@ -12,23 +12,23 @@ object OptionReaderSpec {
   case class SimpleClass(value1: String, value2: Int)
 
   object SimpleClass {
-    implicit val json: JSON[SimpleClass] = deriveJSON[SimpleClass]
+    given JSON[SimpleClass] = deriveJSON[SimpleClass]
   }
 
   case class ComplexClass(name: String, simpleClass: Option[SimpleClass])
 
   object ComplexClass {
-    implicit val json: JSON[ComplexClass] = deriveJSON[ComplexClass]
+    given JSON[ComplexClass] = deriveJSON[ComplexClass]
   }
 
   case class MapClass(id: Long, map: Option[Map[String, String]])
   object MapClass {
-    implicit val json: JSON[MapClass] = deriveJSON[MapClass]
+    given JSON[MapClass] = deriveJSON[MapClass]
   }
 
   case class ListClass(id: Long, list: Option[List[String]])
   object ListClass {
-    implicit val json: JSON[ListClass] = deriveJSON[ListClass]
+    given JSON[ListClass] = deriveJSON[ListClass]
   }
 }
 
@@ -72,7 +72,7 @@ class OptionReaderSpec extends AnyWordSpec with Matchers with OptionValues {
       result must be(None)
     }
 
-    "handle optional map" in  {
+    "handle optional map" in {
       getFromJValue[MapClass](JObject("id" -> JLong(1L))) mustEqual MapClass(1L, None)
 
       getFromJValue[MapClass](JObject("id" -> JLong(1L), "map" -> JObject())) mustEqual
@@ -90,7 +90,7 @@ class OptionReaderSpec extends AnyWordSpec with Matchers with OptionValues {
         JObject("id" -> JLong(1L), "map" -> JObject("a" -> JString("b")))
     }
 
-    "handle optional list" in  {
+    "handle optional list" in {
       getFromJValue[ListClass](
         JObject("id" -> JLong(1L), "list" -> JArray(List(JString("hi"))))) mustEqual
         ListClass(1L, Some(List("hi")))

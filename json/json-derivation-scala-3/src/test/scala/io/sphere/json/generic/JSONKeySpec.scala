@@ -33,7 +33,7 @@ object JSONKeySpec {
       @JSONKey("new_sub_value_2") value2: String
   )
   object SubTest {
-    implicit val json: JSON[SubTest] = deriveJSON[SubTest]
+    given JSON[SubTest] = deriveJSON[SubTest]
   }
 
   case class Test(
@@ -42,6 +42,6 @@ object JSONKeySpec {
       @JSONEmbedded subTest: SubTest
   )
   object Test {
-    implicit val json: JSON[Test] = deriveJSON[Test]
+    given JSON[Test] = deriveJSON[Test]
   }
 }

@@ -114,8 +114,8 @@ class JSONSpec extends AnyFunSpec with Matchers {
 
     it("must provide derived JSON instances for product types (case classes)") {
       import JSONSpec.{Milestone, Project}
-      implicit val milestoneJSON: JSON[Milestone] = deriveJSON[Milestone]
-      implicit val projectJSON: JSON[Project] = deriveJSON[Project]
+      given JSON[Milestone] = deriveJSON[Milestone]
+      given JSON[Project] = deriveJSON[Project]
       val proj =
         Project(42, "Linux", 7, Milestone("1.0") :: Milestone("2.0") :: Milestone("3.0") :: Nil)
       fromJSON[Project](toJSON(proj)) must equal(Valid(proj))
@@ -153,7 +153,7 @@ class JSONSpec extends AnyFunSpec with Matchers {
 
     it("must provide derived instances for product types with concrete type parameters") {
       import io.sphere.json.generic.JSON.derived
-      implicit val aJSON: JSON[GenericA[String]] = deriveJSON[GenericA[String]]
+      given JSON[GenericA[String]] = deriveJSON[GenericA[String]]
       val a = GenericA("hello")
       fromJSON[GenericA[String]](toJSON(a)) must equal(Valid(a))
     }
