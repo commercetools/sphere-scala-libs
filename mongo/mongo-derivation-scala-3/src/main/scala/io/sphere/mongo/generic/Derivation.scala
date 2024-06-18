@@ -1,13 +1,11 @@
 package io.sphere.mongo.generic
 
 import com.mongodb.BasicDBObject
-import org.bson.BSONObject
 import org.bson.types.ObjectId
 
 import java.util.UUID
 import java.util.regex.Pattern
 import scala.deriving.Mirror
-import scala.quoted.*
 
 object MongoNothing
 type SimpleMongoType = UUID | String | ObjectId | Short | Int | Long | Float | Double | Boolean |

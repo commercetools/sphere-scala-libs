@@ -135,3 +135,15 @@ class AnnotationReader(using q: Quotes):
     '{ Map($subtypes*) }
 
 end AnnotationReader
+
+object AnnotationReader:
+  inline def readCaseClassMetaData[T]: CaseClassMetaData = ${ readCaseClassMetaDataImpl[T] }
+
+  inline def readTraitMetaData[T]: TraitMetaData = ${ readTraitMetaDataImpl[T] }
+
+  private def readCaseClassMetaDataImpl[T: Type](using Quotes): Expr[CaseClassMetaData] =
+    AnnotationReader().readCaseClassMetaData[T]
+
+  private def readTraitMetaDataImpl[T: Type](using Quotes): Expr[TraitMetaData] =
+    AnnotationReader().readTraitMetaData[T]
+end AnnotationReader

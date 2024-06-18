@@ -5,10 +5,9 @@ import cats.implicits.*
 import io.sphere.json.{JSON, JSONParseError, JValidation}
 import org.json4s.DefaultJsonFormats.given
 import org.json4s.JsonAST.JValue
-import org.json4s.{DefaultJsonFormats, JNull, JObject, JString, jvalue2monadic, jvalue2readerSyntax}
+import org.json4s.{DefaultJsonFormats, JObject, JString, jvalue2monadic, jvalue2readerSyntax}
 
 import scala.deriving.Mirror
-import scala.quoted.*
 
 inline def deriveJSON[A](using Mirror.Of[A]): JSON[A] = JSON.derived
 
@@ -17,14 +16,6 @@ object JSON:
 
   inline def apply[A: JSON]: JSON[A] = summon[JSON[A]]
   inline given derived[A](using Mirror.Of[A]): JSON[A] = Derivation.derived[A]
-  private inline def readCaseClassMetaData[T]: CaseClassMetaData = ${ readCaseClassMetaDataImpl[T] }
-  private inline def readTraitMetaData[T]: TraitMetaData = ${ readTraitMetaDataImpl[T] }
-
-  private def readCaseClassMetaDataImpl[T: Type](using Quotes): Expr[CaseClassMetaData] =
-    AnnotationReader().readCaseClassMetaData[T]
-
-  private def readTraitMetaDataImpl[T: Type](using Quotes): Expr[TraitMetaData] =
-    AnnotationReader().readTraitMetaData[T]
 
   private def addField(jObject: JObject, field: Field, jValue: JValue): JValue =
     jValue match
@@ -44,7 +35,7 @@ object JSON:
 
     inline private def deriveTrait[A](mirrorOfSum: Mirror.SumOf[A]): JSON[A] =
       new JSON[A]:
-        private val traitMetaData: TraitMetaData = readTraitMetaData[A]
+        private val traitMetaData: TraitMetaData = AnnotationReader.readTraitMetaData[A]
         private val typeHintMap: Map[String, String] = traitMetaData.subtypes.collect {
           case (name, classMeta) if classMeta.typeHint.isDefined =>
             name -> classMeta.typeHint.get
@@ -61,11 +52,9 @@ object JSON:
             case jObject: JObject =>
               val typeName = (jObject \ traitMetaData.typeDiscriminator).as[String]
               val originalTypeName = reverseTypeHintMap.getOrElse(typeName, typeName)
-              val parsed = jsonsByNames(originalTypeName).read(jObject)
-              parsed.map(_.asInstanceOf[A])
+              jsonsByNames(originalTypeName).read(jObject).map(_.asInstanceOf[A])
             case x =>
-              Validated.invalidNel(
-                JSONParseError(s"JSON object expected. >>> trait >>> $jValue >>> ${traitMetaData}"))
+              Validated.invalidNel(JSONParseError(s"JSON object expected. Got: '$jValue'"))
 
         override def write(value: A): JValue =
           // we never get a trait here, only classes, it's safe to assume Product
@@ -79,7 +68,7 @@ object JSON:
 
     inline private def deriveCaseClass[A](mirrorOfProduct: Mirror.ProductOf[A]): JSON[A] =
       new JSON[A]:
-        private val caseClassMetaData: CaseClassMetaData = readCaseClassMetaData[A]
+        private val caseClassMetaData: CaseClassMetaData = AnnotationReader.readCaseClassMetaData[A]
         private val jsons: Vector[JSON[Any]] = summonFormatters[mirrorOfProduct.MirroredElemTypes]
         private val fieldsAndJsons: Vector[(Field, JSON[Any])] = caseClassMetaData.fields.zip(jsons)
 
@@ -112,7 +101,7 @@ object JSON:
                 fieldsAsTuple.asInstanceOf[mirrorOfProduct.MirroredElemTypes])
 
             case x =>
-              Validated.invalidNel(JSONParseError(s"JSON object expected. ${x}"))
+              Validated.invalidNel(JSONParseError(s"JSON object expected. $x"))
 
         private def readField(field: Field, json: JSON[Any], jObject: JObject): JValidation[Any] =
           if (field.embedded) json.read(jObject)

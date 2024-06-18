@@ -152,14 +152,12 @@ class JSONSpec extends AnyFunSpec with Matchers {
     }
 
     it("must provide derived instances for product types with concrete type parameters") {
-      import io.sphere.json.generic.JSON.derived
       given JSON[GenericA[String]] = deriveJSON[GenericA[String]]
       val a = GenericA("hello")
       fromJSON[GenericA[String]](toJSON(a)) must equal(Valid(a))
     }
 
     it("must provide derived instances for product types with generic type parameters") {
-      import io.sphere.json.generic.JSON.derived
       implicit def aJSON[A: JSON]: JSON[GenericA[A]] = deriveJSON[GenericA[A]]
       val a = GenericA("hello")
       fromJSON[GenericA[String]](toJSON(a)) must equal(Valid(a))
