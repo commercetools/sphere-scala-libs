@@ -74,25 +74,25 @@ object JSONProperties extends Properties("JSON") {
       least <- Arbitrary.arbitrary[Long]
     } yield new UUID(most, least))
 
-  implicit val currencyEqual = new Eq[Currency] {
+  implicit val currencyEqual: Eq[Currency] = new Eq[Currency] {
     def eqv(c1: Currency, c2: Currency) = c1.getCurrencyCode == c2.getCurrencyCode
   }
-  implicit val localeEqual = new Eq[Locale] {
+  implicit val localeEqual: Eq[Locale] = new Eq[Locale] {
     def eqv(l1: Locale, l2: Locale) = l1.toLanguageTag == l2.toLanguageTag
   }
-  implicit val moneyEqual = new Eq[Money] {
+  implicit val moneyEqual: Eq[Money] = new Eq[Money] {
     override def eqv(x: Money, y: Money): Boolean = x == y
   }
-  implicit val dateTimeEqual = new Eq[DateTime] {
+  implicit val dateTimeEqual: Eq[DateTime] = new Eq[DateTime] {
     def eqv(dt1: DateTime, dt2: DateTime) = dt1 == dt2
   }
-  implicit val localTimeEqual = new Eq[LocalTime] {
+  implicit val localTimeEqual: Eq[LocalTime] = new Eq[LocalTime] {
     def eqv(dt1: LocalTime, dt2: LocalTime) = dt1 == dt2
   }
-  implicit val localDateEqual = new Eq[LocalDate] {
+  implicit val localDateEqual: Eq[LocalDate] = new Eq[LocalDate] {
     def eqv(dt1: LocalDate, dt2: LocalDate) = dt1 == dt2
   }
-  implicit val yearMonthEqual = new Eq[YearMonth] {
+  implicit val yearMonthEqual: Eq[YearMonth] = new Eq[YearMonth] {
     def eqv(dt1: YearMonth, dt2: YearMonth) = dt1 == dt2
   }
 
