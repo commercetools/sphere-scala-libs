@@ -7,6 +7,7 @@ import org.scalatest.wordspec.AnyWordSpec
 class DateTimeParsingSpec extends AnyWordSpec with Matchers {
 
   import FromJSON.dateTimeReader
+  import FromJSON.javaInstantReader
   def jsonDateStringWith(
       year: String = "2035",
       dayOfTheMonth: String = "23",
@@ -61,6 +62,49 @@ class DateTimeParsingSpec extends AnyWordSpec with Matchers {
 
     "reject strings with invalid seconds" in {
       dateTimeReader.read(jsonDateStringWith(secondOfTheMinute = "87")) shouldNot beValid
+    }
+  }
+
+  "parsing an Instant" should {
+
+    "reject strings with invalid year" in {
+      javaInstantReader.read(jsonDateStringWith(year = "999999999")) shouldNot beValid
+    }
+
+    "reject strings with years that are out of range for integers" in {
+      javaInstantReader.read(jsonDateStringWith(year = outOfIntRange)) shouldNot beValid
+    }
+
+    "reject strings that are out of range for other fields" in {
+      javaInstantReader.read(
+        jsonDateStringWith(
+          monthOfTheYear = outOfIntRange,
+          dayOfTheMonth = outOfIntRange,
+          hourOfTheDay = outOfIntRange,
+          minuteOfTheHour = outOfIntRange,
+          secondOfTheMinute = outOfIntRange,
+          millis = outOfIntRange
+        )) shouldNot beValid
+    }
+
+    "reject strings with invalid days" in {
+      javaInstantReader.read(jsonDateStringWith(dayOfTheMonth = "59")) shouldNot beValid
+    }
+
+    "reject strings with invalid months" in {
+      javaInstantReader.read(jsonDateStringWith(monthOfTheYear = "39")) shouldNot beValid
+    }
+
+    "reject strings with invalid hours" in {
+      javaInstantReader.read(jsonDateStringWith(hourOfTheDay = "39")) shouldNot beValid
+    }
+
+    "reject strings with invalid minutes" in {
+      javaInstantReader.read(jsonDateStringWith(minuteOfTheHour = "87")) shouldNot beValid
+    }
+
+    "reject strings with invalid seconds" in {
+      javaInstantReader.read(jsonDateStringWith(secondOfTheMinute = "87")) shouldNot beValid
     }
   }
 }
