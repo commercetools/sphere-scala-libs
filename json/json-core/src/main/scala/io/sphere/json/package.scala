@@ -10,11 +10,15 @@ import org.json4s.{DefaultFormats, JsonInput, StringInput}
 import org.json4s.JsonAST._
 import org.json4s.ParserUtil.ParseException
 import org.json4s.jackson.compactJson
+import java.time.format.DateTimeFormatter
 
 /** Provides functions for reading & writing JSON, via type classes JSON/JSONR/JSONW. */
 package object json extends Logging {
 
-  implicit val liftJsonFormats = DefaultFormats
+  private[json] val JavaYearMonthFormatter =
+    DateTimeFormatter.ofPattern("uuuu-MM")
+
+  implicit val liftJsonFormats: DefaultFormats = DefaultFormats
 
   type JValidation[A] = ValidatedNel[JSONError, A]
 

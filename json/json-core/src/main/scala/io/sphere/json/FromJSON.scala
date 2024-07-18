@@ -392,7 +392,7 @@ object FromJSON extends FromJSONInstances {
       time.LocalDate.parse(_, time.format.DateTimeFormatter.ISO_LOCAL_DATE))
 
   implicit val javaYearMonthReader: FromJSON[time.YearMonth] =
-    jsonStringReader("Failed to parse year/month: %s")(time.YearMonth.parse(_))
+    jsonStringReader("Failed to parse year/month: %s")(time.YearMonth.parse(_, JavaYearMonthFormatter))
 
   implicit val uuidReader: FromJSON[UUID] = jsonStringReader("Invalid UUID: '%s'")(UUID.fromString)
 

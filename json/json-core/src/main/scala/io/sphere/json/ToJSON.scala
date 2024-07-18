@@ -201,7 +201,7 @@ object ToJSON extends ToJSONInstances {
   }
 
   implicit val javaYearMonth: ToJSON[time.YearMonth] = new ToJSON[time.YearMonth] {
-    def write(value: time.YearMonth): JValue = JString(value.toString())
+    def write(value: time.YearMonth): JValue = JString(JavaYearMonthFormatter.format(value))
   }
 
   implicit val uuidWriter: ToJSON[UUID] = new ToJSON[UUID] {
