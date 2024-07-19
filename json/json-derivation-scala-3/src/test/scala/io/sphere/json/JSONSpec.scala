@@ -145,9 +145,8 @@ class JSONSpec extends AnyFunSpec with Matchers {
     it("must provide derived JSON instances for sum types") {
       import io.sphere.json.generic.JSON.derived
       given JSON[Animal] = deriveJSON
-      List(Bird("Peewee"), Dog("Hasso"), Cat("Felidae")).foreach {
-        animal =>
-          fromJSON[Animal](toJSON(animal)) must equal(Valid(animal))
+      List(Bird("Peewee"), Dog("Hasso"), Cat("Felidae")).foreach { animal =>
+        fromJSON[Animal](toJSON(animal)) must equal(Valid(animal))
       }
     }
 
@@ -181,9 +180,8 @@ class JSONSpec extends AnyFunSpec with Matchers {
     it("must provide derived instances for sum types with a mix of case class / object") {
       import io.sphere.json.generic.JSON.derived
       given JSON[Mixed] = deriveJSON
-      List(SingletonMixed, RecordMixed(1)).foreach {
-        m =>
-          fromJSON[Mixed](toJSON(m)) must equal(Valid(m))
+      List(SingletonMixed, RecordMixed(1)).foreach { m =>
+        fromJSON[Mixed](toJSON(m)) must equal(Valid(m))
       }
     }
 //

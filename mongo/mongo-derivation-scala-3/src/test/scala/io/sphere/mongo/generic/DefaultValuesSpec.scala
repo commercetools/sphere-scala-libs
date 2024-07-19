@@ -6,7 +6,8 @@ import io.sphere.mongo.format.MongoFormat
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class DefaultValuesSpec extends AnyWordSpec with Matchers:
+class DefaultValuesSpec extends AnyWordSpec with Matchers {
+
   import DefaultValuesSpec.*
 
   "deriving TypedMongoFormat" must {
@@ -20,13 +21,17 @@ class DefaultValuesSpec extends AnyWordSpec with Matchers:
       field4 mustBe Some("hi")
     }
   }
+}
 
-object DefaultValuesSpec:
+object DefaultValuesSpec {
   private case class CaseClass(
       field1: String = "hello",
       field2: Option[String],
       field3: Option[String] = None,
       field4: Option[String] = Some("hi")
   )
-  private object CaseClass:
-    implicit val mongo: TypedMongoFormat[CaseClass] = deriveMongoFormat
+
+  private object CaseClass {
+    given TypedMongoFormat[CaseClass] = deriveMongoFormat
+  }
+}

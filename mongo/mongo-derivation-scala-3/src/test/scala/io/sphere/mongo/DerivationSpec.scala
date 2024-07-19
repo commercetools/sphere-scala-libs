@@ -12,7 +12,7 @@ import io.sphere.mongo.generic.TypedMongoFormat.*
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.must.Matchers
 
-class DerivationSpec extends AnyWordSpec with Matchers:
+class DerivationSpec extends AnyWordSpec with Matchers {
 
   "MongoFormat derivation" should {
     "support composition" in {
@@ -36,10 +36,11 @@ class DerivationSpec extends AnyWordSpec with Matchers:
 
       val format = io.sphere.mongo.generic.deriveMongoFormat[Root]
 
-      def roundtrip(member: Root): Unit =
+      def roundtrip(member: Root): Unit = {
         val bson = format.toMongoValue(member)
         val roundtrip = format.fromMongoValue(bson)
         roundtrip mustBe member
+      }
 
       roundtrip(Object1)
       roundtrip(Object2)
@@ -60,3 +61,4 @@ class DerivationSpec extends AnyWordSpec with Matchers:
 
     }
   }
+}

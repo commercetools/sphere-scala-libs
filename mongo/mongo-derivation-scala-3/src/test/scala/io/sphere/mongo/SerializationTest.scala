@@ -8,7 +8,7 @@ import org.scalatest.wordspec.AnyWordSpec
 
 import java.util.UUID
 
-object ProductTypes:
+object ProductTypes {
   // For semi-automatic derivarion + default value argument
   case class Something(a: Option[Int], b: Int = 2)
 
@@ -17,23 +17,28 @@ object ProductTypes:
 
   // Union type field - doesn't compile!
   // case class Identifier(idOrKey: UUID | String) derives TypedMongoFormat
-end ProductTypes
+}
 
-object SumTypes:
-  object Color extends Enumeration:
+object SumTypes {
+  object Color extends Enumeration {
     val Blue, Red, Yellow = Value
+  }
 
   sealed trait Coffee derives TypedMongoFormat
-  object Coffee:
-    case object Espresso extends Coffee
-    case class Other(name: String) extends Coffee
 
-  enum Visitor derives TypedMongoFormat:
+  object Coffee {
+    case object Espresso extends Coffee
+
+    case class Other(name: String) extends Coffee
+  }
+
+  enum Visitor derives TypedMongoFormat {
     case User(email: String, password: String)
     case Anonymous
-end SumTypes
+  }
+}
 
-class SerializationTest extends AnyWordSpec with Matchers:
+class SerializationTest extends AnyWordSpec with Matchers {
   "mongoProduct" must {
     import ProductTypes.*
 
@@ -179,3 +184,4 @@ class SerializationTest extends AnyWordSpec with Matchers:
       enumValue must be(Color.Red)
     }
   }
+}

@@ -20,7 +20,7 @@ class DefaultValuesSpec extends AnyWordSpec with Matchers {
       val json = "{  }"
       val test2 = getFromJSON[Test2](json)
       test2.value1 must be("hello")
-      test2.value2 must be (None)
+      test2.value2 must be(None)
     }
   }
 }

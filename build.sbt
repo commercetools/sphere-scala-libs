@@ -44,7 +44,8 @@ lazy val standardSettings = Defaults.coreDefaultSettings ++ Seq(
   scalacOptions ++= Seq(
     "-deprecation",
     "-unchecked",
-    "-feature"
+    "-feature",
+    "-noindent"
   ),
   javacOptions ++= Seq("-deprecation", "-Xlint:unchecked"),
   // targets Java 8 bytecode (scalac & javac)
@@ -116,12 +117,12 @@ lazy val `sphere-json` = project
 
 lazy val `sphere-mongo-core` = project
   .in(file("./mongo/mongo-core"))
+  .settings(crossScalaVersions := Seq(scala3, scala2_13))
   .settings(standardSettings: _*)
   .dependsOn(`sphere-util`)
 
 lazy val `sphere-mongo-derivation` = project
   .in(file("./mongo/mongo-derivation"))
-  .settings(crossScalaVersions := Seq(scala2_12, scala2_13))
   .settings(standardSettings: _*)
   .settings(Fmpp.settings: _*)
   .dependsOn(`sphere-mongo-core`)

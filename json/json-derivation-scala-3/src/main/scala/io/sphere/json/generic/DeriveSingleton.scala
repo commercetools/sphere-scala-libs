@@ -17,12 +17,13 @@ object DeriveSingleton {
     import scala.compiletime.{constValue, constValueTuple, erasedValue, summonInline}
 
     inline def derived[A](using m: Mirror.Of[A]): JSON[A] =
-      inline m match
+      inline m match {
         case s: Mirror.SumOf[A] => deriveTrait(s)
         case p: Mirror.ProductOf[A] => deriveObject(p)
+      }
 
     inline private def deriveTrait[A](mirrorOfSum: Mirror.SumOf[A]): JSON[A] =
-      new JSON[A]:
+      new JSON[A] {
         private val traitMetaData: TraitMetaData = AnnotationReader.readTraitMetaData[A]
         private val typeHintMap: Map[String, String] = traitMetaData.subtypes.collect {
           case (name, classMeta) if classMeta.typeHint.isDefined =>
@@ -36,42 +37,46 @@ object DeriveSingleton {
         private val jsonsByNames: Map[String, JSON[Any]] = names.zip(jsons).toMap
 
         override def read(jValue: JValue): JValidation[A] =
-          jValue match
+          jValue match {
             case JString(typeName) =>
               val originalTypeName = reverseTypeHintMap.getOrElse(typeName, typeName)
-              jsonsByNames.get(originalTypeName) match
+              jsonsByNames.get(originalTypeName) match {
                 case Some(json) =>
                   json.read(JNull).map(_.asInstanceOf[A])
                 case None =>
                   Validated.invalidNel(JSONParseError(s"'$typeName' is not a valid value"))
+              }
 
             case x =>
               Validated.invalidNel(JSONParseError(s"JSON string expected. Got >>> $jValue"))
+          }
 
-        override def write(value: A): JValue =
+        override def write(value: A): JValue = {
           val originalTypeName = value.asInstanceOf[Product].productPrefix
           val typeName = typeHintMap.getOrElse(originalTypeName, originalTypeName)
           JString(typeName)
+        }
 
-    end deriveTrait
+      }
 
     inline private def deriveObject[A](mirrorOfProduct: Mirror.ProductOf[A]): JSON[A] =
-      new JSON[A]:
+      new JSON[A] {
         override def write(value: A): JValue = ??? // This is already taken care of in `deriveTrait`
-        override def read(jValue: JValue): JValidation[A] =
+
+        override def read(jValue: JValue): JValidation[A] = {
           // Just create the object instance, no need to do anything else
           val tuple = Tuple.fromArray(Array.empty[Any])
           val obj = mirrorOfProduct.fromTuple(tuple.asInstanceOf[mirrorOfProduct.MirroredElemTypes])
           Validated.Valid(obj)
-    end deriveObject
+        }
+      }
 
     inline private def summonFormatters[T <: Tuple]: Vector[JSON[Any]] =
-      inline erasedValue[T] match
+      inline erasedValue[T] match {
         case _: EmptyTuple => Vector.empty
         case _: (t *: ts) =>
           summonInline[JSON[t]]
             .asInstanceOf[JSON[Any]] +: summonFormatters[ts]
-
+      }
   }
-
 }

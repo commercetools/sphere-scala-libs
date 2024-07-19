@@ -48,7 +48,7 @@ object AnnotationReader {
     AnnotationReader().readTraitMetaData[T]
 }
 
-class AnnotationReader(using q: Quotes):
+class AnnotationReader(using q: Quotes) {
   import q.reflect.*
 
   def readCaseClassMetaData[T: Type]: Expr[CaseClassMetaData] = {
@@ -97,7 +97,7 @@ class AnnotationReader(using q: Quotes):
       .filter(_.isExprOf[MongoTypeHintField])
       .map(_.asExprOf[MongoTypeHintField])
 
-  private def collectFieldInfo(companion: Symbol)(s: Symbol, paramIdx: Int): Expr[Field] =
+  private def collectFieldInfo(companion: Symbol)(s: Symbol, paramIdx: Int): Expr[Field] = {
     val embedded = Expr(s.annotations.exists(findEmbedded))
     val ignored = Expr(s.annotations.exists(findIgnored))
     val name = Expr(s.name)
@@ -121,8 +121,9 @@ class AnnotationReader(using q: Quotes):
         mongoKey = $mongoKey,
         defaultArgument = $defArgOpt)
     }
+  }
 
-  private def caseClassMetaData(sym: Symbol): Expr[CaseClassMetaData] =
+  private def caseClassMetaData(sym: Symbol): Expr[CaseClassMetaData] = {
     val caseParams = sym.primaryConstructor.paramSymss.take(1).flatten
     val fields = Varargs(caseParams.zipWithIndex.map(collectFieldInfo(sym.companionModule)))
     val name = Expr(sym.name)
@@ -138,16 +139,16 @@ class AnnotationReader(using q: Quotes):
         fields = Vector($fields*)
       )
     }
-  end caseClassMetaData
+  }
 
-  private def subtypeAnnotation(sym: Symbol): Expr[(String, CaseClassMetaData)] =
+  private def subtypeAnnotation(sym: Symbol): Expr[(String, CaseClassMetaData)] = {
     val name = Expr(sym.name)
     val annots = caseClassMetaData(sym)
     '{ ($name, $annots) }
-  end subtypeAnnotation
+  }
 
-  private def subtypeAnnotations(sym: Symbol): Expr[Map[String, CaseClassMetaData]] =
+  private def subtypeAnnotations(sym: Symbol): Expr[Map[String, CaseClassMetaData]] = {
     val subtypes = Varargs(sym.children.map(subtypeAnnotation))
     '{ Map($subtypes*) }
-
-end AnnotationReader
+  }
+}

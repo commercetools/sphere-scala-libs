@@ -1,6 +1,7 @@
 package io.sphere.mongo.catsinstances
 
 import cats.syntax.invariant._
+import io.sphere.mongo.Test
 import io.sphere.mongo.format.DefaultMongoFormats._
 import io.sphere.mongo.format._
 import org.scalatest.matchers.must.Matchers
@@ -17,6 +18,11 @@ class MongoFormatCatsInstancesTest extends AnyWordSpec with Matchers {
       val myNewId = fromMongo[MyId](dbo)
       myNewId must be(myId)
     }
+  }
+
+  "asd" in {
+    println("asdd")
+    Test.fn
   }
 }
 

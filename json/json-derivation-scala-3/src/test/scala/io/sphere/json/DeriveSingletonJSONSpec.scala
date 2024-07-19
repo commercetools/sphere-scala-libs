@@ -115,7 +115,7 @@ class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
       case _ => false
     }
 
-  extension (jv: JValue)
+  extension (jv: JValue) {
     def removeField(p: JField => Boolean): JValue = jv.transform { case JObject(l) =>
       JObject(l.filterNot(p))
     }
@@ -130,9 +130,10 @@ class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
         case JArray(l) => f(JArray(l.map(rec)))
         case x => f(x)
       }
+
       rec(jv)
     }
-
+  }
 }
 
 sealed abstract class PictureSize(val weight: Int, val height: Int)
