@@ -386,7 +386,7 @@ object FromJSON extends FromJSONInstances {
   // this only supports the part where the date is specified
   private val lenientInstantParser =
     new time.format.DateTimeFormatterBuilder()
-      .appendPattern("yyyy[-MM[-dd]]")
+      .appendPattern("uuuu[-MM[-dd]]")
       .optionalStart()
       .appendPattern("'T'[HH[:mm[:ss]]]")
       .appendFraction(time.temporal.ChronoField.NANO_OF_SECOND, 0, 9, true)
