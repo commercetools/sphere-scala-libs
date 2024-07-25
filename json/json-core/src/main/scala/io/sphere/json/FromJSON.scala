@@ -404,7 +404,8 @@ object FromJSON extends FromJSONInstances {
       .withZone(time.ZoneOffset.UTC)
 
   implicit val javaInstantReader: FromJSON[time.Instant] =
-    jsonStringReader("Failed to parse date/time: %s")(s => time.Instant.from(lenientInstantParser.parse(s)))
+    jsonStringReader("Failed to parse date/time: %s")(s =>
+      time.Instant.from(lenientInstantParser.parse(s)))
 
   implicit val javaLocalTimeReader: FromJSON[time.LocalTime] =
     jsonStringReader("Failed to parse time: %s")(
