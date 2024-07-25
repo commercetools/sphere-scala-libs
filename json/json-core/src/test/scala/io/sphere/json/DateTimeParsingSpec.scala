@@ -3,6 +3,8 @@ package io.sphere.json
 import org.json4s.JString
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import java.time.Instant
+import cats.data.Validated.Valid
 
 class DateTimeParsingSpec extends AnyWordSpec with Matchers {
 
@@ -107,4 +109,54 @@ class DateTimeParsingSpec extends AnyWordSpec with Matchers {
       javaInstantReader.read(jsonDateStringWith(secondOfTheMinute = "87")) shouldNot beValid
     }
   }
+
+  // ported from https://github.com/JodaOrg/joda-time/blob/4a1402a47cab4636bf4c73d42a62bfa80c1535ca/src/test/java/org/joda/time/convert/TestStringConverter.java#L114-L156
+  // ensures that we accept similar patterns as joda when parsing instants
+  "parsing a Java instant" should {
+    "accept a full instant with milliseconds and offset" in {
+      javaInstantReader.read(JString("2004-06-09T12:24:48.501+08:00")) shouldBe Valid(Instant.parse("2004-06-09T04:24:48.501Z"))
+    }
+
+    "accept a year with offset" in {
+      javaInstantReader.read(JString("2004T+08:00")) shouldBe Valid(Instant.parse("2004-01-01T00:00:00+08:00"))
+    }
+
+    "accept a year month with offset" in {
+      javaInstantReader.read(JString("2004-06T+08:00")) shouldBe Valid(Instant.parse("2004-06-01T00:00:00+08:00"))
+    }
+
+    "accept a year month day with offset" in {
+      javaInstantReader.read(JString("2004-06-09T+08:00")) shouldBe Valid(Instant.parse("2004-06-09T00:00:00+08:00"))
+    }
+
+    "accept a year month day with hour and offset" in {
+      javaInstantReader.read(JString("2004-06-09T12+08:00")) shouldBe Valid(Instant.parse("2004-06-09T04:00:00Z"))
+    }
+
+    "accept a year month day with hour, minute, and offset" in {
+      javaInstantReader.read(JString("2004-06-09T12:24+08:00")) shouldBe Valid(Instant.parse("2004-06-09T04:24:00Z"))
+    }
+
+    "accept a year month day with hour, minute, second, and offset" in {
+      javaInstantReader.read(JString("2004-06-09T12:24:48+08:00")) shouldBe Valid(Instant.parse("2004-06-09T04:24:48Z"))
+    }
+
+    "accept a year month day with hour, fraction, and offset" in {
+      javaInstantReader.read(JString("2004-06-09T12.5+08:00")) shouldBe Valid(Instant.parse("2004-06-09T04:00:00.5Z"))
+    }
+
+    "accept a year month day with hour, minute, fraction, and offset" in {
+      javaInstantReader.read(JString("2004-06-09T12:24.5+08:00")) shouldBe Valid(Instant.parse("2004-06-09T04:24:00.5Z"))
+    }
+
+    "accept a year month day with hour, minute, second, fraction, and offset" in {
+      javaInstantReader.read(JString("2004-06-09T12:24:48.5+08:00")) shouldBe Valid(Instant.parse("2004-06-09T04:24:48.5Z"))
+    }
+
+    "accept a year month day with hour, minute, second, fraction, but no offset" in {
+      javaInstantReader.read(JString("2004-06-09T12:24:48.501")) shouldBe Valid(Instant.parse("2004-06-09T12:24:48.501Z"))
+    }
+
+  }
+
 }
