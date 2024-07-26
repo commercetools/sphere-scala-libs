@@ -391,7 +391,7 @@ object FromJSON extends FromJSONInstances {
       .appendPattern("'T'[HH[:mm[:ss]]]")
       .appendFraction(time.temporal.ChronoField.NANO_OF_SECOND, 0, 9, true)
       .optionalStart()
-      .appendZoneOrOffsetId()
+      .appendOffset("+HHmm", "Z")
       .optionalEnd()
       .optionalEnd()
       .parseDefaulting(time.temporal.ChronoField.MONTH_OF_YEAR, 1L)
@@ -400,8 +400,8 @@ object FromJSON extends FromJSONInstances {
       .parseDefaulting(time.temporal.ChronoField.MINUTE_OF_HOUR, 0L)
       .parseDefaulting(time.temporal.ChronoField.SECOND_OF_MINUTE, 0L)
       .parseDefaulting(time.temporal.ChronoField.NANO_OF_SECOND, 0L)
+      .parseDefaulting(time.temporal.ChronoField.OFFSET_SECONDS, 0L)
       .toFormatter()
-      .withZone(time.ZoneOffset.UTC)
 
   implicit val javaInstantReader: FromJSON[time.Instant] =
     jsonStringReader("Failed to parse date/time: %s")(s =>
