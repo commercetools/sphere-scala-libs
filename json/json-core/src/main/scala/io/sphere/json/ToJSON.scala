@@ -185,14 +185,22 @@ object ToJSON extends ToJSONInstances {
   }
 
   // java.time
+
+  // always format the milliseconds
+  private val javaInstantFormatter = new time.format.DateTimeFormatterBuilder()
+    .appendInstant(3)
+    .toFormatter()
   implicit val javaInstantWriter: ToJSON[time.Instant] = new ToJSON[time.Instant] {
     def write(value: time.Instant): JValue = JString(
-      time.format.DateTimeFormatter.ISO_INSTANT.format(value))
+      javaInstantFormatter.format(time.OffsetDateTime.ofInstant(value, time.ZoneOffset.UTC)))
   }
 
+  // always format the milliseconds
+  private val javaLocalTimeFormatter = new time.format.DateTimeFormatterBuilder()
+    .appendPattern("HH:mm:ss.SSS")
+    .toFormatter()
   implicit val javaTimeWriter: ToJSON[time.LocalTime] = new ToJSON[time.LocalTime] {
-    def write(value: time.LocalTime): JValue = JString(
-      time.format.DateTimeFormatter.ISO_LOCAL_TIME.format(value))
+    def write(value: time.LocalTime): JValue = JString(javaLocalTimeFormatter.format(value))
   }
 
   implicit val javaDateWriter: ToJSON[time.LocalDate] = new ToJSON[time.LocalDate] {
