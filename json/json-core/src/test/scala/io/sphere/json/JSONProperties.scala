@@ -9,6 +9,7 @@ import cats.data.NonEmptyList
 import cats.syntax.eq._
 import org.joda.time._
 import org.scalacheck._
+import java.time
 
 import scala.math.BigDecimal.RoundingMode
 
@@ -53,6 +54,13 @@ object JSONProperties extends Properties("JSON") {
       ms <- Gen.choose(0, 999)
     } yield new DateTime(y, m, d, h, min, s, ms, DateTimeZone.UTC))
 
+  // generate dates between years -4000 and +4000
+  implicit val javaInstant: Arbitrary[time.Instant] =
+    Arbitrary(Gen.choose(-188395027761000L, 64092207599999L).map(time.Instant.ofEpochMilli(_)))
+
+  implicit val javaLocalTime: Arbitrary[time.LocalTime] = Arbitrary(
+    Gen.choose(0, 3600 * 24).map(time.LocalTime.ofSecondOfDay(_)))
+
   implicit def arbitraryDate: Arbitrary[LocalDate] =
     Arbitrary(Arbitrary.arbitrary[DateTime].map(_.toLocalDate))
 
@@ -95,6 +103,10 @@ object JSONProperties extends Properties("JSON") {
   implicit val yearMonthEqual: Eq[YearMonth] = new Eq[YearMonth] {
     def eqv(dt1: YearMonth, dt2: YearMonth) = dt1 == dt2
   }
+  implicit val javaInstantEqual: Eq[time.Instant] = Eq.fromUniversalEquals
+  implicit val javaLocalDateEqual: Eq[time.LocalDate] = Eq.fromUniversalEquals
+  implicit val javaLocalTimeEqual: Eq[time.LocalTime] = Eq.fromUniversalEquals
+  implicit val javaYearMonthEqual: Eq[time.YearMonth] = Eq.fromUniversalEquals
 
   private def checkC[C[_]](name: String)(implicit
       jri: FromJSON[C[Int]],
@@ -151,4 +163,8 @@ object JSONProperties extends Properties("JSON") {
   property("read/write LocalDate") = Prop.forAll((u: LocalDate) => check(u))
   property("read/write LocalTime") = Prop.forAll((u: LocalTime) => check(u))
   property("read/write YearMonth") = Prop.forAll((u: YearMonth) => check(u))
+  property("read/write java.time.Instant") = Prop.forAll((i: time.Instant) => check(i))
+  property("read/write java.time.LocalDate") = Prop.forAll((d: time.LocalDate) => check(d))
+  property("read/write java.time.LocalTime") = Prop.forAll((t: time.LocalTime) => check(t))
+  property("read/write java.time.YearMonth") = Prop.forAll((ym: time.YearMonth) => check(ym))
 }

@@ -1,7 +1,7 @@
 import pl.project13.scala.sbt.JmhPlugin
 
-lazy val scala2_12 = "2.12.18"
-lazy val scala2_13 = "2.13.12"
+lazy val scala2_12 = "2.12.19"
+lazy val scala2_13 = "2.13.14"
 lazy val scala3 = "3.4.1"
 
 // sbt-github-actions needs configuration in `ThisBuild`
@@ -58,10 +58,10 @@ lazy val standardSettings = Defaults.coreDefaultSettings ++ Seq(
   ThisBuild / javacOptions ++= Seq("-source", "8", "-target", "8"),
   Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
   libraryDependencies ++= Seq(
-    "org.scalatest" %% "scalatest" % "3.2.18" % Test,
+    "org.scalatest" %% "scalatest" % "3.2.19" % Test,
     "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % Test,
-    "org.scalacheck" %% "scalacheck" % "1.17.0" % Test,
-    "ch.qos.logback" % "logback-classic" % "1.5.0" % Test
+    "org.scalacheck" %% "scalacheck" % "1.18.0" % Test,
+    "ch.qos.logback" % "logback-classic" % "1.5.6" % Test
   ),
   ThisBuild / shellPrompt := { state ⇒
     scala.Console.CYAN + Project.extract(state).currentRef.project + "> " + scala.Console.RESET

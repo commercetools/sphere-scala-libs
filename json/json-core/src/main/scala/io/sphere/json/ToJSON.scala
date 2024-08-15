@@ -5,10 +5,15 @@ import java.util.{Currency, Locale, UUID}
 
 import io.sphere.util.{BaseMoney, HighPrecisionMoney, Money}
 import org.json4s.JsonAST._
-import org.joda.time._
+import org.joda.time.DateTime
+import org.joda.time.DateTimeZone
+import org.joda.time.LocalTime
+import org.joda.time.LocalDate
+import org.joda.time.YearMonth
 import org.joda.time.format.ISODateTimeFormat
 
 import scala.annotation.implicitNotFound
+import java.time
 
 /** Type class for types that can be written to JSON. */
 @implicitNotFound("Could not find an instance of ToJSON for ${A}")
@@ -161,6 +166,7 @@ object ToJSON extends ToJSONInstances {
     def write(u: Unit): JValue = JNothing
   }
 
+  // Joda time
   implicit val dateTimeWriter: ToJSON[DateTime] = new ToJSON[DateTime] {
     def write(dt: DateTime): JValue = JString(
       ISODateTimeFormat.dateTime.print(dt.withZone(DateTimeZone.UTC)))
@@ -176,6 +182,34 @@ object ToJSON extends ToJSONInstances {
 
   implicit val yearMonthWriter: ToJSON[YearMonth] = new ToJSON[YearMonth] {
     def write(ym: YearMonth): JValue = JString(ISODateTimeFormat.yearMonth().print(ym))
+  }
+
+  // java.time
+
+  // always format the milliseconds
+  private val javaInstantFormatter = new time.format.DateTimeFormatterBuilder()
+    .appendInstant(3)
+    .toFormatter()
+  implicit val javaInstantWriter: ToJSON[time.Instant] = new ToJSON[time.Instant] {
+    def write(value: time.Instant): JValue = JString(
+      javaInstantFormatter.format(time.OffsetDateTime.ofInstant(value, time.ZoneOffset.UTC)))
+  }
+
+  // always format the milliseconds
+  private val javaLocalTimeFormatter = new time.format.DateTimeFormatterBuilder()
+    .appendPattern("HH:mm:ss.SSS")
+    .toFormatter()
+  implicit val javaTimeWriter: ToJSON[time.LocalTime] = new ToJSON[time.LocalTime] {
+    def write(value: time.LocalTime): JValue = JString(javaLocalTimeFormatter.format(value))
+  }
+
+  implicit val javaDateWriter: ToJSON[time.LocalDate] = new ToJSON[time.LocalDate] {
+    def write(value: time.LocalDate): JValue = JString(
+      time.format.DateTimeFormatter.ISO_LOCAL_DATE.format(value))
+  }
+
+  implicit val javaYearMonth: ToJSON[time.YearMonth] = new ToJSON[time.YearMonth] {
+    def write(value: time.YearMonth): JValue = JString(JavaYearMonthFormatter.format(value))
   }
 
   implicit val uuidWriter: ToJSON[UUID] = new ToJSON[UUID] {

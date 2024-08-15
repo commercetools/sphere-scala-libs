@@ -23,7 +23,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        scala: [2.12.18, 2.13.12]
+        scala: [2.12.19, 2.13.14]
         java: [temurin@17]
     runs-on: ${{ matrix.os }}
     steps:
@@ -39,6 +39,9 @@ jobs:
           distribution: temurin
           java-version: 17
           cache: sbt
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
 
       - name: Check formatting
         run: sbt '++ ${{ matrix.scala }}' scalafmtCheckAll
@@ -65,7 +68,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        scala: [2.13.12]
+        scala: [2.13.14]
         java: [temurin@17]
     runs-on: ${{ matrix.os }}
     steps:
@@ -82,22 +85,25 @@ jobs:
           java-version: 17
           cache: sbt
 
-      - name: Download target directories (2.12.18)
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
+
+      - name: Download target directories (2.12.19)
         uses: actions/download-artifact@v4
         with:
-          name: target-${{ matrix.os }}-2.12.18-${{ matrix.java }}
+          name: target-${{ matrix.os }}-2.12.19-${{ matrix.java }}
 
-      - name: Inflate target directories (2.12.18)
+      - name: Inflate target directories (2.12.19)
         run: |
           tar xf targets.tar
           rm targets.tar
 
-      - name: Download target directories (2.13.12)
+      - name: Download target directories (2.13.14)
         uses: actions/download-artifact@v4
         with:
-          name: target-${{ matrix.os }}-2.13.12-${{ matrix.java }}
+          name: target-${{ matrix.os }}-2.13.14-${{ matrix.java }}
 
-      - name: Inflate target directories (2.13.12)
+      - name: Inflate target directories (2.13.14)
         run: |
           tar xf targets.tar
           rm targets.tar
