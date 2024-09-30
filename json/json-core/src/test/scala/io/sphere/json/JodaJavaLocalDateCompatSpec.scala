@@ -44,5 +44,8 @@ class JodaJavaLocalDateCompatSpec extends AnyWordSpec with Matchers {
     "accept a year with leading zero" in {
       test(jsonDateStringWith(year = "02020"))
     }
+    "accept a year with leading plus sign" in {
+      test(jsonDateStringWith(year = "+02020"))
+    }
   }
 }

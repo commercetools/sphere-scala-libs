@@ -405,6 +405,9 @@ object FromJSON extends FromJSONInstances {
 
   private val lenientLocalDateParser =
     new time.format.DateTimeFormatterBuilder()
+      .optionalStart()
+      .appendLiteral('+')
+      .optionalEnd()
       .appendValue(time.temporal.ChronoField.YEAR, 1, 9, java.time.format.SignStyle.NORMAL)
       .optionalStart()
       .appendLiteral('-')
