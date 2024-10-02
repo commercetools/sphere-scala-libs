@@ -403,6 +403,24 @@ object FromJSON extends FromJSONInstances {
       .parseDefaulting(time.temporal.ChronoField.OFFSET_SECONDS, 0L)
       .toFormatter()
 
+  private val lenientLocalDateParser =
+    new time.format.DateTimeFormatterBuilder()
+      .optionalStart()
+      .appendLiteral('+')
+      .optionalEnd()
+      .appendValue(time.temporal.ChronoField.YEAR, 1, 9, java.time.format.SignStyle.NORMAL)
+      .optionalStart()
+      .appendLiteral('-')
+      .appendValue(time.temporal.ChronoField.MONTH_OF_YEAR, 1, 2, java.time.format.SignStyle.NORMAL)
+      .optionalStart()
+      .appendLiteral('-')
+      .appendValue(time.temporal.ChronoField.DAY_OF_MONTH, 1, 2, java.time.format.SignStyle.NORMAL)
+      .optionalEnd()
+      .optionalEnd()
+      .parseDefaulting(time.temporal.ChronoField.MONTH_OF_YEAR, 1L)
+      .parseDefaulting(time.temporal.ChronoField.DAY_OF_MONTH, 1L)
+      .toFormatter()
+
   implicit val javaInstantReader: FromJSON[time.Instant] =
     jsonStringReader("Failed to parse date/time: %s")(s =>
       time.Instant.from(lenientInstantParser.parse(s)))
@@ -412,8 +430,8 @@ object FromJSON extends FromJSONInstances {
       time.LocalTime.parse(_, time.format.DateTimeFormatter.ISO_LOCAL_TIME))
 
   implicit val javaLocalDateReader: FromJSON[time.LocalDate] =
-    jsonStringReader("Failed to parse date: %s")(
-      time.LocalDate.parse(_, time.format.DateTimeFormatter.ISO_LOCAL_DATE))
+    jsonStringReader("Failed to parse date: %s")(s =>
+      time.LocalDate.from(lenientLocalDateParser.parse(s)))
 
   implicit val javaYearMonthReader: FromJSON[time.YearMonth] =
     jsonStringReader("Failed to parse year/month: %s")(
