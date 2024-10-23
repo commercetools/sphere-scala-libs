@@ -168,6 +168,22 @@ class DateTimeParsingSpec extends AnyWordSpec with Matchers {
         Instant.parse("2004-06-09T12:24:48.501Z"))
     }
 
+    "accept a year month day with hour, minute, second, and an offset containing a colon" in {
+      javaInstantReader.read(JString("2004-06-09T12:24:48+08:00")) shouldBe Valid(
+        Instant.parse("2004-06-09T04:24:48Z"))
+    }
+    "accept a year month day with hour, minute, second, and an offset of zero containing a colon" in {
+      javaInstantReader.read(JString("2004-06-09T12:24:48+00:00")) shouldBe Valid(
+        Instant.parse("2004-06-09T12:24:48Z"))
+    }
+    "accept a year month day with hour, minute, second, and a negative colon offset" in {
+      javaInstantReader.read(JString("2004-06-09T12:24:48-08:00")) shouldBe Valid(
+        Instant.parse("2004-06-09T20:24:48Z"))
+    }
+    "accept a year month day with hour, minute, second, and an offset of hours only" in {
+      javaInstantReader.read(JString("2004-06-09T12:24:48+00")) shouldBe Valid(
+        Instant.parse("2004-06-09T12:24:48Z"))
+    }
   }
 
 }
