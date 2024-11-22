@@ -2,7 +2,7 @@ import pl.project13.scala.sbt.JmhPlugin
 
 lazy val scala2_12 = "2.12.19"
 lazy val scala2_13 = "2.13.14"
-lazy val scala3 = "3.4.1"
+lazy val scala3 = "3.5.2"
 
 // sbt-github-actions needs configuration in `ThisBuild`
 ThisBuild / crossScalaVersions := Seq(scala2_12, scala2_13, scala3)
@@ -105,7 +105,7 @@ lazy val `sphere-json-derivation` = project
   .dependsOn(`sphere-json-core`)
 
 lazy val `sphere-json-derivation-scala-3` = project
-  .settings(crossScalaVersions := Seq(scala3))
+  .settings(scalaVersion := scala3)
   .in(file("./json/json-derivation-scala-3"))
   .settings(standardSettings: _*)
   .dependsOn(`sphere-json-core`)
@@ -129,11 +129,11 @@ lazy val `sphere-mongo-derivation` = project
   .settings(Fmpp.settings: _*)
   .dependsOn(`sphere-mongo-core`)
 
-lazy val `sphere-mongo-derivation-scala-3` = project
-  .settings(crossScalaVersions := Seq(scala3))
-  .in(file("./mongo/mongo-derivation-scala-3"))
+lazy val `sphere-mongo-3` = project
+  .settings(scalaVersion := scala3)
+  .in(file("./mongo/mongo-3"))
   .settings(standardSettings: _*)
-  .dependsOn(`sphere-mongo-core`)
+  .dependsOn(`sphere-util`)
 
 lazy val `sphere-mongo-derivation-magnolia` = project
   .in(file("./mongo/mongo-derivation-magnolia"))
