@@ -1,7 +1,7 @@
 package io.sphere.mongo.generic
 
 import io.sphere.mongo.MongoUtils.*
-import io.sphere.mongo.generic.DefaultMongoFormats.given
+import io.sphere.mongo.format.DefaultMongoFormats.given
 import io.sphere.mongo.format.{MongoFormat, deriveMongoFormat}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec

@@ -1,13 +1,14 @@
 package io.sphere.mongo.catsinstances
 
-import cats.syntax.invariant._
-import io.sphere.mongo.format.DefaultMongoFormats._
-import io.sphere.mongo.format._
+import cats.syntax.invariant.*
+import io.sphere.mongo.{fromMongo, toMongo}
+import io.sphere.mongo.format.*
+import io.sphere.mongo.format.DefaultMongoFormats.given
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 class MongoFormatCatsInstancesTest extends AnyWordSpec with Matchers {
-  import MongoFormatCatsInstancesTest._
+  import MongoFormatCatsInstancesTest.*
 
   "Invariant[MongoFormat]" must {
     "allow imaping a default format" in {

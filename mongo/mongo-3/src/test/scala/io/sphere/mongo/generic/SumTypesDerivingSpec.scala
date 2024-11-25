@@ -3,7 +3,7 @@ package io.sphere.mongo.generic
 import com.mongodb.DBObject
 import io.sphere.mongo.MongoUtils.dbObj
 import io.sphere.mongo.format.{MongoFormat, deriveMongoFormat}
-import io.sphere.mongo.generic.DefaultMongoFormats.given
+import io.sphere.mongo.format.DefaultMongoFormats.given
 import org.bson.BSONObject
 import org.scalatest.Assertion
 import org.scalatest.matchers.must.Matchers

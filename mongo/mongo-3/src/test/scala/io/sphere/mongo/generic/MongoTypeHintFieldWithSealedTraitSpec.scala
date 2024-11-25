@@ -2,7 +2,7 @@ package io.sphere.mongo.generic
 
 import io.sphere.mongo.MongoUtils.dbObj
 import io.sphere.mongo.format.{MongoFormat, deriveMongoFormat}
-import io.sphere.mongo.generic.DefaultMongoFormats.given
+import io.sphere.mongo.format.DefaultMongoFormats.given
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
