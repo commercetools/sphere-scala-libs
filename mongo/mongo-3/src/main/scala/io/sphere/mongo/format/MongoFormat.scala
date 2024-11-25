@@ -56,6 +56,7 @@ object MongoFormat {
         case p: Mirror.ProductOf[A] => deriveCaseClass(p)
       }
 
+    @annotation.nowarn("msg=New anonymous class definition will be duplicated at each inline site")
     inline private def deriveTrait[A](mirrorOfSum: Mirror.SumOf[A]): MongoFormat[A] =
       new MongoFormat[A] {
         private val traitMetaData = AnnotationReader.readTraitMetaData[A]
@@ -87,6 +88,7 @@ object MongoFormat {
           }
       }
 
+    @annotation.nowarn("msg=New anonymous class definition will be duplicated at each inline site")
     inline private def deriveCaseClass[A](mirrorOfProduct: Mirror.ProductOf[A]): MongoFormat[A] =
       new MongoFormat[A] {
         private val caseClassMetaData = AnnotationReader.readCaseClassMetaData[A]
