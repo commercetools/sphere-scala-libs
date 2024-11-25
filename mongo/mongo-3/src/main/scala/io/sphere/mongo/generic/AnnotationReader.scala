@@ -28,10 +28,6 @@ case class TraitMetaData(
     subtypes: Map[String, CaseClassMetaData]
 ) {
   val typeDiscriminator: String = typeHintFieldRaw.map(_.value).getOrElse("type")
-
-  val subTypeTypeHints: Map[String, String] = subtypes.collect {
-    case (name, classMeta) if classMeta.typeHint.isDefined => name -> classMeta.typeHint.get
-  }
 }
 
 object AnnotationReader {
