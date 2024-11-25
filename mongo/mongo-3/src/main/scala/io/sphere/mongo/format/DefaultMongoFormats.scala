@@ -143,7 +143,7 @@ trait DefaultMongoFormats {
       override def fromMongoValue(any: Any): Map[String, A] = {
         import scala.language.existentials
 
-        val map: java.util.Map[_, _] = any match {
+        val map: java.util.Map[?, ?] = any match {
           case b: BasicBSONObject => b // avoid instantiating a new map
           case dbo: BSONObject => dbo.toMap
           case other => throw new Exception(s"cannot read value from ${other.getClass.getName}")
