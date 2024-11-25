@@ -59,10 +59,7 @@ object MongoFormat {
     inline private def deriveTrait[A](mirrorOfSum: Mirror.SumOf[A]): MongoFormat[A] =
       new MongoFormat[A] {
         private val traitMetaData = AnnotationReader.readTraitMetaData[A]
-        private val typeHintMap = traitMetaData.subtypes.collect {
-          case (name, classMeta) if classMeta.typeHint.isDefined =>
-            name -> classMeta.typeHint.get
-        }
+        private val typeHintMap = traitMetaData.subTypeTypeHints
         private val reverseTypeHintMap = typeHintMap.map((on, n) => (n, on))
         private val formatters = summonFormatters[mirrorOfSum.MirroredElemTypes]
         private val names = constValueTuple[mirrorOfSum.MirroredElemLabels].productIterator.toVector
