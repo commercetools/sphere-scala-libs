@@ -6,7 +6,7 @@ lazy val scala3 = "3.5.2"
 
 // sbt-github-actions needs configuration in `ThisBuild`
 ThisBuild / crossScalaVersions := Seq(scala2_12, scala2_13, scala3)
-ThisBuild / scalaVersion := scala3
+ThisBuild / scalaVersion := scala2_13
 ThisBuild / githubWorkflowPublishTargetBranches := List()
 ThisBuild / githubWorkflowJavaVersions := List(JavaSpec.temurin("17"))
 ThisBuild / githubWorkflowBuildPreamble ++= List(
@@ -77,6 +77,11 @@ lazy val `sphere-libs` = project
     publish := {}
   )
   .aggregate(
+    // Scala 3 modules
+    `sphere-util-3`,
+    `sphere-json-3`,
+
+    // Scala 2 modules
     `sphere-util`,
     `sphere-json`,
     `sphere-json-core`,
@@ -87,6 +92,23 @@ lazy val `sphere-libs` = project
     `sphere-mongo-derivation-magnolia`,
     `benchmarks`
   )
+
+// Scala 3 modules
+
+lazy val `sphere-util-3` = project
+  .in(file("./util-3"))
+  .settings(scalaVersion := scala3)
+  .settings(standardSettings: _*)
+  .settings(homepage := Some(url("https://github.com/commercetools/sphere-scala-libs/README.md")))
+
+lazy val `sphere-json-3` = project
+  .in(file("./json/json-3"))
+  .settings(scalaVersion := scala3)
+  .settings(standardSettings: _*)
+  .settings(Fmpp.settings: _*)
+  .dependsOn(`sphere-util-3`)
+
+// Scala 2 modules
 
 lazy val `sphere-util` = project
   .in(file("./util"))
@@ -146,8 +168,6 @@ lazy val `sphere-mongo` = project
   .settings(homepage := Some(
     url("https://github.com/commercetools/sphere-scala-libs/blob/master/mongo/README.md")))
   .dependsOn(`sphere-mongo-core`, `sphere-mongo-derivation`)
-
-// benchmarks
 
 lazy val benchmarks = project
   .settings(standardSettings: _*)
