@@ -23,3 +23,7 @@ src_managed
 *.deb
 *.changes
 *.worksheet.sc 
+metals.sbt 
+.vscode 
+.metals 
+.bloop 
