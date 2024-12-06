@@ -105,7 +105,6 @@ lazy val `sphere-json-3` = project
   .in(file("./json/json-3"))
   .settings(scalaVersion := scala3)
   .settings(standardSettings: _*)
-  .settings(Fmpp.settings: _*)
   .dependsOn(`sphere-util-3`)
 
 // Scala 2 modules
@@ -124,12 +123,6 @@ lazy val `sphere-json-derivation` = project
   .in(file("./json/json-derivation"))
   .settings(standardSettings: _*)
   .settings(Fmpp.settings: _*)
-  .dependsOn(`sphere-json-core`)
-
-lazy val `sphere-json-derivation-scala-3` = project
-  .settings(scalaVersion := scala3)
-  .in(file("./json/json-derivation-scala-3"))
-  .settings(standardSettings: _*)
   .dependsOn(`sphere-json-core`)
 
 lazy val `sphere-json` = project
