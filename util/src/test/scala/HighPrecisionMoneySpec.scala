@@ -47,9 +47,8 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
     }
 
     it("should throw error on overflow in the unary '-' operator.") {
-      a[MoneyOverflowException] must be thrownBy {
+      a[MoneyOverflowException] must be thrownBy
         -(BigDecimal(Long.MinValue) / 1000).EUR_PRECISE(3)
-      }
     }
 
     it("should support the binary '+' operator.") {
@@ -67,9 +66,8 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
     }
 
     it("should throw error on overflow in the binary '+' operator.") {
-      a[MoneyOverflowException] must be thrownBy {
+      a[MoneyOverflowException] must be thrownBy
         (BigDecimal(Long.MaxValue) / 1000).EUR_PRECISE(3) + 1
-      }
     }
 
     it("should support the binary '-' operator.") {
@@ -87,9 +85,8 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
     }
 
     it("should throw error on overflow in the binary '-' operator.") {
-      a[MoneyOverflowException] must be thrownBy {
+      a[MoneyOverflowException] must be thrownBy
         (BigDecimal(Long.MinValue) / 1000).EUR_PRECISE(3) - 1
-      }
     }
 
     it("should support the binary '*' operator.") {
@@ -107,9 +104,8 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
     }
 
     it("should throw error on overflow in the binary '*' operator.") {
-      a[MoneyOverflowException] must be thrownBy {
+      a[MoneyOverflowException] must be thrownBy
         (BigDecimal(Long.MaxValue / 1000) / 2 + 1).EUR_PRECISE(3) * 2
-      }
     }
 
     it("should support the binary '%' operator.") {
@@ -127,9 +123,8 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
     }
 
     it("should throw error on overflow in the binary '%' operator.") {
-      noException must be thrownBy {
+      noException must be thrownBy
         BigDecimal(Long.MaxValue / 1000).EUR_PRECISE(3) % 0.5
-      }
     }
 
     it("should support the binary '/%' operator.") {
@@ -139,9 +134,8 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
     }
 
     it("should throw error on overflow in the binary '/%' operator.") {
-      a[MoneyOverflowException] must be thrownBy {
+      a[MoneyOverflowException] must be thrownBy
         BigDecimal(Long.MaxValue / 1000).EUR_PRECISE(3) /% 0.5
-      }
     }
 
     it("should support the remainder operator.") {
@@ -151,9 +145,8 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
     }
 
     it("should not overflow when getting the remainder of a division ('%').") {
-      noException must be thrownBy {
+      noException must be thrownBy
         BigDecimal(Long.MaxValue / 1000).EUR_PRECISE(3).remainder(0.5)
-      }
     }
 
     it("should partition the value properly.") {
