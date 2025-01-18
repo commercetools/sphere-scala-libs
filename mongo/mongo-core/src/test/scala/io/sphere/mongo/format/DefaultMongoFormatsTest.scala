@@ -125,12 +125,11 @@ class DefaultMongoFormatsTest
       check(map, format)
     }
 
-    "support Java Locale" in {
+    "support Java Locale" in
       Locale.getAvailableLocales.filter(_.toLanguageTag != LangTag.UNDEFINED).foreach { l: Locale =>
         localeFormat.fromMongoValue(localeFormat.toMongoValue(l)).toLanguageTag must be(
           l.toLanguageTag)
       }
-    }
 
     "support UUID" in {
       val format = uuidFormat

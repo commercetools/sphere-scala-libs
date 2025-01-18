@@ -47,9 +47,8 @@ class SumTypesDerivingSpec extends AnyWordSpec with Matchers {
       "deriveMongoFormat[Color6]" mustNot compile
     }
 
-    "use intermediate level" in {
+    "use intermediate level" in
       Color7.format
-    }
 
     "do not use sealed trait info when using a case class directly" in {
       check(Color8.format, Color8.Custom("2356"), dbObj("type" -> "Custom", "rgb" -> "2356"))
