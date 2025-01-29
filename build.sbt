@@ -1,10 +1,14 @@
 import pl.project13.scala.sbt.JmhPlugin
 
+lazy val scala212 = "2.12.20"
+lazy val scala213 = "2.13.16"
+lazy val scala3 = "3.3.4"
+
 // sbt-github-actions needs configuration in `ThisBuild`
-ThisBuild / crossScalaVersions := Seq("2.12.20", "2.13.16")
-ThisBuild / scalaVersion := crossScalaVersions.value.last
+ThisBuild / crossScalaVersions := Seq(scala212, scala213, scala3)
+ThisBuild / scalaVersion := scala213
 ThisBuild / githubWorkflowPublishTargetBranches := List()
-ThisBuild / githubWorkflowJavaVersions := List(JavaSpec.temurin("17"))
+ThisBuild / githubWorkflowJavaVersions := List(JavaSpec.temurin("21"))
 ThisBuild / githubWorkflowBuildPreamble ++= List(
   WorkflowStep.Sbt(List("scalafmtCheckAll"), name = Some("Check formatting"))
 )
@@ -44,8 +48,8 @@ lazy val standardSettings = Defaults.coreDefaultSettings ++ Seq(
   ),
   javacOptions ++= Seq("-deprecation", "-Xlint:unchecked"),
   // targets Java 8 bytecode (scalac & javac)
-  ThisBuild / scalacOptions ++= {
-    if (scalaVersion.value.startsWith("2.12")) Seq.empty
+  scalacOptions ++= {
+    if (scalaVersion.value.startsWith("2.12") || scalaVersion.value.startsWith("3")) Seq.empty
     else Seq("-target", "8")
   },
   ThisBuild / javacOptions ++= Seq("-source", "8", "-target", "8"),
@@ -64,7 +68,7 @@ lazy val standardSettings = Defaults.coreDefaultSettings ++ Seq(
 lazy val `sphere-libs` = project
   .in(file("."))
   .settings(standardSettings: _*)
-  .settings(publishArtifact := false, publish := {})
+  .settings(publishArtifact := false, publish := {}, crossScalaVersions := Seq(scala212, scala213))
   .aggregate(
     `sphere-util`,
     `sphere-json`,
@@ -91,6 +95,7 @@ lazy val `sphere-json-derivation` = project
   .in(file("./json/json-derivation"))
   .settings(standardSettings: _*)
   .settings(Fmpp.settings: _*)
+  .settings(crossScalaVersions := Seq(scala212, scala213))
   .dependsOn(`sphere-json-core`)
 
 lazy val `sphere-json` = project
@@ -98,6 +103,7 @@ lazy val `sphere-json` = project
   .settings(standardSettings: _*)
   .settings(homepage := Some(
     url("https://github.com/commercetools/sphere-scala-libs/blob/master/json/README.md")))
+  .settings(crossScalaVersions := Seq(scala212, scala213))
   .dependsOn(`sphere-json-core`, `sphere-json-derivation`)
 
 lazy val `sphere-mongo-core` = project
@@ -109,11 +115,13 @@ lazy val `sphere-mongo-derivation` = project
   .in(file("./mongo/mongo-derivation"))
   .settings(standardSettings: _*)
   .settings(Fmpp.settings: _*)
+  .settings(crossScalaVersions := Seq(scala212, scala213))
   .dependsOn(`sphere-mongo-core`)
 
 lazy val `sphere-mongo-derivation-magnolia` = project
   .in(file("./mongo/mongo-derivation-magnolia"))
   .settings(standardSettings: _*)
+  .settings(crossScalaVersions := Seq(scala212, scala213))
   .dependsOn(`sphere-mongo-core`)
 
 lazy val `sphere-mongo` = project
@@ -121,6 +129,7 @@ lazy val `sphere-mongo` = project
   .settings(standardSettings: _*)
   .settings(homepage := Some(
     url("https://github.com/commercetools/sphere-scala-libs/blob/master/mongo/README.md")))
+  .settings(crossScalaVersions := Seq(scala212, scala213))
   .dependsOn(`sphere-mongo-core`, `sphere-mongo-derivation`)
 
 // benchmarks
@@ -128,5 +137,6 @@ lazy val `sphere-mongo` = project
 lazy val benchmarks = project
   .settings(standardSettings: _*)
   .settings(publishArtifact := false, publish := {})
+  .settings(crossScalaVersions := Seq(scala212, scala213))
   .enablePlugins(JmhPlugin)
   .dependsOn(`sphere-util`, `sphere-json`, `sphere-mongo`)

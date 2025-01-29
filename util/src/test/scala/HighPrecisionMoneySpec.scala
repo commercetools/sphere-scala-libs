@@ -14,7 +14,8 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
   import HighPrecisionMoney.ImplicitsString._
   import HighPrecisionMoney.ImplicitsStringPrecise._
 
-  implicit val defaultRoundingMode = BigDecimal.RoundingMode.HALF_EVEN
+  implicit val defaultRoundingMode: BigDecimal.RoundingMode.Value =
+    BigDecimal.RoundingMode.HALF_EVEN
 
   val Euro: Currency = Currency.getInstance("EUR")
 
@@ -198,6 +199,7 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
 
     it("should not fail on toString") {
       forAll(DomainObjectsGen.highPrecisionMoney) { m =>
+        println(m.toString)
         m.toString
       }
     }

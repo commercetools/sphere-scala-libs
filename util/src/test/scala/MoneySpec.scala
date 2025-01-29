@@ -10,7 +10,7 @@ class MoneySpec extends AnyFunSpec with Matchers with ScalaCheckDrivenPropertyCh
   import Money.ImplicitsDecimal._
   import Money._
 
-  implicit val mode = BigDecimal.RoundingMode.UNNECESSARY
+  implicit val mode: BigDecimal.RoundingMode.Value = BigDecimal.RoundingMode.UNNECESSARY
 
   def euroCents(cents: Long): Money = EUR(0).withCentAmount(cents)
 
