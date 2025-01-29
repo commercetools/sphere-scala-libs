@@ -21,6 +21,7 @@ jobs:
   build:
     name: Build and Test
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest]
         scala: [2.12.20, 2.13.16, 3.3.4]
@@ -49,8 +50,13 @@ jobs:
       - name: Check that workflows are up to date
         run: sbt '++ ${{ matrix.scala }}' githubWorkflowCheck
 
-      - name: Build project
+      - name: Build Scala 2 project
+        if: matrix.scala != '3.3.4'
         run: sbt '++ ${{ matrix.scala }}' test
+
+      - name: Build Scala 3 project
+        if: matrix.scala == '3.3.4'
+        run: sbt '++ ${{ matrix.scala }}' sphere-util/test sphere-json-core/test sphere-mongo-core/test
 
       - name: Compress target directories
         run: tar cf targets.tar benchmarks/target mongo/target json/json-core/target mongo/mongo-core/target json/target util/target json/json-derivation/target mongo/mongo-derivation-magnolia/target target mongo/mongo-derivation/target project/target

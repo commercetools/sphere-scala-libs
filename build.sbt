@@ -12,6 +12,21 @@ ThisBuild / githubWorkflowJavaVersions := List(JavaSpec.temurin("21"))
 ThisBuild / githubWorkflowBuildPreamble ++= List(
   WorkflowStep.Sbt(List("scalafmtCheckAll"), name = Some("Check formatting"))
 )
+ThisBuild / githubWorkflowBuildMatrixFailFast := Some(false)
+
+// workaround for CI because `sbt ++3.3.4 test` used by sbt-github-actions
+// still tries to compile the Scala 2 only projects leading to weird issues
+// note that `sbt +test` is working fine to run cross-compiled tests locally
+ThisBuild / githubWorkflowBuild := Seq(
+  WorkflowStep.Sbt(
+    commands = List("test"),
+    name = Some("Build Scala 2 project"),
+    cond = Some(s"matrix.scala != '$scala3'")),
+  WorkflowStep.Sbt(
+    commands = List("sphere-util/test", "sphere-json-core/test", "sphere-mongo-core/test"),
+    name = Some("Build Scala 3 project"),
+    cond = Some(s"matrix.scala == '$scala3'"))
+)
 
 // Release
 
@@ -68,7 +83,7 @@ lazy val standardSettings = Defaults.coreDefaultSettings ++ Seq(
 lazy val `sphere-libs` = project
   .in(file("."))
   .settings(standardSettings: _*)
-  .settings(publishArtifact := false, publish := {}, crossScalaVersions := Seq(scala212, scala213))
+  .settings(publishArtifact := false, publish := {}, crossScalaVersions := Seq())
   .aggregate(
     `sphere-util`,
     `sphere-json`,
@@ -84,11 +99,13 @@ lazy val `sphere-libs` = project
 lazy val `sphere-util` = project
   .in(file("./util"))
   .settings(standardSettings: _*)
+  .settings(crossScalaVersions := Seq(scala212, scala213, scala3))
   .settings(homepage := Some(url("https://github.com/commercetools/sphere-scala-libs/README.md")))
 
 lazy val `sphere-json-core` = project
   .in(file("./json/json-core"))
   .settings(standardSettings: _*)
+  .settings(crossScalaVersions := Seq(scala212, scala213))
   .dependsOn(`sphere-util`)
 
 lazy val `sphere-json-derivation` = project
@@ -109,6 +126,7 @@ lazy val `sphere-json` = project
 lazy val `sphere-mongo-core` = project
   .in(file("./mongo/mongo-core"))
   .settings(standardSettings: _*)
+  .settings(crossScalaVersions := Seq(scala212, scala213, scala3))
   .dependsOn(`sphere-util`)
 
 lazy val `sphere-mongo-derivation` = project

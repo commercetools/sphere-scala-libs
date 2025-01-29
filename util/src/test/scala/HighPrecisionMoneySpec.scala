@@ -199,7 +199,6 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
 
     it("should not fail on toString") {
       forAll(DomainObjectsGen.highPrecisionMoney) { m =>
-        println(m.toString)
         m.toString
       }
     }

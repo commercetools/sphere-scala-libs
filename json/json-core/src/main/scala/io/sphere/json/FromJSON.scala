@@ -263,7 +263,7 @@ object FromJSON extends FromJSONInstances {
             case (preciseAmount, fractionDigits, currencyCode, centAmount) =>
               HighPrecisionMoney
                 .fromPreciseAmount(preciseAmount, fractionDigits, currencyCode, centAmount)
-                .leftMap(_.map(JSONParseError))
+                .leftMap(_.map(JSONParseError.apply))
           }
 
         case _ =>
