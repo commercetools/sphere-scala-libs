@@ -25,7 +25,8 @@ ThisBuild / githubWorkflowBuild := Seq(
   WorkflowStep.Sbt(
     commands = List("sphere-util/test", "sphere-json-core/test", "sphere-mongo-core/test"),
     name = Some("Build Scala 3 project"),
-    cond = Some(s"matrix.scala == '$scala3'"))
+    cond = Some(s"matrix.scala == '$scala3'")
+  )
 )
 
 // Release
@@ -105,7 +106,7 @@ lazy val `sphere-util` = project
 lazy val `sphere-json-core` = project
   .in(file("./json/json-core"))
   .settings(standardSettings: _*)
-  .settings(crossScalaVersions := Seq(scala212, scala213))
+  .settings(crossScalaVersions := Seq(scala212, scala213, scala3))
   .dependsOn(`sphere-util`)
 
 lazy val `sphere-json-derivation` = project
