@@ -21,3 +21,9 @@ plugins-ide.sbt
 src_managed
 *.deb
 *.changes
+.bloop
+.bsp
+.metals
+metals.sbt
+.vscode
+*.worksheet.sc

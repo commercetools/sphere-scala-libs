@@ -79,7 +79,7 @@ trait DefaultMongoFormats {
   implicit def vecFormat[@specialized A](implicit f: MongoFormat[A]): MongoFormat[Vector[A]] =
     new MongoFormat[Vector[A]] {
       import scala.collection.JavaConverters._
-      override def toMongoValue(a: Vector[A]) = {
+      override def toMongoValue(a: Vector[A]): BasicBSONList = {
         val m = new BasicBSONList()
         if (a.nonEmpty) m.addAll(a.map(f.toMongoValue(_).asInstanceOf[AnyRef]).asJavaCollection)
         m
@@ -104,7 +104,7 @@ trait DefaultMongoFormats {
   implicit def listFormat[@specialized A](implicit f: MongoFormat[A]): MongoFormat[List[A]] =
     new MongoFormat[List[A]] {
       import scala.collection.JavaConverters._
-      override def toMongoValue(a: List[A]) = {
+      override def toMongoValue(a: List[A]): BasicBSONList = {
         val m = new BasicBSONList()
         if (a.nonEmpty) m.addAll(a.map(f.toMongoValue(_).asInstanceOf[AnyRef]).asJavaCollection)
         m
@@ -129,7 +129,7 @@ trait DefaultMongoFormats {
   implicit def setFormat[@specialized A](implicit f: MongoFormat[A]): MongoFormat[Set[A]] =
     new MongoFormat[Set[A]] {
       import scala.collection.JavaConverters._
-      override def toMongoValue(a: Set[A]) = {
+      override def toMongoValue(a: Set[A]): BasicBSONList = {
         val m = new BasicBSONList()
         if (a.nonEmpty) m.addAll(a.map(f.toMongoValue(_).asInstanceOf[AnyRef]).asJavaCollection)
         m
