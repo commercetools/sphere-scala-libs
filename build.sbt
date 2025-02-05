@@ -2,7 +2,7 @@ import pl.project13.scala.sbt.JmhPlugin
 
 lazy val scala212 = "2.12.20"
 lazy val scala213 = "2.13.16"
-lazy val scala3 = "3.3.4"
+lazy val scala3 = "3.3.5"
 
 // sbt-github-actions needs configuration in `ThisBuild`
 ThisBuild / crossScalaVersions := Seq(scala212, scala213, scala3)
