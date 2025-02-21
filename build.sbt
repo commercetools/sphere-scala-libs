@@ -25,8 +25,6 @@ ThisBuild / githubWorkflowBuild := Seq(
   WorkflowStep.Sbt(
     commands = List(
       "sphere-util/test",
-      "sphere-json-core/test",
-      "sphere-mongo-core/test",
       "sphere-mongo-3/test",
       "sphere-json-3/test"
     ),
@@ -117,6 +115,12 @@ lazy val `sphere-json-3` = project
   .settings(standardSettings: _*)
   .dependsOn(`sphere-util`)
 
+lazy val `sphere-mongo-3` = project
+  .settings(scalaVersion := scala3)
+  .in(file("./mongo/mongo-3"))
+  .settings(standardSettings: _*)
+  .dependsOn(`sphere-util`)
+
 // Scala 2 modules
 
 lazy val `sphere-util` = project
@@ -128,7 +132,7 @@ lazy val `sphere-util` = project
 lazy val `sphere-json-core` = project
   .in(file("./json/json-core"))
   .settings(standardSettings: _*)
-  .settings(crossScalaVersions := Seq(scala212, scala213, scala3))
+  .settings(crossScalaVersions := Seq(scala212, scala213))
   .dependsOn(`sphere-util`)
 
 lazy val `sphere-json-derivation` = project
@@ -149,7 +153,7 @@ lazy val `sphere-json` = project
 lazy val `sphere-mongo-core` = project
   .in(file("./mongo/mongo-core"))
   .settings(standardSettings: _*)
-  .settings(crossScalaVersions := Seq(scala212, scala213, scala3))
+  .settings(crossScalaVersions := Seq(scala212, scala213))
   .dependsOn(`sphere-util`)
 
 lazy val `sphere-mongo-derivation` = project
@@ -158,12 +162,6 @@ lazy val `sphere-mongo-derivation` = project
   .settings(Fmpp.settings: _*)
   .settings(crossScalaVersions := Seq(scala212, scala213))
   .dependsOn(`sphere-mongo-core`)
-
-lazy val `sphere-mongo-3` = project
-  .settings(scalaVersion := scala3)
-  .in(file("./mongo/mongo-3"))
-  .settings(standardSettings: _*)
-  .dependsOn(`sphere-util`)
 
 lazy val `sphere-mongo-derivation-magnolia` = project
   .in(file("./mongo/mongo-derivation-magnolia"))
