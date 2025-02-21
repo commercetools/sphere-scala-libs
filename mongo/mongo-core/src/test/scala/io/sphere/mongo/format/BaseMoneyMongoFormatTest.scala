@@ -9,7 +9,7 @@ import org.bson.BSONObject
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
 
 class BaseMoneyMongoFormatTest extends AnyWordSpec with Matchers {
 

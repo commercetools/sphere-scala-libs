@@ -64,7 +64,7 @@ trait DefaultMongoFormats {
 
   given vecFormat[@specialized A](using format: MongoFormat[A]): MongoFormat[Vector[A]] =
     new MongoFormat[Vector[A]] {
-      import scala.jdk.CollectionConverters._
+      import scala.collection.JavaConverters._
       override def toMongoValue(a: Vector[A]) = {
         val m = new BasicBSONList()
         if (a.nonEmpty)
@@ -90,7 +90,7 @@ trait DefaultMongoFormats {
 
   given listFormat[@specialized A](using format: MongoFormat[A]): MongoFormat[List[A]] =
     new MongoFormat[List[A]] {
-      import scala.jdk.CollectionConverters._
+      import scala.collection.JavaConverters._
       override def toMongoValue(a: List[A]) = {
         val m = new BasicBSONList()
         if (a.nonEmpty)
@@ -116,7 +116,7 @@ trait DefaultMongoFormats {
 
   given setFormat[@specialized A](using f: MongoFormat[A]): MongoFormat[Set[A]] =
     new MongoFormat[Set[A]] {
-      import scala.jdk.CollectionConverters._
+      import scala.collection.JavaConverters._
       override def toMongoValue(a: Set[A]) = {
         val m = new BasicBSONList()
         if (a.nonEmpty)
