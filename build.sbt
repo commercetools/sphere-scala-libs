@@ -23,7 +23,13 @@ ThisBuild / githubWorkflowBuild := Seq(
     name = Some("Build Scala 2 project"),
     cond = Some(s"matrix.scala != '$scala3'")),
   WorkflowStep.Sbt(
-    commands = List("sphere-util/test", "sphere-json-core/test", "sphere-mongo-core/test"),
+    commands = List(
+      "sphere-util/test",
+      "sphere-json-core/test",
+      "sphere-mongo-core/test",
+      "sphere-mongo-3/test",
+      "sphere-json-3/test"
+    ),
     name = Some("Build Scala 3 project"),
     cond = Some(s"matrix.scala == '$scala3'")
   )
@@ -88,8 +94,8 @@ lazy val `sphere-libs` = project
   .settings(publishArtifact := false, publish := {}, crossScalaVersions := Seq())
   .aggregate(
     // Scala 3 modules
-    `sphere-util-3`,
     `sphere-json-3`,
+    `sphere-mongo-3`,
 
     // Scala 2 modules
     `sphere-util`,
@@ -105,17 +111,11 @@ lazy val `sphere-libs` = project
 
 // Scala 3 modules
 
-lazy val `sphere-util-3` = project
-  .in(file("./util-3"))
-  .settings(scalaVersion := scala3)
-  .settings(standardSettings: _*)
-  .settings(homepage := Some(url("https://github.com/commercetools/sphere-scala-libs/README.md")))
-
 lazy val `sphere-json-3` = project
   .in(file("./json/json-3"))
   .settings(scalaVersion := scala3)
   .settings(standardSettings: _*)
-  .dependsOn(`sphere-util-3`)
+  .dependsOn(`sphere-util`)
 
 // Scala 2 modules
 
