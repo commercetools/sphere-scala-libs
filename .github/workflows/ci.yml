@@ -52,7 +52,7 @@ jobs:
 
       - name: Build Scala 2 project
         if: matrix.scala != '3.3.5'
-        run: sbt '++ ${{ matrix.scala }}' test
+        run: sbt '++ ${{ matrix.scala }}' sphere-util/test sphere-json/test sphere-json-core/test sphere-json-derivation/test sphere-mongo/test sphere-mongo-core/test sphere-mongo-derivation/test sphere-mongo-derivation-magnolia/test benchmark/test
 
       - name: Build Scala 3 project
         if: matrix.scala == '3.3.5'
