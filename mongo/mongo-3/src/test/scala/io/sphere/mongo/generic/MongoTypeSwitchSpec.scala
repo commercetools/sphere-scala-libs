@@ -13,7 +13,7 @@ class MongoTypeSwitchSpec extends AnyWordSpec with Matchers {
   case class B(int: Int) extends A
   case class C(int: Int) extends A
   @MongoTypeHint("D2") case class D(int: Int) extends A
-  
+
   "mongoTypeSwitch" must {
     "derive a subset of a sealed trait" in {
       val format = generic.mongoTypeSwitch[A, (B, C)]()

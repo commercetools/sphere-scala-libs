@@ -4,7 +4,7 @@ import _root_.cats.Invariant
 import io.sphere.mongo.format.MongoFormat
 
 /** Cats instances for [[MongoFormat]]
- */
+  */
 package object catsinstances extends MongoFormatInstances
 
 trait MongoFormatInstances {

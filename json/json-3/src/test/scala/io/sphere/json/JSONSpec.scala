@@ -181,7 +181,8 @@ class JSONSpec extends AnyFunSpec with Matchers {
     }
 
     it("must provide derived instances for singleton objects") {
-      implicit val singletonJSON: JSON[JSONSpec.Singleton.type] = deriveJSON[JSONSpec.Singleton.type]
+      implicit val singletonJSON: JSON[JSONSpec.Singleton.type] =
+        deriveJSON[JSONSpec.Singleton.type]
 
       val json = s"""[${toJSON(Singleton)}]"""
       withClue(json) {

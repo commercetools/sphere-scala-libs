@@ -4,7 +4,7 @@ import com.mongodb.BasicDBObject
 import io.sphere.mongo.format.MongoFormat
 import org.bson.BSONObject
 
-import scala.compiletime.{erasedValue, summonInline, error}
+import scala.compiletime.{erasedValue, error, summonInline}
 
 case object generic {
   inline def mongoTypeSwitch[SuperType, SubTypeTuple <: Tuple](): MongoFormat[SuperType] =
