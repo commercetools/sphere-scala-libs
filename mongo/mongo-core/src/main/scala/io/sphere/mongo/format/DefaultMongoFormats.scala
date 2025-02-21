@@ -50,7 +50,7 @@ trait DefaultMongoFormats {
 
   implicit def optionFormat[@specialized A](implicit f: MongoFormat[A]): MongoFormat[Option[A]] =
     new MongoFormat[Option[A]] {
-      import scala.jdk.CollectionConverters._
+      import scala.collection.JavaConverters._
       override def toMongoValue(a: Option[A]) = a match {
         case Some(aa) => f.toMongoValue(aa)
         case None => MongoNothing

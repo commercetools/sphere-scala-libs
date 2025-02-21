@@ -263,7 +263,6 @@ object Money {
   }
 
   def apply(amount: BigDecimal, currency: Currency): Money = {
-    println("this is called")
     require(
       amount.scale == currency.getDefaultFractionDigits,
       "The scale of the given amount does not match the scale of the provided currency." +
