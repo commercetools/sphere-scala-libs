@@ -2,7 +2,7 @@ package io.sphere.json.generic
 
 import cats.data.Validated.Valid
 import io.sphere.json.{JSON, deriveJSON}
-import io.sphere.json.generic.JsonTypeSwitch.jsonTypeSwitch
+import io.sphere.json.generic.jsonTypeSwitch
 import org.json4s.JsonAST.JObject
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -82,7 +82,7 @@ object JsonTypeSwitchSpec {
     // this can be dangerous is the same class name is used in both sum types
     // ex if we define TypeA.Class1 && TypeB.Class1
     // as both will use the same type value discriminator
-    implicit val json: JSON[Message] = JsonTypeSwitch.jsonTypeSwitch[Message, (TypeA, TypeB)]()
+    implicit val json: JSON[Message] = jsonTypeSwitch[Message, (TypeA, TypeB)]()
   }
 
   sealed trait TypeA extends Message
