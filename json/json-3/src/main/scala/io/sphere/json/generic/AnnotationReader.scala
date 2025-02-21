@@ -25,12 +25,22 @@ case class CaseClassMetaData(
     typeHintRaw.map(_.value).filterNot(_.toList.forall(_ == ' '))
 }
 
+/** This class also works for case classes not only traits, in case of case classes only the `top`
+  * field would be populated
+  */
 case class TraitMetaData(
     top: CaseClassMetaData,
     typeHintFieldRaw: Option[JSONTypeHintField],
     subtypes: Map[String, CaseClassMetaData]
 ) {
+  def isTrait: Boolean = subtypes.nonEmpty
+
   val typeDiscriminator: String = typeHintFieldRaw.map(_.value).getOrElse("type")
+
+  val subTypeTypeHints: Map[String, String] = subtypes.collect {
+    case (name, classMeta) if classMeta.typeHint.isDefined =>
+      name -> classMeta.typeHint.get
+  }
 }
 
 class AnnotationReader(using q: Quotes) {

@@ -1,23 +1,18 @@
 package io.sphere.json
 
 import cats.data.NonEmptyList
-import java.util.{Currency, Locale, UUID}
-
+import io.sphere.json.generic.{AnnotationReader, CaseClassMetaData, Field, TraitMetaData}
 import io.sphere.util.{BaseMoney, HighPrecisionMoney, Money}
-import org.json4s.JsonAST._
-import org.joda.time.DateTime
-import org.joda.time.DateTimeZone
-import org.joda.time.LocalTime
-import org.joda.time.LocalDate
-import org.joda.time.YearMonth
+import org.joda.time.*
 import org.joda.time.format.ISODateTimeFormat
+import org.json4s.JsonAST.*
 
-import scala.annotation.implicitNotFound
 import java.time
+import java.util.{Currency, Locale, UUID}
+import scala.deriving.Mirror
 
 /** Type class for types that can be written to JSON. */
-@implicitNotFound("Could not find an instance of ToJSON for ${A}")
-trait ToJSON[@specialized A] extends Serializable {
+trait ToJSON[A] extends Serializable {
   def write(value: A): JValue
 }
 
@@ -25,10 +20,82 @@ class JSONWriteException(msg: String) extends JSONException(msg)
 
 object ToJSON extends ToJSONInstances {
 
+  inline def apply[A: JSON]: ToJSON[A] = summon[ToJSON[A]]
+
+  inline given derived[A](using Mirror.Of[A]): ToJSON[A] = Derivation.derived[A]
+
+  private def addField(jObject: JObject, field: Field, jValue: JValue): JValue =
+    jValue match {
+      case o: JObject =>
+        if (field.embedded) JObject(jObject.obj ++ o.obj)
+        else JObject(jObject.obj :+ (field.fieldName -> o))
+      case other => JObject(jObject.obj :+ (field.fieldName -> other))
+    }
+
+  private object Derivation {
+
+    import scala.compiletime.{constValue, constValueTuple, erasedValue, summonInline}
+
+    inline def derived[A](using m: Mirror.Of[A]): ToJSON[A] =
+      inline m match {
+        case s: Mirror.SumOf[A] => deriveTrait(s)
+        case p: Mirror.ProductOf[A] => deriveCaseClass(p)
+      }
+
+    inline private def deriveTrait[A](mirrorOfSum: Mirror.SumOf[A]): ToJSON[A] =
+      new ToJSON[A] {
+        private val traitMetaData: TraitMetaData = AnnotationReader.readTraitMetaData[A]
+        private val typeHintMap: Map[String, String] = traitMetaData.subtypes.collect {
+          case (name, classMeta) if classMeta.typeHint.isDefined =>
+            name -> classMeta.typeHint.get
+        }
+        private val reverseTypeHintMap: Map[String, String] = typeHintMap.map((on, n) => (n, on))
+        private val jsons: Seq[ToJSON[Any]] = summonToJson[mirrorOfSum.MirroredElemTypes]
+        private val names: Seq[String] =
+          constValueTuple[mirrorOfSum.MirroredElemLabels].productIterator.toVector
+            .asInstanceOf[Vector[String]]
+        private val jsonsByNames: Map[String, ToJSON[Any]] = names.zip(jsons).toMap
+
+        override def write(value: A): JValue = {
+          // we never get a trait here, only classes, it's safe to assume Product
+          val originalTypeName = value.asInstanceOf[Product].productPrefix
+          val typeName = typeHintMap.getOrElse(originalTypeName, originalTypeName)
+          val json = jsonsByNames(originalTypeName).write(value).asInstanceOf[JObject]
+          val typeDiscriminator = traitMetaData.typeDiscriminator -> JString(typeName)
+          JObject(typeDiscriminator :: json.obj)
+        }
+
+      }
+
+    inline private def deriveCaseClass[A](mirrorOfProduct: Mirror.ProductOf[A]): ToJSON[A] =
+      new ToJSON[A] {
+        private val caseClassMetaData: CaseClassMetaData = AnnotationReader.readCaseClassMetaData[A]
+        private val toJsons: Vector[ToJSON[Any]] = summonToJson[mirrorOfProduct.MirroredElemTypes]
+
+        override def write(value: A): JValue = {
+          val caseClassFields = value.asInstanceOf[Product].productIterator
+          toJsons
+            .zip(caseClassFields)
+            .zip(caseClassMetaData.fields)
+            .foldLeft[JValue](JObject()) { case (jObject, ((toJson, fieldValue), field)) =>
+              addField(jObject.asInstanceOf[JObject], field, toJson.write(fieldValue))
+            }
+        }
+      }
+
+    inline private def summonToJson[T <: Tuple]: Vector[ToJSON[Any]] =
+      inline erasedValue[T] match {
+        case _: EmptyTuple => Vector.empty
+        case _: (t *: ts) =>
+          summonInline[ToJSON[t]]
+            .asInstanceOf[ToJSON[Any]] +: summonToJson[ts]
+      }
+  }
+
   private val emptyJArray = JArray(Nil)
   private val emptyJObject = JObject(Nil)
 
-  @inline def apply[A](implicit instance: ToJSON[A]): ToJSON[A] = instance
+  inline def apply[A](implicit instance: ToJSON[A]): ToJSON[A] = instance
 
   /** construct an instance from a function
     */
@@ -36,7 +103,7 @@ object ToJSON extends ToJSONInstances {
     override def write(value: T): JValue = toJson(value)
   }
 
-  implicit def optionWriter[@specialized A](implicit c: ToJSON[A]): ToJSON[Option[A]] =
+  given optionWriter[A](using c: ToJSON[A]): ToJSON[Option[A]] =
     new ToJSON[Option[A]] {
       def write(opt: Option[A]): JValue = opt match {
         case Some(a) => c.write(a)
@@ -44,7 +111,7 @@ object ToJSON extends ToJSONInstances {
       }
     }
 
-  implicit def listWriter[@specialized A](implicit w: ToJSON[A]): ToJSON[List[A]] =
+  implicit def listWriter[A](implicit w: ToJSON[A]): ToJSON[List[A]] =
     new ToJSON[List[A]] {
       def write(l: List[A]): JValue =
         if (l.isEmpty) emptyJArray
@@ -56,21 +123,21 @@ object ToJSON extends ToJSONInstances {
       def write(l: NonEmptyList[A]): JValue = JArray(l.toList.map(w.write))
     }
 
-  implicit def seqWriter[@specialized A](implicit w: ToJSON[A]): ToJSON[Seq[A]] =
+  implicit def seqWriter[A](implicit w: ToJSON[A]): ToJSON[Seq[A]] =
     new ToJSON[Seq[A]] {
       def write(s: Seq[A]): JValue =
         if (s.isEmpty) emptyJArray
         else JArray(s.iterator.map(w.write).toList)
     }
 
-  implicit def setWriter[@specialized A](implicit w: ToJSON[A]): ToJSON[Set[A]] =
+  implicit def setWriter[A](implicit w: ToJSON[A]): ToJSON[Set[A]] =
     new ToJSON[Set[A]] {
       def write(s: Set[A]): JValue =
         if (s.isEmpty) emptyJArray
         else JArray(s.iterator.map(w.write).toList)
     }
 
-  implicit def vectorWriter[@specialized A](implicit w: ToJSON[A]): ToJSON[Vector[A]] =
+  implicit def vectorWriter[A](implicit w: ToJSON[A]): ToJSON[Vector[A]] =
     new ToJSON[Vector[A]] {
       def write(v: Vector[A]): JValue =
         if (v.isEmpty) emptyJArray
@@ -119,7 +186,7 @@ object ToJSON extends ToJSONInstances {
   }
 
   implicit val moneyWriter: ToJSON[Money] = new ToJSON[Money] {
-    import Money._
+    import Money.*
 
     def write(m: Money): JValue = JObject(
       JField(BaseMoney.TypeField, toJValue(m.`type`)) ::
@@ -132,7 +199,7 @@ object ToJSON extends ToJSONInstances {
 
   implicit val highPrecisionMoneyWriter: ToJSON[HighPrecisionMoney] =
     new ToJSON[HighPrecisionMoney] {
-      import HighPrecisionMoney._
+      import HighPrecisionMoney.*
       def write(m: HighPrecisionMoney): JValue = JObject(
         JField(BaseMoney.TypeField, toJValue(m.`type`)) ::
           JField(CurrencyCodeField, toJValue(m.currency)) ::

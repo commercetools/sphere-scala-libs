@@ -56,8 +56,6 @@ object JsonTypeHintFieldSpec {
   case class UserWithPicture(userId: String, pictureSize: PictureSize, pictureUrl: String)
 
   object UserWithPicture {
-    import io.sphere.json.generic.JSON.given
-    import io.sphere.json.generic.deriveJSON
     given JSON[UserWithPicture] = deriveJSON[UserWithPicture]
   }
 }

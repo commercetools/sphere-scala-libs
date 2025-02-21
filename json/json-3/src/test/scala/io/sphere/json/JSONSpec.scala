@@ -27,7 +27,7 @@ object JSONSpec {
   case class GenericA[A](a: A) extends GenericBase[A]
   case class GenericB[A](a: A) extends GenericBase[A]
 
-  object Singleton
+  case object Singleton
 
   sealed abstract class SingletonEnum
   case object SingletonA extends SingletonEnum
@@ -162,7 +162,6 @@ class JSONSpec extends AnyFunSpec with Matchers {
     }
 
     it("must provide derived JSON instances for sum types") {
-      import io.sphere.json.generic.JSON.derived
       given JSON[Animal] = deriveJSON
       List(Bird("Peewee"), Dog("Hasso"), Cat("Felidae")).foreach { animal =>
         fromJSON[Animal](toJSON(animal)) must equal(Valid(animal))
@@ -181,23 +180,21 @@ class JSONSpec extends AnyFunSpec with Matchers {
       fromJSON[GenericA[String]](toJSON(a)) must equal(Valid(a))
     }
 
-//    it("must provide derived instances for singleton objects") {
-//      import io.sphere.json.generic.JSON.derived
-//      implicit val singletonJSON: JSON[JSONSpec.Singleton.type] = deriveJSON[JSONSpec.Singleton.type]
-//
-//      val json = s"""[${toJSON(Singleton)}]"""
-//      withClue(json) {
-//        fromJSON[Seq[Singleton.type]](json) must equal(Valid(Seq(Singleton)))
-//      }
-//
-//      implicit val singleEnumJSON: JSON[SingletonEnum] = deriveJSON[SingletonEnum]
-//      List(SingletonA, SingletonB, SingletonC).foreach { s =>
-//        fromJSON[SingletonEnum](toJSON(s)) must equal(Valid(s))
-//      }
-//    }
+    it("must provide derived instances for singleton objects") {
+      implicit val singletonJSON: JSON[JSONSpec.Singleton.type] = deriveJSON[JSONSpec.Singleton.type]
+
+      val json = s"""[${toJSON(Singleton)}]"""
+      withClue(json) {
+        fromJSON[Seq[Singleton.type]](json) must equal(Valid(Seq(Singleton)))
+      }
+
+      implicit val singleEnumJSON: JSON[SingletonEnum] = deriveJSON[SingletonEnum]
+      List(SingletonA, SingletonB, SingletonC).foreach { s =>
+        fromJSON[SingletonEnum](toJSON(s)) must equal(Valid(s))
+      }
+    }
 
     it("must provide derived instances for sum types with a mix of case class / object") {
-      import io.sphere.json.generic.JSON.derived
       given JSON[Mixed] = deriveJSON
       List(SingletonMixed, RecordMixed(1)).foreach { m =>
         fromJSON[Mixed](toJSON(m)) must equal(Valid(m))
@@ -390,13 +387,11 @@ case class TestSubjectConcrete4(c4: String) extends TestSubjectCategoryB
 
 object TestSubjectCategoryA {
 
-  import io.sphere.json.generic.JSON.derived
   val json: JSON[TestSubjectCategoryA] = deriveJSON[TestSubjectCategoryA]
 }
 
 object TestSubjectCategoryB {
 
-  import io.sphere.json.generic.JSON.derived
   val json: JSON[TestSubjectCategoryB] = deriveJSON[TestSubjectCategoryB]
 }
 
@@ -405,6 +400,6 @@ object TestSubjectCategoryB {
 //    implicit val jsonA = TestSubjectCategoryA.json
 //    implicit val jsonB = TestSubjectCategoryB.json
 //
-//    jsonTypeSwitch[TestSubjectBase, TestSubjectCategoryA, TestSubjectCategoryB](Nil)
+//    jsonTypeSwitch[TestSubjectBase, (TestSubjectCategoryA, TestSubjectCategoryB)]()
 //  }
 //}

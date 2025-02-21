@@ -3,17 +3,18 @@ package io.sphere.json
 import scala.util.control.NonFatal
 import scala.collection.mutable.ListBuffer
 import java.util.{Currency, Locale, UUID}
-
-import cats.data.NonEmptyList
+import cats.data.{NonEmptyList, Validated}
 import cats.data.Validated.{Invalid, Valid}
-import cats.syntax.apply._
-import cats.syntax.traverse._
+import cats.syntax.apply.*
+import cats.syntax.traverse.*
 import io.sphere.json.field
+import io.sphere.json.generic.{AnnotationReader, CaseClassMetaData, Field, TraitMetaData}
 import io.sphere.util.{BaseMoney, HighPrecisionMoney, LangTag, Money}
-import org.json4s.JsonAST._
+import org.json4s.JsonAST.*
+import org.json4s.DefaultReaders.StringReader
+import org.json4s.{jvalue2monadic, jvalue2readerSyntax}
 import org.joda.time.format.ISODateTimeFormat
 
-import scala.annotation.implicitNotFound
 import java.time
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
@@ -21,9 +22,10 @@ import org.joda.time.YearMonth
 import org.joda.time.LocalTime
 import org.joda.time.LocalDate
 
+import scala.deriving.Mirror
+
 /** Type class for types that can be read from JSON. */
-@implicitNotFound("Could not find an instance of FromJSON for ${A}")
-trait FromJSON[@specialized A] extends Serializable {
+trait FromJSON[A] extends Serializable {
   def read(jval: JValue): JValidation[A]
   final protected def fail(msg: String) = jsonParseError(msg)
 
@@ -33,9 +35,105 @@ trait FromJSON[@specialized A] extends Serializable {
 
 object FromJSON extends FromJSONInstances {
 
+  inline def apply[A: JSON]: FromJSON[A] = summon[FromJSON[A]]
+
+  inline given derived[A](using Mirror.Of[A]): FromJSON[A] = Derivation.derived[A]
+
+  private def addField(jObject: JObject, field: Field, jValue: JValue): JValue =
+    jValue match {
+      case o: JObject =>
+        if (field.embedded) JObject(jObject.obj ++ o.obj)
+        else JObject(jObject.obj :+ (field.fieldName -> o))
+      case other => JObject(jObject.obj :+ (field.fieldName -> other))
+    }
+
+  private object Derivation {
+
+    import scala.compiletime.{constValue, constValueTuple, erasedValue, summonInline}
+
+    inline def derived[A](using m: Mirror.Of[A]): FromJSON[A] =
+      inline m match {
+        case s: Mirror.SumOf[A] => deriveTrait(s)
+        case p: Mirror.ProductOf[A] => deriveCaseClass(p)
+      }
+
+    inline private def deriveTrait[A](mirrorOfSum: Mirror.SumOf[A]): FromJSON[A] =
+      new FromJSON[A] {
+        private val traitMetaData: TraitMetaData = AnnotationReader.readTraitMetaData[A]
+        private val typeHintMap: Map[String, String] = traitMetaData.subtypes.collect {
+          case (name, classMeta) if classMeta.typeHint.isDefined =>
+            name -> classMeta.typeHint.get
+        }
+        private val reverseTypeHintMap: Map[String, String] = typeHintMap.map((on, n) => (n, on))
+        private val fromJsons: Seq[FromJSON[Any]] = summonFromJsons[mirrorOfSum.MirroredElemTypes]
+        private val names: Seq[String] =
+          constValueTuple[mirrorOfSum.MirroredElemLabels].productIterator.toVector
+            .asInstanceOf[Vector[String]]
+        private val jsonsByNames: Map[String, FromJSON[Any]] = names.zip(fromJsons).toMap
+
+        override def read(jValue: JValue): JValidation[A] =
+          jValue match {
+            case jObject: JObject =>
+              val typeName = (jObject \ traitMetaData.typeDiscriminator).as[String]
+              val originalTypeName = reverseTypeHintMap.getOrElse(typeName, typeName)
+              jsonsByNames(originalTypeName).read(jObject).map(_.asInstanceOf[A])
+            case x =>
+              Validated.invalidNel(JSONParseError(s"JSON object expected. Got: '$jValue'"))
+          }
+      }
+
+    inline private def deriveCaseClass[A](mirrorOfProduct: Mirror.ProductOf[A]): FromJSON[A] =
+      new FromJSON[A] {
+        private val caseClassMetaData: CaseClassMetaData = AnnotationReader.readCaseClassMetaData[A]
+        private val fromJsons: Vector[FromJSON[Any]] =
+          summonFromJsons[mirrorOfProduct.MirroredElemTypes]
+        private val fieldsAndJsons: Vector[(Field, FromJSON[Any])] =
+          caseClassMetaData.fields.zip(fromJsons)
+
+        private val fieldNames: Vector[String] = fieldsAndJsons.flatMap { (field, fromJson) =>
+          if (field.embedded) fromJson.fields.toVector :+ field.name
+          else Vector(field.name)
+        }
+
+        override val fields: Set[String] = fieldNames.toSet
+
+        override def read(jValue: JValue): JValidation[A] =
+          jValue match {
+            case jObject: JObject =>
+              for {
+                fieldsAsAList <- fieldsAndJsons
+                  .map((field, fromJson) => readField(field, fromJson, jObject))
+                  .sequence
+                fieldsAsTuple = Tuple.fromArray(fieldsAsAList.toArray)
+
+              } yield mirrorOfProduct.fromTuple(
+                fieldsAsTuple.asInstanceOf[mirrorOfProduct.MirroredElemTypes])
+
+            case x =>
+              Validated.invalidNel(JSONParseError(s"JSON object expected. $x"))
+          }
+
+        private def readField(
+            field: Field,
+            fromJson: FromJSON[Any],
+            jObject: JObject): JValidation[Any] =
+          if (field.embedded) fromJson.read(jObject)
+          else io.sphere.json.field(field.fieldName, field.defaultArgument)(jObject)(fromJson)
+
+      }
+
+    inline private def summonFromJsons[T <: Tuple]: Vector[FromJSON[Any]] =
+      inline erasedValue[T] match {
+        case _: EmptyTuple => Vector.empty
+        case _: (t *: ts) =>
+          summonInline[FromJSON[t]]
+            .asInstanceOf[FromJSON[Any]] +: summonFromJsons[ts]
+      }
+  }
+
   private[FromJSON] val emptyFieldsSet: Set[String] = Set.empty
 
-  @inline def apply[A](implicit instance: FromJSON[A]): FromJSON[A] = instance
+  inline def apply[A](using instance: FromJSON[A]): FromJSON[A] = instance
 
   private val validNone = Valid(None)
   private val validNil = Valid(Nil)
@@ -44,8 +142,7 @@ object FromJSON extends FromJSONInstances {
   private def validEmptyVector[A]: Valid[Vector[A]] =
     validEmptyAnyVector.asInstanceOf[Valid[Vector[A]]]
 
-  implicit def optionMapReader[@specialized A](implicit
-      c: FromJSON[A]): FromJSON[Option[Map[String, A]]] =
+  implicit def optionMapReader[A](implicit c: FromJSON[A]): FromJSON[Option[Map[String, A]]] =
     new FromJSON[Option[Map[String, A]]] {
       private val internalMapReader = mapReader[A]
 
@@ -55,7 +152,7 @@ object FromJSON extends FromJSONInstances {
       }
     }
 
-  implicit def optionReader[@specialized A](implicit c: FromJSON[A]): FromJSON[Option[A]] =
+  given optionReader[A](using c: FromJSON[A]): FromJSON[Option[A]] =
     new FromJSON[Option[A]] {
       def read(jval: JValue): JValidation[Option[A]] = jval match {
         case JNothing | JNull | JObject(Nil) => validNone
@@ -66,7 +163,7 @@ object FromJSON extends FromJSONInstances {
       override val fields: Set[String] = c.fields
     }
 
-  implicit def listReader[@specialized A](implicit r: FromJSON[A]): FromJSON[List[A]] =
+  implicit def listReader[A](implicit r: FromJSON[A]): FromJSON[List[A]] =
     new FromJSON[List[A]] {
 
       def read(jval: JValue): JValidation[List[A]] = jval match {
@@ -96,12 +193,12 @@ object FromJSON extends FromJSONInstances {
       }
     }
 
-  implicit def seqReader[@specialized A](implicit r: FromJSON[A]): FromJSON[Seq[A]] =
+  implicit def seqReader[A](implicit r: FromJSON[A]): FromJSON[Seq[A]] =
     new FromJSON[Seq[A]] {
       def read(jval: JValue): JValidation[Seq[A]] = listReader(r).read(jval)
     }
 
-  implicit def setReader[@specialized A](implicit r: FromJSON[A]): FromJSON[Set[A]] =
+  implicit def setReader[A](implicit r: FromJSON[A]): FromJSON[Set[A]] =
     new FromJSON[Set[A]] {
       def read(jval: JValue): JValidation[Set[A]] = jval match {
         case JArray(l) =>
@@ -111,7 +208,7 @@ object FromJSON extends FromJSONInstances {
       }
     }
 
-  implicit def vectorReader[@specialized A](implicit r: FromJSON[A]): FromJSON[Vector[A]] =
+  implicit def vectorReader[A](implicit r: FromJSON[A]): FromJSON[Vector[A]] =
     new FromJSON[Vector[A]] {
       import scala.collection.immutable.VectorBuilder
 

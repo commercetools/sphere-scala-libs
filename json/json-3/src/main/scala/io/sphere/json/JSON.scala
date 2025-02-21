@@ -1,22 +1,26 @@
 package io.sphere.json
 
+import cats.implicits.*
 import org.json4s.JsonAST.JValue
 
-import scala.annotation.implicitNotFound
+import scala.deriving.Mirror
 
-@implicitNotFound("Could not find an instance of JSON for ${A}")
 trait JSON[A] extends FromJSON[A] with ToJSON[A]
 
-object JSON extends JSONInstances with JSONLowPriorityImplicits {
-  @inline def apply[A](implicit instance: JSON[A]): JSON[A] = instance
-}
+inline def deriveJSON[A](using Mirror.Of[A]): JSON[A] = JSON.derived
 
-trait JSONLowPriorityImplicits {
-  implicit def fromJSONAndToJSON[A](implicit fromJSON: FromJSON[A], toJSON: ToJSON[A]): JSON[A] =
+object JSON extends JSONInstances {
+  inline def apply[A: JSON]: JSON[A] = summon[JSON[A]]
+
+  inline given derived[A](using fromJSON: FromJSON[A], toJSON: ToJSON[A]): JSON[A] =
     new JSON[A] {
       override def read(jval: JValue): JValidation[A] = fromJSON.read(jval)
+
       override def write(value: A): JValue = toJSON.write(value)
+
+      override val fields: Set[String] = fromJSON.fields
     }
+
 }
 
 class JSONException(msg: String) extends RuntimeException(msg)

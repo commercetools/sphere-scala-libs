@@ -154,7 +154,6 @@ object PictureSize {
 sealed trait Access
 object Access {
   // only one sub-type
-  import JSON.derived
   case class Authorized(project: String) extends Access
 
   given JSON[Access] = deriveJSON

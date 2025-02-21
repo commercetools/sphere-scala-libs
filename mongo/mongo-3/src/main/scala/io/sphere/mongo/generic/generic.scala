@@ -4,7 +4,6 @@ import com.mongodb.BasicDBObject
 import io.sphere.mongo.format.MongoFormat
 import org.bson.BSONObject
 
-import scala.annotation.tailrec
 import scala.compiletime.{erasedValue, summonInline, error}
 
 case object generic {
