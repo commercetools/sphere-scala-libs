@@ -7,7 +7,6 @@ boot
 tags
 lib_managed
 *.iml
-.bsp
 .idea
 /.sbtconfig
 /tmtags
@@ -22,8 +21,9 @@ plugins-ide.sbt
 src_managed
 *.deb
 *.changes
-*.worksheet.sc 
-metals.sbt 
-.vscode 
-.metals 
-.bloop 
+.bloop
+.bsp
+.metals
+metals.sbt
+.vscode
+*.worksheet.sc

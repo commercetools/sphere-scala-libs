@@ -1,16 +1,32 @@
 import pl.project13.scala.sbt.JmhPlugin
 
-lazy val scala2_12 = "2.12.19"
-lazy val scala2_13 = "2.13.14"
-lazy val scala3 = "3.5.2"
+lazy val scala212 = "2.12.20"
+lazy val scala213 = "2.13.16"
+lazy val scala3 = "3.3.5"
 
 // sbt-github-actions needs configuration in `ThisBuild`
-ThisBuild / crossScalaVersions := Seq(scala2_12, scala2_13, scala3)
-ThisBuild / scalaVersion := scala2_13
+ThisBuild / crossScalaVersions := Seq(scala212, scala213, scala3)
+ThisBuild / scalaVersion := scala213
 ThisBuild / githubWorkflowPublishTargetBranches := List()
-ThisBuild / githubWorkflowJavaVersions := List(JavaSpec.temurin("17"))
+ThisBuild / githubWorkflowJavaVersions := List(JavaSpec.temurin("21"))
 ThisBuild / githubWorkflowBuildPreamble ++= List(
   WorkflowStep.Sbt(List("scalafmtCheckAll"), name = Some("Check formatting"))
+)
+ThisBuild / githubWorkflowBuildMatrixFailFast := Some(false)
+
+// workaround for CI because `sbt ++3.3.4 test` used by sbt-github-actions
+// still tries to compile the Scala 2 only projects leading to weird issues
+// note that `sbt +test` is working fine to run cross-compiled tests locally
+ThisBuild / githubWorkflowBuild := Seq(
+  WorkflowStep.Sbt(
+    commands = List("test"),
+    name = Some("Build Scala 2 project"),
+    cond = Some(s"matrix.scala != '$scala3'")),
+  WorkflowStep.Sbt(
+    commands = List("sphere-util/test", "sphere-json-core/test", "sphere-mongo-core/test"),
+    name = Some("Build Scala 3 project"),
+    cond = Some(s"matrix.scala == '$scala3'")
+  )
 )
 
 // Release
@@ -51,17 +67,17 @@ lazy val standardSettings = Defaults.coreDefaultSettings ++ Seq(
   }),
   javacOptions ++= Seq("-deprecation", "-Xlint:unchecked"),
   // targets Java 8 bytecode (scalac & javac)
-  ThisBuild / scalacOptions ++= {
-    if (scalaVersion.value.startsWith("2.13")) Seq("-release", "8")
-    else Nil
+  scalacOptions ++= {
+    if (scalaVersion.value.startsWith("2.12") || scalaVersion.value.startsWith("3")) Seq.empty
+    else Seq("-target", "8")
   },
   ThisBuild / javacOptions ++= Seq("-source", "8", "-target", "8"),
   Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "3.2.19" % Test,
     "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % Test,
-    "org.scalacheck" %% "scalacheck" % "1.18.0" % Test,
-    "ch.qos.logback" % "logback-classic" % "1.5.6" % Test
+    "org.scalacheck" %% "scalacheck" % "1.18.1" % Test,
+    "ch.qos.logback" % "logback-classic" % "1.5.16" % Test
   ),
   ThisBuild / shellPrompt := { state ⇒
     scala.Console.CYAN + Project.extract(state).currentRef.project + "> " + scala.Console.RESET
@@ -71,11 +87,7 @@ lazy val standardSettings = Defaults.coreDefaultSettings ++ Seq(
 lazy val `sphere-libs` = project
   .in(file("."))
   .settings(standardSettings: _*)
-  .settings(
-    crossScalaVersions := Nil,
-    publishArtifact := false,
-    publish := {}
-  )
+  .settings(publishArtifact := false, publish := {}, crossScalaVersions := Seq())
   .aggregate(
     // Scala 3 modules
     `sphere-util-3`,
@@ -112,17 +124,20 @@ lazy val `sphere-json-3` = project
 lazy val `sphere-util` = project
   .in(file("./util"))
   .settings(standardSettings: _*)
+  .settings(crossScalaVersions := Seq(scala212, scala213, scala3))
   .settings(homepage := Some(url("https://github.com/commercetools/sphere-scala-libs/README.md")))
 
 lazy val `sphere-json-core` = project
   .in(file("./json/json-core"))
   .settings(standardSettings: _*)
+  .settings(crossScalaVersions := Seq(scala212, scala213, scala3))
   .dependsOn(`sphere-util`)
 
 lazy val `sphere-json-derivation` = project
   .in(file("./json/json-derivation"))
   .settings(standardSettings: _*)
   .settings(Fmpp.settings: _*)
+  .settings(crossScalaVersions := Seq(scala212, scala213))
   .dependsOn(`sphere-json-core`)
 
 lazy val `sphere-json` = project
@@ -130,18 +145,20 @@ lazy val `sphere-json` = project
   .settings(standardSettings: _*)
   .settings(homepage := Some(
     url("https://github.com/commercetools/sphere-scala-libs/blob/master/json/README.md")))
+  .settings(crossScalaVersions := Seq(scala212, scala213))
   .dependsOn(`sphere-json-core`, `sphere-json-derivation`)
 
 lazy val `sphere-mongo-core` = project
   .in(file("./mongo/mongo-core"))
-  .settings(crossScalaVersions := Seq(scala3, scala2_13))
   .settings(standardSettings: _*)
+  .settings(crossScalaVersions := Seq(scala212, scala213, scala3))
   .dependsOn(`sphere-util`)
 
 lazy val `sphere-mongo-derivation` = project
   .in(file("./mongo/mongo-derivation"))
   .settings(standardSettings: _*)
   .settings(Fmpp.settings: _*)
+  .settings(crossScalaVersions := Seq(scala212, scala213))
   .dependsOn(`sphere-mongo-core`)
 
 lazy val `sphere-mongo-3` = project
@@ -153,6 +170,7 @@ lazy val `sphere-mongo-3` = project
 lazy val `sphere-mongo-derivation-magnolia` = project
   .in(file("./mongo/mongo-derivation-magnolia"))
   .settings(standardSettings: _*)
+  .settings(crossScalaVersions := Seq(scala212, scala213))
   .dependsOn(`sphere-mongo-core`)
 
 lazy val `sphere-mongo` = project
@@ -160,10 +178,14 @@ lazy val `sphere-mongo` = project
   .settings(standardSettings: _*)
   .settings(homepage := Some(
     url("https://github.com/commercetools/sphere-scala-libs/blob/master/mongo/README.md")))
+  .settings(crossScalaVersions := Seq(scala212, scala213))
   .dependsOn(`sphere-mongo-core`, `sphere-mongo-derivation`)
+
+// benchmarks
 
 lazy val benchmarks = project
   .settings(standardSettings: _*)
   .settings(publishArtifact := false, publish := {})
+  .settings(crossScalaVersions := Seq(scala212, scala213))
   .enablePlugins(JmhPlugin)
   .dependsOn(`sphere-util`, `sphere-json`, `sphere-mongo`)

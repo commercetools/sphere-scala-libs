@@ -272,6 +272,8 @@ object Money {
     fromDecimalAmount(amount, currency)(BigDecimal.RoundingMode.UNNECESSARY)
   }
 
+  def apply(centAmount: Long, currency: Currency): Money = new Money(centAmount, currency)
+
   private final val bdOne: BigDecimal = BigDecimal(1)
   final val bdTen: BigDecimal = BigDecimal(10)
 
