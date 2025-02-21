@@ -61,14 +61,12 @@ lazy val standardSettings = Defaults.coreDefaultSettings ++ Seq(
     "-deprecation",
     "-unchecked",
     "-feature"
-  ) ++ (CrossVersion.partialVersion(scalaVersion.value) match {
-    case Some((3, _)) => Seq("-noindent")
-    case _ => Seq.empty
-  }),
+  ),
   javacOptions ++= Seq("-deprecation", "-Xlint:unchecked"),
   // targets Java 8 bytecode (scalac & javac)
   scalacOptions ++= {
-    if (scalaVersion.value.startsWith("2.12") || scalaVersion.value.startsWith("3")) Seq.empty
+    if (scalaVersion.value.startsWith("2.12")) Seq.empty
+    else if (scalaVersion.value.startsWith("3")) Seq("-noindent")
     else Seq("-target", "8")
   },
   ThisBuild / javacOptions ++= Seq("-source", "8", "-target", "8"),
