@@ -19,9 +19,20 @@ ThisBuild / githubWorkflowBuildMatrixFailFast := Some(false)
 // note that `sbt +test` is working fine to run cross-compiled tests locally
 ThisBuild / githubWorkflowBuild := Seq(
   WorkflowStep.Sbt(
-    commands = List("test"),
+    commands = List(
+      "sphere-util/test",
+      "sphere-json/test",
+      "sphere-json-core/test",
+      "sphere-json-derivation/test",
+      "sphere-mongo/test",
+      "sphere-mongo-core/test",
+      "sphere-mongo-derivation/test",
+      "sphere-mongo-derivation-magnolia/test",
+      "benchmark/test"
+    ),
     name = Some("Build Scala 2 project"),
-    cond = Some(s"matrix.scala != '$scala3'")),
+    cond = Some(s"matrix.scala != '$scala3'")
+  ),
   WorkflowStep.Sbt(
     commands = List(
       "sphere-util/test",
