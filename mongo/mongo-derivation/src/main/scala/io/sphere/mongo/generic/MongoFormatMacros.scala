@@ -28,7 +28,7 @@ private[generic] object MongoFormatMacros {
       } else Set.empty
     } else Set.empty
 
-  def mongoFormatProductApply(c: blackbox.Context)(
+  private def mongoFormatProductApply(c: blackbox.Context)(
       tpe: c.universe.Type,
       classSym: c.universe.ClassSymbol): c.universe.Tree = {
     import c.universe._
