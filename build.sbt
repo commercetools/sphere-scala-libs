@@ -28,7 +28,7 @@ ThisBuild / githubWorkflowBuild := Seq(
       "sphere-mongo-core/test",
       "sphere-mongo-derivation/test",
       "sphere-mongo-derivation-magnolia/test",
-      "benchmark/test"
+      "benchmarks/test"
     ),
     name = Some("Build Scala 2 project"),
     cond = Some(s"matrix.scala != '$scala3'")
