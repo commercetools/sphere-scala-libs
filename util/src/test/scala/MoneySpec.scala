@@ -5,6 +5,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.language.postfixOps
+import scala.math.BigDecimal
 
 class MoneySpec extends AnyFunSpec with Matchers with ScalaCheckDrivenPropertyChecks {
   import Money.ImplicitsDecimal._

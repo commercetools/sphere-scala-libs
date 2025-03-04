@@ -19,11 +19,26 @@ ThisBuild / githubWorkflowBuildMatrixFailFast := Some(false)
 // note that `sbt +test` is working fine to run cross-compiled tests locally
 ThisBuild / githubWorkflowBuild := Seq(
   WorkflowStep.Sbt(
-    commands = List("test"),
+    commands = List(
+      "sphere-util/test",
+      "sphere-json/test",
+      "sphere-json-core/test",
+      "sphere-json-derivation/test",
+      "sphere-mongo/test",
+      "sphere-mongo-core/test",
+      "sphere-mongo-derivation/test",
+      "sphere-mongo-derivation-magnolia/test",
+      "benchmarks/test"
+    ),
     name = Some("Build Scala 2 project"),
-    cond = Some(s"matrix.scala != '$scala3'")),
+    cond = Some(s"matrix.scala != '$scala3'")
+  ),
   WorkflowStep.Sbt(
-    commands = List("sphere-util/test", "sphere-json-core/test", "sphere-mongo-core/test"),
+    commands = List(
+      "sphere-util/test",
+      "sphere-mongo-3/test",
+      "sphere-json-3/test"
+    ),
     name = Some("Build Scala 3 project"),
     cond = Some(s"matrix.scala == '$scala3'")
   )
@@ -65,7 +80,8 @@ lazy val standardSettings = Defaults.coreDefaultSettings ++ Seq(
   javacOptions ++= Seq("-deprecation", "-Xlint:unchecked"),
   // targets Java 8 bytecode (scalac & javac)
   scalacOptions ++= {
-    if (scalaVersion.value.startsWith("2.12") || scalaVersion.value.startsWith("3")) Seq.empty
+    if (scalaVersion.value.startsWith("2.12")) Seq.empty
+    else if (scalaVersion.value.startsWith("3")) Seq("-noindent")
     else Seq("-target", "8")
   },
   ThisBuild / javacOptions ++= Seq("-source", "8", "-target", "8"),
@@ -86,6 +102,11 @@ lazy val `sphere-libs` = project
   .settings(standardSettings: _*)
   .settings(publishArtifact := false, publish := {}, crossScalaVersions := Seq())
   .aggregate(
+    // Scala 3 modules
+    `sphere-json-3`,
+    `sphere-mongo-3`,
+
+    // Scala 2 modules
     `sphere-util`,
     `sphere-json`,
     `sphere-json-core`,
@@ -97,6 +118,22 @@ lazy val `sphere-libs` = project
     `benchmarks`
   )
 
+// Scala 3 modules
+
+lazy val `sphere-json-3` = project
+  .in(file("./json/json-3"))
+  .settings(scalaVersion := scala3)
+  .settings(standardSettings: _*)
+  .dependsOn(`sphere-util`)
+
+lazy val `sphere-mongo-3` = project
+  .settings(scalaVersion := scala3)
+  .in(file("./mongo/mongo-3"))
+  .settings(standardSettings: _*)
+  .dependsOn(`sphere-util`)
+
+// Scala 2 modules
+
 lazy val `sphere-util` = project
   .in(file("./util"))
   .settings(standardSettings: _*)
@@ -106,7 +143,7 @@ lazy val `sphere-util` = project
 lazy val `sphere-json-core` = project
   .in(file("./json/json-core"))
   .settings(standardSettings: _*)
-  .settings(crossScalaVersions := Seq(scala212, scala213, scala3))
+  .settings(crossScalaVersions := Seq(scala212, scala213))
   .dependsOn(`sphere-util`)
 
 lazy val `sphere-json-derivation` = project
@@ -127,7 +164,7 @@ lazy val `sphere-json` = project
 lazy val `sphere-mongo-core` = project
   .in(file("./mongo/mongo-core"))
   .settings(standardSettings: _*)
-  .settings(crossScalaVersions := Seq(scala212, scala213, scala3))
+  .settings(crossScalaVersions := Seq(scala212, scala213))
   .dependsOn(`sphere-util`)
 
 lazy val `sphere-mongo-derivation` = project
