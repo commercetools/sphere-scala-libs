@@ -29,7 +29,7 @@ class JodaJavaTimeCompat extends Properties("Joda - java.time compat") {
     Arbitrary(epochMillis.map(JInstant.ofEpochMilli(_)))
 
   implicit val javaLocalTime: Arbitrary[JLocalTime] = Arbitrary(
-    Gen.choose(0, 3600 * 24).map(JLocalTime.ofSecondOfDay(_)))
+    Gen.choose(0, 3600 * 24 - 1).map(JLocalTime.ofSecondOfDay(_)))
 
   property("compatibility between serialized Instant and DateTime") = Prop.forAll {
     (instant: JInstant) =>
