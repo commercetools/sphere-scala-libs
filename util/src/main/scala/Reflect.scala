@@ -16,8 +16,7 @@ object Reflect extends Logging {
     * other words, the case class constructors should be pure functions.
     */
   val getCaseClassMeta = new Memoizer[Class[_], CaseClassMeta](clazz => {
-    logger.trace(
-      "Initializing reflection metadata for case class or object %s".format(clazz.getName))
+    log.trace("Initializing reflection metadata for case class or object %s".format(clazz.getName))
     CaseClassMeta(getCaseClassFieldMeta(clazz))
   })
 
