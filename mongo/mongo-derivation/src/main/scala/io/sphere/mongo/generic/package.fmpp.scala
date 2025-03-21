@@ -260,7 +260,7 @@ package object generic extends Logging {
 
   private def typeSelector[A: ClassTag: MongoFormat](): TypeSelector[_] = {
     val clazz = classTag[A].runtimeClass
-    val (typeField, typeValue) = getMongoClassMeta(clazz).typeHint match {
+    val (_, typeValue) = getMongoClassMeta(clazz).typeHint match {
       case Some(hint) => (hint.field, hint.value)
       case None => (defaultTypeFieldName, defaultTypeValue(clazz))
     }
