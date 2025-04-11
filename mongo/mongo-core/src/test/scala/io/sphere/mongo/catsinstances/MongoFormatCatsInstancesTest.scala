@@ -1,7 +1,7 @@
 package io.sphere.mongo.catsinstances
 
 import cats.syntax.invariant._
-import io.sphere.mongo.format.DefaultMongoFormats._
+import io.sphere.mongo.format.DefaultMongoFormats.stringFormat
 import io.sphere.mongo.format._
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec

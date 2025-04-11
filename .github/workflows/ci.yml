@@ -59,7 +59,7 @@ jobs:
         run: sbt '++ ${{ matrix.scala }}' sphere-util/test sphere-mongo-3/test sphere-json-core/test
 
       - name: Compress target directories
-        run: tar cf targets.tar benchmarks/target mongo/target json/json-core/target mongo/mongo-core/target json/target util/target mongo/mongo-3/target json/json-derivation/target mongo/mongo-derivation-magnolia/target target mongo/mongo-derivation/target project/target
+        run: tar cf targets.tar benchmarks/target mongo/target json/json-core/target mongo/mongo-core/target json/target util/target json/json-derivation/target mongo/mongo-derivation-magnolia/target target mongo/mongo-derivation/target project/target
 
       - name: Upload target directories
         uses: actions/upload-artifact@v4

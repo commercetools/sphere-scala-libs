@@ -17,6 +17,6 @@ class MongoFormatInvariant extends Invariant[MongoFormat] {
     new MongoFormat[B] {
       override def toMongoValue(b: B): Any = fa.toMongoValue(g(b))
       override def fromMongoValue(any: Any): B = f(fa.fromMongoValue(any))
-      override val fields: Set[String] = fa.fields
+      override val fields: Vector[String] = fa.fields
     }
 }

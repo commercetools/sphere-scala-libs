@@ -1,12 +1,11 @@
 package io.sphere.mongo.format
 
-import java.util.{Currency, Locale, UUID}
-import java.util.regex.Pattern
-
 import io.sphere.util.{BaseMoney, HighPrecisionMoney, LangTag, Money}
-import org.bson.{BSONObject, BasicBSONObject}
 import org.bson.types.{BasicBSONList, ObjectId}
+import org.bson.{BSONObject, BasicBSONObject}
 
+import java.util.regex.Pattern
+import java.util.{Currency, Locale, UUID}
 import scala.collection.immutable.VectorBuilder
 import scala.collection.mutable.ListBuffer
 
@@ -189,7 +188,7 @@ trait DefaultMongoFormats {
   implicit val moneyFormat: MongoFormat[Money] = new MongoFormat[Money] {
     import Money._
 
-    override val fields = Set(CentAmountField, CurrencyCodeField)
+    override val fields = Vector(CentAmountField, CurrencyCodeField)
 
     override def toMongoValue(m: Money): Any =
       new BasicBSONObject()
@@ -209,9 +208,9 @@ trait DefaultMongoFormats {
 
   implicit val highPrecisionMoneyFormat: MongoFormat[HighPrecisionMoney] =
     new MongoFormat[HighPrecisionMoney] {
-      import HighPrecisionMoney._
+    import HighPrecisionMoney._
 
-      override val fields = Set(PreciseAmountField, CurrencyCodeField, FractionDigitsField)
+      override val fields = Vector(PreciseAmountField, CurrencyCodeField, FractionDigitsField)
 
       override def toMongoValue(m: HighPrecisionMoney): Any =
         new BasicBSONObject()

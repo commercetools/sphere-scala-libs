@@ -36,7 +36,7 @@ ThisBuild / githubWorkflowBuild := Seq(
   WorkflowStep.Sbt(
     commands = List(
       "sphere-util/test",
-      "sphere-mongo-3/test",
+      "sphere-mongo-core/test",
       "sphere-json-core/test"
     ),
     name = Some("Build Scala 3 project"),
@@ -102,10 +102,6 @@ lazy val `sphere-libs` = project
   .settings(standardSettings: _*)
   .settings(publishArtifact := false, publish := {}, crossScalaVersions := Seq())
   .aggregate(
-    // Scala 3 modules
-    `sphere-mongo-3`,
-
-    // Scala 2 modules
     `sphere-util`,
     `sphere-json`,
     `sphere-json-core`,
@@ -117,15 +113,7 @@ lazy val `sphere-libs` = project
     `benchmarks`
   )
 
-// Scala 3 modules
-
-lazy val `sphere-mongo-3` = project
-  .settings(scalaVersion := scala3)
-  .in(file("./mongo/mongo-3"))
-  .settings(standardSettings: _*)
-  .dependsOn(`sphere-util`)
-
-// Scala 2 modules
+// Scala 2 & 3 modules
 
 lazy val `sphere-util` = project
   .in(file("./util"))
@@ -138,6 +126,14 @@ lazy val `sphere-json-core` = project
   .settings(standardSettings: _*)
   .settings(crossScalaVersions := Seq(scala212, scala213, scala3))
   .dependsOn(`sphere-util`)
+
+lazy val `sphere-mongo-core` = project
+  .in(file("./mongo/mongo-core"))
+  .settings(standardSettings: _*)
+  .settings(crossScalaVersions := Seq(scala212, scala213, scala3))
+  .dependsOn(`sphere-util`)
+
+// Scala 2 modules
 
 lazy val `sphere-json-derivation` = project
   .in(file("./json/json-derivation"))
@@ -153,12 +149,6 @@ lazy val `sphere-json` = project
     url("https://github.com/commercetools/sphere-scala-libs/blob/master/json/README.md")))
   .settings(crossScalaVersions := Seq(scala212, scala213))
   .dependsOn(`sphere-json-core`, `sphere-json-derivation`)
-
-lazy val `sphere-mongo-core` = project
-  .in(file("./mongo/mongo-core"))
-  .settings(standardSettings: _*)
-  .settings(crossScalaVersions := Seq(scala212, scala213))
-  .dependsOn(`sphere-util`)
 
 lazy val `sphere-mongo-derivation` = project
   .in(file("./mongo/mongo-derivation"))

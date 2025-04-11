@@ -13,12 +13,12 @@ trait MongoFormat[@specialized A] extends Serializable {
   def default: Option[A] = None
 
   /** needed JSON fields - ignored if empty */
-  val fields: Set[String] = MongoFormat.emptyFieldsSet
+  val fields: Vector[String] = MongoFormat.emptyFields
 }
 
 object MongoFormat extends MongoFormatInstances {
 
-  private[MongoFormat] val emptyFieldsSet: Set[String] = Set.empty
+  private[MongoFormat] val emptyFields: Vector[String] = Vector.empty
 
   @inline def apply[A](implicit instance: MongoFormat[A]): MongoFormat[A] = instance
 

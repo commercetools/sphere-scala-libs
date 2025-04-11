@@ -18,7 +18,7 @@ trait MongoFormat[A] extends Serializable {
   def fromMongoValue(mongoType: Any): A
 
   //  /** needed JSON fields - ignored if empty */
-  val fieldNames: Vector[String] = MongoFormat.emptyFields
+  val fields: Vector[String] = MongoFormat.emptyFields
 
   def default: Option[A] = None
 }
@@ -95,8 +95,8 @@ object MongoFormat {
         private val formatters = summonFormatters[mirrorOfProduct.MirroredElemTypes]
         private val fieldsAndFormatters = caseClassMetaData.fields.zip(formatters)
 
-        override val fieldNames: Vector[String] = fieldsAndFormatters.flatMap((field, formatter) =>
-          if (field.embedded) formatter.fieldNames :+ field.rawName
+        override val fields: Vector[String] = fieldsAndFormatters.flatMap((field, formatter) =>
+          if (field.embedded) formatter.fields :+ field.rawName
           else Vector(field.rawName))
 
         override def toMongoValue(a: A): Any = {
