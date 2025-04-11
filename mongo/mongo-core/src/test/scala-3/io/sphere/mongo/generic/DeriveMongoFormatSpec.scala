@@ -5,7 +5,7 @@ import org.scalatest.wordspec.AnyWordSpec
 import io.sphere.mongo.format.DefaultMongoFormats.given
 import io.sphere.mongo.MongoUtils.*
 import io.sphere.mongo.format.{MongoFormat, deriveMongoFormat}
-import io.sphere.mongo.{fromMongo, toMongo}
+import io.sphere.mongo.format.{fromMongo, toMongo}
 
 class DeriveMongoFormatSpec extends AnyWordSpec with Matchers {
   import DeriveMongoFormatSpec.given
