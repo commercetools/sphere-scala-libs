@@ -65,7 +65,7 @@ object BaseMoney {
     require(m1.currency eq m2.currency, s"${m1.currency} != ${m2.currency}")
 
   def toScalaRoundingMode(mode: java.math.RoundingMode): RoundingMode =
-    BigDecimal.RoundingMode(mode.ordinal)
+    BigDecimal.RoundingMode(mode.ordinal())
 
   implicit def baseMoneyMonoid(implicit c: Currency, mode: RoundingMode): Monoid[BaseMoney] =
     new Monoid[BaseMoney] {
