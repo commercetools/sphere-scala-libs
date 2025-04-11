@@ -103,7 +103,6 @@ lazy val `sphere-libs` = project
   .settings(publishArtifact := false, publish := {}, crossScalaVersions := Seq())
   .aggregate(
     // Scala 3 modules
-    `sphere-json-3`,
     `sphere-mongo-3`,
 
     // Scala 2 modules
@@ -119,12 +118,6 @@ lazy val `sphere-libs` = project
   )
 
 // Scala 3 modules
-
-lazy val `sphere-json-3` = project
-  .in(file("./json/json-3"))
-  .settings(scalaVersion := scala3)
-  .settings(standardSettings: _*)
-  .dependsOn(`sphere-util`)
 
 lazy val `sphere-mongo-3` = project
   .settings(scalaVersion := scala3)
@@ -143,7 +136,7 @@ lazy val `sphere-util` = project
 lazy val `sphere-json-core` = project
   .in(file("./json/json-core"))
   .settings(standardSettings: _*)
-  .settings(crossScalaVersions := Seq(scala212, scala213))
+  .settings(crossScalaVersions := Seq(scala212, scala213, scala3))
   .dependsOn(`sphere-util`)
 
 lazy val `sphere-json-derivation` = project
