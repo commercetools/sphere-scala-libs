@@ -1,4 +1,4 @@
-package io.sphere.json
+package io.sphere.json.generic
 
 import cats.data.Validated.{Invalid, Valid}
 import cats.data.ValidatedNel
@@ -6,8 +6,9 @@ import cats.syntax.apply.*
 import org.json4s.JsonAST.*
 import io.sphere.json.field
 import io.sphere.json.generic.*
+import io.sphere.json.*
 import io.sphere.util.Money
-import org.joda.time.*
+import org.joda.time.DateTime
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.funspec.AnyFunSpec
 import org.json4s.DefaultJsonFormats.given
