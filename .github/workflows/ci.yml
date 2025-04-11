@@ -56,7 +56,7 @@ jobs:
 
       - name: Build Scala 3 project
         if: matrix.scala == '3.3.5'
-        run: sbt '++ ${{ matrix.scala }}' sphere-util/test sphere-mongo-3/test sphere-json-core/test
+        run: sbt '++ ${{ matrix.scala }}' sphere-util/test sphere-mongo-core/test sphere-json-core/test
 
       - name: Compress target directories
         run: tar cf targets.tar benchmarks/target mongo/target json/json-core/target mongo/mongo-core/target json/target util/target json/json-derivation/target mongo/mongo-derivation-magnolia/target target mongo/mongo-derivation/target project/target
