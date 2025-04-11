@@ -9,7 +9,6 @@ import org.scalatest.matchers.must.Matchers
 
 import scala.collection.mutable.ArrayBuffer
 import scala.language.postfixOps
-import scala.math.BigDecimal
 
 class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDrivenPropertyChecks {
   import HighPrecisionMoney.ImplicitsString._

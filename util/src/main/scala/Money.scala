@@ -64,7 +64,7 @@ object BaseMoney {
   def requireSameCurrency(m1: BaseMoney, m2: BaseMoney): Unit =
     require(m1.currency eq m2.currency, s"${m1.currency} != ${m2.currency}")
 
-  def toScalaRoundingMode(mode: java.math.RoundingMode): RoundingMode.Value =
+  def toScalaRoundingMode(mode: java.math.RoundingMode): RoundingMode =
     BigDecimal.RoundingMode(mode.ordinal)
 
   implicit def baseMoneyMonoid(implicit c: Currency, mode: RoundingMode): Monoid[BaseMoney] =
@@ -90,7 +90,7 @@ object BaseMoney {
   * @param currency
   *   The currency of the amount.
   */
-case class Money private[util] (centAmount: Long, currency: Currency)
+case class Money private (centAmount: Long, currency: Currency)
     extends BaseMoney
     with Ordered[Money] {
   import Money._

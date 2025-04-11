@@ -208,7 +208,7 @@ trait DefaultMongoFormats {
 
   implicit val highPrecisionMoneyFormat: MongoFormat[HighPrecisionMoney] =
     new MongoFormat[HighPrecisionMoney] {
-    import HighPrecisionMoney._
+      import HighPrecisionMoney._
 
       override val fields = Vector(PreciseAmountField, CurrencyCodeField, FractionDigitsField)
 
