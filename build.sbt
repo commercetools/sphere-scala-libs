@@ -37,7 +37,7 @@ ThisBuild / githubWorkflowBuild := Seq(
     commands = List(
       "sphere-util/test",
       "sphere-mongo-3/test",
-      "sphere-json-3/test"
+      "sphere-json-core/test"
     ),
     name = Some("Build Scala 3 project"),
     cond = Some(s"matrix.scala == '$scala3'")
