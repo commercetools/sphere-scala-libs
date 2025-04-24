@@ -18,7 +18,7 @@ trait ToJSON[A] extends Serializable {
 
 class JSONWriteException(msg: String) extends JSONException(msg)
 
-object ToJSON extends ToJSONInstances {
+object ToJSON extends ToJSONCatsInstances {
 
   inline def apply[A: JSON]: ToJSON[A] = summon[ToJSON[A]]
 

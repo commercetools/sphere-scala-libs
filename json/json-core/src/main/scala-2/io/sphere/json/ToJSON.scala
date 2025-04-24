@@ -23,7 +23,7 @@ trait ToJSON[@specialized A] extends Serializable {
 
 class JSONWriteException(msg: String) extends JSONException(msg)
 
-object ToJSON extends ToJSONInstances {
+object ToJSON extends ToJSONCatsInstances {
 
   private val emptyJArray = JArray(Nil)
   private val emptyJObject = JObject(Nil)

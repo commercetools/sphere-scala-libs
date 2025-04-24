@@ -9,7 +9,7 @@ trait JSON[A] extends FromJSON[A] with ToJSON[A]
 
 inline def deriveJSON[A](using Mirror.Of[A]): JSON[A] = JSON.derived
 
-object JSON extends JSONInstances {
+object JSON extends JSONCatsInstances {
   inline def apply[A: JSON]: JSON[A] = summon[JSON[A]]
 
   inline given derived[A](using fromJSON: FromJSON[A], toJSON: ToJSON[A]): JSON[A] =
