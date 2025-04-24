@@ -188,7 +188,7 @@ trait DefaultMongoFormats {
   implicit val moneyFormat: MongoFormat[Money] = new MongoFormat[Money] {
     import Money._
 
-    override val fields = Vector(CentAmountField, CurrencyCodeField)
+    override val fields = Set(CentAmountField, CurrencyCodeField)
 
     override def toMongoValue(m: Money): Any =
       new BasicBSONObject()
@@ -210,7 +210,7 @@ trait DefaultMongoFormats {
     new MongoFormat[HighPrecisionMoney] {
       import HighPrecisionMoney._
 
-      override val fields = Vector(PreciseAmountField, CurrencyCodeField, FractionDigitsField)
+      override val fields = Set(PreciseAmountField, CurrencyCodeField, FractionDigitsField)
 
       override def toMongoValue(m: HighPrecisionMoney): Any =
         new BasicBSONObject()

@@ -55,9 +55,9 @@ package object generic extends Logging {
       case _ => sys.error("Deserialization failed. DBObject expected.")
     }
 
-    override val fields: Vector[String] = calculateFields()
-    private def calculateFields(): Vector[String] = {
-      val builder = Vector.newBuilder[String]
+    override val fields: Set[String] = calculateFields()
+    private def calculateFields(): Set[String] = {
+      val builder = Set.newBuilder[String]
       var i = 0
       caseClass.parameters.foreach { p =>
         val f = _fields(i)

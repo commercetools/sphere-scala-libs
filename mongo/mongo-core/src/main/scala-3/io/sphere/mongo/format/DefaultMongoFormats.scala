@@ -46,13 +46,14 @@ trait DefaultMongoFormats {
         }
 
       override def fromMongoValue(mongoType: Any): Option[A] = {
+        import scala.jdk.CollectionConverters.*
         val fieldNames = format.fields
         if (mongoType == null) None
         else
           mongoType match {
             case s: SimpleMongoType => Some(format.fromMongoValue(s))
             case bson: BasicDBObject =>
-              val bsonFieldNames = bson.keySet().toArray
+              val bsonFieldNames = bson.keySet().asScala
               if (fieldNames.nonEmpty && bsonFieldNames.intersect(fieldNames).isEmpty) None
               else Some(format.fromMongoValue(bson))
             case MongoNothing => None // This can't happen, but it makes the compiler happy
@@ -178,7 +179,7 @@ trait DefaultMongoFormats {
   given moneyFormat: MongoFormat[Money] = new MongoFormat[Money] {
     import Money._
 
-    override val fields = Vector(CentAmountField, CurrencyCodeField)
+    override val fields = Set(CentAmountField, CurrencyCodeField)
 
     override def toMongoValue(m: Money): Any =
       new BasicBSONObject()
@@ -200,7 +201,7 @@ trait DefaultMongoFormats {
     new MongoFormat[HighPrecisionMoney] {
       import HighPrecisionMoney._
 
-      override val fields = Vector(PreciseAmountField, CurrencyCodeField, FractionDigitsField)
+      override val fields = Set(PreciseAmountField, CurrencyCodeField, FractionDigitsField)
 
       override def toMongoValue(m: HighPrecisionMoney): Any =
         new BasicBSONObject()
