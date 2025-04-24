@@ -118,18 +118,21 @@ lazy val `sphere-libs` = project
 lazy val `sphere-util` = project
   .in(file("./util"))
   .settings(standardSettings: _*)
+  .settings(scalaVersion := scala3)
   .settings(crossScalaVersions := Seq(scala212, scala213, scala3))
   .settings(homepage := Some(url("https://github.com/commercetools/sphere-scala-libs/README.md")))
 
 lazy val `sphere-json-core` = project
   .in(file("./json/json-core"))
   .settings(standardSettings: _*)
+  .settings(scalaVersion := scala3)
   .settings(crossScalaVersions := Seq(scala212, scala213, scala3))
   .dependsOn(`sphere-util`)
 
 lazy val `sphere-mongo-core` = project
   .in(file("./mongo/mongo-core"))
   .settings(standardSettings: _*)
+  .settings(scalaVersion := scala3)
   .settings(crossScalaVersions := Seq(scala212, scala213, scala3))
   .dependsOn(`sphere-util`)
 
