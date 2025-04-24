@@ -12,7 +12,9 @@ inline def deriveJSON[A](using Mirror.Of[A]): JSON[A] = JSON.derived
 object JSON extends JSONCatsInstances {
   inline def apply[A: JSON]: JSON[A] = summon[JSON[A]]
 
-  inline given derived[A](using fromJSON: FromJSON[A], toJSON: ToJSON[A]): JSON[A] =
+  inline given derived[A](using fromJSON: FromJSON[A], toJSON: ToJSON[A]): JSON[A] = instance
+
+  private def instance[A](using fromJSON: FromJSON[A], toJSON: ToJSON[A]): JSON[A] =
     new JSON[A] {
       override def read(jval: JValue): JValidation[A] = fromJSON.read(jval)
 
@@ -20,7 +22,6 @@ object JSON extends JSONCatsInstances {
 
       override val fields: Set[String] = fromJSON.fields
     }
-
 }
 
 class JSONException(msg: String) extends RuntimeException(msg)
