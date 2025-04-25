@@ -6,6 +6,12 @@ import org.bson.BSONObject
 
 import scala.compiletime.{erasedValue, error, summonInline}
 
+def mongoEnum(e: Enumeration): MongoFormat[e.Value] = new MongoFormat[e.Value] {
+  def toMongoValue(a: e.Value): Any = a.toString
+
+  def fromMongoValue(any: Any): e.Value = e.withName(any.asInstanceOf[String])
+}
+
 inline def mongoTypeSwitch[SuperType, SubTypeTuple <: Tuple](): MongoFormat[SuperType] =
   new MongoFormat[SuperType] {
     private val traitMetaData = AnnotationReader.readTraitMetaData[SuperType]

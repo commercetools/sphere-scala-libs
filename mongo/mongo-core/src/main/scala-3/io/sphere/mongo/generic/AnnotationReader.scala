@@ -37,12 +37,6 @@ case class TraitMetaData(
 
 object AnnotationReader {
 
-  def mongoEnum(e: Enumeration): MongoFormat[e.Value] = new MongoFormat[e.Value] {
-    def toMongoValue(a: e.Value): Any = a.toString
-
-    def fromMongoValue(any: Any): e.Value = e.withName(any.asInstanceOf[String])
-  }
-
   inline def readTraitMetaData[T]: TraitMetaData = ${ readTraitMetaDataImpl[T] }
 
   inline def readCaseClassMetaData[T]: CaseClassMetaData = ${ readCaseClassMetaDataImpl[T] }
