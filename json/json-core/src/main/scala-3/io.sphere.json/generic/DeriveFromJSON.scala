@@ -54,7 +54,8 @@ trait DeriveFromJSON {
 
           case x =>
             Validated.invalidNel(JSONParseError(s"JSON object expected. Got: '$x'"))
-        }
+        },
+        typeHintMap = typeHintMap
       )
     }
 

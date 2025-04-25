@@ -30,6 +30,8 @@ object JSON extends JSONCatsInstances {
       override def write(value: A): JValue = toJSON.write(value)
 
       override val fields: Set[String] = fromJSON.fields
+
+      override val traitTypeHintMap: Map[String, String] = fromJSON.traitTypeHintMap
     }
 }
 

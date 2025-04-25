@@ -67,8 +67,6 @@ def jsonEnum(e: Enumeration): JSON[e.Value] = {
 
 inline def jsonTypeSwitch[SuperType, SubTypeTuple <: Tuple](): JSON[SuperType] = {
   val traitMetaData = AnnotationReader.readTraitMetaData[SuperType]
-  val typeHintMap = traitMetaData.subTypeTypeHints
-  val reverseTypeHintMap = typeHintMap.map((on, n) => (n, on))
   val formattersAndMetaData: Vector[(TraitMetaData, JSON[Any])] = summonFormatters[SubTypeTuple]()
 
   // Separate Trait formatters from CaseClass formatters, so we can avoid adding the typeDiscriminator twice
@@ -83,6 +81,11 @@ inline def jsonTypeSwitch[SuperType, SubTypeTuple <: Tuple](): JSON[SuperType] =
   val traitFormatters = traitFormatterList.flatten.toMap
   val caseClassFormatters = caseClassFormatterList.toMap
   val allFormattersByTypeName = traitFormatters ++ caseClassFormatters
+
+  val subTypeHints =
+    traitFormatters.map((_, formatter) => formatter.traitTypeHintMap).reduce(_ ++ _)
+  val typeHintMap = traitMetaData.subTypeTypeHints ++ subTypeHints
+  val reverseTypeHintMap = typeHintMap.map((on, n) => (n, on))
 
   JSON.instance(
     writeFn = { a =>
