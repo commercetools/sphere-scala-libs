@@ -20,10 +20,6 @@ trait MongoFormat[A] extends Serializable {
 
   def default: Option[A] = None
 }
-final class NativeMongoFormat[A] extends MongoFormat[A] {
-  def toMongoValue(a: A): Any = a
-  def fromMongoValue(any: Any): A = any.asInstanceOf[A]
-}
 
 inline def deriveMongoFormat[A](using Mirror.Of[A]): MongoFormat[A] = MongoFormat.derived
 

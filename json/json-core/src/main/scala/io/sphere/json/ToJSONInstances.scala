@@ -13,10 +13,13 @@ import org.joda.time.LocalDate
 import org.joda.time.YearMonth
 import org.joda.time.format.ISODateTimeFormat
 
-trait ToJSONInstances {
-
+object ToJSONInstances {
   private val emptyJArray = JArray(Nil)
   private val emptyJObject = JObject(Nil)
+}
+
+trait ToJSONInstances {
+  import ToJSONInstances._
 
   implicit def optionWriter[@specialized A](implicit c: ToJSON[A]): ToJSON[Option[A]] =
     new ToJSON[Option[A]] {

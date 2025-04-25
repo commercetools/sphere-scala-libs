@@ -18,14 +18,17 @@ import org.joda.time.LocalTime
 import org.joda.time.LocalDate
 import org.joda.time.format.ISODateTimeFormat
 
-trait FromJSONInstances {
-
+object FromJSONInstances {
   private val validNone = Valid(None)
   private val validNil = Valid(Nil)
   private val validEmptyAnyVector: Valid[Vector[Any]] = Valid(Vector.empty)
   private def validList[A]: Valid[List[A]] = validNil
   private def validEmptyVector[A]: Valid[Vector[A]] =
     validEmptyAnyVector.asInstanceOf[Valid[Vector[A]]]
+}
+
+trait FromJSONInstances {
+  import FromJSONInstances._
 
   implicit def optionMapReader[@specialized A](implicit
       c: FromJSON[A]): FromJSON[Option[Map[String, A]]] =
