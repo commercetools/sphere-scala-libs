@@ -82,15 +82,16 @@ inline def jsonTypeSwitch[SuperType, SubTypeTuple <: Tuple](): JSON[SuperType] =
   val caseClassFormatters = caseClassFormatterList.toMap
   val allFormattersByTypeName = traitFormatters ++ caseClassFormatters
 
+  // We could add some checking here to filter duplicate keys
   val subTypeHints =
-    traitFormatters.map((_, formatter) => formatter.traitTypeHintMap).reduce(_ ++ _)
-  val typeHintMap = traitMetaData.subTypeTypeHints ++ subTypeHints
-  val reverseTypeHintMap = typeHintMap.map((on, n) => (n, on))
+    traitFormatters.map((_, formatter) => formatter.traitTypeHintMap).fold(Map.empty)(_ ++ _)
+  val mergedTypeHintMap = traitMetaData.subTypeTypeHints ++ subTypeHints
+  val reverseTypeHintMap = mergedTypeHintMap.map((on, n) => (n, on))
 
   JSON.instance(
     writeFn = { a =>
       val originalTypeName = a.asInstanceOf[Product].productPrefix
-      val typeName = typeHintMap.getOrElse(originalTypeName, originalTypeName)
+      val typeName = mergedTypeHintMap.getOrElse(originalTypeName, originalTypeName)
       val traitFormatterOpt = traitFormatters.get(originalTypeName)
       traitFormatterOpt
         .map(_.write(a).asInstanceOf[JObject])
