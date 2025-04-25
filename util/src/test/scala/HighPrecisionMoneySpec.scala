@@ -168,20 +168,22 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
     }
 
     it("should validate fractionDigits (min)") {
-      val Invalid(errors) = HighPrecisionMoney.fromPreciseAmount(123456L, 1, Euro, None)
+      val Invalid(errors) = HighPrecisionMoney.fromPreciseAmount(123456L, 1, Euro, None): @unchecked
 
       errors.toList must be(
         List("fractionDigits must be > 2 (default fraction digits defined by currency EUR)."))
     }
 
     it("should validate fractionDigits (max)") {
-      val Invalid(errors) = HighPrecisionMoney.fromPreciseAmount(123456L, 100, Euro, None)
+      val Invalid(errors) =
+        HighPrecisionMoney.fromPreciseAmount(123456L, 100, Euro, None): @unchecked
 
       errors.toList must be(List("fractionDigits must be <= 20."))
     }
 
     it("should validate centAmount") {
-      val Invalid(errors) = HighPrecisionMoney.fromPreciseAmount(123456L, 4, Euro, Some(1))
+      val Invalid(errors) =
+        HighPrecisionMoney.fromPreciseAmount(123456L, 4, Euro, Some(1)): @unchecked
 
       errors.toList must be(
         List(

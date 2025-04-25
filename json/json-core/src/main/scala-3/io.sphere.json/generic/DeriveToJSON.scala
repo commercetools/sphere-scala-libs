@@ -27,46 +27,49 @@ trait DeriveToJSON {
         case p: Mirror.ProductOf[A] => deriveCaseClass(p)
       }
 
-    inline private def deriveTrait[A](mirrorOfSum: Mirror.SumOf[A]): ToJSON[A] =
-      new ToJSON[A] {
-        private val traitMetaData: TraitMetaData = AnnotationReader.readTraitMetaData[A]
-        private val typeHintMap: Map[String, String] = traitMetaData.subtypes.collect {
-          case (name, classMeta) if classMeta.typeHint.isDefined =>
-            name -> classMeta.typeHint.get
-        }
-        private val reverseTypeHintMap: Map[String, String] = typeHintMap.map((on, n) => (n, on))
-        private val jsons: Seq[ToJSON[Any]] = summonToJson[mirrorOfSum.MirroredElemTypes]
-        private val names: Seq[String] =
-          constValueTuple[mirrorOfSum.MirroredElemLabels].productIterator.toVector
-            .asInstanceOf[Vector[String]]
-        private val jsonsByNames: Map[String, ToJSON[Any]] = names.zip(jsons).toMap
+    inline private def deriveTrait[A](mirrorOfSum: Mirror.SumOf[A]): ToJSON[A] = {
+      val traitMetaData: TraitMetaData = AnnotationReader.readTraitMetaData[A]
 
-        override def write(value: A): JValue = {
-          // we never get a trait here, only classes, it's safe to assume Product
-          val originalTypeName = value.asInstanceOf[Product].productPrefix
-          val typeName = typeHintMap.getOrElse(originalTypeName, originalTypeName)
-          val json = jsonsByNames(originalTypeName).write(value).asInstanceOf[JObject]
-          val typeDiscriminator = traitMetaData.typeDiscriminator -> JString(typeName)
-          JObject(typeDiscriminator :: json.obj)
-        }
-
+      val typeHintMap: Map[String, String] = traitMetaData.subtypes.flatMap {
+        case (name, classMeta) if classMeta.typeHint.isDefined =>
+          classMeta.typeHint.map(name -> _)
+        case _ =>
+          None
       }
 
-    inline private def deriveCaseClass[A](mirrorOfProduct: Mirror.ProductOf[A]): ToJSON[A] =
-      new ToJSON[A] {
-        private val caseClassMetaData: CaseClassMetaData = AnnotationReader.readCaseClassMetaData[A]
-        private val toJsons: Vector[ToJSON[Any]] = summonToJson[mirrorOfProduct.MirroredElemTypes]
+      val reverseTypeHintMap: Map[String, String] = typeHintMap.map((on, n) => (n, on))
+      val jsons: Seq[ToJSON[Any]] = summonToJson[mirrorOfSum.MirroredElemTypes]
 
-        override def write(value: A): JValue = {
-          val caseClassFields = value.asInstanceOf[Product].productIterator
-          toJsons
-            .zip(caseClassFields)
-            .zip(caseClassMetaData.fields)
-            .foldLeft[JValue](JObject()) { case (jObject, ((toJson, fieldValue), field)) =>
-              addField(jObject.asInstanceOf[JObject], field, toJson.write(fieldValue))
-            }
-        }
+      val names: Seq[String] =
+        constValueTuple[mirrorOfSum.MirroredElemLabels].productIterator.toVector
+          .asInstanceOf[Vector[String]]
+
+      val jsonsByNames: Map[String, ToJSON[Any]] = names.zip(jsons).toMap
+
+      ToJSON.instance { value =>
+        // we never get a trait here, only classes, it's safe to assume Product
+        val originalTypeName = value.asInstanceOf[Product].productPrefix
+        val typeName = typeHintMap.getOrElse(originalTypeName, originalTypeName)
+        val json = jsonsByNames(originalTypeName).write(value).asInstanceOf[JObject]
+        val typeDiscriminator = traitMetaData.typeDiscriminator -> JString(typeName)
+        JObject(typeDiscriminator :: json.obj)
       }
+    }
+
+    inline private def deriveCaseClass[A](mirrorOfProduct: Mirror.ProductOf[A]): ToJSON[A] = {
+      val caseClassMetaData: CaseClassMetaData = AnnotationReader.readCaseClassMetaData[A]
+      val toJsons: Vector[ToJSON[Any]] = summonToJson[mirrorOfProduct.MirroredElemTypes]
+
+      ToJSON.instance { value =>
+        val caseClassFields = value.asInstanceOf[Product].productIterator
+        toJsons.iterator
+          .zip(caseClassFields)
+          .zip(caseClassMetaData.fields)
+          .foldLeft[JValue](JObject()) { case (jObject, ((toJson, fieldValue), field)) =>
+            addField(jObject.asInstanceOf[JObject], field, toJson.write(fieldValue))
+          }
+      }
+    }
 
     inline private def summonToJson[T <: Tuple]: Vector[ToJSON[Any]] =
       inline erasedValue[T] match {

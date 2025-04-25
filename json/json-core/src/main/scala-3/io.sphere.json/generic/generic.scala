@@ -65,27 +65,27 @@ def jsonEnum(e: Enumeration): JSON[e.Value] = {
   }
 }
 
-inline def jsonTypeSwitch[SuperType, SubTypeTuple <: Tuple](): JSON[SuperType] =
-  new JSON[SuperType] {
-    private val traitMetaData = AnnotationReader.readTraitMetaData[SuperType]
-    private val typeHintMap = traitMetaData.subTypeTypeHints
-    private val reverseTypeHintMap = typeHintMap.map((on, n) => (n, on))
-    private val formattersAndMetaData: Vector[(TraitMetaData, JSON[Any])] =
-      summonFormatters[SubTypeTuple]()
+inline def jsonTypeSwitch[SuperType, SubTypeTuple <: Tuple](): JSON[SuperType] = {
+  val traitMetaData = AnnotationReader.readTraitMetaData[SuperType]
+  val typeHintMap = traitMetaData.subTypeTypeHints
+  val reverseTypeHintMap = typeHintMap.map((on, n) => (n, on))
+  val formattersAndMetaData: Vector[(TraitMetaData, JSON[Any])] = summonFormatters[SubTypeTuple]()
 
-    // Separate Trait formatters from CaseClass formatters, so we can avoid adding the typeDiscriminator twice
-    private val (traitFormatterList, caseClassFormatterList) =
-      formattersAndMetaData.partitionMap { (meta, formatter) =>
-        if (meta.isTrait)
-          Left(meta.subtypes.map(_._2.name -> formatter))
-        else
-          Right(meta.top.name -> formatter)
-      }
-    val traitFormatters = traitFormatterList.flatten.toMap
-    val caseClassFormatters = caseClassFormatterList.toMap
-    val allFormattersByTypeName = traitFormatters ++ caseClassFormatters
+  // Separate Trait formatters from CaseClass formatters, so we can avoid adding the typeDiscriminator twice
+  val (traitFormatterList, caseClassFormatterList) =
+    formattersAndMetaData.partitionMap { (meta, formatter) =>
+      if (meta.isTrait)
+        Left(meta.subtypes.map(_._2.name -> formatter))
+      else
+        Right(meta.top.name -> formatter)
+    }
 
-    override def write(a: SuperType): JValue = {
+  val traitFormatters = traitFormatterList.flatten.toMap
+  val caseClassFormatters = caseClassFormatterList.toMap
+  val allFormattersByTypeName = traitFormatters ++ caseClassFormatters
+
+  JSON.instance(
+    writeFn = { a =>
       val originalTypeName = a.asInstanceOf[Product].productPrefix
       val typeName = typeHintMap.getOrElse(originalTypeName, originalTypeName)
       val traitFormatterOpt = traitFormatters.get(originalTypeName)
@@ -96,18 +96,17 @@ inline def jsonTypeSwitch[SuperType, SubTypeTuple <: Tuple](): JSON[SuperType] =
           val typeDiscriminator = traitMetaData.typeDiscriminator -> JString(typeName)
           JObject(typeDiscriminator :: json.obj)
         }
+    },
+    readFn = {
+      case jObject: JObject =>
+        val typeName = (jObject \ traitMetaData.typeDiscriminator).as[String]
+        val originalTypeName = reverseTypeHintMap.getOrElse(typeName, typeName)
+        allFormattersByTypeName(originalTypeName).read(jObject).map(_.asInstanceOf[SuperType])
+      case x =>
+        Validated.invalidNel(JSONParseError(s"JSON object expected. Got: '$x'"))
     }
-
-    override def read(jValue: JValue): JValidation[SuperType] =
-      jValue match {
-        case jObject: JObject =>
-          val typeName = (jObject \ traitMetaData.typeDiscriminator).as[String]
-          val originalTypeName = reverseTypeHintMap.getOrElse(typeName, typeName)
-          allFormattersByTypeName(originalTypeName).read(jObject).map(_.asInstanceOf[SuperType])
-        case x =>
-          Validated.invalidNel(JSONParseError(s"JSON object expected. Got: '$jValue'"))
-      }
-  }
+  )
+}
 
 inline private def summonFormatters[T <: Tuple](
     acc: Vector[(TraitMetaData, JSON[Any])] = Vector.empty): Vector[(TraitMetaData, JSON[Any])] =

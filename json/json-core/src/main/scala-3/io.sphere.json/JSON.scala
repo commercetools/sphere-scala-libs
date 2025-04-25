@@ -11,8 +11,17 @@ inline def deriveJSON[A](using Mirror.Of[A]): JSON[A] = JSON.derived
 
 object JSON extends JSONCatsInstances {
   inline def apply[A: JSON]: JSON[A] = summon[JSON[A]]
-
   inline given derived[A](using fromJSON: FromJSON[A], toJSON: ToJSON[A]): JSON[A] = instance
+
+  def instance[A](
+      readFn: JValue => JValidation[A],
+      writeFn: A => JValue,
+      fieldSet: Set[String] = FromJSON.emptyFieldsSet): JSON[A] = new {
+
+    override def read(jval: JValue): JValidation[A] = readFn(jval)
+    override def write(value: A): JValue = writeFn(value)
+    override val fields: Set[String] = fieldSet
+  }
 
   private def instance[A](using fromJSON: FromJSON[A], toJSON: ToJSON[A]): JSON[A] =
     new JSON[A] {

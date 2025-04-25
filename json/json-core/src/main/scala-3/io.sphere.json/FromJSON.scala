@@ -13,10 +13,16 @@ trait FromJSON[A] extends Serializable {
 }
 
 object FromJSON extends FromJSONInstances with FromJSONCatsInstances with generic.DeriveFromJSON {
+  val emptyFieldsSet: Set[String] = Set.empty
 
   inline def apply[A: JSON]: FromJSON[A] = summon[FromJSON[A]]
-
-  private[FromJSON] val emptyFieldsSet: Set[String] = Set.empty
-
   inline def apply[A](using instance: FromJSON[A]): FromJSON[A] = instance
+
+  def instance[A](
+      readFn: JValue => JValidation[A],
+      fieldSet: Set[String] = emptyFieldsSet): FromJSON[A] = new {
+
+    override def read(jval: JValue): JValidation[A] = readFn(jval)
+    override val fields: Set[String] = fieldSet
+  }
 }

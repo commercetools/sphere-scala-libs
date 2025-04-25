@@ -26,71 +26,71 @@ trait DeriveFromJSON {
         case p: Mirror.ProductOf[A] => deriveCaseClass(p)
       }
 
-    inline private def deriveTrait[A](mirrorOfSum: Mirror.SumOf[A]): FromJSON[A] =
-      new FromJSON[A] {
-        private val traitMetaData: TraitMetaData = AnnotationReader.readTraitMetaData[A]
-        private val typeHintMap: Map[String, String] = traitMetaData.subtypes.collect {
-          case (name, classMeta) if classMeta.typeHint.isDefined =>
-            name -> classMeta.typeHint.get
-        }
-        private val reverseTypeHintMap: Map[String, String] = typeHintMap.map((on, n) => (n, on))
-        private val fromJsons: Seq[FromJSON[Any]] = summonFromJsons[mirrorOfSum.MirroredElemTypes]
-        private val names: Seq[String] =
-          constValueTuple[mirrorOfSum.MirroredElemLabels].productIterator.toVector
-            .asInstanceOf[Vector[String]]
-        private val jsonsByNames: Map[String, FromJSON[Any]] = names.zip(fromJsons).toMap
+    inline private def deriveTrait[A](mirrorOfSum: Mirror.SumOf[A]): FromJSON[A] = {
+      val traitMetaData: TraitMetaData = AnnotationReader.readTraitMetaData[A]
 
-        override def read(jValue: JValue): JValidation[A] =
-          jValue match {
-            case jObject: JObject =>
-              val typeName = (jObject \ traitMetaData.typeDiscriminator).as[String]
-              val originalTypeName = reverseTypeHintMap.getOrElse(typeName, typeName)
-              jsonsByNames(originalTypeName).read(jObject).map(_.asInstanceOf[A])
-            case x =>
-              Validated.invalidNel(JSONParseError(s"JSON object expected. Got: '$jValue'"))
-          }
+      val typeHintMap: Map[String, String] = traitMetaData.subtypes.flatMap {
+        case (name, classMeta) if classMeta.typeHint.isDefined =>
+          classMeta.typeHint.map(name -> _)
+        case _ =>
+          None
       }
 
-    inline private def deriveCaseClass[A](mirrorOfProduct: Mirror.ProductOf[A]): FromJSON[A] =
-      new FromJSON[A] {
-        private val caseClassMetaData: CaseClassMetaData = AnnotationReader.readCaseClassMetaData[A]
-        private val fromJsons: Vector[FromJSON[Any]] =
-          summonFromJsons[mirrorOfProduct.MirroredElemTypes]
-        private val fieldsAndJsons: Vector[(Field, FromJSON[Any])] =
-          caseClassMetaData.fields.zip(fromJsons)
+      val reverseTypeHintMap: Map[String, String] = typeHintMap.map((on, n) => (n, on))
+      val fromJsons: Seq[FromJSON[Any]] = summonFromJsons[mirrorOfSum.MirroredElemTypes]
 
-        private val fieldNames: Vector[String] = fieldsAndJsons.flatMap { (field, fromJson) =>
-          if (field.embedded) fromJson.fields.toVector :+ field.name
-          else Vector(field.name)
+      val names: Seq[String] =
+        constValueTuple[mirrorOfSum.MirroredElemLabels].productIterator.toVector
+          .asInstanceOf[Vector[String]]
+
+      val jsonsByNames: Map[String, FromJSON[Any]] = names.zip(fromJsons).toMap
+
+      FromJSON.instance(
+        readFn = {
+          case jObject: JObject =>
+            val typeName = (jObject \ traitMetaData.typeDiscriminator).as[String]
+            val originalTypeName = reverseTypeHintMap.getOrElse(typeName, typeName)
+            jsonsByNames(originalTypeName).read(jObject).map(_.asInstanceOf[A])
+
+          case x =>
+            Validated.invalidNel(JSONParseError(s"JSON object expected. Got: '$x'"))
         }
+      )
+    }
 
-        override val fields: Set[String] = fieldNames.toSet
+    inline private def deriveCaseClass[A](mirrorOfProduct: Mirror.ProductOf[A]): FromJSON[A] = {
+      val caseClassMetaData: CaseClassMetaData = AnnotationReader.readCaseClassMetaData[A]
+      val fromJsons: Vector[FromJSON[Any]] =
+        summonFromJsons[mirrorOfProduct.MirroredElemTypes]
+      val fieldsAndJsons: Vector[(Field, FromJSON[Any])] =
+        caseClassMetaData.fields.zip(fromJsons)
 
-        override def read(jValue: JValue): JValidation[A] =
-          jValue match {
-            case jObject: JObject =>
-              println(s"deriveCaseClass ${fields}")
-              for {
-                fieldsAsAList <- fieldsAndJsons
-                  .map((field, fromJson) => readField(field, fromJson, jObject))
-                  .sequence
-                fieldsAsTuple = Tuple.fromArray(fieldsAsAList.toArray)
-
-              } yield mirrorOfProduct.fromTuple(
-                fieldsAsTuple.asInstanceOf[mirrorOfProduct.MirroredElemTypes])
-
-            case x =>
-              Validated.invalidNel(JSONParseError(s"JSON object expected. $x"))
-          }
-
-        private def readField(
-            field: Field,
-            fromJson: FromJSON[Any],
-            jObject: JObject): JValidation[Any] =
-          if (field.embedded) fromJson.read(jObject)
-          else io.sphere.json.field(field.fieldName, field.defaultArgument)(jObject)(fromJson)
-
+      val fieldNames: Vector[String] = fieldsAndJsons.flatMap { (field, fromJson) =>
+        if (field.embedded) fromJson.fields.toVector :+ field.name
+        else Vector(field.name)
       }
+
+      def readField(field: Field, fromJson: FromJSON[Any], jObject: JObject): JValidation[Any] =
+        if (field.embedded) fromJson.read(jObject)
+        else io.sphere.json.field(field.fieldName, field.defaultArgument)(jObject)(fromJson)
+
+      FromJSON.instance(
+        readFn = {
+          case jObject: JObject =>
+            for {
+              fieldsAsAList <-
+                fieldsAndJsons.traverse((field, fromJson) => readField(field, fromJson, jObject))
+
+              fieldsAsTuple = Tuple.fromArray(fieldsAsAList.toArray)
+            } yield mirrorOfProduct.fromTuple(
+              fieldsAsTuple.asInstanceOf[mirrorOfProduct.MirroredElemTypes])
+
+          case x =>
+            Validated.invalidNel(JSONParseError(s"JSON object expected. $x"))
+        },
+        fieldSet = fieldNames.toSet
+      )
+    }
 
     inline private def summonFromJsons[T <: Tuple]: Vector[FromJSON[Any]] =
       inline erasedValue[T] match {

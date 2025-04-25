@@ -24,11 +24,20 @@ trait MongoFormat[A] extends Serializable {
 inline def deriveMongoFormat[A](using Mirror.Of[A]): MongoFormat[A] = MongoFormat.derived
 
 object MongoFormat {
-  inline def apply[A: MongoFormat]: MongoFormat[A] = summon
-
   private val emptyFields: Set[String] = Set.empty
 
+  inline def apply[A: MongoFormat]: MongoFormat[A] = summon
   inline given derived[A](using Mirror.Of[A]): MongoFormat[A] = Derivation.derived
+
+  def instance[A](
+      fromFn: Any => A,
+      toFn: A => Any,
+      fieldSet: Set[String] = emptyFields): MongoFormat[A] = new {
+
+    override def toMongoValue(a: A): Any = toFn(a)
+    override def fromMongoValue(mongoType: Any): A = fromFn(mongoType)
+    override val fields: Set[String] = fieldSet
+  }
 
   private def addField(bson: BasicDBObject, field: Field, mongoType: Any): Unit =
     if (!field.ignored)
@@ -41,7 +50,6 @@ object MongoFormat {
       }
 
   private object Derivation {
-
     import scala.compiletime.{constValue, constValueTuple, erasedValue, summonInline}
 
     inline def derived[A](using m: Mirror.Of[A]): MongoFormat[A] =

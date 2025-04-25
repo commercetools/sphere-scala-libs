@@ -12,34 +12,33 @@ def mongoEnum(e: Enumeration): MongoFormat[e.Value] = new MongoFormat[e.Value] {
   def fromMongoValue(any: Any): e.Value = e.withName(any.asInstanceOf[String])
 }
 
-inline def mongoTypeSwitch[SuperType, SubTypeTuple <: Tuple](): MongoFormat[SuperType] =
-  new MongoFormat[SuperType] {
-    private val traitMetaData = AnnotationReader.readTraitMetaData[SuperType]
-    private val typeHintMap = traitMetaData.subTypeTypeHints
-    private val reverseTypeHintMap = typeHintMap.map((on, n) => (n, on))
-    private val formatters: Vector[MongoFormat[Any]] = summonFormatters[SubTypeTuple]()
-    private val names = summonMetaData[SubTypeTuple]().map(_.name)
-    private val formattersByTypeName = names.zip(formatters).toMap
+inline def mongoTypeSwitch[SuperType, SubTypeTuple <: Tuple](): MongoFormat[SuperType] = {
+  val traitMetaData = AnnotationReader.readTraitMetaData[SuperType]
+  val typeHintMap = traitMetaData.subTypeTypeHints
+  val reverseTypeHintMap = typeHintMap.map((on, n) => (n, on))
+  val formatters: Vector[MongoFormat[Any]] = summonFormatters[SubTypeTuple]()
+  val names = summonMetaData[SubTypeTuple]().map(_.name)
+  val formattersByTypeName = names.zip(formatters).toMap
 
-    override def toMongoValue(a: SuperType): Any = {
+  MongoFormat.instance(
+    toFn = { a =>
       val originalTypeName = a.asInstanceOf[Product].productPrefix
       val typeName = typeHintMap.getOrElse(originalTypeName, originalTypeName)
       val bson =
         formattersByTypeName(originalTypeName).toMongoValue(a).asInstanceOf[BasicDBObject]
       bson.put(traitMetaData.typeDiscriminator, typeName)
       bson
+    },
+    fromFn = {
+      case bson: BasicDBObject =>
+        val typeName = bson.get(traitMetaData.typeDiscriminator).asInstanceOf[String]
+        val originalTypeName = reverseTypeHintMap.getOrElse(typeName, typeName)
+        formattersByTypeName(originalTypeName).fromMongoValue(bson).asInstanceOf[SuperType]
+      case x =>
+        throw new Exception(s"BsonObject is expected for a Trait subtype, instead got $x")
     }
-
-    override def fromMongoValue(bson: Any): SuperType =
-      bson match {
-        case bson: BasicDBObject =>
-          val typeName = bson.get(traitMetaData.typeDiscriminator).asInstanceOf[String]
-          val originalTypeName = reverseTypeHintMap.getOrElse(typeName, typeName)
-          formattersByTypeName(originalTypeName).fromMongoValue(bson).asInstanceOf[SuperType]
-        case x =>
-          throw new Exception(s"BsonObject is expected for a Trait subtype, instead got $x")
-      }
-  }
+  )
+}
 
 private def findTypeValue(dbo: BSONObject, typeField: String): Option[String] =
   Option(dbo.get(typeField)).map(_.toString)
