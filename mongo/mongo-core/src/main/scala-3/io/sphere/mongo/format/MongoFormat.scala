@@ -8,8 +8,6 @@ import java.util.UUID
 import java.util.regex.Pattern
 import scala.deriving.Mirror
 
-object MongoNothing
-
 type SimpleMongoType = UUID | String | ObjectId | Short | Int | Long | Float | Double | Boolean |
   Pattern
 
