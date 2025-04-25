@@ -15,7 +15,6 @@ trait FromJSON[A] extends Serializable {
 object FromJSON extends FromJSONInstances with FromJSONCatsInstances with generic.DeriveFromJSON {
   val emptyFieldsSet: Set[String] = Set.empty
 
-  inline def apply[A: JSON]: FromJSON[A] = summon[FromJSON[A]]
   inline def apply[A](using instance: FromJSON[A]): FromJSON[A] = instance
 
   def instance[A](

@@ -141,6 +141,19 @@ class JSONSpec extends AnyFunSpec with Matchers {
       fromJSON[Project](toJSON(proj)) must equal(Valid(proj))
     }
 
+    it(
+      "must provide derived JSON instances for product types (case classes) through FromJSON and ToJSON") {
+      import JSONSpec.{Milestone, Project}
+      given ToJSON[Milestone] = ToJSON.derived[Milestone]
+      given ToJSON[Project] = ToJSON.derived[Project]
+      given FromJSON[Milestone] = FromJSON.derived[Milestone]
+      given FromJSON[Project] = FromJSON.derived[Project]
+
+      val proj =
+        Project(42, "Linux", 7, Milestone("1.0") :: Milestone("2.0") :: Milestone("3.0") :: Nil)
+      fromJSON[Project](toJSON(proj)) must equal(Valid(proj))
+    }
+
     it("must handle empty String") {
       val Invalid(err) = fromJSON[Int](""): @unchecked
       err.toList.head mustBe a[JSONParseError]
@@ -240,10 +253,7 @@ class JSONSpec extends AnyFunSpec with Matchers {
 //          fromJSON[TestSubjectBase](json) must equal(Valid(testSubject))
 //        }
 //      }
-//
 //    }
-//
-//  }
 //
 //  describe("ToJSON and FromJSON") {
 //    it("must provide derived JSON instances for sum types") {
@@ -358,20 +368,7 @@ class JSONSpec extends AnyFunSpec with Matchers {
 //      }
 //
 //    }
-//
-//    it("must provide derived JSON instances for product types (case classes)") {
-//      import JSONSpec.{Milestone, Project}
-//      // ToJSON
-//      implicit val milestoneToJSON = toJsonProduct(Milestone.apply _)
-//      implicit val projectToJSON = toJsonProduct(Project.apply _)
-//      // FromJSON
-//      implicit val milestoneFromJSON = fromJsonProduct(Milestone.apply _)
-//      implicit val projectFromJSON = fromJsonProduct(Project.apply _)
-//
-//      val proj =
-//        Project(42, "Linux", 7, Milestone("1.0") :: Milestone("2.0") :: Milestone("3.0") :: Nil)
-//      fromJSON[Project](toJSON(proj)) must equal(Valid(proj))
-//    }
+
   }
 }
 
