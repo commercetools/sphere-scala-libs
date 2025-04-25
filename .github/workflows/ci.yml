@@ -9,9 +9,9 @@ name: Continuous Integration
 
 on:
   pull_request:
-    branches: ['**']
+    branches: ["**"]
   push:
-    branches: ['**']
+    branches: ["**"]
     tags: [v*]
 
 env:
@@ -24,7 +24,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        scala: [2.12.20, 2.13.16, 3.3.5]
+        scala: [2.13.16, 3.3.5]
         java: [temurin@21]
     runs-on: ${{ matrix.os }}
     steps:
@@ -93,16 +93,6 @@ jobs:
 
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
-
-      - name: Download target directories (2.12.20)
-        uses: actions/download-artifact@v4
-        with:
-          name: target-${{ matrix.os }}-2.12.20-${{ matrix.java }}
-
-      - name: Inflate target directories (2.12.20)
-        run: |
-          tar xf targets.tar
-          rm targets.tar
 
       - name: Download target directories (2.13.16)
         uses: actions/download-artifact@v4
