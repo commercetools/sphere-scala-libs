@@ -13,10 +13,10 @@ import scala.deriving.Mirror
 import io.sphere.json.FromJSON
 import io.sphere.json.*
 
-trait DeriveJSON {
-  inline given derived[A](using Mirror.Of[A]): FromJSON[A] = Derived.derived[A]
+trait DeriveFromJSON {
+  inline given derived[A](using Mirror.Of[A]): FromJSON[A] = Derivation.derived[A]
 
-  object Derived {
+  protected object Derivation {
 
     import scala.compiletime.{constValue, constValueTuple, erasedValue, summonInline}
 

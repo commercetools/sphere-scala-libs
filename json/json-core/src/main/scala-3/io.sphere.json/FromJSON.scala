@@ -12,7 +12,7 @@ trait FromJSON[A] extends Serializable {
   val fields: Set[String] = FromJSON.emptyFieldsSet
 }
 
-object FromJSON extends FromJSONInstances with FromJSONCatsInstances with generic.DeriveJSON {
+object FromJSON extends FromJSONInstances with FromJSONCatsInstances with generic.DeriveFromJSON {
 
   inline def apply[A: JSON]: FromJSON[A] = summon[FromJSON[A]]
 
