@@ -65,18 +65,18 @@ class OptionMongoFormatSpec extends AnyWordSpec with Matchers with OptionValues 
       result mustEqual None
     }
 
-//    "consider all fields if the data type does not impose any restriction" in {
-//      val dbo = dbObj(
-//        "key1" -> "value1",
-//        "key2" -> "value2"
-//      )
-//      val expected = Map("key1" -> "value1", "key2" -> "value2")
-//      val result = deriveMongoFormat[Map[String, String]].fromMongoValue(dbo)
-//      result mustEqual expected
-//
-//      val maybeResult = deriveMongoFormat[Option[Map[String, String]]].fromMongoValue(dbo)
-//      maybeResult.value mustEqual expected
-//    }
+    "consider all fields if the data type does not impose any restriction" in {
+      val dbo = dbObj(
+        "key1" -> "value1",
+        "key2" -> "value2"
+      )
+      val expected = Map("key1" -> "value1", "key2" -> "value2")
+      val result = MongoFormat[Map[String, String]].fromMongoValue(dbo)
+      result mustEqual expected
+
+      val maybeResult = MongoFormat[Option[Map[String, String]]].fromMongoValue(dbo)
+      maybeResult.value mustEqual expected
+    }
 
     "parse optional element" in {
       val dbo = dbObj(

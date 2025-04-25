@@ -39,6 +39,7 @@ class SumTypesDerivingSpec extends AnyWordSpec with Matchers {
 
     "not allow specifying different custom field" in pendingUntilFixed {
       // to serialize Custom, should we use type "color" or "color-custom"?
+      // The current implementation just takes the type hint of the trait and doesn't look at the subtypes anyway
       "deriveMongoFormat[Color5]" mustNot compile
     }
 

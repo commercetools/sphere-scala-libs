@@ -177,6 +177,10 @@ class SerializationTest extends AnyWordSpec with Matchers {
     "serialize and deserialize enumerations" in {
       val mongo: MongoFormat[Color.Value] = AnnotationReader.mongoEnum(Color)
 
+      val colors = List(Color.Red, Color.Yellow, Color.Blue)
+      val roundTripColors = colors.map(mongo.toMongoValue).map(mongo.fromMongoValue)
+      colors must be (roundTripColors)
+      
       // mongo java driver knows how to encode/decode Strings
       val serializedObject = mongo.toMongoValue(Color.Red).asInstanceOf[String]
       serializedObject must be("Red")
