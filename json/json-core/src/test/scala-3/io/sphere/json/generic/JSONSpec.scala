@@ -202,17 +202,27 @@ class JSONSpec extends AnyFunSpec with Matchers {
         fromJSON[Mixed](toJSON(m)) must equal(Valid(m))
       }
     }
-//
-//    it("must provide derived instances for scala.Enumeration") {
-//      import io.sphere.json.generic.JSON.derived
-//      implicit val scalaEnumJSON: JSON[JSONSpec.ScalaEnum.Value] = deriveJSON[ScalaEnum.Value]
-//      ScalaEnum.values.foreach { v =>
-//        val json = s"""[${toJSON(v)}]"""
-//        withClue(json) {
-//          fromJSON[Seq[ScalaEnum.Value]](json) must equal(Valid(Seq(v)))
-//        }
-//      }
-//    }
+    it("must provide instances for scala.Enumeration") {
+      implicit val toScalaEnumJSON = toJsonEnum(ScalaEnum)
+      implicit val fromScalaEnumJSON = fromJsonEnum(ScalaEnum)
+      ScalaEnum.values.foreach { v =>
+        val json = s"""[${toJSON(v)}]"""
+        withClue(json) {
+          fromJSON[Seq[ScalaEnum.Value]](json) must equal(Valid(Seq(v)))
+        }
+      }
+    }
+
+    it("must provide instances for scala.Enumeration through jsonEnum") {
+      // We dropped support for deriveJSON, because there was no derivation anyway, the derivation just called these methods
+      implicit val scalaEnumJSON: JSON[JSONSpec.ScalaEnum.Value] = jsonEnum(ScalaEnum)
+      ScalaEnum.values.foreach { v =>
+        val json = s"""[${toJSON(v)}]"""
+        withClue(json) {
+          fromJSON[Seq[ScalaEnum.Value]](json) must equal(Valid(Seq(v)))
+        }
+      }
+    }
 //
 //    it("must handle subclasses correctly in `jsonTypeSwitch`") {
 //      implicit val jsonImpl = TestSubjectBase.json
@@ -307,16 +317,6 @@ class JSONSpec extends AnyFunSpec with Matchers {
 //      }
 //    }
 //
-//    it("must provide derived instances for scala.Enumeration") {
-//      implicit val toScalaEnumJSON = toJsonEnum(ScalaEnum)
-//      implicit val fromScalaEnumJSON = fromJsonEnum(ScalaEnum)
-//      ScalaEnum.values.foreach { v =>
-//        val json = s"""[${toJSON(v)}]"""
-//        withClue(json) {
-//          fromJSON[Seq[ScalaEnum.Value]](json) must equal(Valid(Seq(v)))
-//        }
-//      }
-//    }
 //
 //    it("must handle subclasses correctly in `jsonTypeSwitch`") {
 //      // ToJSON
