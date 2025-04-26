@@ -70,33 +70,34 @@ inline def jsonTypeSwitch[SuperType, SubTypeTuple <: Tuple](): JSON[SuperType] =
   val formattersAndMetaData: Vector[(TraitMetaData, JSON[Any])] = summonFormatters[SubTypeTuple]()
 
   // Separate Trait formatters from CaseClass formatters, so we can avoid adding the typeDiscriminator twice
-  val (traitFormatterList, caseClassFormatterList) =
+  val (traitInTraitInfo, caseClassFormatters) =
     formattersAndMetaData.partitionMap { (meta, formatter) =>
-      if (meta.isTrait)
-        Left(meta.subtypes.map(_._2.name -> formatter))
-      else
+      if (meta.isTrait) {
+        val formatterByName = meta.subtypes.map((fieldName, m) => m.name -> formatter)
+        Left((formatterByName, meta.subTypeFieldRenames))
+      } else
         Right(meta.top.name -> formatter)
     }
 
-  val traitFormatters = traitFormatterList.flatten.toMap
-  val caseClassFormatters = caseClassFormatterList.toMap
-  val allFormattersByTypeName = traitFormatters ++ caseClassFormatters
+  // Currently we support 2 layers of traits, because the AnnotationReader only tries to read to 2 levels
+  val (traitInTraitFormatters, traitInTraitRenames) = traitInTraitInfo.unzip
+  val traitInTraitFormatterMap = traitInTraitFormatters.fold(Map.empty)(_ ++ _)
 
-  // We could add some checking here to filter duplicate keys
-  val subTypeHints =
-    traitFormatters.map((_, formatter) => formatter.traitTypeHintMap).fold(Map.empty)(_ ++ _)
-  val mergedTypeHintMap = traitMetaData.subTypeTypeHints ++ subTypeHints
+  val caseClassFormatterMap = caseClassFormatters.toMap
+  val allFormattersByTypeName = traitInTraitFormatterMap ++ caseClassFormatterMap
+
+  val mergedTypeHintMap = traitMetaData.subTypeFieldRenames ++ traitInTraitRenames.fold(Map.empty)(_ ++ _)
   val reverseTypeHintMap = mergedTypeHintMap.map((on, n) => (n, on))
 
   JSON.instance(
     writeFn = { a =>
       val originalTypeName = a.asInstanceOf[Product].productPrefix
       val typeName = mergedTypeHintMap.getOrElse(originalTypeName, originalTypeName)
-      val traitFormatterOpt = traitFormatters.get(originalTypeName)
+      val traitFormatterOpt = traitInTraitFormatterMap.get(originalTypeName)
       traitFormatterOpt
         .map(_.write(a).asInstanceOf[JObject])
         .getOrElse {
-          val json = caseClassFormatters(originalTypeName).write(a).asInstanceOf[JObject]
+          val json = caseClassFormatterMap(originalTypeName).write(a).asInstanceOf[JObject]
           val typeDiscriminator = traitMetaData.typeDiscriminator -> JString(typeName)
           JObject(typeDiscriminator :: json.obj)
         }

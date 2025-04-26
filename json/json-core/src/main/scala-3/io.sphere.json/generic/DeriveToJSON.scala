@@ -30,14 +30,6 @@ trait DeriveToJSON {
     inline private def deriveTrait[A](mirrorOfSum: Mirror.SumOf[A]): ToJSON[A] = {
       val traitMetaData: TraitMetaData = AnnotationReader.readTraitMetaData[A]
 
-      val typeHintMap: Map[String, String] = traitMetaData.subtypes.flatMap {
-        case (name, classMeta) if classMeta.typeHint.isDefined =>
-          classMeta.typeHint.map(name -> _)
-        case _ =>
-          None
-      }
-
-      val reverseTypeHintMap: Map[String, String] = typeHintMap.map((on, n) => (n, on))
       val jsons: Seq[ToJSON[Any]] = summonToJson[mirrorOfSum.MirroredElemTypes]
 
       val names: Seq[String] =
@@ -49,7 +41,8 @@ trait DeriveToJSON {
       ToJSON.instance { value =>
         // we never get a trait here, only classes, it's safe to assume Product
         val originalTypeName = value.asInstanceOf[Product].productPrefix
-        val typeName = typeHintMap.getOrElse(originalTypeName, originalTypeName)
+        val typeName =
+          traitMetaData.subTypeFieldRenames.getOrElse(originalTypeName, originalTypeName)
         val json = jsonsByNames(originalTypeName).write(value).asInstanceOf[JObject]
         val typeDiscriminator = traitMetaData.typeDiscriminator -> JString(typeName)
         JObject(typeDiscriminator :: json.obj)

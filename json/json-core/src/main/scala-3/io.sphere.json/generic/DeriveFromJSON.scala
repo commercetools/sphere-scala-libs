@@ -29,14 +29,8 @@ trait DeriveFromJSON {
     inline private def deriveTrait[A](mirrorOfSum: Mirror.SumOf[A]): FromJSON[A] = {
       val traitMetaData: TraitMetaData = AnnotationReader.readTraitMetaData[A]
 
-      val typeHintMap: Map[String, String] = traitMetaData.subtypes.flatMap {
-        case (name, classMeta) if classMeta.typeHint.isDefined =>
-          classMeta.typeHint.map(name -> _)
-        case _ =>
-          None
-      }
-
-      val reverseTypeHintMap: Map[String, String] = typeHintMap.map((on, n) => (n, on))
+      val reverseTypeHintMap: Map[String, String] =
+        traitMetaData.subTypeFieldRenames.map((on, n) => (n, on))
       val fromJsons: Seq[FromJSON[Any]] = summonFromJsons[mirrorOfSum.MirroredElemTypes]
 
       val names: Seq[String] =
@@ -54,8 +48,7 @@ trait DeriveFromJSON {
 
           case x =>
             Validated.invalidNel(JSONParseError(s"JSON object expected. Got: '$x'"))
-        },
-        typeHintMap = typeHintMap
+        }
       )
     }
 
