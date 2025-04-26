@@ -2,17 +2,7 @@ package io.sphere.json.generic
 
 import cats.data.Validated
 import cats.syntax.validated.*
-import io.sphere.json.{
-  FromJSON,
-  JSON,
-  JSONError,
-  JSONParseError,
-  JValidation,
-  ToJSON,
-  jsonParseError,
-  toJSON,
-  toJValue
-}
+import io.sphere.json.*
 import org.json4s.DefaultJsonFormats.given
 import org.json4s.{JObject, JString, jvalue2monadic, jvalue2readerSyntax}
 import org.json4s.JsonAST.JValue
@@ -86,7 +76,8 @@ inline def jsonTypeSwitch[SuperType, SubTypeTuple <: Tuple](): JSON[SuperType] =
   val caseClassFormatterMap = caseClassFormatters.toMap
   val allFormattersByTypeName = traitInTraitFormatterMap ++ caseClassFormatterMap
 
-  val mergedTypeHintMap = traitMetaData.subTypeFieldRenames ++ traitInTraitRenames.fold(Map.empty)(_ ++ _)
+  val mergedTypeHintMap =
+    traitMetaData.subTypeFieldRenames ++ traitInTraitRenames.fold(Map.empty)(_ ++ _)
   val reverseTypeHintMap = mergedTypeHintMap.map((on, n) => (n, on))
 
   JSON.instance(
@@ -95,11 +86,15 @@ inline def jsonTypeSwitch[SuperType, SubTypeTuple <: Tuple](): JSON[SuperType] =
       val typeName = mergedTypeHintMap.getOrElse(originalTypeName, originalTypeName)
       val traitFormatterOpt = traitInTraitFormatterMap.get(originalTypeName)
       traitFormatterOpt
-        .map(_.write(a).asInstanceOf[JObject])
+        .map(_.write(a))
         .getOrElse {
-          val json = caseClassFormatterMap(originalTypeName).write(a).asInstanceOf[JObject]
+          val jsonObj = caseClassFormatterMap(originalTypeName).write(a) match {
+            case JObject(obj) => obj
+            case json =>
+              throw new Exception(s"This code only handles objects as of now, but got: $json")
+          }
           val typeDiscriminator = traitMetaData.typeDiscriminator -> JString(typeName)
-          JObject(typeDiscriminator :: json.obj)
+          JObject(typeDiscriminator :: jsonObj)
         }
     },
     readFn = {

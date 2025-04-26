@@ -1,7 +1,7 @@
 package io.sphere.json.generic
 
 import cats.data.Validated.Valid
-import io.sphere.json.{JSON, deriveJSON}
+import io.sphere.json.{JSON, JSONParseError, JValidation, deriveJSON}
 import io.sphere.json.generic.jsonTypeSwitch
 import org.json4s.JsonAST.JObject
 import org.scalatest.matchers.must.Matchers
@@ -65,6 +65,29 @@ class JsonTypeSwitchSpec extends AnyWordSpec with Matchers {
 
       val messages = jsons.map(Message.json.read).map(_.toOption.get)
       messages must be(m)
+    }
+
+    "handle custom implementations for subtypes" in {
+
+      given JSON[B] = new JSON[B] {
+        override def read(jval: JValue): JValidation[B] = jval match {
+          case JObject(List(_, "field" -> JString(s"Custom-B-${n}"))) =>
+            Valid(B(n.toInt))
+          case _ => ???
+        }
+        override def write(value: B): JValue =
+          JObject(List("field" -> JString(s"Custom-B-${value.int}")))
+      }
+      val format = jsonTypeSwitch[A, (B, D, C)]()
+
+      List(
+        D(2345),
+        C(4),
+        B(34)
+      ).foreach { value =>
+        val json = format.write(value)
+        format.read(json).getOrElse(null) must be(value)
+      }
     }
   }
 
