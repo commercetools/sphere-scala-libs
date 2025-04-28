@@ -1,119 +1,29 @@
 package io.sphere.json.generic
 
-import cats.data.Validated
-import cats.syntax.validated.*
 import io.sphere.json.*
-import org.json4s.DefaultJsonFormats.given
-import org.json4s.{JObject, JString, jvalue2monadic, jvalue2readerSyntax}
-import org.json4s.JsonAST.JValue
-
-import scala.collection.mutable
-import scala.compiletime.{erasedValue, error, summonInline}
 
 /** Creates a ToJSON instance for an Enumeration type that encodes the `toString` representations of
   * the enumeration values.
   */
-def toJsonEnum(e: Enumeration): ToJSON[e.Value] = new ToJSON[e.Value] {
-  def write(a: e.Value): JValue = JString(a.toString)
-}
+inline def toJsonEnum(e: Enumeration): ToJSON[e.Value] = EnumerationInstances.toJsonEnum(e)
 
 /** Creates a FromJSON instance for an Enumeration type that encodes the `toString` representations
   * of the enumeration values.
   */
-def fromJsonEnum(e: Enumeration): FromJSON[e.Value] = {
-  // We're using an AnyRefMap for performance, it's not for mutability.
-  val validRepresentations = mutable.AnyRefMap(
-    e.values.iterator.map { value =>
-      value.toString -> value.validNel[JSONError]
-    }.toSeq: _*
-  )
-
-  val allowedValues = e.values.mkString("'", "','", "'")
-
-  new FromJSON[e.Value] {
-    override def read(json: JValue): JValidation[e.Value] =
-      json match {
-        case JString(string) =>
-          validRepresentations.getOrElse(
-            string,
-            jsonParseError(
-              "Invalid enum value: '%s'. Expected one of: %s".format(string, allowedValues)))
-        case _ => jsonParseError("JSON String expected.")
-      }
-  }
-}
+inline def fromJsonEnum(e: Enumeration): FromJSON[e.Value] = EnumerationInstances.fromJsonEnum(e)
 
 // This can be used instead of deriveJSON
-def jsonEnum(e: Enumeration): JSON[e.Value] = {
-  val toJson = toJsonEnum(e)
-  val fromJson = fromJsonEnum(e)
+inline def jsonEnum(e: Enumeration): JSON[e.Value] = EnumerationInstances.jsonEnum(e)
 
-  new JSON[e.Value] {
-    override def read(jval: JValue): JValidation[e.Value] = fromJson.read(jval)
+inline def jsonTypeSwitch[SuperType, SubTypes <: Tuple](): JSON[SuperType] =
+  JSONTypeSwitch.jsonTypeSwitch[SuperType, SubTypes]()
 
-    override def write(value: e.Value): JValue = toJson.write(value)
-  }
+inline def toJsonTypeSwitch[SuperType, SubTypes <: Tuple]: ToJSON[SuperType] = {
+  val info = JSONTypeSwitch.readTraitInformation[SuperType, SubTypes]
+  JSONTypeSwitch.toJsonTypeSwitch[SuperType](info)
 }
 
-inline def jsonTypeSwitch[SuperType, SubTypeTuple <: Tuple](): JSON[SuperType] = {
-  val traitMetaData = AnnotationReader.readTraitMetaData[SuperType]
-  val formattersAndMetaData: Vector[(TraitMetaData, JSON[Any])] = summonFormatters[SubTypeTuple]()
-
-  // Separate Trait formatters from CaseClass formatters, so we can avoid adding the typeDiscriminator twice
-  val (traitInTraitInfo, caseClassFormatters) =
-    formattersAndMetaData.partitionMap { (meta, formatter) =>
-      if (meta.isTrait) {
-        val formatterByName = meta.subtypes.map((fieldName, m) => m.name -> formatter)
-        Left((formatterByName, meta.subTypeFieldRenames))
-      } else
-        Right(meta.top.name -> formatter)
-    }
-
-  // Currently we support 2 layers of traits, because the AnnotationReader only tries to read to 2 levels
-  val (traitInTraitFormatters, traitInTraitRenames) = traitInTraitInfo.unzip
-  val traitInTraitFormatterMap = traitInTraitFormatters.fold(Map.empty)(_ ++ _)
-
-  val caseClassFormatterMap = caseClassFormatters.toMap
-  val allFormattersByTypeName = traitInTraitFormatterMap ++ caseClassFormatterMap
-
-  val mergedTypeHintMap =
-    traitMetaData.subTypeFieldRenames ++ traitInTraitRenames.fold(Map.empty)(_ ++ _)
-  val reverseTypeHintMap = mergedTypeHintMap.map((on, n) => (n, on))
-
-  JSON.instance(
-    writeFn = { a =>
-      val originalTypeName = a.asInstanceOf[Product].productPrefix
-      val typeName = mergedTypeHintMap.getOrElse(originalTypeName, originalTypeName)
-      val traitFormatterOpt = traitInTraitFormatterMap.get(originalTypeName)
-      traitFormatterOpt
-        .map(_.write(a))
-        .getOrElse {
-          val jsonObj = caseClassFormatterMap(originalTypeName).write(a) match {
-            case JObject(obj) => obj
-            case json =>
-              throw new Exception(s"This code only handles objects as of now, but got: $json")
-          }
-          val typeDiscriminator = traitMetaData.typeDiscriminator -> JString(typeName)
-          JObject(typeDiscriminator :: jsonObj)
-        }
-    },
-    readFn = {
-      case jObject: JObject =>
-        val typeName = (jObject \ traitMetaData.typeDiscriminator).as[String]
-        val originalTypeName = reverseTypeHintMap.getOrElse(typeName, typeName)
-        allFormattersByTypeName(originalTypeName).read(jObject).map(_.asInstanceOf[SuperType])
-      case x =>
-        Validated.invalidNel(JSONParseError(s"JSON object expected. Got: '$x'"))
-    }
-  )
+inline def fromJsonTypeSwitch[SuperType, SubTypes <: Tuple]: FromJSON[SuperType] = {
+  val info = JSONTypeSwitch.readTraitInformation[SuperType, SubTypes]
+  JSONTypeSwitch.fromJsonTypeSwitch[SuperType](info)
 }
-
-inline private def summonFormatters[T <: Tuple](
-    acc: Vector[(TraitMetaData, JSON[Any])] = Vector.empty): Vector[(TraitMetaData, JSON[Any])] =
-  inline erasedValue[T] match {
-    case _: EmptyTuple => acc
-    case _: (t *: ts) =>
-      val traitMetaData = AnnotationReader.readTraitMetaData[t]
-      val headFormatter = summonInline[JSON[t]].asInstanceOf[JSON[Any]]
-      summonFormatters[ts](acc :+ (traitMetaData -> headFormatter))
-  }

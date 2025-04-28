@@ -263,23 +263,23 @@ class JSONSpec extends AnyFunSpec with Matchers {
       }
     }
 
-//    it("must provide derived JSON instances for sum types") {
-//      // ToJSON
-//      implicit val birdToJSON = deriveJSON[Bird].write(Bird.apply _)
-//      implicit val dogToJSON = deriveJSON[Dog].write(Dog.apply _)
-//      implicit val catToJSON = ToJSON.derived[Cat]
-//      implicit val animalToJSON = jsonTypeSwitch[Animal, (Bird, Dog, Cat)]()
-//      // FromJSON
-//      implicit val birdFromJSON = FromJSON.derived[Bird]
-//      implicit val dogFromJSON = FromJSON.derived[Dog]
-//      implicit val catFromJSON = FromJSON.derived[Cat]
-//      implicit val animalFromJSON = jsonTypeSwitch[Animal, (Bird, Dog, Cat)]()
-//
-//      List(Bird("Peewee"), Dog("Hasso"), Cat("Felidae")).foreach { a: Animal =>
-//        fromJSON[Animal](toJSON(a)) must equal(Valid(a))
-//      }
-//    }
-//
+    it("must provide derived JSON instances for sum types") {
+      // ToJSON
+      given ToJSON[Bird] = ToJSON.derived[Bird]
+      given ToJSON[Dog] = ToJSON.derived[Dog]
+      given ToJSON[Cat] = ToJSON.derived[Cat]
+      given ToJSON[Animal] = toJsonTypeSwitch[Animal, (Bird, Dog, Cat)]
+      // FromJSON
+      given FromJSON[Bird] = FromJSON.derived[Bird]
+      given FromJSON[Dog] = FromJSON.derived[Dog]
+      given FromJSON[Cat] = FromJSON.derived[Cat]
+      given FromJSON[Animal] = fromJsonTypeSwitch[Animal, (Bird, Dog, Cat)]
+
+      List(Bird("Peewee"), Dog("Hasso"), Cat("Felidae")).foreach { (a: Animal) =>
+        fromJSON[Animal](toJSON(a)) must equal(Valid(a))
+      }
+    }
+
     it("must provide derived instances for product types with concrete type parameters") {
       given ToJSON[GenericA[String]] = ToJSON.derived
       given FromJSON[GenericA[String]] = FromJSON.derived
@@ -317,22 +317,22 @@ class JSONSpec extends AnyFunSpec with Matchers {
 //          fromJSON[SingletonEnum](toJSON(s)) must equal(Valid(s))
 //      }
 //    }
-//
-//    it("must provide derived instances for sum types with a mix of case class / object") {
-//      // ToJSON
-//      implicit val toSingleJSON = toJsonProduct0(SingletonMixed)
-//      implicit val toRecordJSON = toJsonProduct(RecordMixed.apply _)
-//      implicit val toMixedJSON = toJsonTypeSwitch[Mixed, SingletonMixed.type, RecordMixed](Nil)
-//      // FromJSON
-//      implicit val fromSingleJSON = fromJsonProduct0(SingletonMixed)
-//      implicit val fromRecordJSON = fromJsonProduct(RecordMixed.apply _)
-//      implicit val fromMixedJSON = fromJsonTypeSwitch[Mixed, SingletonMixed.type, RecordMixed](Nil)
-//      List(SingletonMixed, RecordMixed(1)).foreach {
-//        m: Mixed =>
-//          fromJSON[Mixed](toJSON(m)) must equal(Valid(m))
-//      }
-//    }
-//
+
+    it("must provide derived instances for sum types with a mix of case class / object") {
+      // ToJSON
+      given ToJSON[SingletonMixed.type] = ToJSON.derived
+      given ToJSON[RecordMixed] = ToJSON.derived
+      given ToJSON[Mixed] = toJsonTypeSwitch[Mixed, (SingletonMixed.type, RecordMixed)]
+      // FromJSON
+      given FromJSON[SingletonMixed.type] = FromJSON.derived
+      given FromJSON[RecordMixed] = FromJSON.derived
+      given FromJSON[Mixed] = fromJsonTypeSwitch[Mixed, (SingletonMixed.type, RecordMixed)]
+
+      List(SingletonMixed, RecordMixed(1)).foreach { m =>
+        fromJSON[Mixed](toJSON(m)) must equal(Valid(m))
+      }
+    }
+
 //
 //    it("must handle subclasses correctly in `jsonTypeSwitch`") {
 //      // ToJSON

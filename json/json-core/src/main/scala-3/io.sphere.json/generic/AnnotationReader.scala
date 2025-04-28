@@ -35,7 +35,9 @@ case class TraitMetaData(
 ) {
   def isTrait: Boolean = subtypes.nonEmpty
 
-  val typeDiscriminator: String = typeHintFieldRaw.map(_.value).getOrElse("type")
+  private val defaultTypeDiscriminatorName = "type"
+  val typeDiscriminator: String =
+    typeHintFieldRaw.map(_.value).getOrElse(defaultTypeDiscriminatorName)
 
   val subTypeFieldRenames: Map[String, String] = subtypes.collect {
     case (name, classMeta) if classMeta.typeHint.isDefined =>
@@ -122,7 +124,8 @@ class AnnotationReader(using q: Quotes) {
   private def caseClassMetaData(sym: Symbol): Expr[CaseClassMetaData] = {
     val caseParams = sym.primaryConstructor.paramSymss.take(1).flatten
     val fields = Varargs(caseParams.zipWithIndex.map(collectFieldInfo(sym.companionModule)))
-    val name = Expr(sym.name)
+    // Removing $ from the end of object names (productPrefix doesn't return names like that, so it's better not to have it)
+    val name = Expr(sym.name.stripSuffix("$"))
     val typeHint = sym.annotations.map(findTypeHint).find(_.isDefined).flatten match {
       case Some(th) => '{ Some($th) }
       case None => '{ None }
