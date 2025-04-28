@@ -286,37 +286,6 @@ class JSONSpec extends AnyFunSpec with Matchers {
       val a = GenericA("hello")
       fromJSON[GenericA[String]](toJSON(a)) must equal(Valid(a))
     }
-//
-//    it("must provide derived instances for singleton objects") {
-//      implicit val toSingletonJSON = toJsonSingleton(Singleton)
-//      implicit val fromSingletonJSON = fromJsonSingleton(Singleton)
-//      val json = s"""[${toJSON(Singleton)}]"""
-//      withClue(json) {
-//        fromJSON[Seq[Singleton.type]](json) must equal(Valid(Seq(Singleton)))
-//      }
-//
-//      // ToJSON
-//      implicit val toSingleAJSON = toJsonSingleton(SingletonA)
-//      implicit val toSingleBJSON = toJsonSingleton(SingletonB)
-//      implicit val toSingleCJSON = toJsonSingleton(SingletonC)
-//      implicit val toSingleEnumJSON =
-//        toJsonSingletonEnumSwitch[SingletonEnum, SingletonA.type, SingletonB.type, SingletonC.type](
-//          Nil)
-//      // FromJSON
-//      implicit val fromSingleAJSON = fromJsonSingleton(SingletonA)
-//      implicit val fromSingleBJSON = fromJsonSingleton(SingletonB)
-//      implicit val fromSingleCJSON = fromJsonSingleton(SingletonC)
-//      implicit val fromSingleEnumJSON = fromJsonSingletonEnumSwitch[
-//        SingletonEnum,
-//        SingletonA.type,
-//        SingletonB.type,
-//        SingletonC.type](Nil)
-//
-//      List(SingletonA, SingletonB, SingletonC).foreach {
-//        s: SingletonEnum =>
-//          fromJSON[SingletonEnum](toJSON(s)) must equal(Valid(s))
-//      }
-//    }
 
     it("must provide derived instances for sum types with a mix of case class / object") {
       // ToJSON
@@ -333,47 +302,46 @@ class JSONSpec extends AnyFunSpec with Matchers {
       }
     }
 
-//
-//    it("must handle subclasses correctly in `jsonTypeSwitch`") {
-//      // ToJSON
-//      implicit val to1 = toJsonProduct(TestSubjectConcrete1.apply _)
-//      implicit val to2 = toJsonProduct(TestSubjectConcrete2.apply _)
-//      implicit val to3 = toJsonProduct(TestSubjectConcrete3.apply _)
-//      implicit val to4 = toJsonProduct(TestSubjectConcrete4.apply _)
-//      implicit val toA =
-//        toJsonTypeSwitch[TestSubjectCategoryA, TestSubjectConcrete1, TestSubjectConcrete2](Nil)
-//      implicit val toB =
-//        toJsonTypeSwitch[TestSubjectCategoryB, TestSubjectConcrete3, TestSubjectConcrete4](Nil)
-//      implicit val toBase =
-//        toJsonTypeSwitch[TestSubjectBase, TestSubjectCategoryA, TestSubjectCategoryB](Nil)
-//
-//      // FromJSON
-//      implicit val from1 = fromJsonProduct(TestSubjectConcrete1.apply _)
-//      implicit val from2 = fromJsonProduct(TestSubjectConcrete2.apply _)
-//      implicit val from3 = fromJsonProduct(TestSubjectConcrete3.apply _)
-//      implicit val from4 = fromJsonProduct(TestSubjectConcrete4.apply _)
-//      implicit val fromA =
-//        fromJsonTypeSwitch[TestSubjectCategoryA, TestSubjectConcrete1, TestSubjectConcrete2](Nil)
-//      implicit val fromB =
-//        fromJsonTypeSwitch[TestSubjectCategoryB, TestSubjectConcrete3, TestSubjectConcrete4](Nil)
-//      implicit val fromBase =
-//        fromJsonTypeSwitch[TestSubjectBase, TestSubjectCategoryA, TestSubjectCategoryB](Nil)
-//
-//      val testSubjects = List[TestSubjectBase](
-//        TestSubjectConcrete1("testSubject1"),
-//        TestSubjectConcrete2("testSubject2"),
-//        TestSubjectConcrete3("testSubject3"),
-//        TestSubjectConcrete4("testSubject4")
-//      )
-//
-//      testSubjects.foreach { testSubject =>
-//        val json = toJSON(testSubject)
-//        withClue(json) {
-//          fromJSON[TestSubjectBase](json) must equal(Valid(testSubject))
-//        }
-//      }
-//
-//    }
+    it("must handle subclasses correctly in `jsonTypeSwitch`") {
+      // ToJSON
+      given ToJSON[TestSubjectConcrete1] = ToJSON.derived
+      given ToJSON[TestSubjectConcrete2] = ToJSON.derived
+      given ToJSON[TestSubjectConcrete3] = ToJSON.derived
+      given ToJSON[TestSubjectConcrete4] = ToJSON.derived
+      given ToJSON[TestSubjectCategoryA] =
+        toJsonTypeSwitch[TestSubjectCategoryA, (TestSubjectConcrete1, TestSubjectConcrete2)]
+      given ToJSON[TestSubjectCategoryB] =
+        toJsonTypeSwitch[TestSubjectCategoryB, (TestSubjectConcrete3, TestSubjectConcrete4)]
+      given ToJSON[TestSubjectBase] =
+        toJsonTypeSwitch[TestSubjectBase, (TestSubjectCategoryA, TestSubjectCategoryB)]
+
+      // FromJSON
+      given FromJSON[TestSubjectConcrete1] = FromJSON.derived
+      given FromJSON[TestSubjectConcrete2] = FromJSON.derived
+      given FromJSON[TestSubjectConcrete3] = FromJSON.derived
+      given FromJSON[TestSubjectConcrete4] = FromJSON.derived
+      given FromJSON[TestSubjectCategoryA] =
+        fromJsonTypeSwitch[TestSubjectCategoryA, (TestSubjectConcrete1, TestSubjectConcrete2)]
+      given FromJSON[TestSubjectCategoryB] =
+        fromJsonTypeSwitch[TestSubjectCategoryB, (TestSubjectConcrete3, TestSubjectConcrete4)]
+      given FromJSON[TestSubjectBase] =
+        fromJsonTypeSwitch[TestSubjectBase, (TestSubjectCategoryA, TestSubjectCategoryB)]
+
+      val testSubjects = List[TestSubjectBase](
+        TestSubjectConcrete1("testSubject1"),
+        TestSubjectConcrete2("testSubject2"),
+        TestSubjectConcrete3("testSubject3"),
+        TestSubjectConcrete4("testSubject4")
+      )
+
+      testSubjects.foreach { testSubject =>
+        val json = toJSON(testSubject)
+        withClue(json) {
+          fromJSON[TestSubjectBase](json) must equal(Valid(testSubject))
+        }
+      }
+
+    }
 
   }
 }
