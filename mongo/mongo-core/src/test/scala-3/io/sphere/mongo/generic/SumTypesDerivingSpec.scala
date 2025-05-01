@@ -60,7 +60,9 @@ class SumTypesDerivingSpec extends AnyWordSpec with Matchers {
     }
 
     "nested trait 4: no duplicates, 1 type discriminator" in {
-      Color7.format
+      check(Color7.format, Color7.Red, dbObj("type" -> "Red"))
+      check(Color7.format, Color7.Blue, dbObj("type" -> "Blue"))
+      check(Color7.format, Color7.Custom("234"), dbObj("rgb" -> "234", "type" -> "Custom"))
     }
 
     "do not use sealed trait info when using a case class directly" in {
@@ -206,6 +208,7 @@ object SumTypesDerivingSpec {
   object Color7 {
     case object Red extends Color7a
     case class Custom(rgb: String) extends Color7a
+    case object Blue extends Color7
     def format = deriveMongoFormat[Color7]
   }
 

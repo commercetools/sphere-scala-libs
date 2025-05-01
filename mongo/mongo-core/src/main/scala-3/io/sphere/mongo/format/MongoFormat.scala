@@ -28,24 +28,20 @@ trait MongoFormat[A] extends Serializable {
   * easier
   */
 trait TraitMongoFormat[A] extends MongoFormat[A] {
-  val subTypeNames: Vector[String]
-  val typeDiscriminator: String
-
+  // This approach is somewhat slow, the reason I chose to implement it like this is because:
+  // 1. We don't have nested trait structures anyway, the scala 2 version didn't even work for this case.
+  //    So this is more of a proof of concept feature
+  // 2. I didn't find a way to check types runtime when you have a nested trait hierarchy, because of erasure.
+  //    So this instance wouldn't know if it's really dealing with one of its subtypes or with another trait's subtype.
   def attemptWrite(a: A): Try[Any] = Try(toMongoValue(a))
 
   def attemptRead(bson: BSONObject): Try[A] = Try(fromMongoValue(bson))
 }
 
 object TraitMongoFormat {
-  def instance[A](
-      fromMongo: Any => A,
-      toMongo: A => Any,
-      subTypes: Vector[String],
-      typeDiscr: String): TraitMongoFormat[A] = new {
+  def instance[A](fromMongo: Any => A, toMongo: A => Any): TraitMongoFormat[A] = new {
     override def toMongoValue(a: A): Any = toMongo(a)
     override def fromMongoValue(mongoType: Any): A = fromMongo(mongoType)
-    override val subTypeNames: Vector[String] = subTypes
-    override val typeDiscriminator: String = typeDiscr
   }
 }
 
@@ -127,9 +123,7 @@ object MongoFormat {
             }
           case x =>
             throw new Exception(s"BsonObject is expected for a Trait subtype, instead got $x")
-        },
-        subTypes = subTypeNames,
-        typeDiscr = traitMetaData.typeDiscriminator
+        }
       )
     }
 

@@ -3,7 +3,7 @@ package io.sphere.json.generic
 import cats.data.Validated
 import cats.syntax.traverse.*
 import io.sphere.json.field
-import io.sphere.json.generic.{AnnotationReader, TypeMetaData, Field, TraitMetaData}
+import io.sphere.json.generic.{AnnotationReader, Field, TraitMetaData, TypeMetaData}
 import org.json4s.JsonAST.*
 import org.json4s.DefaultReaders.StringReader
 import org.json4s.{jvalue2monadic, jvalue2readerSyntax}
