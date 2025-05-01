@@ -3,11 +3,13 @@ package io.sphere.mongo.format
 import com.mongodb.BasicDBObject
 import io.sphere.mongo.generic.{AnnotationReader, Field}
 import io.sphere.util.VectorUtils.*
+import org.bson.BSONObject
 import org.bson.types.ObjectId
 
 import java.util.UUID
 import java.util.regex.Pattern
 import scala.deriving.Mirror
+import scala.util.{Success, Try}
 
 type SimpleMongoType = UUID | String | ObjectId | Short | Int | Long | Float | Double | Boolean |
   Pattern
@@ -28,6 +30,10 @@ trait MongoFormat[A] extends Serializable {
 trait TraitMongoFormat[A] extends MongoFormat[A] {
   val subTypeNames: Vector[String]
   val typeDiscriminator: String
+
+  def attemptWrite(a: A): Try[Any] = Try(toMongoValue(a))
+
+  def attemptRead(bson: BSONObject): Try[A] = Try(fromMongoValue(bson))
 }
 
 object TraitMongoFormat {
@@ -85,38 +91,44 @@ object MongoFormat {
       val typeHintMap = traitMetaData.subTypeTypeHints
       val reverseTypeHintMap = typeHintMap.map((on, n) => (n, on))
       val formatters = summonFormatters[mirrorOfSum.MirroredElemTypes]
-      val names = constValueTuple[mirrorOfSum.MirroredElemLabels].productIterator.toVector
+      val subTypeNames = constValueTuple[mirrorOfSum.MirroredElemLabels].productIterator.toVector
         .asInstanceOf[Vector[String]]
-      val formattersByTypeName = names
-        .zip(formatters)
-        .flatMap { case kv @ (name, formatter) =>
+      val pairedFormatterWithSubtypeName = subTypeNames.zip(formatters)
+      val (caseClassFormatterList, traitFormatters) = pairedFormatterWithSubtypeName.partitionMap {
+        case kv @ (name, formatter) =>
           formatter match {
-            case traitFormatter: TraitMongoFormat[_] =>
-              traitFormatter.subTypeNames.map(_ -> formatter)
-            case _ => Vector(kv)
+            case traitFormatter: TraitMongoFormat[_] => Right(traitFormatter)
+            case _ => Left(kv)
           }
-        }
-        .toMapWithNoDuplicateKeys
+      }
+      val caseClassFormatters = caseClassFormatterList.toMap
 
       TraitMongoFormat.instance(
         toMongo = { a =>
-          // we never get a trait here, only classes, it's safe to assume Product
-          val originalTypeName = a.asInstanceOf[Product].productPrefix
-          val typeName = typeHintMap.getOrElse(originalTypeName, originalTypeName)
-          val bson =
-            formattersByTypeName(originalTypeName).toMongoValue(a).asInstanceOf[BasicDBObject]
-          bson.put(traitMetaData.typeDiscriminator, typeName)
-          bson
+          traitFormatters.view.map(_.attemptWrite(a)).find(_.isSuccess).map(_.get) match {
+            case Some(bson) => bson
+            case None =>
+              val originalTypeName = a.asInstanceOf[Product].productPrefix
+              val typeName = typeHintMap.getOrElse(originalTypeName, originalTypeName)
+              val bson =
+                caseClassFormatters(originalTypeName).toMongoValue(a).asInstanceOf[BasicDBObject]
+              bson.put(traitMetaData.typeDiscriminator, typeName)
+              bson
+          }
         },
         fromMongo = {
           case bson: BasicDBObject =>
-            val typeName = bson.get(traitMetaData.typeDiscriminator).asInstanceOf[String]
-            val originalTypeName = reverseTypeHintMap.getOrElse(typeName, typeName)
-            formattersByTypeName(originalTypeName).fromMongoValue(bson).asInstanceOf[A]
+            traitFormatters.view.map(_.attemptRead(bson)).find(_.isSuccess).map(_.get) match {
+              case Some(a) => a.asInstanceOf[A]
+              case None =>
+                val typeName = bson.get(traitMetaData.typeDiscriminator).asInstanceOf[String]
+                val originalTypeName = reverseTypeHintMap.getOrElse(typeName, typeName)
+                caseClassFormatters(originalTypeName).fromMongoValue(bson).asInstanceOf[A]
+            }
           case x =>
             throw new Exception(s"BsonObject is expected for a Trait subtype, instead got $x")
         },
-        subTypes = names,
+        subTypes = subTypeNames,
         typeDiscr = traitMetaData.typeDiscriminator
       )
     }

@@ -37,20 +37,29 @@ class SumTypesDerivingSpec extends AnyWordSpec with Matchers {
       check(Color4.format, Color4.Custom("2356"), dbObj("color" -> "custom", "rgb" -> "2356"))
     }
 
-    "ignore @MongoTypeHintField on subtypes if it's present on the trait" in {
+    "ignore @MongoTypeHintField on case classes" in {
       check(Color5.format, Color5.Red, dbObj("color" -> "red"))
-
       check(Color5.format, Color5.Custom("123"), dbObj("color" -> "custom", "rgb" -> "123"))
     }
 
-    "not allow specifying different custom field on intermediate level" in {
-      // TODO make this more sophisticated in the future
-      // The color is Red because the top level trait doesn't read the annotations of children of it's children
-      check(Color6.format, Color6.Red, dbObj("color-custom" -> "red", "color" -> "Red"))
-
+    "nested trait 1: no duplicate names, 2 type discriminators" in {
+      check(Color6.format, Color6.Red, dbObj("custom-color" -> "mapped-red"))
     }
 
-    "use intermediate level" in {
+    "nested trait 2: duplicate names, 1 type discriminator" in pendingUntilFixed {
+      // This doesn't fail currently, because we don't validate it.
+      val format = deriveMongoFormat[Color6a]
+      check(format, Color6b.Red, dbObj("type" -> "Red"))
+      check(format, Color6c.Red, dbObj("type" -> "Red"))
+    }
+
+    "nested trait 3: 2 duplicate names, 2 type discriminators" in {
+      val format = deriveMongoFormat[Color6e]
+      check(format, Color6g.Red, dbObj("type" -> "Red"))
+      check(format, Color6f.Red, dbObj("color-custom" -> "Red"))
+    }
+
+    "nested trait 4: no duplicates, 1 type discriminator" in {
       Color7.format
     }
 
@@ -60,16 +69,10 @@ class SumTypesDerivingSpec extends AnyWordSpec with Matchers {
       check(Color8.Custom.format, Color8.Custom("2356"), dbObj("rgb" -> "2356"))
 
       // unless annotated
-
       check(
         Color8.format,
         Color8.CustomAnnotated("2356"),
         dbObj("type" -> "CustomAnnotated", "rgb" -> "2356"))
-// TODO should this be a thing?
-//      check(
-//        Color8.CustomAnnotated.format,
-//        Color8.CustomAnnotated("2356"),
-//        dbObj("type" -> "CustomAnnotated", "rgb" -> "2356"))
     }
 
     "use default values if custom values are empty" in {
@@ -168,13 +171,34 @@ object SumTypesDerivingSpec {
   @MongoTypeHintField("color")
   sealed trait Color6
   object Color6 {
-    @MongoTypeHintField("color-custom")
+    @MongoTypeHintField("custom-color")
     sealed abstract class MyColor extends Color6
-    @MongoTypeHint("red")
+    @MongoTypeHint("mapped-red")
     case object Red extends MyColor
     @MongoTypeHint("custom")
     case class Custom(rgb: String) extends MyColor
     val format = deriveMongoFormat[Color6]
+  }
+
+  sealed trait Color6a
+  sealed trait Color6b extends Color6a
+  object Color6b {
+    case object Red extends Color6b
+  }
+  sealed trait Color6c extends Color6a
+  object Color6c {
+    case object Red extends Color6c
+  }
+
+  sealed trait Color6e
+  @MongoTypeHintField("color-custom")
+  sealed trait Color6f extends Color6e
+  object Color6f {
+    case object Red extends Color6f
+  }
+  sealed trait Color6g extends Color6e
+  object Color6g {
+    case object Red extends Color6g
   }
 
   sealed trait Color7
