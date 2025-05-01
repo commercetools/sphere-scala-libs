@@ -37,15 +37,17 @@ class SumTypesDerivingSpec extends AnyWordSpec with Matchers {
       check(Color4.format, Color4.Custom("2356"), dbObj("color" -> "custom", "rgb" -> "2356"))
     }
 
-    "not allow specifying different custom field" in pendingUntilFixed {
-      // to serialize Custom, should we use type "color" or "color-custom"?
-      // The current implementation just takes the type hint of the trait and doesn't look at the subtypes anyway
-      "deriveMongoFormat[Color5]" mustNot compile
+    "ignore @MongoTypeHintField on subtypes if it's present on the trait" in {
+      check(Color5.format, Color5.Red, dbObj("color" -> "red"))
+
+      check(Color5.format, Color5.Custom("123"), dbObj("color" -> "custom", "rgb" -> "123"))
     }
 
     "not allow specifying different custom field on intermediate level" in {
-      // to serialize Custom, should we use type "color" or "color-custom"?
-      "deriveMongoFormat[Color6]" mustNot compile
+      // TODO make this more sophisticated in the future
+      // The color is Red because the top level trait doesn't read the annotations of children of it's children
+      check(Color6.format, Color6.Red, dbObj("color-custom" -> "red", "color" -> "Red"))
+
     }
 
     "use intermediate level" in {
@@ -160,17 +162,19 @@ object SumTypesDerivingSpec {
     @MongoTypeHintField("color-custom")
     @MongoTypeHint("custom")
     case class Custom(rgb: String) extends Color5
+    val format = deriveMongoFormat[Color5]
   }
 
   @MongoTypeHintField("color")
   sealed trait Color6
   object Color6 {
     @MongoTypeHintField("color-custom")
-    abstract class MyColor extends Color6
+    sealed abstract class MyColor extends Color6
     @MongoTypeHint("red")
     case object Red extends MyColor
     @MongoTypeHint("custom")
     case class Custom(rgb: String) extends MyColor
+    val format = deriveMongoFormat[Color6]
   }
 
   sealed trait Color7

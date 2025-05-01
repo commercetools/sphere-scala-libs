@@ -50,7 +50,7 @@ class DerivationSpec extends AnyWordSpec with Matchers {
       case object Object2 extends Root
       case class Class(i: Int, @MongoEmbedded inner: InnerClass) extends Root
 
-      val res = AnnotationReader.readCaseClassMetaData[Root]
+      val res = AnnotationReader.readTypeMetaData[Root]
 
     }
   }

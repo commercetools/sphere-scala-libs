@@ -2,6 +2,7 @@ package io.sphere.mongo.format
 
 import com.mongodb.BasicDBObject
 import io.sphere.mongo.generic.{AnnotationReader, Field}
+import io.sphere.util.VectorUtils.*
 import org.bson.types.ObjectId
 
 import java.util.UUID
@@ -21,6 +22,27 @@ trait MongoFormat[A] extends Serializable {
   def default: Option[A] = None
 }
 
+/** Some extra information for traits and abstract classes so we can handle nested hierarchies
+  * easier
+  */
+trait TraitMongoFormat[A] extends MongoFormat[A] {
+  val subTypeNames: Vector[String]
+  val typeDiscriminator: String
+}
+
+object TraitMongoFormat {
+  def instance[A](
+      fromMongo: Any => A,
+      toMongo: A => Any,
+      subTypes: Vector[String],
+      typeDiscr: String): TraitMongoFormat[A] = new {
+    override def toMongoValue(a: A): Any = toMongo(a)
+    override def fromMongoValue(mongoType: Any): A = fromMongo(mongoType)
+    override val subTypeNames: Vector[String] = subTypes
+    override val typeDiscriminator: String = typeDiscr
+  }
+}
+
 inline def deriveMongoFormat[A](using Mirror.Of[A]): MongoFormat[A] = MongoFormat.derived
 
 object MongoFormat {
@@ -30,12 +52,12 @@ object MongoFormat {
   inline given derived[A](using Mirror.Of[A]): MongoFormat[A] = Derivation.derived
 
   def instance[A](
-      fromFn: Any => A,
-      toFn: A => Any,
+      fromMongo: Any => A,
+      toMongo: A => Any,
       fieldSet: Set[String] = emptyFields): MongoFormat[A] = new {
 
-    override def toMongoValue(a: A): Any = toFn(a)
-    override def fromMongoValue(mongoType: Any): A = fromFn(mongoType)
+    override def toMongoValue(a: A): Any = toMongo(a)
+    override def fromMongoValue(mongoType: Any): A = fromMongo(mongoType)
     override val fields: Set[String] = fieldSet
   }
 
@@ -50,7 +72,7 @@ object MongoFormat {
       }
 
   private object Derivation {
-    import scala.compiletime.{constValue, constValueTuple, erasedValue, summonInline}
+    import scala.compiletime.{constValue, constValueTuple, erasedValue, error, summonInline}
 
     inline def derived[A](using m: Mirror.Of[A]): MongoFormat[A] =
       inline m match {
@@ -58,18 +80,26 @@ object MongoFormat {
         case p: Mirror.ProductOf[A] => deriveCaseClass(p)
       }
 
-    @annotation.nowarn("msg=New anonymous class definition will be duplicated at each inline site")
-    inline private def deriveTrait[A](mirrorOfSum: Mirror.SumOf[A]): MongoFormat[A] =
-      new MongoFormat[A] {
-        private val traitMetaData = AnnotationReader.readTraitMetaData[A]
-        private val typeHintMap = traitMetaData.subTypeTypeHints
-        private val reverseTypeHintMap = typeHintMap.map((on, n) => (n, on))
-        private val formatters = summonFormatters[mirrorOfSum.MirroredElemTypes]
-        private val names = constValueTuple[mirrorOfSum.MirroredElemLabels].productIterator.toVector
-          .asInstanceOf[Vector[String]]
-        private val formattersByTypeName = names.zip(formatters).toMap
+    inline private def deriveTrait[A](mirrorOfSum: Mirror.SumOf[A]): MongoFormat[A] = {
+      val traitMetaData = AnnotationReader.readTraitMetaData[A]
+      val typeHintMap = traitMetaData.subTypeTypeHints
+      val reverseTypeHintMap = typeHintMap.map((on, n) => (n, on))
+      val formatters = summonFormatters[mirrorOfSum.MirroredElemTypes]
+      val names = constValueTuple[mirrorOfSum.MirroredElemLabels].productIterator.toVector
+        .asInstanceOf[Vector[String]]
+      val formattersByTypeName = names
+        .zip(formatters)
+        .flatMap { case kv @ (name, formatter) =>
+          formatter match {
+            case traitFormatter: TraitMongoFormat[_] =>
+              traitFormatter.subTypeNames.map(_ -> formatter)
+            case _ => Vector(kv)
+          }
+        }
+        .toMapWithNoDuplicateKeys
 
-        override def toMongoValue(a: A): Any = {
+      TraitMongoFormat.instance(
+        toMongo = { a =>
           // we never get a trait here, only classes, it's safe to assume Product
           val originalTypeName = a.asInstanceOf[Product].productPrefix
           val typeName = typeHintMap.getOrElse(originalTypeName, originalTypeName)
@@ -77,31 +107,31 @@ object MongoFormat {
             formattersByTypeName(originalTypeName).toMongoValue(a).asInstanceOf[BasicDBObject]
           bson.put(traitMetaData.typeDiscriminator, typeName)
           bson
-        }
+        },
+        fromMongo = {
+          case bson: BasicDBObject =>
+            val typeName = bson.get(traitMetaData.typeDiscriminator).asInstanceOf[String]
+            val originalTypeName = reverseTypeHintMap.getOrElse(typeName, typeName)
+            formattersByTypeName(originalTypeName).fromMongoValue(bson).asInstanceOf[A]
+          case x =>
+            throw new Exception(s"BsonObject is expected for a Trait subtype, instead got $x")
+        },
+        subTypes = names,
+        typeDiscr = traitMetaData.typeDiscriminator
+      )
+    }
 
-        override def fromMongoValue(bson: Any): A =
-          bson match {
-            case bson: BasicDBObject =>
-              val typeName = bson.get(traitMetaData.typeDiscriminator).asInstanceOf[String]
-              val originalTypeName = reverseTypeHintMap.getOrElse(typeName, typeName)
-              formattersByTypeName(originalTypeName).fromMongoValue(bson).asInstanceOf[A]
-            case x =>
-              throw new Exception(s"BsonObject is expected for a Trait subtype, instead got $x")
-          }
-      }
+    inline private def deriveCaseClass[A](mirrorOfProduct: Mirror.ProductOf[A]): MongoFormat[A] = {
+      val caseClassMetaData = AnnotationReader.readTypeMetaData[A]
+      val formatters = summonFormatters[mirrorOfProduct.MirroredElemTypes]
+      val fieldsAndFormatters = caseClassMetaData.fields.zip(formatters)
 
-    @annotation.nowarn("msg=New anonymous class definition will be duplicated at each inline site")
-    inline private def deriveCaseClass[A](mirrorOfProduct: Mirror.ProductOf[A]): MongoFormat[A] =
-      new MongoFormat[A] {
-        private val caseClassMetaData = AnnotationReader.readCaseClassMetaData[A]
-        private val formatters = summonFormatters[mirrorOfProduct.MirroredElemTypes]
-        private val fieldsAndFormatters = caseClassMetaData.fields.zip(formatters)
+      val fields: Set[String] = fieldsAndFormatters.toSet.flatMap((field, formatter) =>
+        if (field.embedded) formatter.fields + field.rawName
+        else Set(field.rawName))
 
-        override val fields: Set[String] = fieldsAndFormatters.toSet.flatMap((field, formatter) =>
-          if (field.embedded) formatter.fields + field.rawName
-          else Set(field.rawName))
-
-        override def toMongoValue(a: A): Any = {
+      instance(
+        toMongo = { a =>
           val bson = new BasicDBObject()
           val values = a.asInstanceOf[Product].productIterator
           formatters.zip(values).zip(caseClassMetaData.fields).foreach {
@@ -109,37 +139,37 @@ object MongoFormat {
               addField(bson, field, format.toMongoValue(value))
           }
           bson
-        }
+        },
+        fromMongo = {
+          case bson: BasicDBObject =>
+            val fields = fieldsAndFormatters
+              .map { case (field, format) =>
+                def defaultValue = field.defaultArgument.orElse(format.default)
 
-        override def fromMongoValue(mongoType: Any): A =
-          mongoType match {
-            case bson: BasicDBObject =>
-              val fields = fieldsAndFormatters
-                .map { case (field, format) =>
-                  def defaultValue = field.defaultArgument.orElse(format.default)
-
-                  if (field.ignored)
+                if (field.ignored)
+                  defaultValue.getOrElse {
+                    throw new Exception(
+                      s"Missing default parameter value for ignored field `${field.name}` on deserialization.")
+                  }
+                else if (field.embedded) format.fromMongoValue(bson)
+                else {
+                  val value = bson.get(field.name)
+                  if (value ne null) format.fromMongoValue(value.asInstanceOf[Any])
+                  else
                     defaultValue.getOrElse {
                       throw new Exception(
-                        s"Missing default parameter value for ignored field `${field.name}` on deserialization.")
+                        s"Missing required field '${field.name}' on deserialization.")
                     }
-                  else if (field.embedded) format.fromMongoValue(bson)
-                  else {
-                    val value = bson.get(field.name)
-                    if (value ne null) format.fromMongoValue(value.asInstanceOf[Any])
-                    else
-                      defaultValue.getOrElse {
-                        throw new Exception(
-                          s"Missing required field '${field.name}' on deserialization.")
-                      }
-                  }
                 }
-              val tuple = Tuple.fromArray(fields.toArray)
-              mirrorOfProduct.fromTuple(tuple.asInstanceOf[mirrorOfProduct.MirroredElemTypes])
+              }
+            val tuple = Tuple.fromArray(fields.toArray)
+            mirrorOfProduct.fromTuple(tuple.asInstanceOf[mirrorOfProduct.MirroredElemTypes])
 
-            case x => throw new Exception(s"BasicDBObject is expected for a class, instead got: $x")
-          }
-      }
+          case x => throw new Exception(s"BasicDBObject is expected for a class, instead got: $x")
+        },
+        fieldSet = fields
+      )
+    }
 
     inline private def summonFormatters[T <: Tuple]: Vector[MongoFormat[Any]] =
       inline erasedValue[T] match {

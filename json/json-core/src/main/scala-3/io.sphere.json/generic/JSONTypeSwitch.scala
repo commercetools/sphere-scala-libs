@@ -26,7 +26,6 @@ object JSONTypeSwitch {
           val formatterByName = meta.subtypes.map((fieldName, m) => m.name -> formatter)
           Left((formatterByName, meta.subTypeFieldRenames))
         } else {
-          println(meta.top)
           Right(meta.top.name -> formatter)
         }
       }

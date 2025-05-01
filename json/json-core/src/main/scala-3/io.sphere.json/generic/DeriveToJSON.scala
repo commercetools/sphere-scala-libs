@@ -50,7 +50,7 @@ trait DeriveToJSON {
     }
 
     inline private def deriveCaseClass[A](mirrorOfProduct: Mirror.ProductOf[A]): ToJSON[A] = {
-      val caseClassMetaData: CaseClassMetaData = AnnotationReader.readCaseClassMetaData[A]
+      val caseClassMetaData: TypeMetaData = AnnotationReader.readTypeMetaData[A]
       val toJsons: Vector[ToJSON[Any]] = summonToJson[mirrorOfProduct.MirroredElemTypes]
 
       ToJSON.instance { value =>

@@ -21,7 +21,7 @@ inline def mongoTypeSwitch[SuperType, SubTypeTuple <: Tuple](): MongoFormat[Supe
   val formattersByTypeName = names.zip(formatters).toMap
 
   MongoFormat.instance(
-    toFn = { a =>
+    toMongo = { a =>
       val originalTypeName = a.asInstanceOf[Product].productPrefix
       val typeName = typeHintMap.getOrElse(originalTypeName, originalTypeName)
       val bson =
@@ -29,7 +29,7 @@ inline def mongoTypeSwitch[SuperType, SubTypeTuple <: Tuple](): MongoFormat[Supe
       bson.put(traitMetaData.typeDiscriminator, typeName)
       bson
     },
-    fromFn = {
+    fromMongo = {
       case bson: BasicDBObject =>
         val typeName = bson.get(traitMetaData.typeDiscriminator).asInstanceOf[String]
         val originalTypeName = reverseTypeHintMap.getOrElse(typeName, typeName)
@@ -44,11 +44,11 @@ private def findTypeValue(dbo: BSONObject, typeField: String): Option[String] =
   Option(dbo.get(typeField)).map(_.toString)
 
 inline private def summonMetaData[T <: Tuple](
-    acc: Vector[CaseClassMetaData] = Vector.empty): Vector[CaseClassMetaData] =
+    acc: Vector[TypeMetaData] = Vector.empty): Vector[TypeMetaData] =
   inline erasedValue[T] match {
     case _: EmptyTuple => acc
     case _: (t *: ts) =>
-      summonMetaData[ts](acc :+ AnnotationReader.readCaseClassMetaData[t])
+      summonMetaData[ts](acc :+ AnnotationReader.readTypeMetaData[t])
   }
 
 inline private def summonFormatters[T <: Tuple](
