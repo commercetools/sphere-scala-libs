@@ -26,7 +26,6 @@ ThisBuild / githubWorkflowBuild := Seq(
       "sphere-mongo/test",
       "sphere-mongo-core/test",
       "sphere-mongo-derivation/test",
-      "sphere-mongo-derivation-magnolia/test",
       "benchmarks/test"
     ),
     name = Some("Build Scala 2 project"),
@@ -107,7 +106,6 @@ lazy val `sphere-libs` = project
     `sphere-mongo`,
     `sphere-mongo-core`,
     `sphere-mongo-derivation`,
-    `sphere-mongo-derivation-magnolia`,
     `benchmarks`
   )
 
@@ -158,11 +156,6 @@ lazy val `sphere-mongo-derivation` = project
   .settings(crossScalaVersions := Seq(scala213))
   .dependsOn(`sphere-mongo-core`)
 
-lazy val `sphere-mongo-derivation-magnolia` = project
-  .in(file("./mongo/mongo-derivation-magnolia"))
-  .settings(standardSettings: _*)
-  .settings(crossScalaVersions := Seq(scala213))
-  .dependsOn(`sphere-mongo-core`)
 
 lazy val `sphere-mongo` = project
   .in(file("./mongo"))
