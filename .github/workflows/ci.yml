@@ -50,16 +50,11 @@ jobs:
       - name: Check that workflows are up to date
         run: sbt '++ ${{ matrix.scala }}' githubWorkflowCheck
 
-      - name: Build Scala 2 project
-        if: matrix.scala != '3.3.5'
-        run: sbt '++ ${{ matrix.scala }}' sphere-util/test sphere-json/test sphere-json-core/test sphere-json-derivation/test sphere-mongo/test sphere-mongo-core/test sphere-mongo-derivation/test sphere-mongo-derivation-magnolia/test benchmarks/test
-
-      - name: Build Scala 3 project
-        if: matrix.scala == '3.3.5'
-        run: sbt '++ ${{ matrix.scala }}' sphere-util/test sphere-mongo-core/test sphere-json-core/test
+      - name: Build project
+        run: sbt '++ ${{ matrix.scala }}' test
 
       - name: Compress target directories
-        run: tar cf targets.tar benchmarks/target mongo/target json/json-core/target mongo/mongo-core/target json/target util/target json/json-derivation/target mongo/mongo-derivation-magnolia/target target mongo/mongo-derivation/target project/target
+        run: tar cf targets.tar benchmarks/target mongo/target json/json-core/target mongo/mongo-core/target json/target util/target json/json-derivation/target target mongo/mongo-derivation/target project/target
 
       - name: Upload target directories
         uses: actions/upload-artifact@v4

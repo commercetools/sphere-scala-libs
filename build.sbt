@@ -13,35 +13,6 @@ ThisBuild / githubWorkflowBuildPreamble ++= List(
 )
 ThisBuild / githubWorkflowBuildMatrixFailFast := Some(false)
 
-// workaround for CI because `sbt ++3.3.4 test` used by sbt-github-actions
-// still tries to compile the Scala 2 only projects leading to weird issues
-// note that `sbt +test` is working fine to run cross-compiled tests locally
-ThisBuild / githubWorkflowBuild := Seq(
-  WorkflowStep.Sbt(
-    commands = List(
-      "sphere-util/test",
-      "sphere-json/test",
-      "sphere-json-core/test",
-      "sphere-json-derivation/test",
-      "sphere-mongo/test",
-      "sphere-mongo-core/test",
-      "sphere-mongo-derivation/test",
-      "benchmarks/test"
-    ),
-    name = Some("Build Scala 2 project"),
-    cond = Some(s"matrix.scala != '$scala3'")
-  ),
-  WorkflowStep.Sbt(
-    commands = List(
-      "sphere-util/test",
-      "sphere-mongo-core/test",
-      "sphere-json-core/test"
-    ),
-    name = Some("Build Scala 3 project"),
-    cond = Some(s"matrix.scala == '$scala3'")
-  )
-)
-
 // Release
 
 inThisBuild(
@@ -109,8 +80,6 @@ lazy val `sphere-libs` = project
     `benchmarks`
   )
 
-// Scala 2 & 3 modules
-
 lazy val `sphere-util` = project
   .in(file("./util"))
   .settings(standardSettings: _*)
@@ -125,8 +94,6 @@ lazy val `sphere-mongo-core` = project
   .in(file("./mongo/mongo-core"))
   .settings(standardSettings: _*)
   .dependsOn(`sphere-util`)
-
-// Scala 2 modules
 
 lazy val `sphere-json-derivation` = project
   .in(file("./json/json-derivation"))
