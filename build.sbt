@@ -13,36 +13,6 @@ ThisBuild / githubWorkflowBuildPreamble ++= List(
 )
 ThisBuild / githubWorkflowBuildMatrixFailFast := Some(false)
 
-// workaround for CI because `sbt ++3.3.4 test` used by sbt-github-actions
-// still tries to compile the Scala 2 only projects leading to weird issues
-// note that `sbt +test` is working fine to run cross-compiled tests locally
-ThisBuild / githubWorkflowBuild := Seq(
-  WorkflowStep.Sbt(
-    commands = List(
-      "sphere-util/test",
-      "sphere-json/test",
-      "sphere-json-core/test",
-      "sphere-json-derivation/test",
-      "sphere-mongo/test",
-      "sphere-mongo-core/test",
-      "sphere-mongo-derivation/test",
-      "sphere-mongo-derivation-magnolia/test",
-      "benchmarks/test"
-    ),
-    name = Some("Build Scala 2 project"),
-    cond = Some(s"matrix.scala != '$scala3'")
-  ),
-  WorkflowStep.Sbt(
-    commands = List(
-      "sphere-util/test",
-      "sphere-mongo-core/test",
-      "sphere-json-core/test"
-    ),
-    name = Some("Build Scala 3 project"),
-    cond = Some(s"matrix.scala == '$scala3'")
-  )
-)
-
 // Release
 
 inThisBuild(
@@ -107,40 +77,32 @@ lazy val `sphere-libs` = project
     `sphere-mongo`,
     `sphere-mongo-core`,
     `sphere-mongo-derivation`,
-    `sphere-mongo-derivation-magnolia`,
     `benchmarks`
   )
-
-// Scala 2 & 3 modules
 
 lazy val `sphere-util` = project
   .in(file("./util"))
   .settings(standardSettings: _*)
-  .settings(scalaVersion := scala3)
-  .settings(crossScalaVersions := Seq(scala213, scala3))
   .settings(homepage := Some(url("https://github.com/commercetools/sphere-scala-libs/README.md")))
 
 lazy val `sphere-json-core` = project
   .in(file("./json/json-core"))
   .settings(standardSettings: _*)
-  .settings(scalaVersion := scala3)
-  .settings(crossScalaVersions := Seq(scala213, scala3))
   .dependsOn(`sphere-util`)
 
 lazy val `sphere-mongo-core` = project
   .in(file("./mongo/mongo-core"))
   .settings(standardSettings: _*)
-  .settings(scalaVersion := scala3)
-  .settings(crossScalaVersions := Seq(scala213, scala3))
   .dependsOn(`sphere-util`)
-
-// Scala 2 modules
 
 lazy val `sphere-json-derivation` = project
   .in(file("./json/json-derivation"))
   .settings(standardSettings: _*)
   .settings(Fmpp.settings: _*)
-  .settings(crossScalaVersions := Seq(scala213))
+  .settings(
+    inConfig(Compile)(
+      sourceGenerators ++= (if (scalaVersion.value.startsWith("2")) Seq(Fmpp.fmpp.taskValue)
+                            else Seq())))
   .dependsOn(`sphere-json-core`)
 
 lazy val `sphere-json` = project
@@ -148,20 +110,16 @@ lazy val `sphere-json` = project
   .settings(standardSettings: _*)
   .settings(homepage := Some(
     url("https://github.com/commercetools/sphere-scala-libs/blob/master/json/README.md")))
-  .settings(crossScalaVersions := Seq(scala213))
   .dependsOn(`sphere-json-core`, `sphere-json-derivation`)
 
 lazy val `sphere-mongo-derivation` = project
   .in(file("./mongo/mongo-derivation"))
   .settings(standardSettings: _*)
   .settings(Fmpp.settings: _*)
-  .settings(crossScalaVersions := Seq(scala213))
-  .dependsOn(`sphere-mongo-core`)
-
-lazy val `sphere-mongo-derivation-magnolia` = project
-  .in(file("./mongo/mongo-derivation-magnolia"))
-  .settings(standardSettings: _*)
-  .settings(crossScalaVersions := Seq(scala213))
+  .settings(
+    inConfig(Compile)(
+      sourceGenerators ++= (if (scalaVersion.value.startsWith("2")) Seq(Fmpp.fmpp.taskValue)
+      else Seq())))
   .dependsOn(`sphere-mongo-core`)
 
 lazy val `sphere-mongo` = project
@@ -169,7 +127,6 @@ lazy val `sphere-mongo` = project
   .settings(standardSettings: _*)
   .settings(homepage := Some(
     url("https://github.com/commercetools/sphere-scala-libs/blob/master/mongo/README.md")))
-  .settings(crossScalaVersions := Seq(scala213))
   .dependsOn(`sphere-mongo-core`, `sphere-mongo-derivation`)
 
 // benchmarks
@@ -177,6 +134,5 @@ lazy val `sphere-mongo` = project
 lazy val benchmarks = project
   .settings(standardSettings: _*)
   .settings(publishArtifact := false, publish := {})
-  .settings(crossScalaVersions := Seq(scala213))
   .enablePlugins(JmhPlugin)
   .dependsOn(`sphere-util`, `sphere-json`, `sphere-mongo`)
