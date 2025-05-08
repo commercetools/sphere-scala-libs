@@ -8,7 +8,7 @@ import scala.annotation.implicitNotFound
 trait JSON[A] extends FromJSON[A] with ToJSON[A] {
 
   // This field is only used in case we derive a trait, for classes/objects it remains empty
-  // It uses the JSON names not the Scala names (if there's @MongoKey renaming a class the renamed name is used here)
+  // It uses the JSON names not the Scala names (if there's @JSONTypeHint renaming a class the renamed name is used here)
   def subTypeNames: List[String] = Nil
 }
 
