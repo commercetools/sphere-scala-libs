@@ -31,7 +31,7 @@ object JSONKeySpec {
       @JSONKey("new_sub_value_2") value2: String
   )
   object SubTest {
-    implicit val mongo: JSON[SubTest] = jsonProduct(apply _)
+    implicit val mongo: JSON[SubTest] = deriveJSON
   }
 
   case class Test(
@@ -40,6 +40,6 @@ object JSONKeySpec {
       @JSONEmbedded subTest: SubTest
   )
   object Test {
-    implicit val mongo: JSON[Test] = jsonProduct(apply _)
+    implicit val mongo: JSON[Test] = deriveJSON
   }
 }

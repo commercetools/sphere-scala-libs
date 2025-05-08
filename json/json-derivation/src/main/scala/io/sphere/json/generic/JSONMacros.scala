@@ -134,6 +134,69 @@ private[generic] object JSONMacros {
     }
   }
 
+  def generateJsonProduct(c: blackbox.Context)(
+      tpe: c.universe.Type,
+      classSym: c.universe.ClassSymbol)(classFnName: String, objectFnName: String): c.universe.Tree = {
+    import c.universe._
+
+    if (classSym.isCaseClass && !classSym.isModuleClass) {
+      val classSymType = classSym.toType
+      val argList = classSymType.member(termNames.CONSTRUCTOR).asMethod.paramLists.head
+      val modifiers = Modifiers(Flag.PARAM)
+      val (argDefs, args) = (for ((a, i) <- argList.zipWithIndex) yield {
+        val argType = classSymType.member(a.name).typeSignatureIn(tpe)
+        val termName = TermName("x" + i)
+        val argTree = ValDef(modifiers, termName, TypeTree(argType), EmptyTree)
+        (argTree, Ident(termName))
+      }).unzip
+
+      val applyBlock = Block(
+        Nil,
+        Function(
+          argDefs,
+          Apply(Select(Ident(classSym.companion), TermName("apply")), args)
+        ))
+      Apply(
+        Select(
+          reify(io.sphere.json.generic.`package`).tree,
+          TermName(classFnName)
+        ),
+        applyBlock :: Nil
+      )
+    } else if (classSym.isCaseClass && classSym.isModuleClass) {
+      Apply(
+        Select(
+          reify(io.sphere.json.generic.`package`).tree,
+          TermName(objectFnName)
+        ),
+        Ident(classSym.name.toTermName) :: Nil
+      )
+    } else c.abort(c.enclosingPosition, "Not a case class or (case) object")
+  }
+  def deriveToJSON_impl[A: c.WeakTypeTag](c: blackbox.Context): c.Expr[ToJSON[A]] = {
+    import c.universe._
+
+    val tpe = weakTypeOf[A]
+    val symbol = tpe.typeSymbol
+
+    if (symbol.isClass && (symbol.asClass.isCaseClass || symbol.asClass.isModuleClass))
+      c.Expr[ToJSON[A]](generateJsonProduct(c)(tpe, symbol.asClass)("toJsonProduct", "toJsonProduct0"))
+    else
+      c.abort(c.enclosingPosition, "Not a case class or (case) object")
+  }
+
+  def deriveFromJSON_impl[A: c.WeakTypeTag](c: blackbox.Context): c.Expr[FromJSON[A]] = {
+    import c.universe._
+
+    val tpe = weakTypeOf[A]
+    val symbol = tpe.typeSymbol
+
+    if (symbol.isClass && (symbol.asClass.isCaseClass || symbol.asClass.isModuleClass))
+      c.Expr[FromJSON[A]](generateJsonProduct(c)(tpe, symbol.asClass)("fromJsonProduct", "fromJsonProduct0"))
+    else
+      c.abort(c.enclosingPosition, "Not a case class or (case) object")
+  }
+
   def deriveJSON_impl[A: c.WeakTypeTag](c: blackbox.Context): c.Expr[JSON[A]] = {
     import c.universe._
 

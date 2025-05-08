@@ -57,6 +57,6 @@ object MongoTypeHintFieldWithSealedTraitSpec {
   case class UserWithPicture(userId: String, pictureSize: PictureSize, pictureUrl: String)
 
   object UserWithPicture {
-    implicit val mongo: MongoFormat[UserWithPicture] = mongoProduct(apply _)
+    implicit val mongo: MongoFormat[UserWithPicture] = deriveMongoFormat
   }
 }
