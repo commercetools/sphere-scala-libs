@@ -1,6 +1,5 @@
 package io.sphere.json.generic
 
-
 import io.sphere.json._
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
