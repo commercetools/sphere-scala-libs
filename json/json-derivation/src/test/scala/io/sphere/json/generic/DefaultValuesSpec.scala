@@ -1,7 +1,7 @@
 package io.sphere.json.generic
 
+
 import io.sphere.json._
-import io.sphere.json.generic._
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -32,13 +32,13 @@ object DefaultValuesSpec {
       value3: Option[String] = Some("hi")
   )
   object Test {
-    given JSON[Test] = deriveJSON[Test]
+    implicit val json: JSON[Test] = deriveJSON[Test]
   }
   case class Test2(
       value1: String = "hello",
       value2: Option[String]
   )
   object Test2 {
-    given JSON[Test2] = deriveJSON[Test2]
+    implicit val json: JSON[Test2] = deriveJSON[Test2]
   }
 }

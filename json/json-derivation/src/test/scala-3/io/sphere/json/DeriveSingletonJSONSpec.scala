@@ -146,6 +146,7 @@ case object Big extends PictureSize(1024, 2048)
 case object Custom extends PictureSize(1, 2)
 
 object PictureSize {
+  // TODO We have to get rid of this
   import DeriveSingleton.derived
 
   given JSON[PictureSize] = deriveSingletonJSON

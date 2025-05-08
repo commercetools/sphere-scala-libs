@@ -5,30 +5,29 @@ import org.json4s.{JArray, JLong, JNothing, JObject, JString}
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.json4s.DefaultJsonFormats.given
 
 object OptionReaderSpec {
 
   case class SimpleClass(value1: String, value2: Int)
 
   object SimpleClass {
-    given JSON[SimpleClass] = deriveJSON[SimpleClass]
+    implicit val json: JSON[SimpleClass] = deriveJSON
   }
 
   case class ComplexClass(name: String, simpleClass: Option[SimpleClass])
 
   object ComplexClass {
-    given JSON[ComplexClass] = deriveJSON[ComplexClass]
+    implicit val json: JSON[ComplexClass] = deriveJSON
   }
 
   case class MapClass(id: Long, map: Option[Map[String, String]])
   object MapClass {
-    given JSON[MapClass] = deriveJSON[MapClass]
+    implicit val json: JSON[MapClass] = deriveJSON
   }
 
   case class ListClass(id: Long, list: Option[List[String]])
   object ListClass {
-    given JSON[ListClass] = deriveJSON[ListClass]
+    implicit val json: JSON[ListClass] = deriveJSON
   }
 }
 
@@ -69,7 +68,7 @@ class OptionReaderSpec extends AnyWordSpec with Matchers with OptionValues {
     "handle absence of all fields" in {
       val json = "{}"
       val result = getFromJSON[Option[SimpleClass]](json)
-      result must be(None)
+      result mustEqual None
     }
 
     "handle optional map" in {
@@ -111,7 +110,7 @@ class OptionReaderSpec extends AnyWordSpec with Matchers with OptionValues {
     "handle absence of all fields mixed with ignored fields" in {
       val json = """{ "value3": "a" }"""
       val result = getFromJSON[Option[SimpleClass]](json)
-      result must be(None)
+      result mustEqual None
     }
 
     "consider all fields if the data type does not impose any restriction" in {
