@@ -43,8 +43,7 @@ object JSONSpec {
     val One, Two, Three = Value
   }
 
-  // JSON instances for recursive data types cannot be derived
-  case class Node(value: Option[List[Node]])
+  // case class Node(value: Option[List[Node]]) // JSON instances for recursive data types cannot be derived
 }
 
 class JSONSpec extends AnyFunSpec with Matchers {
@@ -76,7 +75,6 @@ class JSONSpec extends AnyFunSpec with Matchers {
           JField("name", JString(m.name)) ::
             JField("date", toJValue(m.date)) :: Nil
         )
-
         def read(j: JValue): ValidatedNel[JSONError, Milestone] = j match {
           case o: JObject =>
             (field[String]("name")(o), field[Option[DateTime]]("date")(o)).mapN(Milestone.apply)
@@ -88,10 +86,8 @@ class JSONSpec extends AnyFunSpec with Matchers {
           JField("nr", JInt(p.nr)) ::
             JField("name", JString(p.name)) ::
             JField("version", JInt(p.version)) ::
-            JField("milestones", toJValue(p.milestones)) ::
-            Nil
+            JField("milestones", toJValue(p.milestones)) :: Nil
         )
-
         def read(jval: JValue): ValidatedNel[JSONError, Project] = jval match {
           case o: JObject =>
             (
@@ -107,8 +103,7 @@ class JSONSpec extends AnyFunSpec with Matchers {
       fromJSON[Project](toJSON(proj)) must equal(Valid(proj))
 
       // Now some invalid JSON to test the error accumulation
-      val wrongTypeJSON =
-        """
+      val wrongTypeJSON = """
       {
         "nr":"1",
         "name":23,
@@ -116,7 +111,6 @@ class JSONSpec extends AnyFunSpec with Matchers {
         "milestones":[{"name":"Bravo", "date": "xxx"}]
       }
       """
-
       val Invalid(errs) = fromJSON[Project](wrongTypeJSON): @unchecked
       errs.toList must equal(
         List(
@@ -137,8 +131,8 @@ class JSONSpec extends AnyFunSpec with Matchers {
 
     it("must provide derived JSON instances for product types (case classes)") {
       import JSONSpec.{Milestone, Project}
-      given JSON[Milestone] = deriveJSON[Milestone]
-      given JSON[Project] = deriveJSON[Project]
+      implicit val milestoneJSON: JSON[Milestone] = deriveJSON[Milestone]
+      implicit val projectJSON: JSON[Project] = deriveJSON[Project]
       val proj =
         Project(42, "Linux", 7, Milestone("1.0") :: Milestone("2.0") :: Milestone("3.0") :: Nil)
       fromJSON[Project](toJSON(proj)) must equal(Valid(proj))
@@ -166,20 +160,20 @@ class JSONSpec extends AnyFunSpec with Matchers {
     }
 
     it("must provide derived JSON instances for sum types") {
-      given JSON[Animal] = deriveJSON
-      List(Bird("Peewee"), Dog("Hasso"), Cat("Felidae")).foreach { animal =>
-        fromJSON[Animal](toJSON(animal)) must equal(Valid(animal))
+      implicit val animalJSON: JSON[Animal] = deriveJSON
+      List(Bird("Peewee"), Dog("Hasso"), Cat("Felidae")).foreach { (a: Animal) =>
+        fromJSON[Animal](toJSON(a)) must equal(Valid(a))
       }
     }
 
     it("must provide derived instances for product types with concrete type parameters") {
-      given JSON[GenericA[String]] = deriveJSON[GenericA[String]]
+      implicit val aJSON: JSON[GenericA[String]] = deriveJSON[GenericA[String]]
       val a = GenericA("hello")
       fromJSON[GenericA[String]](toJSON(a)) must equal(Valid(a))
     }
 
     it("must provide derived instances for product types with generic type parameters") {
-      implicit def aJSON[A: JSON]: JSON[GenericA[A]] = deriveJSON[GenericA[A]]
+      implicit def aJSON[A: FromJSON: ToJSON]: JSON[GenericA[A]] = deriveJSON[GenericA[A]]
       val a = GenericA("hello")
       fromJSON[GenericA[String]](toJSON(a)) must equal(Valid(a))
     }
@@ -194,20 +188,20 @@ class JSONSpec extends AnyFunSpec with Matchers {
       }
 
       implicit val singleEnumJSON: JSON[SingletonEnum] = deriveJSON[SingletonEnum]
-      List(SingletonA, SingletonB, SingletonC).foreach { s =>
+      List(SingletonA, SingletonB, SingletonC).foreach { (s: SingletonEnum) =>
         fromJSON[SingletonEnum](toJSON(s)) must equal(Valid(s))
       }
     }
 
     it("must provide derived instances for sum types with a mix of case class / object") {
-      given JSON[Mixed] = deriveJSON
-      List(SingletonMixed, RecordMixed(1)).foreach { m =>
+      implicit val mixedJSON: JSON[Mixed] = deriveJSON
+      List(SingletonMixed, RecordMixed(1)).foreach { (m: Mixed) =>
         fromJSON[Mixed](toJSON(m)) must equal(Valid(m))
       }
     }
-    it("must provide instances for scala.Enumeration") {
-      // We dropped support for deriveJSON, because there was no derivation anyway, the derivation just called these methods
-      implicit val scalaEnumJSON: JSON[JSONSpec.ScalaEnum.Value] = jsonEnum(ScalaEnum)
+
+    it("must provide derived instances for scala.Enumeration") {
+      implicit val scalaEnumJSON: JSON[ScalaEnum.Value] = jsonEnum(ScalaEnum)
       ScalaEnum.values.foreach { v =>
         val json = s"""[${toJSON(v)}]"""
         withClue(json) {
@@ -217,7 +211,7 @@ class JSONSpec extends AnyFunSpec with Matchers {
     }
 
     it("must handle subclasses correctly in `jsonTypeSwitch`") {
-      given JSON[TestSubjectBase] = TestSubjectBase.json
+      implicit val jsonImpl: JSON[TestSubjectBase] = TestSubjectBase.json
 
       val testSubjects = List[TestSubjectBase](
         TestSubjectConcrete1("testSubject1"),
@@ -236,33 +230,6 @@ class JSONSpec extends AnyFunSpec with Matchers {
   }
 
   describe("ToJSON and FromJSON") {
-
-    it("must provide derived JSON instances for product types (case classes)") {
-      import JSONSpec.{Milestone, Project}
-      given ToJSON[Milestone] = ToJSON.derived[Milestone]
-
-      given ToJSON[Project] = ToJSON.derived[Project]
-
-      given FromJSON[Milestone] = FromJSON.derived[Milestone]
-
-      given FromJSON[Project] = FromJSON.derived[Project]
-
-      val proj =
-        Project(42, "Linux", 7, Milestone("1.0") :: Milestone("2.0") :: Milestone("3.0") :: Nil)
-      fromJSON[Project](toJSON(proj)) must equal(Valid(proj))
-    }
-
-    it("must provide instances for scala.Enumeration") {
-      implicit val toScalaEnumJSON = toJsonEnum(ScalaEnum)
-      implicit val fromScalaEnumJSON = fromJsonEnum(ScalaEnum)
-      ScalaEnum.values.foreach { v =>
-        val json = s"""[${toJSON(v)}]"""
-        withClue(json) {
-          fromJSON[Seq[ScalaEnum.Value]](json) must equal(Valid(Seq(v)))
-        }
-      }
-    }
-
     it("must provide derived JSON instances for sum types") {
       // ToJSON
       given ToJSON[Bird] = ToJSON.derived[Bird]
@@ -299,6 +266,17 @@ class JSONSpec extends AnyFunSpec with Matchers {
 
       List(SingletonMixed, RecordMixed(1)).foreach { m =>
         fromJSON[Mixed](toJSON(m)) must equal(Valid(m))
+      }
+    }
+
+    it("must provide derived instances for scala.Enumeration") {
+      implicit val toScalaEnumJSON: ToJSON[JSONSpec.ScalaEnum.Value] = toJsonEnum(ScalaEnum)
+      implicit val fromScalaEnumJSON: FromJSON[JSONSpec.ScalaEnum.Value] = fromJsonEnum(ScalaEnum)
+      ScalaEnum.values.foreach { v =>
+        val json = s"""[${toJSON(v)}]"""
+        withClue(json) {
+          fromJSON[Seq[ScalaEnum.Value]](json) must equal(Valid(Seq(v)))
+        }
       }
     }
 
@@ -343,6 +321,17 @@ class JSONSpec extends AnyFunSpec with Matchers {
 
     }
 
+    it("must provide derived JSON instances for product types (case classes)") {
+      import JSONSpec.{Milestone, Project}
+      given ToJSON[Milestone] = ToJSON.derived[Milestone]
+      given ToJSON[Project] = ToJSON.derived[Project]
+      given FromJSON[Milestone] = FromJSON.derived[Milestone]
+      given FromJSON[Project] = FromJSON.derived[Project]
+
+      val proj =
+        Project(42, "Linux", 7, Milestone("1.0") :: Milestone("2.0") :: Milestone("3.0") :: Nil)
+      fromJSON[Project](toJSON(proj)) must equal(Valid(proj))
+    }
   }
 }
 
@@ -360,19 +349,17 @@ case class TestSubjectConcrete3(c3: String) extends TestSubjectCategoryB
 case class TestSubjectConcrete4(c4: String) extends TestSubjectCategoryB
 
 object TestSubjectCategoryA {
-
   val json: JSON[TestSubjectCategoryA] = deriveJSON[TestSubjectCategoryA]
 }
 
 object TestSubjectCategoryB {
-
   val json: JSON[TestSubjectCategoryB] = deriveJSON[TestSubjectCategoryB]
 }
 
 object TestSubjectBase {
   val json: JSON[TestSubjectBase] = {
-    given JSON[TestSubjectCategoryA] = TestSubjectCategoryA.json
-    given JSON[TestSubjectCategoryB] = TestSubjectCategoryB.json
+    implicit val jsonA: JSON[TestSubjectCategoryA] = TestSubjectCategoryA.json
+    implicit val jsonB: JSON[TestSubjectCategoryB] = TestSubjectCategoryB.json
 
     jsonTypeSwitch[TestSubjectBase, (TestSubjectCategoryA, TestSubjectCategoryB)]()
   }
