@@ -1,15 +1,13 @@
 package io.sphere.mongo.generic
 
+import io.sphere.mongo.MongoUtils._
+import io.sphere.mongo.format._
+import io.sphere.mongo.format.DefaultMongoFormats._
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import io.sphere.mongo.format.DefaultMongoFormats.given
-import io.sphere.mongo.MongoUtils.*
-import io.sphere.mongo.format.{MongoFormat, deriveMongoFormat}
-import io.sphere.mongo.format.{fromMongo, toMongo}
 
-class DeriveMongoFormatSpec extends AnyWordSpec with Matchers {
-  import DeriveMongoFormatSpec.given
-  import DeriveMongoFormatSpec.*
+class DeriveMongoformatSpec extends AnyWordSpec with Matchers {
+  import DeriveMongoformatSpec._
 
   "deriving MongoFormat" must {
     "read normal singleton values" in {
@@ -99,7 +97,7 @@ class DeriveMongoFormatSpec extends AnyWordSpec with Matchers {
   }
 }
 
-object DeriveMongoFormatSpec {
+object DeriveMongoformatSpec {
   sealed trait PictureSize
   case object Small extends PictureSize
   case object Medium extends PictureSize
@@ -107,15 +105,17 @@ object DeriveMongoFormatSpec {
   @MongoTypeHint(value = "bar")
   case class Custom(width: Int, height: Int) extends PictureSize
 
-  given MongoFormat[PictureSize] = deriveMongoFormat[PictureSize]
+  object PictureSize {
+    implicit val mongo: MongoFormat[PictureSize] = deriveMongoFormat[PictureSize]
+  }
 
   sealed trait Access
   object Access {
     // only one sub-type
     case class Authorized(project: String) extends Access
 
+    implicit val mongo: MongoFormat[Access] = deriveMongoFormat
   }
-  given MongoFormat[Access] = deriveMongoFormat
 
   case class UserWithPicture(
       userId: String,
@@ -123,7 +123,9 @@ object DeriveMongoFormatSpec {
       pictureUrl: String,
       access: Option[Access] = None)
 
-  given MongoFormat[UserWithPicture] = deriveMongoFormat
+  object UserWithPicture {
+    implicit val mongo: MongoFormat[UserWithPicture] = deriveMongoFormat
+  }
 
   sealed trait SealedParent
 

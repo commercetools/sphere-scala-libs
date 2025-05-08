@@ -4,7 +4,10 @@ import com.mongodb.BasicDBObject
 import io.sphere.mongo.format.MongoFormat
 import org.bson.BSONObject
 
+import scala.deriving.Mirror
 import scala.compiletime.{erasedValue, error, summonInline}
+
+inline def deriveMongoFormat[A](using Mirror.Of[A]): MongoFormat[A] = MongoFormat.derived
 
 def mongoEnum(e: Enumeration): MongoFormat[e.Value] = new MongoFormat[e.Value] {
   def toMongoValue(a: e.Value): Any = a.toString

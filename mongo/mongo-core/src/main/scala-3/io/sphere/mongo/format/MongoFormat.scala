@@ -45,8 +45,6 @@ object TraitMongoFormat {
   }
 }
 
-inline def deriveMongoFormat[A](using Mirror.Of[A]): MongoFormat[A] = MongoFormat.derived
-
 object MongoFormat {
   private val emptyFields: Set[String] = Set.empty
 
@@ -155,7 +153,7 @@ object MongoFormat {
                 if (field.ignored)
                   defaultValue.getOrElse {
                     throw new Exception(
-                      s"Missing default parameter value for ignored field `${field.name}` on deserialization.")
+                      s"Ignored Mongo field '${field.name}' must have a default value.")
                   }
                 else if (field.embedded) format.fromMongoValue(bson)
                 else {

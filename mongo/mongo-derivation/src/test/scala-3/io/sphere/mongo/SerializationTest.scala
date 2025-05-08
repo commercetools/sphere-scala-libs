@@ -49,7 +49,7 @@ class SerializationTest extends AnyWordSpec with Matchers {
       dbo.put("b", Integer.valueOf(4))
 
       // Using backwards-compatible `deriveMongoFormat` + `implicit`
-      implicit val x: MongoFormat[Something] = io.sphere.mongo.format.deriveMongoFormat
+      implicit val x: MongoFormat[Something] = io.sphere.mongo.generic.deriveMongoFormat
 
       val something = MongoFormat[Something].fromMongoValue(dbo)
       something mustBe Something(Some(3), 4)

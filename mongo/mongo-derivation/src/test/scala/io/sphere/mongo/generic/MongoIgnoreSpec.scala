@@ -1,8 +1,8 @@
 package io.sphere.mongo.generic
 
-import io.sphere.mongo.MongoUtils.*
-import io.sphere.mongo.format.deriveMongoFormat
-import io.sphere.mongo.format.DefaultMongoFormats.given
+import io.sphere.mongo.MongoUtils._
+import io.sphere.mongo.generic.deriveMongoFormat
+import io.sphere.mongo.format.DefaultMongoFormats._
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -18,13 +18,13 @@ object MongoIgnoreSpec {
 }
 
 class MongoIgnoreSpec extends AnyWordSpec with Matchers with OptionValues {
-  import MongoIgnoreSpec.*
+  import MongoIgnoreSpec._
 
   "MongoIgnore" when {
     "annotated field has no default" must {
       "fail with a suitable message" in {
         val e = the[Exception] thrownBy deriveMongoFormat[MissingDefault].fromMongoValue(dbo)
-        e.getMessage mustBe "Missing default parameter value for ignored field `age` on deserialization."
+        e.getMessage mustBe "Ignored Mongo field 'age' must have a default value."
       }
     }
     "annotated field has also a default" must {

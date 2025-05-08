@@ -1,13 +1,13 @@
 package io.sphere.mongo.generic
 
 import io.sphere.mongo.MongoUtils.dbObj
-import io.sphere.mongo.format.{MongoFormat, deriveMongoFormat}
-import io.sphere.mongo.format.DefaultMongoFormats.given
+import io.sphere.mongo.format.{MongoFormat, fromMongo, toMongo}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import io.sphere.mongo.format.DefaultMongoFormats._
 
 class MongoTypeHintFieldWithSealedTraitSpec extends AnyWordSpec with Matchers {
-  import MongoTypeHintFieldWithSealedTraitSpec.*
+  import MongoTypeHintFieldWithSealedTraitSpec._
 
   "MongoTypeHintField (with sealed trait)" must {
     "allow to set another field to distinguish between types (toMongo)" in {
@@ -17,7 +17,7 @@ class MongoTypeHintFieldWithSealedTraitSpec extends AnyWordSpec with Matchers {
         "pictureSize" -> dbObj("pictureType" -> "Medium"),
         "pictureUrl" -> "http://example.com")
 
-      val dbo = userWithPictureFormat.toMongoValue(user)
+      val dbo = toMongo[UserWithPicture](user)
       dbo must be(expected)
     }
 
@@ -27,11 +27,11 @@ class MongoTypeHintFieldWithSealedTraitSpec extends AnyWordSpec with Matchers {
         "pictureSize" -> dbObj("pictureType" -> "Medium"),
         "pictureUrl" -> "http://example.com")
 
-      val user = userWithPictureFormat.fromMongoValue(initialDbo)
+      val user = fromMongo[UserWithPicture](initialDbo)
 
       user must be(UserWithPicture("foo-123", Medium, "http://example.com"))
 
-      val dbo = userWithPictureFormat.toMongoValue(user)
+      val dbo = toMongo[UserWithPicture](user)
       dbo must be(initialDbo)
     }
   }
@@ -43,12 +43,20 @@ object MongoTypeHintFieldWithSealedTraitSpec {
   // @MongoTypeHintField must be repeated for all sub-classes
   @MongoTypeHintField(value = "pictureType")
   sealed trait PictureSize
+  @MongoTypeHintField(value = "pictureType")
   case object Small extends PictureSize
+  @MongoTypeHintField(value = "pictureType")
   case object Medium extends PictureSize
+  @MongoTypeHintField(value = "pictureType")
   case object Big extends PictureSize
+
+  object PictureSize {
+    implicit val mongo: MongoFormat[PictureSize] = deriveMongoFormat[PictureSize]
+  }
 
   case class UserWithPicture(userId: String, pictureSize: PictureSize, pictureUrl: String)
 
-  val userWithPictureFormat = deriveMongoFormat[UserWithPicture]
-
+  object UserWithPicture {
+    implicit val mongo: MongoFormat[UserWithPicture] = deriveMongoFormat
+  }
 }

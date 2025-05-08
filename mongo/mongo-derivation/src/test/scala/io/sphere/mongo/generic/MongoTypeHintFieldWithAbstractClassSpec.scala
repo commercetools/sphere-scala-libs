@@ -6,10 +6,10 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import io.sphere.mongo.format.DefaultMongoFormats._
 
-class MongoTypeHintFieldWithSealedTraitSpec extends AnyWordSpec with Matchers {
-  import MongoTypeHintFieldWithSealedTraitSpec._
+class MongoTypeHintFieldWithAbstractClassSpec extends AnyWordSpec with Matchers {
+  import MongoTypeHintFieldWithAbstractClassSpec._
 
-  "MongoTypeHintField (with sealed trait)" must {
+  "MongoTypeHintField (with abstract class)" must {
     "allow to set another field to distinguish between types (toMongo)" in {
       val user = UserWithPicture("foo-123", Medium, "http://example.com")
       val expected = dbObj(
@@ -37,17 +37,12 @@ class MongoTypeHintFieldWithSealedTraitSpec extends AnyWordSpec with Matchers {
   }
 }
 
-object MongoTypeHintFieldWithSealedTraitSpec {
+object MongoTypeHintFieldWithAbstractClassSpec {
 
-  // issue https://github.com/commercetools/sphere-scala-libs/issues/10
-  // @MongoTypeHintField must be repeated for all sub-classes
   @MongoTypeHintField(value = "pictureType")
-  sealed trait PictureSize
-  @MongoTypeHintField(value = "pictureType")
+  sealed abstract class PictureSize
   case object Small extends PictureSize
-  @MongoTypeHintField(value = "pictureType")
   case object Medium extends PictureSize
-  @MongoTypeHintField(value = "pictureType")
   case object Big extends PictureSize
 
   object PictureSize {
@@ -57,6 +52,6 @@ object MongoTypeHintFieldWithSealedTraitSpec {
   case class UserWithPicture(userId: String, pictureSize: PictureSize, pictureUrl: String)
 
   object UserWithPicture {
-    implicit val mongo: MongoFormat[UserWithPicture] = mongoProduct(apply _)
+    implicit val mongo: MongoFormat[UserWithPicture] = deriveMongoFormat
   }
 }

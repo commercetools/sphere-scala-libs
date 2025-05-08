@@ -1,8 +1,8 @@
 package io.sphere.mongo.format
 
-import io.sphere.mongo.MongoUtils.*
-import io.sphere.mongo.generic.*
-import DefaultMongoFormats.given
+import io.sphere.mongo.MongoUtils._
+import io.sphere.mongo.format.DefaultMongoFormats._
+import io.sphere.mongo.generic._
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -12,19 +12,19 @@ object OptionMongoFormatSpec {
   case class SimpleClass(value1: String, value2: Int)
 
   object SimpleClass {
-    given MongoFormat[SimpleClass] = deriveMongoFormat[SimpleClass]
+    implicit val mongo: MongoFormat[SimpleClass] = deriveMongoFormat
   }
 
   case class ComplexClass(name: String, simpleClass: Option[SimpleClass])
 
   object ComplexClass {
-    given MongoFormat[ComplexClass] = deriveMongoFormat[ComplexClass]
+    implicit val mongo: MongoFormat[ComplexClass] = deriveMongoFormat
   }
 
 }
 
 class OptionMongoFormatSpec extends AnyWordSpec with Matchers with OptionValues {
-  import OptionMongoFormatSpec.*
+  import OptionMongoFormatSpec._
 
   "MongoFormat[Option[_]]" should {
     "handle presence of all fields" in {

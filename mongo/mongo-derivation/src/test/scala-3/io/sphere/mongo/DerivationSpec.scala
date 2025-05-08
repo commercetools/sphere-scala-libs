@@ -12,7 +12,7 @@ class DerivationSpec extends AnyWordSpec with Matchers {
       case class Container(i: Int, str: String, component: Component)
       case class Component(i: Int)
 
-      val format = io.sphere.mongo.format.deriveMongoFormat[Container]
+      val format = io.sphere.mongo.generic.deriveMongoFormat[Container]
 
       val container = Container(123, "anything", Component(456))
       val bson = format.toMongoValue(container)
@@ -27,7 +27,7 @@ class DerivationSpec extends AnyWordSpec with Matchers {
       case object Object2 extends Root
       case class Class(i: Int) extends Root
 
-      val format = io.sphere.mongo.format.deriveMongoFormat[Root]
+      val format = io.sphere.mongo.generic.deriveMongoFormat[Root]
 
       def roundtrip(member: Root): Unit = {
         val bson = format.toMongoValue(member)
