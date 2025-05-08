@@ -134,9 +134,10 @@ private[generic] object JSONMacros {
     }
   }
 
-  def generateJsonProduct(c: blackbox.Context)(
-      tpe: c.universe.Type,
-      classSym: c.universe.ClassSymbol)(classFnName: String, objectFnName: String): c.universe.Tree = {
+  def generateJsonProduct(
+      c: blackbox.Context)(tpe: c.universe.Type, classSym: c.universe.ClassSymbol)(
+      classFnName: String,
+      objectFnName: String): c.universe.Tree = {
     import c.universe._
 
     if (classSym.isCaseClass && !classSym.isModuleClass) {
@@ -180,7 +181,8 @@ private[generic] object JSONMacros {
     val symbol = tpe.typeSymbol
 
     if (symbol.isClass && (symbol.asClass.isCaseClass || symbol.asClass.isModuleClass))
-      c.Expr[ToJSON[A]](generateJsonProduct(c)(tpe, symbol.asClass)("toJsonProduct", "toJsonProduct0"))
+      c.Expr[ToJSON[A]](
+        generateJsonProduct(c)(tpe, symbol.asClass)("toJsonProduct", "toJsonProduct0"))
     else
       c.abort(c.enclosingPosition, "Not a case class or (case) object")
   }
@@ -192,7 +194,8 @@ private[generic] object JSONMacros {
     val symbol = tpe.typeSymbol
 
     if (symbol.isClass && (symbol.asClass.isCaseClass || symbol.asClass.isModuleClass))
-      c.Expr[FromJSON[A]](generateJsonProduct(c)(tpe, symbol.asClass)("fromJsonProduct", "fromJsonProduct0"))
+      c.Expr[FromJSON[A]](
+        generateJsonProduct(c)(tpe, symbol.asClass)("fromJsonProduct", "fromJsonProduct0"))
     else
       c.abort(c.enclosingPosition, "Not a case class or (case) object")
   }
