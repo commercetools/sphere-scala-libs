@@ -8,7 +8,7 @@ import scala.deriving.Mirror
 
 inline def deriveSingletonJSON[A](using Mirror.Of[A]): DeriveSingleton[A] = DeriveSingleton.derived
 
-// This is required so we don't summon normal JSON instances (maybe there's a better way to work around this)
+// This is required so we don't summon normal JSON instances in summonFormatters (maybe there's a better way to work around this)
 trait DeriveSingleton[A] extends JSON[A]
 
 object DeriveSingleton {

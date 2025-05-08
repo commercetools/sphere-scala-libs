@@ -126,7 +126,7 @@ class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
   def fromValidJValue[A](jval: JValue)(implicit json: FromJSON[A]): A =
     json.read(jval) match {
       case Valid(a) => a
-      case Validated.Invalid(e) =>  throw new Exception(e.head.toString)
+      case Validated.Invalid(e) => throw new Exception(e.head.toString)
     }
 }
 

@@ -100,7 +100,6 @@ object JsonTypeSwitchSpec {
   @JSONTypeHint("D2") case class D(int: Int) extends A
 
   trait Message
-
   object Message {
     // this can be dangerous is the same class name is used in both sum types
     // ex if we define TypeA.Class1 && TypeB.Class1
@@ -109,22 +108,16 @@ object JsonTypeSwitchSpec {
   }
 
   sealed trait TypeA extends Message
-
   object TypeA {
     case class ClassA1(number: Int) extends TypeA
-
     case class ClassA2(name: String) extends TypeA
-
     implicit val json: JSON[TypeA] = deriveJSON[TypeA]
   }
 
   sealed trait TypeB extends Message
-
   object TypeB {
     case class ClassB1(valid: Boolean) extends TypeB
-
     case class ClassB2(references: Seq[String]) extends TypeB
-
     implicit val json: JSON[TypeB] = deriveJSON[TypeB]
   }
 }
