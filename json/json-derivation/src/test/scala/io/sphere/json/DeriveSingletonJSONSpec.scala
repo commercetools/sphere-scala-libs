@@ -1,10 +1,10 @@
 package io.sphere.json
 
+import cats.data.Validated
 import cats.data.Validated.Valid
-import io.sphere.json.generic.*
-import org.json4s.DefaultJsonFormats.given
-import org.json4s.{DynamicJValueImplicits, JArray, JObject, JValue}
-import org.json4s.JsonAST.{JField, JNothing}
+import io.sphere.json.generic._
+import org.json4s.JValue
+import org.json4s.JsonAST.JNothing
 import org.json4s.jackson.JsonMethods.{compact, render}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -36,13 +36,13 @@ class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
     "write normal singleton values" in {
       val userJson = toJValue(UserWithPicture("foo-123", Medium, "http://exmple.com"))
 
-      val Valid(expectedJson) = parseJSON("""
+      val expectedJson = parseValidJSON("""
         {
           "userId": "foo-123",
           "pictureSize": "Medium",
           "pictureUrl": "http://exmple.com"
         }
-        """): @unchecked
+        """)
 
       filter(userJson) must be(expectedJson)
     }
@@ -62,13 +62,13 @@ class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
     "write custom singleton values" in {
       val userJson = toJValue(UserWithPicture("foo-123", Custom, "http://exmple.com"))
 
-      val Valid(expectedJson) = parseJSON("""
+      val expectedJson = parseValidJSON("""
         {
           "userId": "foo-123",
           "pictureSize": "bar",
           "pictureUrl": "http://exmple.com"
         }
-        """): @unchecked
+        """)
 
       filter(userJson) must be(expectedJson)
     }
@@ -104,36 +104,30 @@ class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
       val newJson = toJValue[UserWithPicture](user)
       Valid(newJson) must be(parseJSON(json))
 
-      val Valid(newUser) = fromJValue[UserWithPicture](newJson): @unchecked
+      val newUser = fromValidJValue[UserWithPicture](newJson)
       newUser must be(user)
     }
   }
 
-  private def filter(jvalue: JValue): JValue =
+  private def filter(jvalue: JValue): JValue = {
+    import org.json4s.jvalue2monadic
     jvalue.removeField {
       case (_, JNothing) => true
       case _ => false
     }
-
-  extension (jv: JValue) {
-    def removeField(p: JField => Boolean): JValue = jv.transform { case JObject(l) =>
-      JObject(l.filterNot(p))
-    }
-
-    def transform(f: PartialFunction[JValue, JValue]): JValue = map { x =>
-      f.applyOrElse[JValue, JValue](x, _ => x)
-    }
-
-    def map(f: JValue => JValue): JValue = {
-      def rec(v: JValue): JValue = v match {
-        case JObject(l) => f(JObject(l.map { case (n, va) => (n, rec(va)) }))
-        case JArray(l) => f(JArray(l.map(rec)))
-        case x => f(x)
-      }
-
-      rec(jv)
-    }
   }
+
+  def parseValidJSON(string: String): JValue =
+    parseJSON(string) match {
+      case Valid(a) => a
+      case Validated.Invalid(e) => throw new Exception(e.head.toString)
+    }
+
+  def fromValidJValue[A](jval: JValue)(implicit json: FromJSON[A]): A =
+    json.read(jval) match {
+      case Valid(a) => a
+      case Validated.Invalid(e) =>  throw new Exception(e.head.toString)
+    }
 }
 
 sealed abstract class PictureSize(val weight: Int, val height: Int)
@@ -146,10 +140,7 @@ case object Big extends PictureSize(1024, 2048)
 case object Custom extends PictureSize(1, 2)
 
 object PictureSize {
-  // TODO We have to get rid of this
-  import DeriveSingleton.derived
-
-  given JSON[PictureSize] = deriveSingletonJSON
+  implicit val json: JSON[PictureSize] = deriveSingletonJSON[PictureSize]
 }
 
 sealed trait Access
@@ -157,7 +148,7 @@ object Access {
   // only one sub-type
   case class Authorized(project: String) extends Access
 
-  given JSON[Access] = deriveJSON
+  implicit val json: JSON[Access] = deriveJSON
 }
 
 case class UserWithPicture(
@@ -167,5 +158,5 @@ case class UserWithPicture(
     access: Option[Access] = None)
 
 object UserWithPicture {
-  given JSON[UserWithPicture] = deriveJSON[UserWithPicture]
+  implicit val json: JSON[UserWithPicture] = deriveJSON[UserWithPicture]
 }
