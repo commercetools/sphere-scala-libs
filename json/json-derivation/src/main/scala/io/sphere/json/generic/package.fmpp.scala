@@ -29,6 +29,9 @@ package object generic extends Logging {
 
   def deriveJSON[A]: JSON[A] = macro JSONMacros.deriveJSON_impl[A]
   def deriveSingletonJSON[A]: JSON[A] = macro JSONMacros.deriveSingletonJSON_impl[A]
+  def deriveToJSON[A]: ToJSON[A] = macro JSONMacros.deriveToJSON_impl[A]
+  def deriveFromJSON[A]: FromJSON[A] = macro JSONMacros.deriveFromJSON_impl[A]
+
 
   private def JSONofToAndFrom[A](toJSON: ToJSON[A], fromJSON: FromJSON[A]): JSON[A] = {
     new JSON[A] {
@@ -406,6 +409,8 @@ package object generic extends Logging {
 
     new JSON[T] with TypeSelectorContainer {
       override def typeSelectors: List[TypeSelector[_]] = allSelectors
+
+      override def subTypeNames: List[String] = allSelectors.map(_.typeValue)
 
       def read(jval: JValue): ValidatedNel[JSONError, T] = fromJSON.read(jval)
 

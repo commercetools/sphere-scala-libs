@@ -125,7 +125,7 @@ object DeriveMongoformatSpec {
       access: Option[Access] = None)
 
   object UserWithPicture {
-    implicit val mongo: MongoFormat[UserWithPicture] = mongoProduct(apply _)
+    implicit val mongo: MongoFormat[UserWithPicture] = deriveMongoFormat
   }
 
   sealed trait SealedParent
