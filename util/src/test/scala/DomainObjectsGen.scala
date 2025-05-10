@@ -4,7 +4,7 @@ import java.util.Currency
 
 import org.scalacheck.Gen
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object DomainObjectsGen {
 

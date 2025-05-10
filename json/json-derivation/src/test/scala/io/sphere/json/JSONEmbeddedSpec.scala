@@ -10,29 +10,29 @@ object JSONEmbeddedSpec {
   case class Embedded(value1: String, value2: Int)
 
   object Embedded {
-    implicit val json: JSON[Embedded] = jsonProduct(apply _)
+    implicit val json: JSON[Embedded] = deriveJSON
   }
 
   case class Test1(name: String, @JSONEmbedded embedded: Embedded)
 
   object Test1 {
-    implicit val json: JSON[Test1] = jsonProduct(apply _)
+    implicit val json: JSON[Test1] = deriveJSON
   }
 
   case class Test2(name: String, @JSONEmbedded embedded: Option[Embedded] = None)
 
   object Test2 {
-    implicit val json: JSON[Test2] = jsonProduct(apply _)
+    implicit val json: JSON[Test2] = deriveJSON
   }
 
   case class SubTest4(@JSONEmbedded embedded: Embedded)
   object SubTest4 {
-    implicit val json: JSON[SubTest4] = jsonProduct(apply _)
+    implicit val json: JSON[SubTest4] = deriveJSON
   }
 
   case class Test4(subField: Option[SubTest4] = None)
   object Test4 {
-    implicit val json: JSON[Test4] = jsonProduct(apply _)
+    implicit val json: JSON[Test4] = deriveJSON
   }
 }
 
