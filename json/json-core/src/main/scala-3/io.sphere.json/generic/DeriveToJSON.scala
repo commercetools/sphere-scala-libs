@@ -1,6 +1,7 @@
 package io.sphere.json.generic
 
 import io.sphere.json.ToJSON
+import io.sphere.util.{Field, TypeMetaData}
 import org.json4s.JsonAST.*
 
 import scala.deriving.Mirror
@@ -47,8 +48,8 @@ trait DeriveToJSON {
     jValue match {
       case o: JObject =>
         if (field.embedded) JObject(jObject.obj ++ o.obj)
-        else JObject(jObject.obj :+ (field.fieldName -> o))
-      case other => JObject(jObject.obj :+ (field.fieldName -> other))
+        else JObject(jObject.obj :+ (field.serializedName -> o))
+      case other => JObject(jObject.obj :+ (field.serializedName -> other))
     }
 
 }

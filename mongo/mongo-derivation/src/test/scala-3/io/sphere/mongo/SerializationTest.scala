@@ -2,7 +2,7 @@ package io.sphere.mongo
 
 import com.mongodb.BasicDBObject
 import io.sphere.mongo.format.{DefaultMongoFormats, MongoFormat}
-import io.sphere.mongo.generic.{AnnotationReader, MongoTypeHint}
+import io.sphere.mongo.generic.{MongoAnnotationReader, MongoTypeHint}
 import io.sphere.mongo.MongoUtils.dbObj
 import DefaultMongoFormats.given
 import org.scalatest.matchers.must.Matchers

@@ -2,6 +2,7 @@ package io.sphere.json.generic
 
 import cats.data.Validated
 import io.sphere.json.{JSON, JSONParseError, JValidation}
+import io.sphere.util.TraitMetaData
 import org.json4s.{JNull, JString, JValue}
 
 import scala.deriving.Mirror

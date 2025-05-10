@@ -2,6 +2,7 @@ package io.sphere.mongo.generic
 
 import com.mongodb.BasicDBObject
 import io.sphere.mongo.format.{MongoFormat, TraitMongoFormat}
+import io.sphere.util.TypeMetaData
 import org.bson.BSONObject
 
 import scala.deriving.Mirror
@@ -16,13 +17,13 @@ def mongoEnum(e: Enumeration): MongoFormat[e.Value] = new MongoFormat[e.Value] {
 }
 
 inline def mongoTypeSwitch[SuperType, SubTypeTuple <: Tuple]: MongoFormat[SuperType] = {
-  val traitMetaData = AnnotationReader.readTraitMetaData[SuperType]
-  val typeHintMap = traitMetaData.subTypeTypeHints
+  val traitMetaData = MongoAnnotationReader.readTraitMetaData[SuperType]
+  val typeHintMap = traitMetaData.subTypeFieldRenames
   val reverseTypeHintMap = typeHintMap.map((on, n) => (n, on))
   val formatters = summonFormatters[SubTypeTuple]()
   val subTypeNames = summonMetaData[SubTypeTuple]()
 
-  val pairedFormatterWithSubtypeName = subTypeNames.map(_.name).zip(formatters)
+  val pairedFormatterWithSubtypeName = subTypeNames.map(_.scalaName).zip(formatters)
   val (caseClassFormatterList, traitFormatters) = pairedFormatterWithSubtypeName.partitionMap {
     case kv @ (name, formatter) =>
       formatter match {
@@ -68,7 +69,7 @@ inline private def summonMetaData[T <: Tuple](
   inline erasedValue[T] match {
     case _: EmptyTuple => acc
     case _: (t *: ts) =>
-      summonMetaData[ts](acc :+ AnnotationReader.readTypeMetaData[t])
+      summonMetaData[ts](acc :+ MongoAnnotationReader.readTypeMetaData[t])
   }
 
 inline private def summonFormatters[T <: Tuple](

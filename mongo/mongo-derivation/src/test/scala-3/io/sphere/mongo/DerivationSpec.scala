@@ -1,6 +1,6 @@
 package io.sphere.mongo
 
-import io.sphere.mongo.generic.{AnnotationReader, MongoEmbedded, MongoKey, MongoTypeHintField}
+import io.sphere.mongo.generic.{MongoAnnotationReader, MongoEmbedded, MongoKey, MongoTypeHintField}
 import io.sphere.mongo.format.DefaultMongoFormats.given
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.must.Matchers
@@ -50,7 +50,7 @@ class DerivationSpec extends AnyWordSpec with Matchers {
       case object Object2 extends Root
       case class Class(i: Int, @MongoEmbedded inner: InnerClass) extends Root
 
-      val res = AnnotationReader.readTypeMetaData[Root]
+      val res = MongoAnnotationReader.readTypeMetaData[Root]
 
     }
   }

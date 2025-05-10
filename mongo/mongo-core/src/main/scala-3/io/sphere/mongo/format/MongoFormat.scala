@@ -1,15 +1,15 @@
 package io.sphere.mongo.format
 
 import com.mongodb.BasicDBObject
-import io.sphere.mongo.generic.{AnnotationReader, Field, mongoTypeSwitch}
-import io.sphere.util.VectorUtils.*
+import io.sphere.mongo.generic.{MongoAnnotationReader, mongoTypeSwitch}
+import io.sphere.util.Field
 import org.bson.BSONObject
 import org.bson.types.ObjectId
 
 import java.util.UUID
 import java.util.regex.Pattern
 import scala.deriving.Mirror
-import scala.util.{Success, Try}
+import scala.util.Try
 
 type SimpleMongoType = UUID | String | ObjectId | Short | Int | Long | Float | Double | Boolean |
   Pattern
@@ -69,13 +69,13 @@ object MongoFormat {
       }
 
     inline private def deriveCaseClass[A](mirrorOfProduct: Mirror.ProductOf[A]): MongoFormat[A] = {
-      val caseClassMetaData = AnnotationReader.readTypeMetaData[A]
+      val caseClassMetaData = MongoAnnotationReader.readTypeMetaData[A]
       val formatters = summonFormatters[mirrorOfProduct.MirroredElemTypes]
       val fieldsAndFormatters = caseClassMetaData.fields.zip(formatters)
 
       val fields: Set[String] = fieldsAndFormatters.toSet.flatMap((field, formatter) =>
-        if (field.embedded) formatter.fields + field.rawName
-        else Set(field.rawName))
+        if (field.embedded) formatter.fields + field.scalaName
+        else Set(field.scalaName))
 
       instance(
         toMongo = { a =>
@@ -112,10 +112,10 @@ object MongoFormat {
   private def addField(bson: BasicDBObject, field: Field, mongoType: Any): Unit =
     if (!field.ignored)
       mongoType match {
-        case s: SimpleMongoType => bson.put(field.name, s)
+        case s: SimpleMongoType => bson.put(field.serializedName, s)
         case innerBson: BasicDBObject =>
           if (field.embedded) innerBson.entrySet().forEach(p => bson.put(p.getKey, p.getValue))
-          else bson.put(field.name, innerBson)
+          else bson.put(field.serializedName, innerBson)
         case MongoNothing =>
       }
 
@@ -123,15 +123,17 @@ object MongoFormat {
     def defaultValue = field.defaultArgument.orElse(format.default)
     if (field.ignored)
       defaultValue.getOrElse {
-        throw new Exception(s"Ignored Mongo field '${field.name}' must have a default value.")
+        throw new Exception(
+          s"Ignored Mongo field '${field.serializedName}' must have a default value.")
       }
     else if (field.embedded) format.fromMongoValue(bson)
     else {
-      val value = bson.get(field.name)
+      val value = bson.get(field.serializedName)
       if (value ne null) format.fromMongoValue(value.asInstanceOf[Any])
       else
         defaultValue.getOrElse {
-          throw new Exception(s"Missing required field '${field.name}' on deserialization.")
+          throw new Exception(
+            s"Missing required field '${field.serializedName}' on deserialization.")
         }
     }
   }

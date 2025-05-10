@@ -3,6 +3,7 @@ package io.sphere.json.generic
 import cats.data.Validated
 import cats.syntax.traverse.*
 import io.sphere.json.*
+import io.sphere.util.{Field, TypeMetaData}
 import org.json4s.JsonAST.*
 
 import scala.deriving.Mirror
@@ -26,13 +27,13 @@ trait DeriveFromJSON {
       val fieldsAndJsons: Vector[(Field, FromJSON[Any])] = caseClassMetaData.fields.zip(fromJsons)
 
       val fieldNames: Vector[String] = fieldsAndJsons.flatMap { (field, fromJson) =>
-        if (field.embedded) fromJson.fields.toVector :+ field.name
-        else Vector(field.name)
+        if (field.embedded) fromJson.fields.toVector :+ field.scalaName
+        else Vector(field.scalaName)
       }
 
       def readField(field: Field, fromJson: FromJSON[Any], jObject: JObject): JValidation[Any] =
         if (field.embedded) fromJson.read(jObject)
-        else io.sphere.json.field(field.fieldName, field.defaultArgument)(jObject)(fromJson)
+        else io.sphere.json.field(field.serializedName, field.defaultArgument)(jObject)(fromJson)
 
       FromJSON.instance(
         readFn = {

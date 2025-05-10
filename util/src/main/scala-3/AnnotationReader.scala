@@ -1,53 +1,52 @@
-package io.sphere.mongo.generic
+package io.sphere.util
 
 import scala.quoted.{Expr, Quotes, Type, Varargs}
 
-private type MA = MongoAnnotation
-
 case class Field(
-    rawName: String,
+    scalaName: String,
     embedded: Boolean,
     ignored: Boolean,
-    mongoKey: Option[MongoKey],
+    key: Option[String],
     defaultArgument: Option[Any]) {
-  val name: String = mongoKey.map(_.value).getOrElse(rawName)
+  val serializedName: String = key.getOrElse(scalaName)
 }
+
 case class TypeMetaData(
-    name: String,
-    typeHintRaw: Option[MongoTypeHint],
+    scalaName: String,
+    typeHintRaw: Option[String],
     fields: Vector[Field]
 ) {
   val typeHint: Option[String] =
-    typeHintRaw.map(_.value).filterNot(_.toList.forall(_ == ' '))
+    typeHintRaw.filterNot(_.toList.forall(_ == ' '))
 }
 
+/** This class also works for case classes not only traits, in case of case classes only the `top`
+  * field would be populated
+  */
 case class TraitMetaData(
     top: TypeMetaData,
-    typeHintFieldRaw: Option[MongoTypeHintField],
+    typeHintFieldRaw: Option[String],
     subtypes: Map[String, TypeMetaData]
 ) {
-  val typeDiscriminator: String = typeHintFieldRaw.map(_.value).getOrElse("type")
+  def isTrait: Boolean = subtypes.nonEmpty
 
-  val subTypeTypeHints: Map[String, String] = subtypes.collect {
+  private val defaultTypeDiscriminatorName = "type"
+  val typeDiscriminator: String =
+    typeHintFieldRaw.getOrElse(defaultTypeDiscriminatorName)
+
+  val subTypeFieldRenames: Map[String, String] = subtypes.collect {
     case (name, classMeta) if classMeta.typeHint.isDefined =>
       name -> classMeta.typeHint.get
   }
 }
 
-object AnnotationReader {
-
-  inline def readTraitMetaData[T]: TraitMetaData = ${ readTraitMetaDataImpl[T] }
-
-  inline def readTypeMetaData[T]: TypeMetaData = ${ readTypeMetaDataImpl[T] }
-
-  private def readTypeMetaDataImpl[T: Type](using Quotes): Expr[TypeMetaData] =
-    AnnotationReader().readTypeMetaData[T]
-
-  private def readTraitMetaDataImpl[T: Type](using Quotes): Expr[TraitMetaData] =
-    AnnotationReader().readTraitMetaData[T]
-}
-
-class AnnotationReader(using q: Quotes) {
+class AnnotationReader(using q: Quotes)(
+    findEmbedded: q.reflect.Tree => Boolean,
+    findIgnored: q.reflect.Tree => Boolean,
+    findKey: q.reflect.Tree => Option[Expr[String]],
+    findTypeHint: q.reflect.Tree => Option[Expr[String]],
+    findTypeHintField: q.reflect.Tree => Option[Expr[String]]
+) {
   import q.reflect.*
 
   def readTypeMetaData[T: Type]: Expr[TypeMetaData] = {
@@ -68,7 +67,7 @@ class AnnotationReader(using q: Quotes) {
     }
     '{
       TypeMetaData(
-        name = $name,
+        scalaName = $name,
         typeHintRaw = $typeHint,
         fields = Vector.empty
       )
@@ -83,7 +82,6 @@ class AnnotationReader(using q: Quotes) {
         Expr(sym.name.stripSuffix("$"))
       else
         Expr(sym.name)
-
     val typeHint = sym.annotations.map(findTypeHint).find(_.isDefined).flatten match {
       case Some(th) => '{ Some($th) }
       case None => '{ None }
@@ -91,59 +89,18 @@ class AnnotationReader(using q: Quotes) {
 
     '{
       TypeMetaData(
-        name = $name,
+        scalaName = $name,
         typeHintRaw = $typeHint,
         fields = Vector($fields*)
       )
     }
   }
 
-  def readTraitMetaData[T: Type]: Expr[TraitMetaData] = {
-    val sym = TypeRepr.of[T].typeSymbol
-    val typeHintField =
-      sym.annotations.map(findMongoTypeHintField).find(_.isDefined).flatten match {
-        case Some(thf) => '{ Some($thf) }
-        case None => '{ None }
-      }
-
-    '{
-      TraitMetaData(
-        top = ${ typeMetaData(sym) },
-        typeHintFieldRaw = $typeHintField,
-        subtypes = ${ subtypeAnnotations(sym) }
-      )
-    }
-  }
-
-  private def annotationTree(tree: Tree): Option[Expr[MA]] =
-    Option.when(tree.isExpr)(tree.asExpr).filter(_.isExprOf[MA]).map(_.asExprOf[MA])
-
-  private def findEmbedded(tree: Tree): Boolean =
-    Option.when(tree.isExpr)(tree.asExpr).filter(_.isExprOf[MongoEmbedded]).isDefined
-
-  private def findIgnored(tree: Tree): Boolean =
-    Option.when(tree.isExpr)(tree.asExpr).filter(_.isExprOf[MongoIgnore]).isDefined
-
-  private def findKey(tree: Tree): Option[Expr[MongoKey]] =
-    Option.when(tree.isExpr)(tree.asExpr).filter(_.isExprOf[MongoKey]).map(_.asExprOf[MongoKey])
-
-  private def findTypeHint(tree: Tree): Option[Expr[MongoTypeHint]] =
-    Option
-      .when(tree.isExpr)(tree.asExpr)
-      .filter(_.isExprOf[MongoTypeHint])
-      .map(_.asExprOf[MongoTypeHint])
-
-  private def findMongoTypeHintField(tree: Tree): Option[Expr[MongoTypeHintField]] =
-    Option
-      .when(tree.isExpr)(tree.asExpr)
-      .filter(_.isExprOf[MongoTypeHintField])
-      .map(_.asExprOf[MongoTypeHintField])
-
   private def collectFieldInfo(companion: Symbol)(s: Symbol, paramIdx: Int): Expr[Field] = {
     val embedded = Expr(s.annotations.exists(findEmbedded))
     val ignored = Expr(s.annotations.exists(findIgnored))
     val name = Expr(s.name)
-    val mongoKey = s.annotations.map(findKey).find(_.isDefined).flatten match {
+    val key = s.annotations.map(findKey).find(_.isDefined).flatten match {
       case Some(k) => '{ Some($k) }
       case None => '{ None }
     }
@@ -157,10 +114,10 @@ class AnnotationReader(using q: Quotes) {
 
     '{
       Field(
-        rawName = $name,
+        scalaName = $name,
         embedded = $embedded,
         ignored = $ignored,
-        mongoKey = $mongoKey,
+        key = $key,
         defaultArgument = $defArgOpt)
     }
   }
@@ -175,4 +132,22 @@ class AnnotationReader(using q: Quotes) {
     val subtypes = Varargs(sym.children.map(subtypeAnnotation))
     '{ Map($subtypes*) }
   }
+
+  def readTraitMetaData[T: Type]: Expr[TraitMetaData] = {
+    val sym = TypeRepr.of[T].typeSymbol
+    val typeHintField =
+      sym.annotations.map(findTypeHintField).find(_.isDefined).flatten match {
+        case Some(thf) => '{ Some($thf) }
+        case None => '{ None }
+      }
+
+    '{
+      TraitMetaData(
+        top = ${ typeMetaData(sym) },
+        typeHintFieldRaw = $typeHintField,
+        subtypes = ${ subtypeAnnotations(sym) }
+      )
+    }
+  }
+
 }

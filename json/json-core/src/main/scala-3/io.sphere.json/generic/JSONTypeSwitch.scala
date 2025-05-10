@@ -2,6 +2,7 @@ package io.sphere.json.generic
 
 import cats.data.Validated
 import io.sphere.json.{FromJSON, JSON, JSONParseError, ToJSON}
+import io.sphere.util.TraitMetaData
 import org.json4s.{JObject, JString, jvalue2monadic, jvalue2readerSyntax}
 import org.json4s.DefaultJsonFormats.given
 
@@ -23,10 +24,10 @@ object JSONTypeSwitch {
     val (traitInTraitInfo, caseClassFormatters) =
       formattersAndMetaData.partitionMap { (meta, formatter) =>
         if (meta.isTrait) {
-          val formatterByName = meta.subtypes.map((fieldName, m) => m.name -> formatter)
+          val formatterByName = meta.subtypes.map((fieldName, m) => m.scalaName -> formatter)
           Left(formatterByName -> meta.subTypeFieldRenames)
         } else {
-          Right(meta.top.name -> formatter)
+          Right(meta.top.scalaName -> formatter)
         }
       }
 
