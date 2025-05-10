@@ -2,16 +2,10 @@ package io.sphere.json.generic
 
 import cats.data.Validated
 import cats.syntax.traverse.*
-import io.sphere.json.field
-import io.sphere.json.generic.{AnnotationReader, Field, TraitMetaData, TypeMetaData}
+import io.sphere.json.*
 import org.json4s.JsonAST.*
-import org.json4s.DefaultReaders.StringReader
-import org.json4s.{jvalue2monadic, jvalue2readerSyntax}
 
 import scala.deriving.Mirror
-
-import io.sphere.json.FromJSON
-import io.sphere.json.*
 
 trait DeriveFromJSON {
   inline given derived[A](using Mirror.Of[A]): FromJSON[A] = Derivation.derived[A]
@@ -22,42 +16,14 @@ trait DeriveFromJSON {
 
     inline def derived[A](using m: Mirror.Of[A]): FromJSON[A] =
       inline m match {
-        case s: Mirror.SumOf[A] => deriveTrait(s)
+        case s: Mirror.SumOf[A] => fromJsonTypeSwitch[A, s.MirroredElemTypes]
         case p: Mirror.ProductOf[A] => deriveCaseClass(p)
       }
 
-    inline private def deriveTrait[A](mirrorOfSum: Mirror.SumOf[A]): FromJSON[A] = {
-      val traitMetaData: TraitMetaData = AnnotationReader.readTraitMetaData[A]
-
-      val reverseTypeHintMap: Map[String, String] =
-        traitMetaData.subTypeFieldRenames.map((on, n) => (n, on))
-      val fromJsons: Seq[FromJSON[Any]] = summonFromJsons[mirrorOfSum.MirroredElemTypes]
-
-      val names: Seq[String] =
-        constValueTuple[mirrorOfSum.MirroredElemLabels].productIterator.toVector
-          .asInstanceOf[Vector[String]]
-
-      val jsonsByNames: Map[String, FromJSON[Any]] = names.zip(fromJsons).toMap
-
-      FromJSON.instance(
-        readFn = {
-          case jObject: JObject =>
-            val typeName = (jObject \ traitMetaData.typeDiscriminator).as[String]
-            val originalTypeName = reverseTypeHintMap.getOrElse(typeName, typeName)
-            jsonsByNames(originalTypeName).read(jObject).map(_.asInstanceOf[A])
-
-          case x =>
-            Validated.invalidNel(JSONParseError(s"JSON object expected. Got: '$x'"))
-        }
-      )
-    }
-
     inline private def deriveCaseClass[A](mirrorOfProduct: Mirror.ProductOf[A]): FromJSON[A] = {
       val caseClassMetaData: TypeMetaData = AnnotationReader.readTypeMetaData[A]
-      val fromJsons: Vector[FromJSON[Any]] =
-        summonFromJsons[mirrorOfProduct.MirroredElemTypes]
-      val fieldsAndJsons: Vector[(Field, FromJSON[Any])] =
-        caseClassMetaData.fields.zip(fromJsons)
+      val fromJsons: Vector[FromJSON[Any]] = summonFromJsons[mirrorOfProduct.MirroredElemTypes]
+      val fieldsAndJsons: Vector[(Field, FromJSON[Any])] = caseClassMetaData.fields.zip(fromJsons)
 
       val fieldNames: Vector[String] = fieldsAndJsons.flatMap { (field, fromJson) =>
         if (field.embedded) fromJson.fields.toVector :+ field.name

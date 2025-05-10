@@ -9,45 +9,15 @@ trait DeriveToJSON {
 
   inline given derived[A](using Mirror.Of[A]): ToJSON[A] = Derivation.derived[A]
 
-  private def addField(jObject: JObject, field: Field, jValue: JValue): JValue =
-    jValue match {
-      case o: JObject =>
-        if (field.embedded) JObject(jObject.obj ++ o.obj)
-        else JObject(jObject.obj :+ (field.fieldName -> o))
-      case other => JObject(jObject.obj :+ (field.fieldName -> other))
-    }
-
   protected object Derivation {
 
     import scala.compiletime.{constValue, constValueTuple, erasedValue, summonInline}
 
     inline def derived[A](using m: Mirror.Of[A]): ToJSON[A] =
       inline m match {
-        case s: Mirror.SumOf[A] => deriveTrait(s)
+        case s: Mirror.SumOf[A] => toJsonTypeSwitch[A, s.MirroredElemTypes]
         case p: Mirror.ProductOf[A] => deriveCaseClass(p)
       }
-
-    inline private def deriveTrait[A](mirrorOfSum: Mirror.SumOf[A]): ToJSON[A] = {
-      val traitMetaData: TraitMetaData = AnnotationReader.readTraitMetaData[A]
-
-      val jsons: Seq[ToJSON[Any]] = summonToJson[mirrorOfSum.MirroredElemTypes]
-
-      val names: Seq[String] =
-        constValueTuple[mirrorOfSum.MirroredElemLabels].productIterator.toVector
-          .asInstanceOf[Vector[String]]
-
-      val jsonsByNames: Map[String, ToJSON[Any]] = names.zip(jsons).toMap
-
-      ToJSON.instance { value =>
-        // we never get a trait here, only classes, it's safe to assume Product
-        val originalTypeName = value.asInstanceOf[Product].productPrefix
-        val typeName =
-          traitMetaData.subTypeFieldRenames.getOrElse(originalTypeName, originalTypeName)
-        val json = jsonsByNames(originalTypeName).write(value).asInstanceOf[JObject]
-        val typeDiscriminator = traitMetaData.typeDiscriminator -> JString(typeName)
-        JObject(typeDiscriminator :: json.obj)
-      }
-    }
 
     inline private def deriveCaseClass[A](mirrorOfProduct: Mirror.ProductOf[A]): ToJSON[A] = {
       val caseClassMetaData: TypeMetaData = AnnotationReader.readTypeMetaData[A]
@@ -72,5 +42,13 @@ trait DeriveToJSON {
             .asInstanceOf[ToJSON[Any]] +: summonToJson[ts]
       }
   }
+
+  private def addField(jObject: JObject, field: Field, jValue: JValue): JValue =
+    jValue match {
+      case o: JObject =>
+        if (field.embedded) JObject(jObject.obj ++ o.obj)
+        else JObject(jObject.obj :+ (field.fieldName -> o))
+      case other => JObject(jObject.obj :+ (field.fieldName -> other))
+    }
 
 }

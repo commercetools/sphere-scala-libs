@@ -2,7 +2,8 @@ package io.sphere.mongo
 
 import com.mongodb.BasicDBObject
 import io.sphere.mongo.format.{DefaultMongoFormats, MongoFormat}
-import io.sphere.mongo.generic.AnnotationReader
+import io.sphere.mongo.generic.{AnnotationReader, MongoTypeHint}
+import io.sphere.mongo.MongoUtils.dbObj
 import DefaultMongoFormats.given
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -36,6 +37,7 @@ object SumTypes {
   enum Visitor derives MongoFormat {
     case User(email: String, password: String)
     case Anonymous
+    @MongoTypeHint("Admin") case Administrator
   }
 }
 
@@ -148,29 +150,22 @@ class SerializationTest extends AnyWordSpec with Matchers {
     "serialize and deserialize enums" in {
       val mongo = MongoFormat[Visitor]
 
-      val anonObj = {
-        val dbo = new BasicDBObject
-        dbo.put("type", "Anonymous")
-        dbo
-      }
       val serializedAnon = mongo.toMongoValue(Visitor.Anonymous)
       val deserializedAnon = mongo.fromMongoValue(serializedAnon)
-      serializedAnon must be(anonObj)
+      serializedAnon must be(dbObj("type" -> "Anonymous"))
       deserializedAnon must be(Visitor.Anonymous)
+
+      val serializedAdmin = mongo.toMongoValue(Visitor.Administrator)
+      val deserializedAdmin = mongo.fromMongoValue(serializedAdmin)
+      serializedAdmin must be(dbObj("type" -> "Admin"))
+      deserializedAdmin must be(Visitor.Administrator)
 
       val email = "ian@sosafe.com"
       val password = "123456"
       val user = Visitor.User(email, password)
-      val userObj = {
-        val dbo = new BasicDBObject
-        dbo.put("email", email)
-        dbo.put("password", password)
-        dbo.put("type", "User")
-        dbo
-      }
       val serializedUser = mongo.toMongoValue(user)
-      val deserializedUser = mongo.fromMongoValue(userObj)
-      serializedUser must be(userObj)
+      val deserializedUser = mongo.fromMongoValue(serializedUser)
+      serializedUser must be(dbObj("email" -> email, "password" -> password, "type" -> "User"))
       deserializedUser must be(user)
     }
 

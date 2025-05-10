@@ -1,11 +1,11 @@
 package io.sphere.mongo.generic
 
 import com.mongodb.BasicDBObject
-import io.sphere.mongo.format.MongoFormat
+import io.sphere.mongo.format.{MongoFormat, TraitMongoFormat}
 import org.bson.BSONObject
 
 import scala.deriving.Mirror
-import scala.compiletime.{erasedValue, error, summonInline}
+import scala.compiletime.{constValueTuple, erasedValue, error, summonInline}
 
 inline def deriveMongoFormat[A](using Mirror.Of[A]): MongoFormat[A] = MongoFormat.derived
 
@@ -15,28 +15,45 @@ def mongoEnum(e: Enumeration): MongoFormat[e.Value] = new MongoFormat[e.Value] {
   def fromMongoValue(any: Any): e.Value = e.withName(any.asInstanceOf[String])
 }
 
-inline def mongoTypeSwitch[SuperType, SubTypeTuple <: Tuple](): MongoFormat[SuperType] = {
+inline def mongoTypeSwitch[SuperType, SubTypeTuple <: Tuple]: MongoFormat[SuperType] = {
   val traitMetaData = AnnotationReader.readTraitMetaData[SuperType]
   val typeHintMap = traitMetaData.subTypeTypeHints
   val reverseTypeHintMap = typeHintMap.map((on, n) => (n, on))
-  val formatters: Vector[MongoFormat[Any]] = summonFormatters[SubTypeTuple]()
-  val names = summonMetaData[SubTypeTuple]().map(_.name)
-  val formattersByTypeName = names.zip(formatters).toMap
+  val formatters = summonFormatters[SubTypeTuple]()
+  val subTypeNames = summonMetaData[SubTypeTuple]()
 
-  MongoFormat.instance(
+  val pairedFormatterWithSubtypeName = subTypeNames.map(_.name).zip(formatters)
+  val (caseClassFormatterList, traitFormatters) = pairedFormatterWithSubtypeName.partitionMap {
+    case kv @ (name, formatter) =>
+      formatter match {
+        case traitFormatter: TraitMongoFormat[_] => Right(traitFormatter)
+        case _ => Left(kv)
+      }
+  }
+  val caseClassFormatters = caseClassFormatterList.toMap
+
+  TraitMongoFormat.instance(
     toMongo = { a =>
-      val originalTypeName = a.asInstanceOf[Product].productPrefix
-      val typeName = typeHintMap.getOrElse(originalTypeName, originalTypeName)
-      val bson =
-        formattersByTypeName(originalTypeName).toMongoValue(a).asInstanceOf[BasicDBObject]
-      bson.put(traitMetaData.typeDiscriminator, typeName)
-      bson
+      traitFormatters.view.map(_.attemptWrite(a)).find(_.isSuccess).map(_.get) match {
+        case Some(bson) => bson
+        case None =>
+          val originalTypeName = a.asInstanceOf[Product].productPrefix
+          val typeName = typeHintMap.getOrElse(originalTypeName, originalTypeName)
+          val bson =
+            caseClassFormatters(originalTypeName).toMongoValue(a).asInstanceOf[BasicDBObject]
+          bson.put(traitMetaData.typeDiscriminator, typeName)
+          bson
+      }
     },
     fromMongo = {
       case bson: BasicDBObject =>
-        val typeName = bson.get(traitMetaData.typeDiscriminator).asInstanceOf[String]
-        val originalTypeName = reverseTypeHintMap.getOrElse(typeName, typeName)
-        formattersByTypeName(originalTypeName).fromMongoValue(bson).asInstanceOf[SuperType]
+        traitFormatters.view.map(_.attemptRead(bson)).find(_.isSuccess).map(_.get) match {
+          case Some(a) => a.asInstanceOf[SuperType]
+          case None =>
+            val typeName = bson.get(traitMetaData.typeDiscriminator).asInstanceOf[String]
+            val originalTypeName = reverseTypeHintMap.getOrElse(typeName, typeName)
+            caseClassFormatters(originalTypeName).fromMongoValue(bson).asInstanceOf[SuperType]
+        }
       case x =>
         throw new Exception(s"BsonObject is expected for a Trait subtype, instead got $x")
     }

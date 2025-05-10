@@ -52,8 +52,54 @@ class AnnotationReader(using q: Quotes) {
   import q.reflect.*
 
   def readTypeMetaData[T: Type]: Expr[TypeMetaData] = {
-    val sym = TypeRepr.of[T].typeSymbol
-    typeMetaData(sym)
+    val tpe = TypeRepr.of[T]
+    val termSym = tpe.termSymbol
+    val typeSym = tpe.typeSymbol
+    if (termSym.flags.is(Flags.Enum) && typeSym.flags.is(Flags.Enum))
+      typeMetaDataForEnumObjects(termSym)
+    else
+      typeMetaData(typeSym)
+
+  }
+
+  private def typeMetaDataForEnumObjects(sym: Symbol): Expr[TypeMetaData] = {
+    val name = Expr(sym.name)
+    val typeHint = sym.annotations.map(findTypeHint).find(_.isDefined).flatten match {
+      case Some(th) => '{ Some($th) }
+      case None => '{ None }
+    }
+    '{
+      TypeMetaData(
+        name = $name,
+        typeHintRaw = $typeHint,
+        fields = Vector.empty
+      )
+    }
+  }
+
+  private def typeMetaData(sym: Symbol): Expr[TypeMetaData] = {
+    val caseParams = sym.primaryConstructor.paramSymss.take(1).flatten
+    val fields = Varargs(caseParams.zipWithIndex.map(collectFieldInfo(sym.companionModule)))
+    val name =
+      if (sym.flags.is(Flags.Enum)) {
+        Expr(sym.name)
+      } else if (sym.flags.is(Flags.Case) && sym.flags.is(Flags.Module))
+        Expr(sym.name.stripSuffix("$"))
+      else
+        Expr(sym.name)
+
+    val typeHint = sym.annotations.map(findTypeHint).find(_.isDefined).flatten match {
+      case Some(th) => '{ Some($th) }
+      case None => '{ None }
+    }
+
+    '{
+      TypeMetaData(
+        name = $name,
+        typeHintRaw = $typeHint,
+        fields = Vector($fields*)
+      )
+    }
   }
 
   def readTraitMetaData[T: Type]: Expr[TraitMetaData] = {
@@ -120,24 +166,6 @@ class AnnotationReader(using q: Quotes) {
         ignored = $ignored,
         mongoKey = $mongoKey,
         defaultArgument = $defArgOpt)
-    }
-  }
-
-  private def typeMetaData(sym: Symbol): Expr[TypeMetaData] = {
-    val caseParams = sym.primaryConstructor.paramSymss.take(1).flatten
-    val fields = Varargs(caseParams.zipWithIndex.map(collectFieldInfo(sym.companionModule)))
-    val name = Expr(sym.name)
-    val typeHint = sym.annotations.map(findTypeHint).find(_.isDefined).flatten match {
-      case Some(th) => '{ Some($th) }
-      case None => '{ None }
-    }
-
-    '{
-      TypeMetaData(
-        name = $name,
-        typeHintRaw = $typeHint,
-        fields = Vector($fields*)
-      )
     }
   }
 

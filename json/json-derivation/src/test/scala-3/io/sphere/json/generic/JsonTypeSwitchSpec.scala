@@ -16,7 +16,7 @@ class JsonTypeSwitchSpec extends AnyWordSpec with Matchers {
 
     "derive a subset of a sealed trait" in {
       given JSON[B] = deriveJSON[B]
-      val format = jsonTypeSwitch[A, (B, C)]()
+      val format = jsonTypeSwitch[A, (B, C)]
 
       val b = B(123)
       val jsonB = format.write(b)
@@ -34,7 +34,7 @@ class JsonTypeSwitchSpec extends AnyWordSpec with Matchers {
     }
 
     "derive a subset of a sealed trait with a mongoKey" in {
-      val format = jsonTypeSwitch[A, (B, D)]()
+      val format = jsonTypeSwitch[A, (B, D)]
 
       val d = D(123)
       val json = format.write(d)
@@ -78,7 +78,7 @@ class JsonTypeSwitchSpec extends AnyWordSpec with Matchers {
         override def write(value: B): JValue =
           JObject(List("field" -> JString(s"Custom-B-${value.int}")))
       }
-      val format = jsonTypeSwitch[A, (B, D, C)]()
+      val format = jsonTypeSwitch[A, (B, D, C)]
 
       List(
         D(2345),
@@ -104,7 +104,7 @@ object JsonTypeSwitchSpec {
     // this can be dangerous is the same class name is used in both sum types
     // ex if we define TypeA.Class1 && TypeB.Class1
     // as both will use the same type value discriminator
-    implicit val json: JSON[Message] = jsonTypeSwitch[Message, (TypeA, TypeB)]()
+    implicit val json: JSON[Message] = jsonTypeSwitch[Message, (TypeA, TypeB)]
   }
 
   sealed trait TypeA extends Message

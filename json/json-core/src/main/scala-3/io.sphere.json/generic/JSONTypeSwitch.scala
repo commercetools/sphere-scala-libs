@@ -24,7 +24,7 @@ object JSONTypeSwitch {
       formattersAndMetaData.partitionMap { (meta, formatter) =>
         if (meta.isTrait) {
           val formatterByName = meta.subtypes.map((fieldName, m) => m.name -> formatter)
-          Left((formatterByName, meta.subTypeFieldRenames))
+          Left(formatterByName -> meta.subTypeFieldRenames)
         } else {
           Right(meta.top.name -> formatter)
         }
@@ -77,7 +77,7 @@ object JSONTypeSwitch {
     }
   }
 
-  inline def jsonTypeSwitch[SuperType, SubTypes <: Tuple](): JSON[SuperType] = {
+  inline def jsonTypeSwitch[SuperType, SubTypes <: Tuple]: JSON[SuperType] = {
     val info = readTraitInformation[SuperType, SubTypes]
     val fromJson = fromJsonTypeSwitch[SuperType](info)
     val toJson = toJsonTypeSwitch[SuperType](info)

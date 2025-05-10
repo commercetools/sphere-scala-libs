@@ -16,7 +16,7 @@ class MongoTypeSwitchSpec extends AnyWordSpec with Matchers {
 
   "mongoTypeSwitch" must {
     "derive a subset of a sealed trait" in {
-      val format = mongoTypeSwitch[A, (B, C)]()
+      val format = mongoTypeSwitch[A, (B, C)]
 
       val b = B(123)
       val bson = format.toMongoValue(b)
@@ -34,7 +34,7 @@ class MongoTypeSwitchSpec extends AnyWordSpec with Matchers {
     }
 
     "derive a subset of a sealed trait with a mongoKey" in {
-      val format = mongoTypeSwitch[A, (B, D)]()
+      val format = mongoTypeSwitch[A, (B, D)]
 
       val d = D(123)
       val bson = format.toMongoValue(d).asInstanceOf[BSONObject]

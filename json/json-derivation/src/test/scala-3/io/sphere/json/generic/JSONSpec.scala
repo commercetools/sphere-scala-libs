@@ -361,6 +361,6 @@ object TestSubjectBase {
     implicit val jsonA: JSON[TestSubjectCategoryA] = TestSubjectCategoryA.json
     implicit val jsonB: JSON[TestSubjectCategoryB] = TestSubjectCategoryB.json
 
-    jsonTypeSwitch[TestSubjectBase, (TestSubjectCategoryA, TestSubjectCategoryB)]()
+    jsonTypeSwitch[TestSubjectBase, (TestSubjectCategoryA, TestSubjectCategoryB)]
   }
 }

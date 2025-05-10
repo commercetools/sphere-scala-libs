@@ -15,8 +15,8 @@ inline def fromJsonEnum(e: Enumeration): FromJSON[e.Value] = EnumerationInstance
 // This can be used instead of deriveJSON
 inline def jsonEnum(e: Enumeration): JSON[e.Value] = EnumerationInstances.jsonEnum(e)
 
-inline def jsonTypeSwitch[SuperType, SubTypes <: Tuple](): JSON[SuperType] =
-  JSONTypeSwitch.jsonTypeSwitch[SuperType, SubTypes]()
+inline def jsonTypeSwitch[SuperType, SubTypes <: Tuple]: JSON[SuperType] =
+  JSONTypeSwitch.jsonTypeSwitch[SuperType, SubTypes]
 
 inline def toJsonTypeSwitch[SuperType, SubTypes <: Tuple]: ToJSON[SuperType] = {
   val info = JSONTypeSwitch.readTraitInformation[SuperType, SubTypes]

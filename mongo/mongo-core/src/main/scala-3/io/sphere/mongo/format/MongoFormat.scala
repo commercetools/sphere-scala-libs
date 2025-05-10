@@ -1,7 +1,7 @@
 package io.sphere.mongo.format
 
 import com.mongodb.BasicDBObject
-import io.sphere.mongo.generic.{AnnotationReader, Field}
+import io.sphere.mongo.generic.{AnnotationReader, Field, mongoTypeSwitch}
 import io.sphere.util.VectorUtils.*
 import org.bson.BSONObject
 import org.bson.types.ObjectId
@@ -29,10 +29,8 @@ trait MongoFormat[A] extends Serializable {
   */
 trait TraitMongoFormat[A] extends MongoFormat[A] {
   // This approach is somewhat slow, the reason I chose to implement it like this is because:
-  // 1. We don't have nested trait structures anyway, the scala 2 version didn't even work for this case.
-  //    So this is more of a proof of concept feature
-  // 2. I didn't find a way to check types runtime when you have a nested trait hierarchy, because of erasure.
-  //    So this instance wouldn't know if it's really dealing with one of its subtypes or with another trait's subtype.
+  // 1. this approach supports different type discriminators for different traits
+  // 2. no need for classtag
   def attemptWrite(a: A): Try[Any] = Try(toMongoValue(a))
 
   def attemptRead(bson: BSONObject): Try[A] = Try(fromMongoValue(bson))
@@ -61,69 +59,14 @@ object MongoFormat {
     override val fields: Set[String] = fieldSet
   }
 
-  private def addField(bson: BasicDBObject, field: Field, mongoType: Any): Unit =
-    if (!field.ignored)
-      mongoType match {
-        case s: SimpleMongoType => bson.put(field.name, s)
-        case innerBson: BasicDBObject =>
-          if (field.embedded) innerBson.entrySet().forEach(p => bson.put(p.getKey, p.getValue))
-          else bson.put(field.name, innerBson)
-        case MongoNothing =>
-      }
-
   private object Derivation {
     import scala.compiletime.{constValue, constValueTuple, erasedValue, error, summonInline}
 
     inline def derived[A](using m: Mirror.Of[A]): MongoFormat[A] =
       inline m match {
-        case s: Mirror.SumOf[A] => deriveTrait(s)
+        case s: Mirror.SumOf[A] => mongoTypeSwitch[A, s.MirroredElemTypes]
         case p: Mirror.ProductOf[A] => deriveCaseClass(p)
       }
-
-    inline private def deriveTrait[A](mirrorOfSum: Mirror.SumOf[A]): MongoFormat[A] = {
-      val traitMetaData = AnnotationReader.readTraitMetaData[A]
-      val typeHintMap = traitMetaData.subTypeTypeHints
-      val reverseTypeHintMap = typeHintMap.map((on, n) => (n, on))
-      val formatters = summonFormatters[mirrorOfSum.MirroredElemTypes]
-      val subTypeNames = constValueTuple[mirrorOfSum.MirroredElemLabels].productIterator.toVector
-        .asInstanceOf[Vector[String]]
-      val pairedFormatterWithSubtypeName = subTypeNames.zip(formatters)
-      val (caseClassFormatterList, traitFormatters) = pairedFormatterWithSubtypeName.partitionMap {
-        case kv @ (name, formatter) =>
-          formatter match {
-            case traitFormatter: TraitMongoFormat[_] => Right(traitFormatter)
-            case _ => Left(kv)
-          }
-      }
-      val caseClassFormatters = caseClassFormatterList.toMap
-
-      TraitMongoFormat.instance(
-        toMongo = { a =>
-          traitFormatters.view.map(_.attemptWrite(a)).find(_.isSuccess).map(_.get) match {
-            case Some(bson) => bson
-            case None =>
-              val originalTypeName = a.asInstanceOf[Product].productPrefix
-              val typeName = typeHintMap.getOrElse(originalTypeName, originalTypeName)
-              val bson =
-                caseClassFormatters(originalTypeName).toMongoValue(a).asInstanceOf[BasicDBObject]
-              bson.put(traitMetaData.typeDiscriminator, typeName)
-              bson
-          }
-        },
-        fromMongo = {
-          case bson: BasicDBObject =>
-            traitFormatters.view.map(_.attemptRead(bson)).find(_.isSuccess).map(_.get) match {
-              case Some(a) => a.asInstanceOf[A]
-              case None =>
-                val typeName = bson.get(traitMetaData.typeDiscriminator).asInstanceOf[String]
-                val originalTypeName = reverseTypeHintMap.getOrElse(typeName, typeName)
-                caseClassFormatters(originalTypeName).fromMongoValue(bson).asInstanceOf[A]
-            }
-          case x =>
-            throw new Exception(s"BsonObject is expected for a Trait subtype, instead got $x")
-        }
-      )
-    }
 
     inline private def deriveCaseClass[A](mirrorOfProduct: Mirror.ProductOf[A]): MongoFormat[A] = {
       val caseClassMetaData = AnnotationReader.readTypeMetaData[A]
@@ -146,27 +89,8 @@ object MongoFormat {
         },
         fromMongo = {
           case bson: BasicDBObject =>
-            val fields = fieldsAndFormatters
-              .map { case (field, format) =>
-                def defaultValue = field.defaultArgument.orElse(format.default)
-
-                if (field.ignored)
-                  defaultValue.getOrElse {
-                    throw new Exception(
-                      s"Ignored Mongo field '${field.name}' must have a default value.")
-                  }
-                else if (field.embedded) format.fromMongoValue(bson)
-                else {
-                  val value = bson.get(field.name)
-                  if (value ne null) format.fromMongoValue(value.asInstanceOf[Any])
-                  else
-                    defaultValue.getOrElse {
-                      throw new Exception(
-                        s"Missing required field '${field.name}' on deserialization.")
-                    }
-                }
-              }
-            val tuple = Tuple.fromArray(fields.toArray)
+            val valuesOfClass = fieldsAndFormatters.map(readField(bson))
+            val tuple = Tuple.fromArray(valuesOfClass.toArray)
             mirrorOfProduct.fromTuple(tuple.asInstanceOf[mirrorOfProduct.MirroredElemTypes])
 
           case x => throw new Exception(s"BasicDBObject is expected for a class, instead got: $x")
@@ -183,5 +107,32 @@ object MongoFormat {
             .asInstanceOf[MongoFormat[Any]] +: summonFormatters[ts]
       }
 
+  }
+
+  private def addField(bson: BasicDBObject, field: Field, mongoType: Any): Unit =
+    if (!field.ignored)
+      mongoType match {
+        case s: SimpleMongoType => bson.put(field.name, s)
+        case innerBson: BasicDBObject =>
+          if (field.embedded) innerBson.entrySet().forEach(p => bson.put(p.getKey, p.getValue))
+          else bson.put(field.name, innerBson)
+        case MongoNothing =>
+      }
+
+  private def readField(bson: BSONObject)(field: Field, format: MongoFormat[Any]): Any = {
+    def defaultValue = field.defaultArgument.orElse(format.default)
+    if (field.ignored)
+      defaultValue.getOrElse {
+        throw new Exception(s"Ignored Mongo field '${field.name}' must have a default value.")
+      }
+    else if (field.embedded) format.fromMongoValue(bson)
+    else {
+      val value = bson.get(field.name)
+      if (value ne null) format.fromMongoValue(value.asInstanceOf[Any])
+      else
+        defaultValue.getOrElse {
+          throw new Exception(s"Missing required field '${field.name}' on deserialization.")
+        }
+    }
   }
 }
