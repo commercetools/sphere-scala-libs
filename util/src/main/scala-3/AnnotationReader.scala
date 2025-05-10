@@ -41,8 +41,8 @@ case class TraitMetaData(
 }
 
 class AnnotationReader(using q: Quotes)(
-    findEmbedded: q.reflect.Tree => Boolean,
-    findIgnored: q.reflect.Tree => Boolean,
+    embeddedExists: q.reflect.Tree => Boolean,
+    ignoredExists: q.reflect.Tree => Boolean,
     findKey: q.reflect.Tree => Option[Expr[String]],
     findTypeHint: q.reflect.Tree => Option[Expr[String]],
     findTypeHintField: q.reflect.Tree => Option[Expr[String]]
@@ -97,8 +97,8 @@ class AnnotationReader(using q: Quotes)(
   }
 
   private def collectFieldInfo(companion: Symbol)(s: Symbol, paramIdx: Int): Expr[Field] = {
-    val embedded = Expr(s.annotations.exists(findEmbedded))
-    val ignored = Expr(s.annotations.exists(findIgnored))
+    val embedded = Expr(s.annotations.exists(embeddedExists))
+    val ignored = Expr(s.annotations.exists(ignoredExists))
     val name = Expr(s.name)
     val key = s.annotations.map(findKey).find(_.isDefined).flatten match {
       case Some(k) => '{ Some($k) }
