@@ -5,7 +5,7 @@ import io.sphere.json.generic.JSONTypeHint
 
 import scala.quoted.{Expr, Quotes, Type, Varargs}
 
-private type MA = JSONAnnotation
+private type JA = JSONAnnotation
 
 case class Field(
     name: String,
@@ -50,8 +50,50 @@ class AnnotationReader(using q: Quotes) {
   import q.reflect.*
 
   def readTypeMetaData[T: Type]: Expr[TypeMetaData] = {
-    val sym = TypeRepr.of[T].typeSymbol
-    typeMetaData(sym)
+    val tpe = TypeRepr.of[T]
+    val termSym = tpe.termSymbol
+    val typeSym = tpe.typeSymbol
+    if (termSym.flags.is(Flags.Enum) && typeSym.flags.is(Flags.Enum))
+      typeMetaDataForEnumObjects(termSym)
+    else
+      typeMetaData(typeSym)
+  }
+
+  private def typeMetaDataForEnumObjects(sym: Symbol): Expr[TypeMetaData] = {
+    val name = Expr(sym.name)
+    val typeHint = sym.annotations.map(findTypeHint).find(_.isDefined).flatten match {
+      case Some(th) => '{ Some($th) }
+      case None => '{ None }
+    }
+    '{
+      TypeMetaData(
+        name = $name,
+        typeHintRaw = $typeHint,
+        fields = Vector.empty
+      )
+    }
+  }
+
+  private def typeMetaData(sym: Symbol): Expr[TypeMetaData] = {
+    val caseParams = sym.primaryConstructor.paramSymss.take(1).flatten
+    val fields = Varargs(caseParams.zipWithIndex.map(collectFieldInfo(sym.companionModule)))
+    val name =
+      if (sym.flags.is(Flags.Case) && sym.flags.is(Flags.Module))
+        Expr(sym.name.stripSuffix("$"))
+      else
+        Expr(sym.name)
+    val typeHint = sym.annotations.map(findTypeHint).find(_.isDefined).flatten match {
+      case Some(th) => '{ Some($th) }
+      case None => '{ None }
+    }
+
+    '{
+      TypeMetaData(
+        name = $name,
+        typeHintRaw = $typeHint,
+        fields = Vector($fields*)
+      )
+    }
   }
 
   def readTraitMetaData[T: Type]: Expr[TraitMetaData] = {
@@ -71,8 +113,8 @@ class AnnotationReader(using q: Quotes) {
     }
   }
 
-  private def annotationTree(tree: Tree): Option[Expr[MA]] =
-    Option.when(tree.isExpr)(tree.asExpr).filter(_.isExprOf[MA]).map(_.asExprOf[MA])
+  private def annotationTree(tree: Tree): Option[Expr[JA]] =
+    Option.when(tree.isExpr)(tree.asExpr).filter(_.isExprOf[JA]).map(_.asExprOf[JA])
 
   private def findEmbedded(tree: Tree): Boolean =
     Option.when(tree.isExpr)(tree.asExpr).filter(_.isExprOf[JSONEmbedded]).isDefined
@@ -118,25 +160,6 @@ class AnnotationReader(using q: Quotes) {
         ignored = $ignored,
         jsonKey = $key,
         defaultArgument = $defArgOpt)
-    }
-  }
-
-  private def typeMetaData(sym: Symbol): Expr[TypeMetaData] = {
-    val caseParams = sym.primaryConstructor.paramSymss.take(1).flatten
-    val fields = Varargs(caseParams.zipWithIndex.map(collectFieldInfo(sym.companionModule)))
-    // Removing $ from the end of object names (productPrefix doesn't return names like that, so it's better not to have it)
-    val name = Expr(sym.name.stripSuffix("$"))
-    val typeHint = sym.annotations.map(findTypeHint).find(_.isDefined).flatten match {
-      case Some(th) => '{ Some($th) }
-      case None => '{ None }
-    }
-
-    '{
-      TypeMetaData(
-        name = $name,
-        typeHintRaw = $typeHint,
-        fields = Vector($fields*)
-      )
     }
   }
 

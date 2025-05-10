@@ -1,7 +1,6 @@
 package io.sphere.mongo.generic
 
 import scala.quoted.{Expr, Quotes, Type, Varargs}
-import io.sphere.mongo.format.MongoFormat
 
 private type MA = MongoAnnotation
 
@@ -59,7 +58,6 @@ class AnnotationReader(using q: Quotes) {
       typeMetaDataForEnumObjects(termSym)
     else
       typeMetaData(typeSym)
-
   }
 
   private def typeMetaDataForEnumObjects(sym: Symbol): Expr[TypeMetaData] = {
@@ -81,9 +79,7 @@ class AnnotationReader(using q: Quotes) {
     val caseParams = sym.primaryConstructor.paramSymss.take(1).flatten
     val fields = Varargs(caseParams.zipWithIndex.map(collectFieldInfo(sym.companionModule)))
     val name =
-      if (sym.flags.is(Flags.Enum)) {
-        Expr(sym.name)
-      } else if (sym.flags.is(Flags.Case) && sym.flags.is(Flags.Module))
+      if (sym.flags.is(Flags.Case) && sym.flags.is(Flags.Module))
         Expr(sym.name.stripSuffix("$"))
       else
         Expr(sym.name)
