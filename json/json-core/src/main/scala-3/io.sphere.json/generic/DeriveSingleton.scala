@@ -51,8 +51,8 @@ object DeriveSingleton {
       DeriveSingleton.instance(
         readFn = {
           case JString(typeName) =>
-            val originalTypeName = reverseTypeHintMap.getOrElse(typeName, typeName)
-            jsonsByNames.get(originalTypeName) match {
+            val scalaTypeName = reverseTypeHintMap.getOrElse(typeName, typeName)
+            jsonsByNames.get(scalaTypeName) match {
               case Some(json) =>
                 val dummyValue = JNull
                 json.read(dummyValue).map(_.asInstanceOf[A])
@@ -64,9 +64,9 @@ object DeriveSingleton {
             Validated.invalidNel(JSONParseError(s"JSON string expected. Got >>> $x"))
         },
         writeFn = { value =>
-          val originalTypeName = value.asInstanceOf[Product].productPrefix
-          val typeName = typeHintMap.getOrElse(originalTypeName, originalTypeName)
-          JString(typeName)
+          val scalaTypeName = value.asInstanceOf[Product].productPrefix
+          val serializedTypeName = typeHintMap.getOrElse(scalaTypeName, scalaTypeName)
+          JString(serializedTypeName)
         }
       )
     }

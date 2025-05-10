@@ -35,8 +35,8 @@ case class TraitMetaData(
     typeHintFieldRaw.getOrElse(defaultTypeDiscriminatorName)
 
   val subTypeFieldRenames: Map[String, String] = subtypes.collect {
-    case (name, classMeta) if classMeta.typeHint.isDefined =>
-      name -> classMeta.typeHint.get
+    case (scalaName, classMeta) if classMeta.typeHint.isDefined =>
+      scalaName -> classMeta.typeHint.get
   }
 }
 

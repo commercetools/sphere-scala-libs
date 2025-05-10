@@ -38,11 +38,11 @@ inline def mongoTypeSwitch[SuperType, SubTypeTuple <: Tuple]: MongoFormat[SuperT
       traitFormatters.view.map(_.attemptWrite(a)).find(_.isSuccess).map(_.get) match {
         case Some(bson) => bson
         case None =>
-          val originalTypeName = a.asInstanceOf[Product].productPrefix
-          val typeName = typeHintMap.getOrElse(originalTypeName, originalTypeName)
+          val scalaTypeName = a.asInstanceOf[Product].productPrefix
+          val serializedTypeName = typeHintMap.getOrElse(scalaTypeName, scalaTypeName)
           val bson =
-            caseClassFormatters(originalTypeName).toMongoValue(a).asInstanceOf[BasicDBObject]
-          bson.put(traitMetaData.typeDiscriminator, typeName)
+            caseClassFormatters(scalaTypeName).toMongoValue(a).asInstanceOf[BasicDBObject]
+          bson.put(traitMetaData.typeDiscriminator, serializedTypeName)
           bson
       }
     },
@@ -51,9 +51,9 @@ inline def mongoTypeSwitch[SuperType, SubTypeTuple <: Tuple]: MongoFormat[SuperT
         traitFormatters.view.map(_.attemptRead(bson)).find(_.isSuccess).map(_.get) match {
           case Some(a) => a.asInstanceOf[SuperType]
           case None =>
-            val typeName = bson.get(traitMetaData.typeDiscriminator).asInstanceOf[String]
-            val originalTypeName = reverseTypeHintMap.getOrElse(typeName, typeName)
-            caseClassFormatters(originalTypeName).fromMongoValue(bson).asInstanceOf[SuperType]
+            val serializedTypeName = bson.get(traitMetaData.typeDiscriminator).asInstanceOf[String]
+            val scalaTypeName = reverseTypeHintMap.getOrElse(serializedTypeName, serializedTypeName)
+            caseClassFormatters(scalaTypeName).fromMongoValue(bson).asInstanceOf[SuperType]
         }
       case x =>
         throw new Exception(s"BsonObject is expected for a Trait subtype, instead got $x")

@@ -48,20 +48,12 @@ object JSONTypeSwitch {
 
   inline def toJsonTypeSwitch[SuperType](info: TraitInformation): ToJSON[SuperType] =
     ToJSON.instance { a =>
-      val originalTypeName = a.asInstanceOf[Product].productPrefix
-      val typeName = info.mergedTypeHintMap.getOrElse(originalTypeName, originalTypeName)
-      val traitFormatterOpt = info.traitInTraitFormatterMap.get(originalTypeName)
+      val scalaTypeName = a.asInstanceOf[Product].productPrefix
+      val serializedTypeName = info.mergedTypeHintMap.getOrElse(scalaTypeName, scalaTypeName)
+      val traitFormatterOpt = info.traitInTraitFormatterMap.get(scalaTypeName)
       traitFormatterOpt
         .map(_.write(a))
-        .getOrElse {
-          val jsonObj = info.caseClassFormatterMap(originalTypeName).write(a) match {
-            case JObject(obj) => obj
-            case json =>
-              throw new Exception(s"This code only handles objects as of now, but got: $json")
-          }
-          val typeDiscriminator = info.traitMetaData.typeDiscriminator -> JString(typeName)
-          JObject(typeDiscriminator :: jsonObj)
-        }
+        .getOrElse(writeCaseClass(info, scalaTypeName, a, serializedTypeName))
     }
 
   inline def fromJsonTypeSwitch[SuperType](info: TraitInformation): FromJSON[SuperType] = {
@@ -70,9 +62,9 @@ object JSONTypeSwitch {
 
     FromJSON.instance {
       case jObject: JObject =>
-        val typeName = (jObject \ info.traitMetaData.typeDiscriminator).as[String]
-        val originalTypeName = reverseTypeHintMap.getOrElse(typeName, typeName)
-        allFormattersByTypeName(originalTypeName).read(jObject).map(_.asInstanceOf[SuperType])
+        val serializedTypeName = (jObject \ info.traitMetaData.typeDiscriminator).as[String]
+        val scalaTypeName = reverseTypeHintMap.getOrElse(serializedTypeName, serializedTypeName)
+        allFormattersByTypeName(scalaTypeName).read(jObject).map(_.asInstanceOf[SuperType])
       case x =>
         Validated.invalidNel(JSONParseError(s"JSON object expected. Got: '$x'"))
     }
@@ -87,6 +79,20 @@ object JSONTypeSwitch {
       writeFn = toJson.write,
       readFn = fromJson.read
     )
+  }
+
+  private def writeCaseClass[A](
+      info: TraitInformation,
+      scalaTypeName: String,
+      a: A,
+      serializedTypeName: String): JObject = {
+    val jsonObj = info.caseClassFormatterMap(scalaTypeName).write(a) match {
+      case JObject(obj) => obj
+      case json =>
+        throw new Exception(s"This code only handles objects as of now, but got: $json")
+    }
+    val typeDiscriminator = info.traitMetaData.typeDiscriminator -> JString(serializedTypeName)
+    JObject(typeDiscriminator :: jsonObj)
   }
 
   inline private def summonFormatters[T <: Tuple](
