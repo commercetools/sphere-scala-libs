@@ -10,7 +10,7 @@ class SubTypeNameSpec extends AnyWordSpec with Matchers {
   "JSON.subtypeNames" must {
 
     val subTypeNames = List("Obj1", "Obj2", "Class1", "Class2")
-    "return all subtypes objects and class of a trait when using deriveJSON" in {
+    "return all subtypes of a trait when using deriveJSON" in {
       val format: JSON[SuperType] = deriveJSON
 
       format.subTypeNames must be(subTypeNames)
@@ -19,7 +19,7 @@ class SubTypeNameSpec extends AnyWordSpec with Matchers {
         subTypeNames)
     }
 
-    "return all subtypes objects and class of a trait when using jsonTypeSwitch" in {
+    "return all subtypes of a trait when using jsonTypeSwitch" in {
       implicit val obj1F: JSON[Obj1.type] = deriveJSON
       implicit val objHF: JSON[ObjHidden.type] = deriveJSON
       implicit val class1F: JSON[Class1] = deriveJSON

@@ -3,7 +3,7 @@
 ### How to cross-compile
 
 If you want to compile the same codebase with both scala-2 and scala-3,
-you need to port the methods.
+you need to port the following methods.
 
 ```scala
 // JSON derivation
