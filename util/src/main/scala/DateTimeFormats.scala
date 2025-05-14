@@ -21,7 +21,7 @@ object DateTimeFormats {
     * of the year is only used to mark negative years (i.e. no + for years with more than 4 digits)
     */
   val localDateFormatter: DateTimeFormatter = new DateTimeFormatterBuilder()
-    .appendValue(ChronoField.YEAR, 1, 9, SignStyle.NORMAL)
+    .appendValue(ChronoField.YEAR, 4, 9, SignStyle.NORMAL)
     .appendLiteral('-')
     .appendValue(ChronoField.MONTH_OF_YEAR, 2)
     .appendLiteral('-')
@@ -50,7 +50,7 @@ object DateTimeFormats {
     .toFormatter
 
   def format(date: LocalDate): String = localDateFormatter.format(date)
-  def format(time: LocalTime): String = localDateFormatter.format(time)
+  def format(time: LocalTime): String = localTimeFormatter.format(time)
   def format(dateTime: LocalDateTime): String =
     localDateTimeFormatter.format(dateTime.atOffset(ZoneOffset.UTC).toLocalDateTime())
   def format(dateTime: ZonedDateTime): String =
@@ -148,5 +148,9 @@ object DateTimeFormats {
   def parseOffsetDateTime(dateTime: String): Try[OffsetDateTime] =
     Try(
       OffsetDateTime.parse(dateTime, lenientDateTimeParser)
+    )
+  def parseInstant(dateTime: String): Try[Instant] =
+    Try(
+      OffsetDateTime.parse(dateTime, lenientDateTimeParser).toInstant()
     )
 }
