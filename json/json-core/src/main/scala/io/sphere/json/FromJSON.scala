@@ -409,7 +409,7 @@ object FromJSON extends FromJSONInstances {
 
   implicit val javaInstantReader: FromJSON[time.Instant] =
     jsonStringReader("Failed to parse date/time: %s")(s =>
-      // Consider using: 
+      // Consider using:
       //   DateTimeFormats.parseOffsetDateTime(s).map(_.toInstant()).get)
       //
       // This implementation does not support years with > 4 digits
