@@ -128,6 +128,11 @@ class DateTimeParsingSpec extends AnyWordSpec with Matchers {
         Instant.parse("2004-06-01T00:00:00+08:00"))
     }
 
+    "accept a year month day without offset" in {
+      javaInstantReader.read(JString("2004-06-09")) shouldBe Valid(
+        Instant.parse("2004-06-09T00:00:00+00:00"))
+    }
+
     "accept a year month day with offset" in {
       javaInstantReader.read(JString("2004-06-09T+0800")) shouldBe Valid(
         Instant.parse("2004-06-09T00:00:00+08:00"))

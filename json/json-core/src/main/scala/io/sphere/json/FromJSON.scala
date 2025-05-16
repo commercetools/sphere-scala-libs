@@ -390,6 +390,7 @@ object FromJSON extends FromJSONInstances {
       .optionalStart()
       .appendPattern("'T'[HH[:mm[:ss]]]")
       .appendFraction(time.temporal.ChronoField.NANO_OF_SECOND, 0, 9, true)
+      .optionalEnd
       .optionalStart()
       .appendOffset("+HH:MM", "Z")
       .optionalEnd()
