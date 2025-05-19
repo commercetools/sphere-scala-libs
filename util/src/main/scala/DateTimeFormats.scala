@@ -103,7 +103,7 @@ object DateTimeFormats {
     .parseDefaulting(ChronoField.NANO_OF_SECOND, 0)
     .toFormatter()
 
-  /** Strict version o jodatime's `ISODateTimeFormat.dateTimeParser`
+  /** Strict version of jodatime's `ISODateTimeFormat.dateTimeParser`
     *
     * Parse a ZonedDateTime defaulting to UTC using the lenient date and time parsers
     */
