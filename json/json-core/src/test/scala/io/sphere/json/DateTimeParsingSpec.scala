@@ -69,8 +69,9 @@ class DateTimeParsingSpec extends AnyWordSpec with Matchers {
 
   "parsing an Instant" should {
 
-    "reject strings with invalid year" in {
-      javaInstantReader.read(jsonDateStringWith(year = "999999999")) shouldNot beValid
+    "accept strings with invalid year" in {
+      // this is the only difference with joda that rejects this.
+      javaInstantReader.read(jsonDateStringWith(year = "999999999")) should beValid
     }
 
     "reject strings with years that are out of range for integers" in {

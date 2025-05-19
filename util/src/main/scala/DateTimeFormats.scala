@@ -134,23 +134,32 @@ object DateTimeFormats {
       .parseDefaulting(ChronoField.OFFSET_SECONDS, 0)
       .toFormatter
 
-  def parseLocalTime(time: String): Try[LocalTime] = Try(
-    LocalTime.parse(time, lenientLocalTimeParser))
-  def parseLocalDate(date: String): Try[LocalDate] = Try(
-    LocalDate.parse(date, lenientLocalDateParser))
+  def parseLocalTime(time: String): Try[LocalTime] =
+    Try(parseLocalTimeUnsafe(time))
+  def parseLocalTimeUnsafe(time: String): LocalTime =
+    LocalTime.parse(time, lenientLocalTimeParser)
+
+  def parseLocalDate(date: String): Try[LocalDate] = Try(parseLocalDateUnsafe(date))
+  def parseLocalDateUnsafe(date: String): LocalDate =
+    LocalDate.parse(date, lenientLocalDateParser)
+
   def parseLocalDateTime(dateTime: String): Try[LocalDateTime] =
-    Try(
-      OffsetDateTime
-        .parse(dateTime, lenientDateTimeParser)
-        .withOffsetSameInstant(ZoneOffset.UTC)
-        .toLocalDateTime
-    )
+    Try(parseLocalDateTimeUnsafe(dateTime))
+  def parseLocalDateTimeUnsafe(dateTime: String): LocalDateTime =
+    OffsetDateTime
+      .parse(dateTime, lenientDateTimeParser)
+      .withOffsetSameInstant(ZoneOffset.UTC)
+      .toLocalDateTime
+
   def parseOffsetDateTime(dateTime: String): Try[OffsetDateTime] =
-    Try(
-      OffsetDateTime.parse(dateTime, lenientDateTimeParser)
-    )
+    Try(parseOffsetDateTimeUnsafe(dateTime))
+  def parseOffsetDateTimeUnsafe(dateTime: String): OffsetDateTime =
+    OffsetDateTime.parse(dateTime, lenientDateTimeParser)
+
   def parseInstant(dateTime: String): Try[Instant] =
-    Try(
-      OffsetDateTime.parse(dateTime, lenientDateTimeParser).toInstant()
-    )
+    Try(parseInstantUnsafe(dateTime))
+
+  def parseInstantUnsafe(dateTime: String): Instant =
+    Instant.from(lenientDateTimeParser.parse(dateTime))
+
 }
