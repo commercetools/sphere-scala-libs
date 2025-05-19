@@ -20,7 +20,7 @@ object DateTimeFormats {
     * Very close to the default ISO_LOCAL_DATE formatter with the difference that the sign in front
     * of the year is only used to mark negative years (i.e. no + for years with more than 4 digits)
     */
-  val localDateFormatter: DateTimeFormatter = new DateTimeFormatterBuilder()
+  private val localDateFormatter: DateTimeFormatter = new DateTimeFormatterBuilder()
     .appendValue(ChronoField.YEAR, 4, 9, SignStyle.NORMAL)
     .appendLiteral('-')
     .appendValue(ChronoField.MONTH_OF_YEAR, 2)
@@ -30,7 +30,7 @@ object DateTimeFormats {
 
   /** Canonical format for writing times.
     */
-  val localTimeFormatter: DateTimeFormatter = new DateTimeFormatterBuilder()
+  private val localTimeFormatter: DateTimeFormatter = new DateTimeFormatterBuilder()
     .appendValue(ChronoField.HOUR_OF_DAY, 2)
     .appendLiteral(':')
     .appendValue(ChronoField.MINUTE_OF_HOUR, 2)
@@ -42,7 +42,7 @@ object DateTimeFormats {
 
   /** Canonical format for writing date-times in UTC
     */
-  val localDateTimeFormatter = new DateTimeFormatterBuilder()
+  private val localDateTimeFormatter = new DateTimeFormatterBuilder()
     .append(localDateFormatter)
     .appendLiteral('T')
     .append(localTimeFormatter)
@@ -67,7 +67,7 @@ object DateTimeFormats {
     * from Joda to [[java.time]] in Sphere. java.time operates more strictly, so this parser ensures
     * a very high level in flexibility
     */
-  val lenientLocalDateParser: DateTimeFormatter = new DateTimeFormatterBuilder()
+  private val lenientLocalDateParser: DateTimeFormatter = new DateTimeFormatterBuilder()
     .optionalStart()
     .appendLiteral('+')
     .optionalEnd()
@@ -85,7 +85,7 @@ object DateTimeFormats {
     .toFormatter()
 
   // Simplified version of jodatime's `ISODateTimeFormat.localTimeParser`
-  val lenientLocalTimeParser: DateTimeFormatter = new DateTimeFormatterBuilder()
+  private val lenientLocalTimeParser: DateTimeFormatter = new DateTimeFormatterBuilder()
     .appendValue(ChronoField.HOUR_OF_DAY, 2)
     .optionalStart()
     .appendLiteral(':')
@@ -107,7 +107,7 @@ object DateTimeFormats {
     *
     * Parse a ZonedDateTime defaulting to UTC using the lenient date and time parsers
     */
-  val lenientDateTimeParser: DateTimeFormatter =
+  private val lenientDateTimeParser: DateTimeFormatter =
     new DateTimeFormatterBuilder()
       .append(lenientLocalDateParser)
       .optionalStart()
