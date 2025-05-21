@@ -3,13 +3,12 @@ package io.sphere.json
 import scala.util.control.NonFatal
 import scala.collection.mutable.ListBuffer
 import java.util.{Currency, Locale, UUID}
-
 import cats.data.NonEmptyList
 import cats.data.Validated.{Invalid, Valid}
 import cats.syntax.apply._
 import cats.syntax.traverse._
 import io.sphere.json.field
-import io.sphere.util.{BaseMoney, HighPrecisionMoney, LangTag, Money}
+import io.sphere.util.{BaseMoney, DateTimeFormats, HighPrecisionMoney, LangTag, Logging, Money}
 import org.json4s.JsonAST._
 import org.joda.time.format.ISODateTimeFormat
 
@@ -20,7 +19,6 @@ import org.joda.time.DateTimeZone
 import org.joda.time.YearMonth
 import org.joda.time.LocalTime
 import org.joda.time.LocalDate
-import io.sphere.util.DateTimeFormats
 
 /** Type class for types that can be read from JSON. */
 @implicitNotFound("Could not find an instance of FromJSON for ${A}")
@@ -32,7 +30,7 @@ trait FromJSON[@specialized A] extends Serializable {
   val fields: Set[String] = FromJSON.emptyFieldsSet
 }
 
-object FromJSON extends FromJSONInstances {
+object FromJSON extends FromJSONInstances with Logging {
 
   private[FromJSON] val emptyFieldsSet: Set[String] = Set.empty
 
@@ -348,23 +346,24 @@ object FromJSON extends FromJSONInstances {
     }
 
   // Joda Time
-  implicit val dateTimeReader: FromJSON[DateTime] = {
-    val UTCDateTimeComponents = raw"(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})\.(\d{3})Z".r
+  implicit val dateTimeReader: FromJSON[DateTime] =
+    jsonStringReader("Failed to parse date/time: %s")(parseJodaTime)
 
-    jsonStringReader("Failed to parse date/time: %s") {
-      case UTCDateTimeComponents(year, month, days, hours, minutes, seconds, millis) =>
-        new DateTime(
-          year.toInt,
-          month.toInt,
-          days.toInt,
-          hours.toInt,
-          minutes.toInt,
-          seconds.toInt,
-          millis.toInt,
-          DateTimeZone.UTC)
-      case otherwise =>
-        new DateTime(otherwise, DateTimeZone.UTC)
-    }
+  private final val UTCDateTimeComponents =
+    raw"(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})\.(\d{3})Z".r
+  private def parseJodaTime(s: String): DateTime = s match {
+    case UTCDateTimeComponents(year, month, days, hours, minutes, seconds, millis) =>
+      new DateTime(
+        year.toInt,
+        month.toInt,
+        days.toInt,
+        hours.toInt,
+        minutes.toInt,
+        seconds.toInt,
+        millis.toInt,
+        DateTimeZone.UTC)
+    case otherwise =>
+      new DateTime(otherwise, DateTimeZone.UTC)
   }
 
   implicit val timeReader: FromJSON[LocalTime] = jsonStringReader("Failed to parse time: %s") {
@@ -381,7 +380,16 @@ object FromJSON extends FromJSONInstances {
     }
 
   implicit val javaInstantReader: FromJSON[time.Instant] =
-    jsonStringReader("Failed to parse date/time: %s")(DateTimeFormats.parseInstantUnsafe)
+    jsonStringReader("Failed to parse date/time: %s") { s =>
+      try DateTimeFormats.parseInstantUnsafe(s)
+      catch {
+        case NonFatal(e) =>
+          log.error(
+            s"Failed to parse date/time '$s' with java.time.Instant, falling back to Joda time.",
+            e)
+          time.Instant.ofEpochMilli(parseJodaTime(s).getMillis)
+      }
+    }
 
   implicit val javaLocalTimeReader: FromJSON[time.LocalTime] =
     jsonStringReader("Failed to parse time: %s")(DateTimeFormats.parseLocalTimeUnsafe)
