@@ -384,10 +384,12 @@ object FromJSON extends FromJSONInstances with Logging {
       try DateTimeFormats.parseInstantUnsafe(s)
       catch {
         case NonFatal(e) =>
+          val result = time.Instant.ofEpochMilli(parseJodaTime(s).getMillis)
+          // only log if the joda parsing does not fail
           log.error(
             s"Failed to parse date/time '$s' with java.time.Instant, falling back to Joda time.",
             e)
-          time.Instant.ofEpochMilli(parseJodaTime(s).getMillis)
+          result
       }
     }
 
