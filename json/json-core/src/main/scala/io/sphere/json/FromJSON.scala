@@ -20,6 +20,7 @@ import org.joda.time.DateTimeZone
 import org.joda.time.YearMonth
 import org.joda.time.LocalTime
 import org.joda.time.LocalDate
+import io.sphere.util.DateTimeFormats
 
 /** Type class for types that can be read from JSON. */
 @implicitNotFound("Could not find an instance of FromJSON for ${A}")
@@ -380,14 +381,13 @@ object FromJSON extends FromJSONInstances {
     }
 
   implicit val javaInstantReader: FromJSON[time.Instant] =
-    jsonStringReader("Failed to parse date/time: %s")(s => TimeParsers.parseInstant(s))
+    jsonStringReader("Failed to parse date/time: %s")(DateTimeFormats.parseInstantUnsafe)
 
   implicit val javaLocalTimeReader: FromJSON[time.LocalTime] =
-    jsonStringReader("Failed to parse time: %s")(
-      time.LocalTime.parse(_, time.format.DateTimeFormatter.ISO_LOCAL_TIME))
+    jsonStringReader("Failed to parse time: %s")(DateTimeFormats.parseLocalTimeUnsafe)
 
   implicit val javaLocalDateReader: FromJSON[time.LocalDate] =
-    jsonStringReader("Failed to parse date: %s")(s => TimeParsers.parseLocalDate(s))
+    jsonStringReader("Failed to parse date: %s")(DateTimeFormats.parseLocalDateUnsafe)
 
   implicit val javaYearMonthReader: FromJSON[time.YearMonth] =
     jsonStringReader("Failed to parse year/month: %s")(

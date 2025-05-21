@@ -23,11 +23,18 @@ class DateTimeParsingSpec extends AnyWordSpec with Matchers {
 
   val beValid = be(Symbol("valid"))
   val outOfIntRange = "999999999999999"
+  val maxValidYearInJoda = 292278994
 
   "parsing a DateTime" should {
 
     "reject strings with invalid year" in {
       dateTimeReader.read(jsonDateStringWith(year = "999999999")) shouldNot beValid
+      dateTimeReader.read(
+        jsonDateStringWith(year = (maxValidYearInJoda + 1).toString)) shouldNot beValid
+    }
+
+    "accept strings with valid year" in {
+      dateTimeReader.read(jsonDateStringWith(year = maxValidYearInJoda.toString)) should beValid
     }
 
     "reject strings with years that are out of range for integers" in {
@@ -69,8 +76,12 @@ class DateTimeParsingSpec extends AnyWordSpec with Matchers {
 
   "parsing an Instant" should {
 
-    "reject strings with invalid year" in {
-      javaInstantReader.read(jsonDateStringWith(year = "999999999")) shouldNot beValid
+    "accept strings with invalid year" in {
+      // this is the only difference with joda that rejects this.
+      javaInstantReader.read(jsonDateStringWith(year = "999999999")) should beValid
+      javaInstantReader.read(
+        jsonDateStringWith(year = (maxValidYearInJoda + 1).toString)) should beValid
+      javaInstantReader.read(jsonDateStringWith(year = maxValidYearInJoda.toString)) should beValid
     }
 
     "reject strings with years that are out of range for integers" in {
