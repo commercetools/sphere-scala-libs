@@ -1,7 +1,7 @@
 package io.sphere.json.generic
 
 import cats.data.Validated.Valid
-import io.sphere.json.{JSON, JSONParseError, JValidation, deriveJSON}
+import io.sphere.json.{JSON, JSONParseError, JValidation, deriveJSON, parseJSON}
 import io.sphere.json.generic.jsonTypeSwitch
 import org.json4s.JsonAST.JObject
 import org.scalatest.matchers.must.Matchers
@@ -19,18 +19,18 @@ class JsonTypeSwitchSpec extends AnyWordSpec with Matchers {
       "derive a subset of a sealed trait".withFormatters(
         newSyntax = jsonTypeSwitch[A, (B, C)],
         oldSyntax = jsonTypeSwitch[A, B, C](Nil)
-      ) { format =>
+      ) {
         val b = B(123)
-        val jsonB = format.write(b)
+        val jsonB = JSON[A].write(b)
 
-        val b2 = format.read(jsonB).getOrElse(null)
+        val b2 = JSON[A].read(jsonB).getOrElse(null)
 
         b2 must be(b)
 
         val c = C(2345345)
-        val jsonC = format.write(c)
+        val jsonC = JSON[A].write(c)
 
-        val c2 = format.read(jsonC).getOrElse(null)
+        val c2 = JSON[A].read(jsonC).getOrElse(null)
 
         c2 must be(c)
       }
@@ -39,10 +39,10 @@ class JsonTypeSwitchSpec extends AnyWordSpec with Matchers {
     "derive a subset of a sealed trait with a mongoKey".withFormatters(
       newSyntax = jsonTypeSwitch[A, (B, D)],
       oldSyntax = jsonTypeSwitch[A, B, D](Nil)
-    ) { format =>
+    ) {
       val d = D(123)
-      val json = format.write(d)
-      val d2 = format.read(json)
+      val json = JSON[A].write(d)
+      val d2 = JSON[A].read(json)
 
       (json \ "type").as[String] must be("D2")
       d2 must be(Valid(d))
@@ -51,14 +51,14 @@ class JsonTypeSwitchSpec extends AnyWordSpec with Matchers {
     "combine different sum types tree".withFormatters(
       newSyntax = jsonTypeSwitch[Message, (TypeA, TypeB)],
       oldSyntax = jsonTypeSwitch[Message, (TypeA, TypeB)]
-    ) { format =>
+    ) {
       val m: Seq[Message] = List(
         TypeA.ClassA1(23),
         TypeA.ClassA2("world"),
         TypeB.ClassB1(valid = false),
         TypeB.ClassB2(Seq("a23", "c62")))
 
-      val jsons = m.map(format.write)
+      val jsons = m.map(JSON[Message].write)
       jsons must be(
         List(
           JObject("number" -> JLong(23), "type" -> JString("ClassA1")),
@@ -69,7 +69,7 @@ class JsonTypeSwitchSpec extends AnyWordSpec with Matchers {
             "type" -> JString("ClassB2"))
         ))
 
-      val messages = jsons.map(format.read).map(_.toOption.get)
+      val messages = jsons.map(JSON[Message].read).map(_.toOption.get)
       messages must be(m)
     }
 
@@ -88,23 +88,30 @@ class JsonTypeSwitchSpec extends AnyWordSpec with Matchers {
       "handle custom implementations for subtypes".withFormatters(
         newSyntax = jsonTypeSwitch[A, (B, D, C)],
         oldSyntax = jsonTypeSwitch[A, B, D, C](Nil)
-      ) { format =>
-        List(D(2345), C(4), B(34)).foreach { value =>
-          val json = format.write(value)
-          format.read(json).getOrElse(null) must be(value)
-        }
+      ) {
+        check[A](D(2345), """ {"type": "D2", "int": 2345 } """)
+        check[A](C(4), """ {"type": "C", "int": 4 } """)
+        check[A](B(34), """ {"type": "B", "field": "Custom-B-34" } """)
       }
     }
   }
 
+  def check[A](a: A, json: String)(using format: JSON[A]): Unit = {
+    val parsedJson = parseJSON(json).getOrElse(null)
+    val json2 = format.write(a)
+    json2 must be(parsedJson)
+    format.read(json2).getOrElse(null) must be(a)
+  }
+
+  type FormatTest[A] = JSON[A] ?=> Any
   extension (string: String) {
-    def withFormatters[A](newSyntax: JSON[A], oldSyntax: JSON[A])(f: JSON[A] => Any): Unit = {
+    def withFormatters[A](newSyntax: JSON[A], oldSyntax: JSON[A])(f: FormatTest[A]): Unit = {
       s"$string with newSyntax" in {
-        f(newSyntax)
+        f(using newSyntax)
       }
 
       s"$string with oldSyntax" in {
-        f(oldSyntax)
+        f(using oldSyntax)
       }
     }
   }
