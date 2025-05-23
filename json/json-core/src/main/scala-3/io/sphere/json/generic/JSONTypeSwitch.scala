@@ -3,8 +3,8 @@ package io.sphere.json.generic
 import cats.data.Validated
 import io.sphere.json.{FromJSON, JSON, JSONParseError, ToJSON}
 import io.sphere.util.TraitMetaData
-import org.json4s.{JObject, JString, jvalue2monadic, jvalue2readerSyntax}
 import org.json4s.DefaultJsonFormats.given
+import org.json4s.{JObject, JString, jvalue2monadic, jvalue2readerSyntax}
 
 object JSONTypeSwitch {
   import scala.compiletime.{erasedValue, error, summonInline}

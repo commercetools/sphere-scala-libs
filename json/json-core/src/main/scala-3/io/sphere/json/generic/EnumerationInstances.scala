@@ -1,8 +1,8 @@
 package io.sphere.json.generic
 
-import org.json4s.JsonAST.*
 import cats.syntax.validated.*
 import io.sphere.json.*
+import org.json4s.JsonAST.*
 
 import scala.collection.mutable
 
