@@ -1,24 +1,24 @@
 package io.sphere.mongo.format
 
+import io.sphere.mongo.MongoUtils._
+import io.sphere.mongo.format.DefaultMongoFormats._
 import io.sphere.mongo.generic._
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import io.sphere.mongo.MongoUtils._
-import DefaultMongoFormats._
 
 object OptionMongoFormatSpec {
 
   case class SimpleClass(value1: String, value2: Int)
 
   object SimpleClass {
-    implicit val mongo: MongoFormat[SimpleClass] = mongoProduct(apply _)
+    implicit val mongo: MongoFormat[SimpleClass] = deriveMongoFormat
   }
 
   case class ComplexClass(name: String, simpleClass: Option[SimpleClass])
 
   object ComplexClass {
-    implicit val mongo: MongoFormat[ComplexClass] = mongoProduct(apply _)
+    implicit val mongo: MongoFormat[ComplexClass] = deriveMongoFormat
   }
 
 }
