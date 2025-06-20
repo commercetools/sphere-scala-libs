@@ -3,6 +3,7 @@ package io.sphere.json
 import cats.data.NonEmptyList
 
 import java.util.{Currency, Locale, UUID}
+import java.time
 import io.sphere.util.{BaseMoney, DateTimeFormats, HighPrecisionMoney, Money}
 import org.json4s.JsonAST._
 import org.joda.time.DateTime
