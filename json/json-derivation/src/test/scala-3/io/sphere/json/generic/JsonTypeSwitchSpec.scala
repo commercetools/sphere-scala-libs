@@ -1,6 +1,7 @@
 package io.sphere.json.generic
 
 import cats.data.Validated.Valid
+import cats.implicits.toTraverseOps
 import io.sphere.json.{JSON, JSONParseError, JValidation, deriveJSON, parseJSON}
 import io.sphere.json.generic.jsonTypeSwitch
 import org.json4s.JsonAST.JObject
@@ -94,6 +95,28 @@ class JsonTypeSwitchSpec extends AnyWordSpec with Matchers {
         check[A](B(34), """ {"type": "B", "field": "Custom-B-34" } """)
       }
     }
+
+    "handle PlatformFormattedNotification case" in {
+
+      type Trait234 = SubTrait2 *: (SubTrait3, SubTrait4)
+
+      val formatSuper: JSON[SuperTrait] = jsonTypeSwitch[SuperTrait, SubTrait1 *: Trait234]
+
+      val objs =
+        List[SuperTrait](
+          SubTrait1.O1,
+          SubTrait1.O2,
+          SubTrait2.O3,
+          SubTrait2.O4,
+          SubTrait3.O5,
+          SubTrait3.O6,
+          SubTrait4.O7)
+
+      val res = objs.map(formatSuper.write).map(formatSuper.read).sequence.getOrElse(null)
+
+      res must be(objs)
+
+    }
   }
 
   def check[A](a: A, json: String)(using format: JSON[A]): Unit = {
@@ -137,5 +160,47 @@ object JsonTypeSwitchSpec {
     case class ClassB1(valid: Boolean) extends TypeB
     case class ClassB2(references: Seq[String]) extends TypeB
     implicit val json: JSON[TypeB] = deriveJSON[TypeB]
+  }
+
+  trait SuperTrait
+
+  sealed trait SubTrait1 extends SuperTrait
+
+  object SubTrait1 {
+    case object O1 extends SubTrait1
+
+    case object O2 extends SubTrait1
+
+    given JSON[SubTrait1] = deriveJSON
+  }
+
+  sealed trait SubTrait2 extends SuperTrait
+
+  object SubTrait2 {
+    case object O3 extends SubTrait2
+
+    case object O4 extends SubTrait2
+
+    given JSON[SubTrait2] = deriveJSON
+  }
+
+  sealed trait SubTrait3 extends SuperTrait
+
+  object SubTrait3 {
+    case object O5 extends SubTrait3
+
+    case object O6 extends SubTrait3
+
+    given JSON[SubTrait3] = deriveJSON
+  }
+
+  sealed trait SubTrait4 extends SuperTrait
+
+  object SubTrait4 {
+    case object O7 extends SubTrait4
+
+    case object O8 extends SubTrait4
+
+    given JSON[SubTrait4] = deriveJSON
   }
 }

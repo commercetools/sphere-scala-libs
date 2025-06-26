@@ -13,7 +13,8 @@ object JSONTypeSwitch {
       serializedTypeNames: Map[String, String],
       traitFormatters: Map[String, JSON[Any]],
       caseClassFormatters: Map[String, JSON[Any]],
-      traitMetaData: TraitMetaData)
+      traitMetaData: TraitMetaData
+  )
 
   inline def readTraitInformation[SuperType, SubTypes <: Tuple]: TraitInformation = {
     val traitMetaData = AnnotationReader.readTraitMetaData[SuperType]
@@ -32,8 +33,8 @@ object JSONTypeSwitch {
     // We could add some checks here to avoid the same type name in trait hierarchies
     val traitFormatters = subTraitFormatters.fold(Map.empty)(_ ++ _)
     val serializedTypeNames =
-      traitMetaData.subTypeSerializedTypeNames ++ subTraitSerializedTypeNames.fold(Map.empty)(
-        _ ++ _)
+      subTraitSerializedTypeNames.fold(Map.empty)(
+        _ ++ _) ++ traitMetaData.subTypeSerializedTypeNames
 
     TraitInformation(serializedTypeNames, traitFormatters, caseClassFormatters.toMap, traitMetaData)
   }
@@ -41,7 +42,7 @@ object JSONTypeSwitch {
   inline def toJsonTypeSwitch[SuperType](info: TraitInformation): ToJSON[SuperType] =
     ToJSON.instance { a =>
       val scalaTypeName = a.asInstanceOf[Product].productPrefix
-      val serializedTypeName = info.serializedTypeNames.getOrElse(scalaTypeName, scalaTypeName)
+      val serializedTypeName = info.serializedTypeNames(scalaTypeName)
       val traitFormatterOpt = info.traitFormatters.get(scalaTypeName)
       traitFormatterOpt
         .map(_.write(a))
@@ -55,7 +56,7 @@ object JSONTypeSwitch {
     FromJSON.instance {
       case jObject: JObject =>
         val serializedTypeName = (jObject \ info.traitMetaData.typeDiscriminator).as[String]
-        val scalaTypeName = scalaTypeNames.getOrElse(serializedTypeName, serializedTypeName)
+        val scalaTypeName = scalaTypeNames(serializedTypeName)
         allFormattersByTypeName(scalaTypeName).read(jObject).map(_.asInstanceOf[SuperType])
       case x =>
         Validated.invalidNel(JSONParseError(s"JSON object expected. Got: '$x'"))
@@ -69,7 +70,8 @@ object JSONTypeSwitch {
 
     JSON.instance(
       writeFn = toJson.write,
-      readFn = fromJson.read
+      readFn = fromJson.read,
+      subTypeNameList = info.serializedTypeNames.values.toList
     )
   }
 

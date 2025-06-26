@@ -232,14 +232,14 @@ class JSONSpec extends AnyFunSpec with Matchers {
   describe("ToJSON and FromJSON") {
     it("must provide derived JSON instances for sum types") {
       // ToJSON
-      given ToJSON[Bird] = ToJSON.derived[Bird]
-      given ToJSON[Dog] = ToJSON.derived[Dog]
-      given ToJSON[Cat] = ToJSON.derived[Cat]
+      given ToJSON[Bird] = deriveToJSON[Bird]
+      given ToJSON[Dog] = deriveToJSON[Dog]
+      given ToJSON[Cat] = deriveToJSON[Cat]
       given ToJSON[Animal] = toJsonTypeSwitch[Animal, (Bird, Dog, Cat)]
       // FromJSON
-      given FromJSON[Bird] = FromJSON.derived[Bird]
-      given FromJSON[Dog] = FromJSON.derived[Dog]
-      given FromJSON[Cat] = FromJSON.derived[Cat]
+      given FromJSON[Bird] = deriveFromJSON[Bird]
+      given FromJSON[Dog] = deriveFromJSON[Dog]
+      given FromJSON[Cat] = deriveFromJSON[Cat]
       given FromJSON[Animal] = fromJsonTypeSwitch[Animal, (Bird, Dog, Cat)]
 
       List(Bird("Peewee"), Dog("Hasso"), Cat("Felidae")).foreach { (a: Animal) =>
@@ -248,20 +248,20 @@ class JSONSpec extends AnyFunSpec with Matchers {
     }
 
     it("must provide derived instances for product types with concrete type parameters") {
-      given ToJSON[GenericA[String]] = ToJSON.derived
-      given FromJSON[GenericA[String]] = FromJSON.derived
+      given ToJSON[GenericA[String]] = deriveToJSON
+      given FromJSON[GenericA[String]] = deriveFromJSON
       val a = GenericA("hello")
       fromJSON[GenericA[String]](toJSON(a)) must equal(Valid(a))
     }
 
     it("must provide derived instances for sum types with a mix of case class / object") {
       // ToJSON
-      given ToJSON[SingletonMixed.type] = ToJSON.derived
-      given ToJSON[RecordMixed] = ToJSON.derived
+      given ToJSON[SingletonMixed.type] = deriveToJSON
+      given ToJSON[RecordMixed] = deriveToJSON
       given ToJSON[Mixed] = toJsonTypeSwitch[Mixed, (SingletonMixed.type, RecordMixed)]
       // FromJSON
-      given FromJSON[SingletonMixed.type] = FromJSON.derived
-      given FromJSON[RecordMixed] = FromJSON.derived
+      given FromJSON[SingletonMixed.type] = deriveFromJSON
+      given FromJSON[RecordMixed] = deriveFromJSON
       given FromJSON[Mixed] = fromJsonTypeSwitch[Mixed, (SingletonMixed.type, RecordMixed)]
 
       List(SingletonMixed, RecordMixed(1)).foreach { m =>
@@ -282,10 +282,10 @@ class JSONSpec extends AnyFunSpec with Matchers {
 
     it("must handle subclasses correctly in `jsonTypeSwitch`") {
       // ToJSON
-      given ToJSON[TestSubjectConcrete1] = ToJSON.derived
-      given ToJSON[TestSubjectConcrete2] = ToJSON.derived
-      given ToJSON[TestSubjectConcrete3] = ToJSON.derived
-      given ToJSON[TestSubjectConcrete4] = ToJSON.derived
+      given ToJSON[TestSubjectConcrete1] = deriveToJSON
+      given ToJSON[TestSubjectConcrete2] = deriveToJSON
+      given ToJSON[TestSubjectConcrete3] = deriveToJSON
+      given ToJSON[TestSubjectConcrete4] = deriveToJSON
       given ToJSON[TestSubjectCategoryA] =
         toJsonTypeSwitch[TestSubjectCategoryA, (TestSubjectConcrete1, TestSubjectConcrete2)]
       given ToJSON[TestSubjectCategoryB] =
@@ -294,10 +294,10 @@ class JSONSpec extends AnyFunSpec with Matchers {
         toJsonTypeSwitch[TestSubjectBase, (TestSubjectCategoryA, TestSubjectCategoryB)]
 
       // FromJSON
-      given FromJSON[TestSubjectConcrete1] = FromJSON.derived
-      given FromJSON[TestSubjectConcrete2] = FromJSON.derived
-      given FromJSON[TestSubjectConcrete3] = FromJSON.derived
-      given FromJSON[TestSubjectConcrete4] = FromJSON.derived
+      given FromJSON[TestSubjectConcrete1] = deriveFromJSON
+      given FromJSON[TestSubjectConcrete2] = deriveFromJSON
+      given FromJSON[TestSubjectConcrete3] = deriveFromJSON
+      given FromJSON[TestSubjectConcrete4] = deriveFromJSON
       given FromJSON[TestSubjectCategoryA] =
         fromJsonTypeSwitch[TestSubjectCategoryA, (TestSubjectConcrete1, TestSubjectConcrete2)]
       given FromJSON[TestSubjectCategoryB] =
@@ -323,10 +323,10 @@ class JSONSpec extends AnyFunSpec with Matchers {
 
     it("must provide derived JSON instances for product types (case classes)") {
       import JSONSpec.{Milestone, Project}
-      given ToJSON[Milestone] = ToJSON.derived[Milestone]
-      given ToJSON[Project] = ToJSON.derived[Project]
-      given FromJSON[Milestone] = FromJSON.derived[Milestone]
-      given FromJSON[Project] = FromJSON.derived[Project]
+      given ToJSON[Milestone] = deriveToJSON[Milestone]
+      given ToJSON[Project] = deriveToJSON[Project]
+      given FromJSON[Milestone] = deriveFromJSON[Milestone]
+      given FromJSON[Project] = deriveFromJSON[Project]
 
       val proj =
         Project(42, "Linux", 7, Milestone("1.0") :: Milestone("2.0") :: Milestone("3.0") :: Nil)
