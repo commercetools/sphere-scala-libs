@@ -10,60 +10,52 @@ object JSONTypeSwitch {
   import scala.compiletime.{erasedValue, error, summonInline}
 
   case class TraitInformation(
-      mergedTypeHintMap: Map[String, String],
-      traitInTraitFormatterMap: Map[String, JSON[Any]],
-      caseClassFormatterMap: Map[String, JSON[Any]],
+      serializedTypeNames: Map[String, String],
+      traitFormatters: Map[String, JSON[Any]],
+      caseClassFormatters: Map[String, JSON[Any]],
       traitMetaData: TraitMetaData)
 
   inline def readTraitInformation[SuperType, SubTypes <: Tuple]: TraitInformation = {
     val traitMetaData = AnnotationReader.readTraitMetaData[SuperType]
-    val formattersAndMetaData: Vector[(TraitMetaData, JSON[Any])] = summonFormatters[SubTypes]()
+    val formattersAndMetaData = summonFormatters[SubTypes]()
 
-    // - Separate Trait formatters from CaseClass formatters, so we can avoid adding the typeDiscriminator twice
-    // - Currently we support 2 layers of traits, because the AnnotationReader only tries to read to 2 levels
     val (traitInTraitInfo, caseClassFormatters) =
       formattersAndMetaData.partitionMap { (meta, formatter) =>
         if (meta.isTrait) {
           val formatterByName = meta.subtypes.map((fieldName, m) => m.scalaName -> formatter)
-          Left(formatterByName -> meta.subTypeFieldRenames)
-        } else {
-          Right(meta.top.scalaName -> formatter)
-        }
+          Left((formatterByName, meta.subTypeSerializedTypeNames))
+        } else
+          Right((meta.top.scalaName, formatter))
       }
 
-    val (traitInTraitFormatters, traitInTraitRenames) = traitInTraitInfo.unzip
-    val traitInTraitFormatterMap = traitInTraitFormatters.fold(Map.empty)(_ ++ _)
+    val (subTraitFormatters, subTraitSerializedTypeNames) = traitInTraitInfo.unzip
+    // We could add some checks here to avoid the same type name in trait hierarchies
+    val traitFormatters = subTraitFormatters.fold(Map.empty)(_ ++ _)
+    val serializedTypeNames =
+      traitMetaData.subTypeSerializedTypeNames ++ subTraitSerializedTypeNames.fold(Map.empty)(
+        _ ++ _)
 
-    val caseClassFormatterMap = caseClassFormatters.toMap
-
-    val mergedTypeHintMap =
-      traitMetaData.subTypeFieldRenames ++ traitInTraitRenames.fold(Map.empty)(_ ++ _)
-
-    TraitInformation(
-      mergedTypeHintMap,
-      traitInTraitFormatterMap,
-      caseClassFormatterMap,
-      traitMetaData)
+    TraitInformation(serializedTypeNames, traitFormatters, caseClassFormatters.toMap, traitMetaData)
   }
 
   inline def toJsonTypeSwitch[SuperType](info: TraitInformation): ToJSON[SuperType] =
     ToJSON.instance { a =>
       val scalaTypeName = a.asInstanceOf[Product].productPrefix
-      val serializedTypeName = info.mergedTypeHintMap.getOrElse(scalaTypeName, scalaTypeName)
-      val traitFormatterOpt = info.traitInTraitFormatterMap.get(scalaTypeName)
+      val serializedTypeName = info.serializedTypeNames.getOrElse(scalaTypeName, scalaTypeName)
+      val traitFormatterOpt = info.traitFormatters.get(scalaTypeName)
       traitFormatterOpt
         .map(_.write(a))
         .getOrElse(writeCaseClass(info, scalaTypeName, a, serializedTypeName))
     }
 
   inline def fromJsonTypeSwitch[SuperType](info: TraitInformation): FromJSON[SuperType] = {
-    val reverseTypeHintMap = info.mergedTypeHintMap.map((on, n) => (n, on))
-    val allFormattersByTypeName = info.traitInTraitFormatterMap ++ info.caseClassFormatterMap
+    val scalaTypeNames = info.serializedTypeNames.map((on, n) => (n, on))
+    val allFormattersByTypeName = info.traitFormatters ++ info.caseClassFormatters
 
     FromJSON.instance {
       case jObject: JObject =>
         val serializedTypeName = (jObject \ info.traitMetaData.typeDiscriminator).as[String]
-        val scalaTypeName = reverseTypeHintMap.getOrElse(serializedTypeName, serializedTypeName)
+        val scalaTypeName = scalaTypeNames.getOrElse(serializedTypeName, serializedTypeName)
         allFormattersByTypeName(scalaTypeName).read(jObject).map(_.asInstanceOf[SuperType])
       case x =>
         Validated.invalidNel(JSONParseError(s"JSON object expected. Got: '$x'"))
@@ -86,7 +78,7 @@ object JSONTypeSwitch {
       scalaTypeName: String,
       a: A,
       serializedTypeName: String): JObject = {
-    val jsonObj = info.caseClassFormatterMap(scalaTypeName).write(a) match {
+    val jsonObj = info.caseClassFormatters(scalaTypeName).write(a) match {
       case JObject(obj) => obj
       case json =>
         throw new Exception(s"This code only handles objects as of now, but got: $json")
@@ -102,7 +94,7 @@ object JSONTypeSwitch {
       case _: (t *: ts) =>
         val traitMetaData = AnnotationReader.readTraitMetaData[t]
         val headFormatter = summonInline[JSON[t]].asInstanceOf[JSON[Any]]
-        summonFormatters[ts](acc :+ (traitMetaData -> headFormatter))
+        summonFormatters[ts](acc :+ (traitMetaData, headFormatter))
     }
 
 }

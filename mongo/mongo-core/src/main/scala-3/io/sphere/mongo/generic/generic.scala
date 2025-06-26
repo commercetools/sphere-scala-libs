@@ -18,7 +18,7 @@ def mongoEnum(e: Enumeration): MongoFormat[e.Value] = new MongoFormat[e.Value] {
 
 inline def mongoTypeSwitch[SuperType, SubTypeTuple <: Tuple]: MongoFormat[SuperType] = {
   val traitMetaData = MongoAnnotationReader.readTraitMetaData[SuperType]
-  val typeHintMap = traitMetaData.subTypeFieldRenames
+  val typeHintMap = traitMetaData.subTypeSerializedTypeNames
   val reverseTypeHintMap = typeHintMap.map((on, n) => (n, on))
   val formatters = summonFormatters[SubTypeTuple]()
   val subTypeNames = summonMetaData[SubTypeTuple]()
