@@ -19,7 +19,7 @@ object ToJSON extends ToJSONInstances with ToJSONCatsInstances with generic.Deri
 
   /** construct an instance from a function
     */
-  def instance[T](toFs: Formatters[ToJSON])(toJson: T => JValue): ToJSON[T] = new ToJSON[T] {
+  def instance[T](toJson: T => JValue, toFs: Formatters[ToJSON] = null): ToJSON[T] = new ToJSON[T] {
     override def write(value: T): JValue = toJson(value)
     override val toFormatters: Formatters[ToJSON] = toFs
   }

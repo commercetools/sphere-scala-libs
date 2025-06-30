@@ -24,7 +24,7 @@ trait DeriveToJSON {
       val caseClassMetaData: TypeMetaData = AnnotationReader.readTypeMetaData[A]
       val toJsons: Vector[ToJSON[Any]] = summonToJson[mirrorOfProduct.MirroredElemTypes]
 
-      ToJSON.instance(null) { value =>
+      ToJSON.instance { value =>
         val caseClassFields = value.asInstanceOf[Product].productIterator
         toJsons.iterator
           .zip(caseClassFields)

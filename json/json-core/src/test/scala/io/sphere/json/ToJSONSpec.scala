@@ -12,7 +12,7 @@ class ToJSONSpec extends AnyWordSpec with Matchers {
 
   "ToJSON.apply" must {
     "create a ToJSON" in {
-      implicit val encodeUser: ToJSON[User] = ToJSON.instance[User](null)(u =>
+      implicit val encodeUser: ToJSON[User] = ToJSON.instance[User](u =>
         JObject(
           List(
             "id" -> toJValue(u.id),

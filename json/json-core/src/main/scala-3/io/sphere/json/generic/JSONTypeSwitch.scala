@@ -10,22 +10,28 @@ import scala.compiletime.{constValue, constValueTuple}
 object JSONTypeSwitch {
   import scala.compiletime.{erasedValue, summonInline}
 
-  case class Formatters[JsonF[_]](
+  case class Formatters[JsonKind[_]](
       serializedTypeNames: Map[String, String],
-      forCaseClasses: Map[String, JsonF[Any]],
+      forCaseClasses: Map[String, JsonKind[Any]],
       typeDiscriminator: String
   ) {
-    def addTypeNames(names: Map[String, String]): Formatters[JsonF] =
+    def addTypeNames(names: Map[String, String]): Formatters[JsonKind] =
       copy(serializedTypeNames = serializedTypeNames ++ names)
   }
 
   object Formatters {
-    def merge[JsonF[_]](f1: Formatters[JsonF], f2: Formatters[JsonF]): Formatters[JsonF] =
-      Formatters[JsonF](
+    def merge[JsonKind[_]](
+        f1: Formatters[JsonKind],
+        f2: Formatters[JsonKind]): Formatters[JsonKind] = {
+      require(
+        f1.typeDiscriminator == f2.typeDiscriminator,
+        "Only a single @JSONTypeHintField is allowed")
+      Formatters[JsonKind](
         serializedTypeNames = f1.serializedTypeNames ++ f2.serializedTypeNames,
         forCaseClasses = f1.forCaseClasses ++ f2.forCaseClasses,
         typeDiscriminator = f1.typeDiscriminator
       )
+    }
   }
 
   inline def deriveToFormatters[SuperType, SubTypes <: Tuple]: Formatters[ToJSON] = {
@@ -45,17 +51,20 @@ object JSONTypeSwitch {
   }
 
   inline def toJsonTypeSwitch[SuperType](formatters: Formatters[ToJSON]): ToJSON[SuperType] =
-    ToJSON.instance(formatters) { a =>
-      val scalaTypeName = a.asInstanceOf[Product].productPrefix
-      val serializedTypeName = formatters.serializedTypeNames(scalaTypeName)
-      val jsonObj = formatters.forCaseClasses(scalaTypeName).write(a) match {
-        case JObject(obj) => obj
-        case json =>
-          throw new Exception(s"This code only handles objects as of now, but got: $json")
-      }
-      val typeDiscriminator = formatters.typeDiscriminator -> JString(serializedTypeName)
-      JObject(typeDiscriminator :: jsonObj)
-    }
+    ToJSON.instance(
+      toJson = { scalaValue =>
+        val scalaTypeName = scalaValue.asInstanceOf[Product].productPrefix
+        val serializedTypeName = formatters.serializedTypeNames(scalaTypeName)
+        val jsonObj = formatters.forCaseClasses(scalaTypeName).write(scalaValue) match {
+          case JObject(obj) => obj
+          case json =>
+            throw new Exception(s"This code only handles objects as of now, but got: $json")
+        }
+        val typeDiscriminator = formatters.typeDiscriminator -> JString(serializedTypeName)
+        JObject(typeDiscriminator :: jsonObj)
+      },
+      toFs = formatters
+    )
 
   inline def fromJsonTypeSwitch[SuperType](
       formatters: Formatters[FromJSON]): FromJSON[SuperType] = {
