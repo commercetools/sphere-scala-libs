@@ -19,13 +19,13 @@ inline def jsonTypeSwitch[SuperType, SubTypes <: Tuple]: JSON[SuperType] =
   JSONTypeSwitch.jsonTypeSwitch[SuperType, SubTypes]
 
 inline def toJsonTypeSwitch[SuperType, SubTypes <: Tuple]: ToJSON[SuperType] = {
-  val info = JSONTypeSwitch.readTraitInformation[SuperType, SubTypes]
-  JSONTypeSwitch.toJsonTypeSwitch[SuperType](info)
+  val f = JSONTypeSwitch.deriveToFormatters[SuperType, SubTypes]
+  JSONTypeSwitch.toJsonTypeSwitch[SuperType](f)
 }
 
 inline def fromJsonTypeSwitch[SuperType, SubTypes <: Tuple]: FromJSON[SuperType] = {
-  val info = JSONTypeSwitch.readTraitInformation[SuperType, SubTypes]
-  JSONTypeSwitch.fromJsonTypeSwitch[SuperType](info)
+  val f = JSONTypeSwitch.deriveFromFormatters[SuperType, SubTypes]
+  JSONTypeSwitch.fromJsonTypeSwitch[SuperType](f)
 }
 
 // Compatibility with the scala-2 methods, that will be deprecated later

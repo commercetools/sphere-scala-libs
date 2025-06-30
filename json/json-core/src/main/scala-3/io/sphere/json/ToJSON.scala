@@ -1,13 +1,14 @@
 package io.sphere.json
 
+import io.sphere.json.generic.JSONTypeSwitch.Formatters
 import org.json4s.JsonAST.JValue
-
-import java.time
-import java.util.{Currency, Locale, UUID}
 
 /** Type class for types that can be written to JSON. */
 trait ToJSON[A] extends Serializable {
   def write(value: A): JValue
+
+  // Filled automatically for traits
+  val toFormatters: Formatters[ToJSON] = null
 }
 
 class JSONWriteException(msg: String) extends JSONException(msg)
@@ -18,7 +19,8 @@ object ToJSON extends ToJSONInstances with ToJSONCatsInstances with generic.Deri
 
   /** construct an instance from a function
     */
-  def instance[T](toJson: T => JValue): ToJSON[T] = new ToJSON[T] {
+  def instance[T](toFs: Formatters[ToJSON])(toJson: T => JValue): ToJSON[T] = new ToJSON[T] {
     override def write(value: T): JValue = toJson(value)
+    override val toFormatters: Formatters[ToJSON] = toFs
   }
 }

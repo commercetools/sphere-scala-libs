@@ -13,7 +13,7 @@ trait DeriveFromJSON {
 
   protected object Derivation {
 
-    import scala.compiletime.{constValue, constValueTuple, erasedValue, summonInline}
+    import scala.compiletime.{erasedValue, summonInline}
 
     inline def derived[A](using m: Mirror.Of[A]): FromJSON[A] =
       inline m match {
@@ -49,7 +49,8 @@ trait DeriveFromJSON {
           case x =>
             Validated.invalidNel(JSONParseError(s"JSON object expected. $x"))
         },
-        fieldSet = fieldNames.toSet
+        fieldSet = fieldNames.toSet,
+        fromFs = null,
       )
     }
 

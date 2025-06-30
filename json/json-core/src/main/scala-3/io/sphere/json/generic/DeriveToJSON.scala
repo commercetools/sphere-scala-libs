@@ -12,7 +12,7 @@ trait DeriveToJSON {
 
   protected object Derivation {
 
-    import scala.compiletime.{constValue, constValueTuple, erasedValue, summonInline}
+    import scala.compiletime.{erasedValue, summonInline}
 
     inline def derived[A](using m: Mirror.Of[A]): ToJSON[A] =
       inline m match {
@@ -24,7 +24,7 @@ trait DeriveToJSON {
       val caseClassMetaData: TypeMetaData = AnnotationReader.readTypeMetaData[A]
       val toJsons: Vector[ToJSON[Any]] = summonToJson[mirrorOfProduct.MirroredElemTypes]
 
-      ToJSON.instance { value =>
+      ToJSON.instance(null) { value =>
         val caseClassFields = value.asInstanceOf[Product].productIterator
         toJsons.iterator
           .zip(caseClassFields)

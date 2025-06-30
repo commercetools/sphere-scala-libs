@@ -1,6 +1,7 @@
 package io.sphere.json
 
 import cats.implicits.*
+import io.sphere.json.generic.JSONTypeSwitch.Formatters
 import org.json4s.JsonAST.JValue
 
 import scala.deriving.Mirror
@@ -17,28 +18,29 @@ inline def deriveFromJSON[A](using Mirror.Of[A]): FromJSON[A] = FromJSON.derived
 
 object JSON extends JSONCatsInstances {
   inline def apply[A: JSON]: JSON[A] = summon[JSON[A]]
-  inline given derived[A](using fromJSON: FromJSON[A], toJSON: ToJSON[A]): JSON[A] = instance
+  inline given derived[A](using fromJSON: FromJSON[A], toJSON: ToJSON[A]): JSON[A] =
+    instance(
+      readFn = fromJSON.read,
+      writeFn = toJSON.write,
+      fromFs = fromJSON.fromFormatters,
+      toFs = toJSON.toFormatters,
+      fieldSet = fromJSON.fields
+    )
 
   def instance[A](
       readFn: JValue => JValidation[A],
       writeFn: A => JValue,
+      fromFs: Formatters[FromJSON],
+      toFs: Formatters[ToJSON],
       subTypeNameList: List[String] = Nil,
       fieldSet: Set[String] = FromJSON.emptyFieldsSet): JSON[A] = new {
-
     override def read(jval: JValue): JValidation[A] = readFn(jval)
     override def write(value: A): JValue = writeFn(value)
     override val fields: Set[String] = fieldSet
     override def subTypeNames: List[String] = subTypeNameList
+    override val fromFormatters: Formatters[FromJSON] = fromFs
+    override val toFormatters: Formatters[ToJSON] = toFs
   }
-
-  private def instance[A](using fromJSON: FromJSON[A], toJSON: ToJSON[A]): JSON[A] =
-    new JSON[A] {
-      override def read(jval: JValue): JValidation[A] = fromJSON.read(jval)
-
-      override def write(value: A): JValue = toJSON.write(value)
-
-      override val fields: Set[String] = fromJSON.fields
-    }
 }
 
 class JSONException(msg: String) extends RuntimeException(msg)
