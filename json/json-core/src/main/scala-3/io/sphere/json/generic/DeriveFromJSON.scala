@@ -50,7 +50,7 @@ trait DeriveFromJSON {
             Validated.invalidNel(JSONParseError(s"JSON object expected. $x"))
         },
         fieldSet = fieldNames.toSet,
-        fromFs = null,
+        fromFs = null
       )
     }
 
