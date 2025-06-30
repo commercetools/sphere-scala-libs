@@ -37,7 +37,7 @@ object DeriveSingleton {
     inline private def deriveTrait[A](mirrorOfSum: Mirror.SumOf[A]): DeriveSingleton[A] = {
       val traitMetaData: TraitMetaData = AnnotationReader.readTraitMetaData[A]
 
-      val typeHintMap = traitMetaData.subTypeSerializedTypeNames
+      val typeHintMap = traitMetaData.serializedNamesOfSubTypes
 
       val reverseTypeHintMap: Map[String, String] = typeHintMap.map((on, n) => (n, on))
       val jsons: Seq[DeriveSingleton[Any]] = summonFormatters[mirrorOfSum.MirroredElemTypes]

@@ -10,36 +10,12 @@ import scala.compiletime.{constValue, constValueTuple}
 object JSONTypeSwitch {
   import scala.compiletime.{erasedValue, summonInline}
 
-  case class Formatters[JsonKind[_]](
-      serializedTypeNames: Map[String, String],
-      forCaseClasses: Map[String, JsonKind[Any]],
-      typeDiscriminator: String
-  ) {
-    def addTypeNames(names: Map[String, String]): Formatters[JsonKind] =
-      copy(serializedTypeNames = serializedTypeNames ++ names)
-  }
-
-  object Formatters {
-    def merge[JsonKind[_]](
-        f1: Formatters[JsonKind],
-        f2: Formatters[JsonKind]): Formatters[JsonKind] = {
-      require(
-        f1.typeDiscriminator == f2.typeDiscriminator,
-        "Only a single @JSONTypeHintField is allowed")
-      Formatters[JsonKind](
-        serializedTypeNames = f1.serializedTypeNames ++ f2.serializedTypeNames,
-        forCaseClasses = f1.forCaseClasses ++ f2.forCaseClasses,
-        typeDiscriminator = f1.typeDiscriminator
-      )
-    }
-  }
-
   inline def deriveToFormatters[SuperType, SubTypes <: Tuple]: Formatters[ToJSON] = {
     val traitMetaData = AnnotationReader.readTraitMetaData[SuperType]
     summonToFormatters[SubTypes]()
       .reduce(Formatters.merge)
       .copy(typeDiscriminator = traitMetaData.typeDiscriminator)
-      .addTypeNames(traitMetaData.subTypeSerializedTypeNames)
+      .addTypeNames(traitMetaData.serializedNamesOfSubTypes)
   }
 
   inline def deriveFromFormatters[SuperType, SubTypes <: Tuple]: Formatters[FromJSON] = {
@@ -47,7 +23,7 @@ object JSONTypeSwitch {
     summonFromFormatters[SubTypes]()
       .reduce(Formatters.merge)
       .copy(typeDiscriminator = traitMetaData.typeDiscriminator)
-      .addTypeNames(traitMetaData.subTypeSerializedTypeNames)
+      .addTypeNames(traitMetaData.serializedNamesOfSubTypes)
   }
 
   inline def toJsonTypeSwitch[SuperType](formatters: Formatters[ToJSON]): ToJSON[SuperType] =
@@ -113,7 +89,7 @@ object JSONTypeSwitch {
             Map(traitMetaData.top.scalaName -> headFormatter)
 
         val f = Formatters[FromJSON](
-          serializedTypeNames = traitMetaData.subTypeSerializedTypeNames,
+          serializedTypeNames = traitMetaData.serializedNamesOfSubTypes,
           forCaseClasses = formatterMap,
           typeDiscriminator = traitMetaData.typeDiscriminator
         )
@@ -134,11 +110,35 @@ object JSONTypeSwitch {
             Map(traitMetaData.top.scalaName -> headFormatter)
 
         val f = Formatters[ToJSON](
-          serializedTypeNames = traitMetaData.subTypeSerializedTypeNames,
+          serializedTypeNames = traitMetaData.serializedNamesOfSubTypes,
           forCaseClasses = formatterMap,
           typeDiscriminator = traitMetaData.typeDiscriminator
         )
         summonToFormatters[ts](acc :+ f)
     }
+
+  case class Formatters[JsonKind[_]](
+      serializedTypeNames: Map[String, String],
+      forCaseClasses: Map[String, JsonKind[Any]],
+      typeDiscriminator: String
+  ) {
+    def addTypeNames(names: Map[String, String]): Formatters[JsonKind] =
+      copy(serializedTypeNames = serializedTypeNames ++ names)
+  }
+
+  object Formatters {
+    def merge[JsonKind[_]](
+        f1: Formatters[JsonKind],
+        f2: Formatters[JsonKind]): Formatters[JsonKind] = {
+      require(
+        f1.typeDiscriminator == f2.typeDiscriminator,
+        "@JSONTypeHintField has to be the same on all traits")
+      Formatters[JsonKind](
+        serializedTypeNames = f1.serializedTypeNames ++ f2.serializedTypeNames,
+        forCaseClasses = f1.forCaseClasses ++ f2.forCaseClasses,
+        typeDiscriminator = f1.typeDiscriminator
+      )
+    }
+  }
 
 }
