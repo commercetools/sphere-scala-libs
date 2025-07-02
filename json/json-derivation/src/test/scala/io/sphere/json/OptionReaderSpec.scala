@@ -11,23 +11,23 @@ object OptionReaderSpec {
   case class SimpleClass(value1: String, value2: Int)
 
   object SimpleClass {
-    implicit val json: JSON[SimpleClass] = jsonProduct(apply _)
+    implicit val json: JSON[SimpleClass] = deriveJSON
   }
 
   case class ComplexClass(name: String, simpleClass: Option[SimpleClass])
 
   object ComplexClass {
-    implicit val json: JSON[ComplexClass] = jsonProduct(apply _)
+    implicit val json: JSON[ComplexClass] = deriveJSON
   }
 
   case class MapClass(id: Long, map: Option[Map[String, String]])
   object MapClass {
-    implicit val json: JSON[MapClass] = jsonProduct(apply _)
+    implicit val json: JSON[MapClass] = deriveJSON
   }
 
   case class ListClass(id: Long, list: Option[List[String]])
   object ListClass {
-    implicit val json: JSON[ListClass] = jsonProduct(apply _)
+    implicit val json: JSON[ListClass] = deriveJSON
   }
 }
 
