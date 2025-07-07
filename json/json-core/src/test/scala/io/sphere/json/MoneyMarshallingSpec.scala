@@ -14,7 +14,7 @@ class MoneyMarshallingSpec extends AnyWordSpec with Matchers {
       val money = Money.EUR(34.56)
       val jsonAst = toJValue(money)
       val jsonAsString = compactJson(jsonAst)
-      val Valid(readAst) = parseJSON(jsonAsString)
+      val Valid(readAst) = parseJSON(jsonAsString): @unchecked
 
       jsonAst should equal(readAst)
     }
@@ -52,9 +52,9 @@ class MoneyMarshallingSpec extends AnyWordSpec with Matchers {
       val money = HighPrecisionMoney.fromDecimalAmount(34.123456, 6, Currency.getInstance("EUR"))
       val jsonAst = toJValue(money)
       val jsonAsString = compactJson(jsonAst)
-      val Valid(readAst) = parseJSON(jsonAsString)
-      val Valid(decodedMoney) = fromJSON[HighPrecisionMoney](jsonAsString)
-      val Valid(decodedBaseMoney) = fromJSON[BaseMoney](jsonAsString)
+      val Valid(readAst) = parseJSON(jsonAsString): @unchecked
+      val Valid(decodedMoney) = fromJSON[HighPrecisionMoney](jsonAsString): @unchecked
+      val Valid(decodedBaseMoney) = fromJSON[BaseMoney](jsonAsString): @unchecked
 
       jsonAst should equal(readAst)
       decodedMoney should equal(money)
@@ -85,9 +85,9 @@ class MoneyMarshallingSpec extends AnyWordSpec with Matchers {
           "centAmount": 1,
           "fractionDigits": 4
         }
-        """)
+        """): @unchecked
 
-      val Valid(parsed) = fromJValue[BaseMoney](json)
+      val Valid(parsed) = fromJValue[BaseMoney](json): @unchecked
 
       toJValue(parsed) should be(json)
     }
