@@ -2,6 +2,12 @@ package io.sphere.json.generic
 
 import io.sphere.json.*
 
+import scala.deriving.Mirror
+
+inline def deriveJSON[A](using Mirror.Of[A]): JSON[A] = JSON.derived
+inline def deriveToJSON[A](using Mirror.Of[A]): ToJSON[A] = ToJSON.derived
+inline def deriveFromJSON[A](using Mirror.Of[A]): FromJSON[A] = FromJSON.derived
+
 /** Creates a ToJSON instance for an Enumeration type that encodes the `toString` representations of
   * the enumeration values.
   */

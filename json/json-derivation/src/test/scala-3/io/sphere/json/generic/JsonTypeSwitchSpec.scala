@@ -2,7 +2,8 @@ package io.sphere.json.generic
 
 import cats.data.Validated.Valid
 import cats.implicits.toTraverseOps
-import io.sphere.json.{JSON, JSONParseError, JValidation, deriveJSON, parseJSON}
+import io.sphere.json.{JSON, JSONParseError, JValidation, parseJSON}
+import io.sphere.json.generic.deriveJSON
 import io.sphere.json.generic.jsonTypeSwitch
 import org.json4s.JsonAST.JObject
 import org.scalatest.matchers.must.Matchers

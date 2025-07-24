@@ -68,7 +68,7 @@ object JSONTypeSwitch {
     JSON.instance(
       writeFn = toJson.write,
       readFn = fromJson.read,
-      subTypeNameList = fromFormatters.serializedTypeNames.values.toList,
+      subTypeNameList = fromFormatters.getSubTypeNames,
       fromFs = fromJson.fromFormatters,
       toFs = toJson.toFormatters
     )
@@ -124,6 +124,8 @@ object JSONTypeSwitch {
   ) {
     def addTypeNames(names: Map[String, String]): Formatters[JsonKind] =
       copy(serializedTypeNames = serializedTypeNames ++ names)
+
+    def getSubTypeNames: List[String] = serializedTypeNames.values.toList
   }
 
   object Formatters {
