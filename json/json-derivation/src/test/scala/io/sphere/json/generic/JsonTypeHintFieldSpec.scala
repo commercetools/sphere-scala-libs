@@ -57,7 +57,7 @@ object JsonTypeHintFieldSpec {
   case object Big extends PictureSize
 
   object PictureSize {
-    implicit val json: JSON[PictureSize] = deriveJSON[PictureSize]
+    implicit val json: JSON[PictureSize] = deriveJSON
   }
 
   case class UserWithPicture(userId: String, pictureSize: PictureSize, pictureUrl: String)
