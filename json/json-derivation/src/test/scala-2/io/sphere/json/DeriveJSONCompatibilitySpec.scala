@@ -1,13 +1,12 @@
 package io.sphere.json
 
-import java.util.UUID
+import io.sphere.json.generic.{deriveJSON, jsonProduct}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-import io.sphere.json.generic.deriveJSON
-import io.sphere.json.generic.jsonProduct
+import java.util.UUID
 
 class DeriveJSONCompatibilitySpec extends AnyWordSpec with Matchers with ScalaCheckPropertyChecks {
 
