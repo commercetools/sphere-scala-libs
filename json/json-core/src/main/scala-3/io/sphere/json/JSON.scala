@@ -19,8 +19,7 @@ object JSON extends JSONCatsInstances {
       fromFs = fromJSON.fromFormatters,
       toFs = toJSON.toFormatters,
       fieldSet = fromJSON.fields,
-      subTypeNameList =
-        Option(fromJSON.fromFormatters).map(_.serializedNames).getOrElse(Vector.empty)
+      subTypeNameList = fromJSON.getSerializedNames
     )
 
   def instance[A](

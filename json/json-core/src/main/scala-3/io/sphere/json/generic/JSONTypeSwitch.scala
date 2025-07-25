@@ -14,15 +14,13 @@ object JSONTypeSwitch {
   inline def deriveToFormatters[SuperType, SubTypes <: Tuple]: ToFormatters = {
     val traitMetaData = AnnotationReader.readTraitMetaData[SuperType]
     summonToFormatters[SubTypes]()
-      .reduce(ToFormatters.merge)
-      .copy(typeDiscriminator = traitMetaData.typeDiscriminator)
+      .reduce(ToFormatters.merge(traitMetaData.typeDiscriminator))
   }
 
   inline def deriveFromFormatters[SuperType, SubTypes <: Tuple]: FromFormatters = {
     val traitMetaData = AnnotationReader.readTraitMetaData[SuperType]
     summonFromFormatters[SubTypes]()
-      .reduce(FromFormatters.merge)
-      .copy(typeDiscriminator = traitMetaData.typeDiscriminator)
+      .reduce(FromFormatters.merge(traitMetaData.typeDiscriminator))
   }
 
   inline def toJsonTypeSwitch[SuperType](formatters: ToFormatters): ToJSON[SuperType] =
@@ -133,14 +131,15 @@ object JSONTypeSwitch {
       typeDiscriminator: String
   )
   object ToFormatters {
-    def merge(f1: ToFormatters, f2: ToFormatters): ToFormatters = {
+    def merge(
+        typeDiscriminatorFromParent: String)(f1: ToFormatters, f2: ToFormatters): ToFormatters = {
       require(
-        f1.typeDiscriminator == f2.typeDiscriminator,
+        f1.typeDiscriminator == f2.typeDiscriminator && typeDiscriminatorFromParent == f2.typeDiscriminator,
         "@JSONTypeHintField has to be the same on all traits")
       ToFormatters(
         serializedNamesByClass = f1.serializedNamesByClass ++ f2.serializedNamesByClass,
         formatterByClass = f1.formatterByClass ++ f2.formatterByClass,
-        typeDiscriminator = f1.typeDiscriminator
+        typeDiscriminator = typeDiscriminatorFromParent
       )
     }
   }
@@ -152,14 +151,16 @@ object JSONTypeSwitch {
   )
 
   object FromFormatters {
-    def merge(f1: FromFormatters, f2: FromFormatters): FromFormatters = {
+    def merge(typeDiscriminatorFromParent: String)(
+        f1: FromFormatters,
+        f2: FromFormatters): FromFormatters = {
       require(
-        f1.typeDiscriminator == f2.typeDiscriminator,
+        f1.typeDiscriminator == f2.typeDiscriminator && typeDiscriminatorFromParent == f2.typeDiscriminator,
         "@JSONTypeHintField has to be the same on all traits")
       FromFormatters(
         serializedNames = f1.serializedNames ++ f2.serializedNames,
         formatterBySerializedName = f1.formatterBySerializedName ++ f2.formatterBySerializedName,
-        typeDiscriminator = f1.typeDiscriminator
+        typeDiscriminator = typeDiscriminatorFromParent
       )
     }
   }

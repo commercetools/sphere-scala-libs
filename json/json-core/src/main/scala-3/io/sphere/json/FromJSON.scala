@@ -14,6 +14,9 @@ trait FromJSON[A] extends Serializable {
 
   // This is automatically filled for traits
   val fromFormatters: FromFormatters = null
+  def getSerializedNames: Vector[String] =
+    if (fromFormatters == null) Vector.empty
+    else fromFormatters.serializedNames
 }
 
 object FromJSON extends FromJSONInstances with FromJSONCatsInstances with generic.DeriveFromJSON {

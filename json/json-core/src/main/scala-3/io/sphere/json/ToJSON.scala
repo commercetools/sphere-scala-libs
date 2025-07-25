@@ -8,6 +8,10 @@ trait ToJSON[A] extends Serializable {
   def write(value: A): JValue
 
   // Filled automatically for traits
+  // I decided to not use option, because it's not an internal type anyway and
+  // on traits it's always filled
+  // on case classes it's always null
+  // So there's not a lot of reasons to check for it runtime in most cases.
   val toFormatters: ToFormatters = null
 }
 
