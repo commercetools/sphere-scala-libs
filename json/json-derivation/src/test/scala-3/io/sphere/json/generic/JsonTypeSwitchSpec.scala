@@ -97,27 +97,57 @@ class JsonTypeSwitchSpec extends AnyWordSpec with Matchers {
       }
     }
 
-    "handle PlatformFormattedNotification case" in {
+    "handle the PlatformFormattedNotification case " when {
+      // This means deriving a formatter for a supertrait that has 3 sub traits.
+      // 1 of them passed in as a type parameter and fully being derived
+      // the other 2 sub traits passed in as a value parameter, through their combined type selectors
 
-      type Trait234 = SubTrait2 *: (SubTrait3, SubTrait4)
+      "using the /old/ syntax" in {
 
-      val formatSuper: JSON[SuperTrait] = jsonTypeSwitch[SuperTrait, SubTrait1 *: Trait234]
+//        val formatSub2 = jsonTypeSwitch[SubTrait2, SubTrait2.O3.type, SubTrait2.O4.type](Nil)
+//        val formatSub3 = jsonTypeSwitch[SubTrait3, SubTrait3.O5.type, SubTrait3.O6.type](Nil)
+//
+//        val formatSuper: JSON[SuperTrait] = jsonTypeSwitch[SuperTrait, SubTrait1]()
+//
+//        val objs =
+//          List[SuperTrait](
+//            SubTrait1.O1,
+//            SubTrait1.O2,
+//            SubTrait2.O3,
+//            SubTrait2.O4,
+//            SubTrait3.O5,
+//            SubTrait3.O6,
+//            SubTrait4.O7)
+//
+//        val res = objs.map(formatSuper.write).map(formatSuper.read).sequence.getOrElse(null)
+//
+//        res must be(objs)
 
-      val objs =
-        List[SuperTrait](
-          SubTrait1.O1,
-          SubTrait1.O2,
-          SubTrait2.O3,
-          SubTrait2.O4,
-          SubTrait3.O5,
-          SubTrait3.O6,
-          SubTrait4.O7)
+      }
 
-      val res = objs.map(formatSuper.write).map(formatSuper.read).sequence.getOrElse(null)
+      "using the /new/ syntax" in {
+        type Trait234 = SubTrait2 *: (SubTrait3, SubTrait4)
 
-      res must be(objs)
+        val formatSuper: JSON[SuperTrait] = jsonTypeSwitch[SuperTrait, SubTrait1 *: Trait234]
+
+        val objs =
+          List[SuperTrait](
+            SubTrait1.O1,
+            SubTrait1.O2,
+            SubTrait2.O3,
+            SubTrait2.O4,
+            SubTrait3.O5,
+            SubTrait3.O6,
+            SubTrait4.O7)
+
+        val res = objs.map(formatSuper.write).map(formatSuper.read).sequence.getOrElse(null)
+
+        res must be(objs)
+
+      }
 
     }
+
   }
 
   def check[A](a: A, json: String)(using format: JSON[A]): Unit = {

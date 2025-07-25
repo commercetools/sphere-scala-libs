@@ -1,7 +1,7 @@
 package io.sphere.json
 
 import cats.implicits.*
-import io.sphere.json.generic.JSONTypeSwitch.{Formatters, fromJsonTypeSwitch}
+import io.sphere.json.generic.JSONTypeSwitch.{FromFormatters, ToFormatters, fromJsonTypeSwitch}
 import org.json4s.JsonAST.JValue
 
 trait JSON[A] extends FromJSON[A] with ToJSON[A] {
@@ -19,23 +19,33 @@ object JSON extends JSONCatsInstances {
       fromFs = fromJSON.fromFormatters,
       toFs = toJSON.toFormatters,
       fieldSet = fromJSON.fields,
-      subTypeNameList = Option(fromJSON.fromFormatters).map(_.getSubTypeNames).getOrElse(Nil)
+      subTypeNameList = Option(fromJSON.fromFormatters).map(_.getSerializedNames).getOrElse(Nil)
     )
 
   def instance[A](
       readFn: JValue => JValidation[A],
       writeFn: A => JValue,
-      fromFs: Formatters[FromJSON],
-      toFs: Formatters[ToJSON],
+      fromFs: FromFormatters,
+      toFs: ToFormatters,
       subTypeNameList: List[String] = Nil,
-      fieldSet: Set[String] = FromJSON.emptyFieldsSet): JSON[A] = new {
-    override def read(jval: JValue): JValidation[A] = readFn(jval)
-    override def write(value: A): JValue = writeFn(value)
-    override val fields: Set[String] = fieldSet
-    override def subTypeNames: List[String] = subTypeNameList
-    override val fromFormatters: Formatters[FromJSON] = fromFs
-    override val toFormatters: Formatters[ToJSON] = toFs
-  }
+      fieldSet: Set[String] = FromJSON.emptyFieldsSet): JSON[A] with TypeSelectorContainer =
+    new JSON[A] with TypeSelectorContainer {
+      override def read(jval: JValue): JValidation[A] = readFn(jval)
+      override def write(value: A): JValue = writeFn(value)
+      override val fields: Set[String] = fieldSet
+      override def subTypeNames: List[String] = subTypeNameList
+      override val fromFormatters: FromFormatters = fromFs
+      override val toFormatters: ToFormatters = toFs
+
+      override def typeSelectors: List[TypeSelector] = ???
+    }
+}
+
+// Compatibility with Scala 2 syntax
+// provide merging
+case class TypeSelector(json: JSON[_]) {}
+trait TypeSelectorContainer {
+  def typeSelectors: List[TypeSelector]
 }
 
 class JSONException(msg: String) extends RuntimeException(msg)
