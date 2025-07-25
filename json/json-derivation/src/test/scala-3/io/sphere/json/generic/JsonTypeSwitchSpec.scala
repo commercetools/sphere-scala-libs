@@ -97,31 +97,30 @@ class JsonTypeSwitchSpec extends AnyWordSpec with Matchers {
       }
     }
 
-    "handle the PlatformFormattedNotification case " when {
+    "handle the PlatformFormattedNotification case" when {
       // This means deriving a formatter for a supertrait that has 3 sub traits.
       // 1 of them passed in as a type parameter and fully being derived
       // the other 2 sub traits passed in as a value parameter, through their combined type selectors
 
       "using the /old/ syntax" in {
+        val formatSub2 = jsonTypeSwitch[SubTrait2, SubTrait2.O3.type, SubTrait2.O4.type](Nil)
+        val formatSub3 = jsonTypeSwitch[SubTrait3, SubTrait3.O5.type, SubTrait3.O6.type](Nil)
 
-//        val formatSub2 = jsonTypeSwitch[SubTrait2, SubTrait2.O3.type, SubTrait2.O4.type](Nil)
-//        val formatSub3 = jsonTypeSwitch[SubTrait3, SubTrait3.O5.type, SubTrait3.O6.type](Nil)
-//
-//        val formatSuper: JSON[SuperTrait] = jsonTypeSwitch[SuperTrait, SubTrait1]()
-//
-//        val objs =
-//          List[SuperTrait](
-//            SubTrait1.O1,
-//            SubTrait1.O2,
-//            SubTrait2.O3,
-//            SubTrait2.O4,
-//            SubTrait3.O5,
-//            SubTrait3.O6,
-//            SubTrait4.O7)
-//
-//        val res = objs.map(formatSuper.write).map(formatSuper.read).sequence.getOrElse(null)
-//
-//        res must be(objs)
+        val typeSelectors = formatSub2.typeSelectors ++ formatSub3.typeSelectors
+        val formatSuper: JSON[SuperTrait] = jsonTypeSwitch[SuperTrait, SubTrait1](typeSelectors)
+
+        val objs =
+          List[SuperTrait](
+            SubTrait1.O1,
+            SubTrait1.O2,
+            SubTrait2.O3,
+            SubTrait2.O4,
+            SubTrait3.O5,
+            SubTrait3.O6)
+
+        val res = objs.map(formatSuper.write).map(formatSuper.read).sequence.getOrElse(null)
+
+        res must be(objs)
 
       }
 

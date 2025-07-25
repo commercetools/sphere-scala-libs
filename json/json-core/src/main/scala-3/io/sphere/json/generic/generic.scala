@@ -1,6 +1,8 @@
 package io.sphere.json.generic
 
 import io.sphere.json.*
+import io.sphere.json.generic.JSONTypeSwitch.{FromFormatters, ToFormatters}
+import org.json4s.JsonAST.JValue
 
 import scala.deriving.Mirror
 
@@ -36,65 +38,103 @@ inline def fromJsonTypeSwitch[SuperType, SubTypes <: Tuple]: FromJSON[SuperType]
 
 // Compatibility with the scala-2 methods, that will be deprecated later
 // fromJsonTypeSwitch is not used, so no old syntax support will be added for now
+// Compatibility with Scala 2 syntax
+case class TypeSelector(clazz: Class[?], typeValue: String, json: JSON[?])
+
+// Compatibility with Scala 2 syntax
+trait TypeSelectorContainer {
+  def typeSelectors: List[TypeSelector]
+}
+
+// Compatibility with Scala 2 syntax
+private def addTypeSelectorContainer[A](derviedJson: JSON[A])(
+    typeSelectors: List[TypeSelector]): JSON[A] with TypeSelectorContainer = {
+  val additionalJsons = typeSelectors.map(_.json)
+  val mergedFromFormatters = additionalJsons
+    .map(_.fromFormatters)
+    .fold(derviedJson.fromFormatters)(
+      FromFormatters.merge(derviedJson.fromFormatters.typeDiscriminator))
+  val mergedToFormatters = additionalJsons
+    .map(_.toFormatters)
+    .fold(derviedJson.toFormatters)(ToFormatters.merge(derviedJson.toFormatters.typeDiscriminator))
+
+  // We create the write/read methods again with the all the formatters present, so they have the correct references
+  val toJson = JSONTypeSwitch.toJsonTypeSwitch[A](mergedToFormatters)
+  val fromJson = JSONTypeSwitch.fromJsonTypeSwitch[A](mergedFromFormatters)
+
+  new JSON[A] with TypeSelectorContainer {
+    override def read(jval: JValue): JValidation[A] = fromJson.read(jval)
+    override def write(value: A): JValue = toJson.write(value)
+    override val fields: Set[String] = fromJson.fields
+    override def subTypeNames: Vector[String] = Vector.empty
+    override val fromFormatters: FromFormatters = mergedFromFormatters
+    override val toFormatters: ToFormatters = mergedToFormatters
+
+    override def typeSelectors: List[TypeSelector] =
+      toFormatters.serializedNamesByClass
+        .map((cls, serializedName) => TypeSelector(cls, serializedName, this))
+        .toList
+  }
+}
 
 // jsonTypeSwitch is used up to 26 parameters, so I'll up to 28
 // format: off
-inline def jsonTypeSwitch[SuperType, A1: JSON](ignoredList: List[Nothing]): JSON[SuperType] =
-  jsonTypeSwitch[SuperType, Tuple1[A1]]
-inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON](ignoredList: List[Nothing]): JSON[SuperType] =
-  jsonTypeSwitch[SuperType, (A1, A2)]
-inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON](ignoredList: List[Nothing]): JSON[SuperType] =
-  jsonTypeSwitch[SuperType, (A1, A2, A3)]
-inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON](ignoredList: List[Nothing]): JSON[SuperType] =
-  jsonTypeSwitch[SuperType, (A1, A2, A3, A4)]
-inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON](ignoredList: List[Nothing]): JSON[SuperType] =
-  jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5)]
-inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON](ignoredList: List[Nothing]): JSON[SuperType] =
-  jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6)]
-inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON](ignoredList: List[Nothing]): JSON[SuperType] =
-  jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7)]
-inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON](ignoredList: List[Nothing]): JSON[SuperType] =
-  jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8)]
-inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON](ignoredList: List[Nothing]): JSON[SuperType] =
-  jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9)]
-inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON](ignoredList: List[Nothing]): JSON[SuperType] =
-  jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)]
-inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON](ignoredList: List[Nothing]): JSON[SuperType] =
-  jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)]
-inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON](ignoredList: List[Nothing]): JSON[SuperType] =
-  jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)]
-inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON](ignoredList: List[Nothing]): JSON[SuperType] =
-  jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13)]
-inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON](ignoredList: List[Nothing]): JSON[SuperType] =
-  jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14)]
-inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON, A15: JSON](ignoredList: List[Nothing]): JSON[SuperType] =
-  jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15)]
-inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON, A15: JSON, A16: JSON](ignoredList: List[Nothing]): JSON[SuperType] =
-  jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16)]
-inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON, A15: JSON, A16: JSON, A17: JSON](ignoredList: List[Nothing]): JSON[SuperType] =
-  jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17)]
-inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON, A15: JSON, A16: JSON, A17: JSON, A18: JSON](ignoredList: List[Nothing]): JSON[SuperType] =
-  jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18)]
-inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON, A15: JSON, A16: JSON, A17: JSON, A18: JSON, A19: JSON](ignoredList: List[Nothing]): JSON[SuperType] =
-  jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19)]
-inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON, A15: JSON, A16: JSON, A17: JSON, A18: JSON, A19: JSON, A20: JSON](ignoredList: List[Nothing]): JSON[SuperType] =
-  jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20)]
-inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON, A15: JSON, A16: JSON, A17: JSON, A18: JSON, A19: JSON, A20: JSON, A21: JSON](ignoredList: List[Nothing]): JSON[SuperType] =
-  jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21)]
-inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON, A15: JSON, A16: JSON, A17: JSON, A18: JSON, A19: JSON, A20: JSON, A21: JSON, A22: JSON](ignoredList: List[Nothing]): JSON[SuperType] =
-  jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22)]
-inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON, A15: JSON, A16: JSON, A17: JSON, A18: JSON, A19: JSON, A20: JSON, A21: JSON, A22: JSON, A23: JSON](ignoredList: List[Nothing]): JSON[SuperType] =
-  jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22, A23)]
-inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON, A15: JSON, A16: JSON, A17: JSON, A18: JSON, A19: JSON, A20: JSON, A21: JSON, A22: JSON, A23: JSON, A24: JSON](ignoredList: List[Nothing]): JSON[SuperType] =
-  jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22, A23, A24)]
-inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON, A15: JSON, A16: JSON, A17: JSON, A18: JSON, A19: JSON, A20: JSON, A21: JSON, A22: JSON, A23: JSON, A24: JSON, A25: JSON](ignoredList: List[Nothing]): JSON[SuperType] =
-  jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22, A23, A24, A25)]
-inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON, A15: JSON, A16: JSON, A17: JSON, A18: JSON, A19: JSON, A20: JSON, A21: JSON, A22: JSON, A23: JSON, A24: JSON, A25: JSON, A26: JSON](ignoredList: List[Nothing]): JSON[SuperType] =
-  jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22, A23, A24, A25, A26)]
-inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON, A15: JSON, A16: JSON, A17: JSON, A18: JSON, A19: JSON, A20: JSON, A21: JSON, A22: JSON, A23: JSON, A24: JSON, A25: JSON, A26: JSON, A27: JSON](ignoredList: List[Nothing]): JSON[SuperType] =
-  jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22, A23, A24, A25, A26, A27)]
-inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON, A15: JSON, A16: JSON, A17: JSON, A18: JSON, A19: JSON, A20: JSON, A21: JSON, A22: JSON, A23: JSON, A24: JSON, A25: JSON, A26: JSON, A27: JSON, A28: JSON](ignoredList: List[Nothing]): JSON[SuperType] =
-  jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22, A23, A24, A25, A26, A27, A28)]
+inline def jsonTypeSwitch[SuperType, A1: JSON](typeSelectors: List[TypeSelector]): JSON[SuperType] with TypeSelectorContainer =
+  addTypeSelectorContainer(jsonTypeSwitch[SuperType, Tuple1[A1]])(typeSelectors)
+inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON](typeSelectors: List[TypeSelector]): JSON[SuperType] with TypeSelectorContainer =
+  addTypeSelectorContainer(jsonTypeSwitch[SuperType, (A1, A2)])(typeSelectors)
+inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON](typeSelectors: List[TypeSelector]): JSON[SuperType] with TypeSelectorContainer =
+  addTypeSelectorContainer(jsonTypeSwitch[SuperType, (A1, A2, A3)])(typeSelectors)
+inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON](typeSelectors: List[TypeSelector]): JSON[SuperType] with TypeSelectorContainer =
+  addTypeSelectorContainer(jsonTypeSwitch[SuperType, (A1, A2, A3, A4)])(typeSelectors)
+inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON](typeSelectors: List[TypeSelector]): JSON[SuperType] with TypeSelectorContainer =
+  addTypeSelectorContainer(jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5)])(typeSelectors)
+inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON](typeSelectors: List[TypeSelector]): JSON[SuperType] with TypeSelectorContainer =
+  addTypeSelectorContainer(jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6)])(typeSelectors)
+inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON](typeSelectors: List[TypeSelector]): JSON[SuperType] with TypeSelectorContainer =
+  addTypeSelectorContainer(jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7)])(typeSelectors)
+inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON](typeSelectors: List[TypeSelector]): JSON[SuperType] with TypeSelectorContainer =
+  addTypeSelectorContainer(jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8)])(typeSelectors)
+inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON](typeSelectors: List[TypeSelector]): JSON[SuperType] with TypeSelectorContainer =
+  addTypeSelectorContainer(jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9)])(typeSelectors)
+inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON](typeSelectors: List[TypeSelector]): JSON[SuperType] with TypeSelectorContainer =
+  addTypeSelectorContainer(jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)])(typeSelectors)
+inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON](typeSelectors: List[TypeSelector]): JSON[SuperType] with TypeSelectorContainer =
+  addTypeSelectorContainer(jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)])(typeSelectors)
+inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON](typeSelectors: List[TypeSelector]): JSON[SuperType] with TypeSelectorContainer =
+  addTypeSelectorContainer(jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)])(typeSelectors)
+inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON](typeSelectors: List[TypeSelector]): JSON[SuperType] with TypeSelectorContainer =
+  addTypeSelectorContainer(jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13)])(typeSelectors)
+inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON](typeSelectors: List[TypeSelector]): JSON[SuperType] with TypeSelectorContainer =
+  addTypeSelectorContainer(jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14)])(typeSelectors)
+inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON, A15: JSON](typeSelectors: List[TypeSelector]): JSON[SuperType] with TypeSelectorContainer =
+  addTypeSelectorContainer(jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15)])(typeSelectors)
+inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON, A15: JSON, A16: JSON](typeSelectors: List[TypeSelector]): JSON[SuperType] with TypeSelectorContainer =
+  addTypeSelectorContainer(jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16)])(typeSelectors)
+inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON, A15: JSON, A16: JSON, A17: JSON](typeSelectors: List[TypeSelector]): JSON[SuperType] with TypeSelectorContainer =
+  addTypeSelectorContainer(jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17)])(typeSelectors)
+inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON, A15: JSON, A16: JSON, A17: JSON, A18: JSON](typeSelectors: List[TypeSelector]): JSON[SuperType] with TypeSelectorContainer =
+  addTypeSelectorContainer(jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18)])(typeSelectors)
+inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON, A15: JSON, A16: JSON, A17: JSON, A18: JSON, A19: JSON](typeSelectors: List[TypeSelector]): JSON[SuperType] with TypeSelectorContainer =
+  addTypeSelectorContainer(jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19)])(typeSelectors)
+inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON, A15: JSON, A16: JSON, A17: JSON, A18: JSON, A19: JSON, A20: JSON](typeSelectors: List[TypeSelector]): JSON[SuperType] with TypeSelectorContainer =
+  addTypeSelectorContainer(jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20)])(typeSelectors)
+inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON, A15: JSON, A16: JSON, A17: JSON, A18: JSON, A19: JSON, A20: JSON, A21: JSON](typeSelectors: List[TypeSelector]): JSON[SuperType] with TypeSelectorContainer =
+  addTypeSelectorContainer(jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21)])(typeSelectors)
+inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON, A15: JSON, A16: JSON, A17: JSON, A18: JSON, A19: JSON, A20: JSON, A21: JSON, A22: JSON](typeSelectors: List[TypeSelector]): JSON[SuperType] with TypeSelectorContainer =
+  addTypeSelectorContainer(jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22)])(typeSelectors)
+inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON, A15: JSON, A16: JSON, A17: JSON, A18: JSON, A19: JSON, A20: JSON, A21: JSON, A22: JSON, A23: JSON](typeSelectors: List[TypeSelector]): JSON[SuperType] with TypeSelectorContainer =
+  addTypeSelectorContainer(jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22, A23)])(typeSelectors)
+inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON, A15: JSON, A16: JSON, A17: JSON, A18: JSON, A19: JSON, A20: JSON, A21: JSON, A22: JSON, A23: JSON, A24: JSON](typeSelectors: List[TypeSelector]): JSON[SuperType] with TypeSelectorContainer =
+  addTypeSelectorContainer(jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22, A23, A24)])(typeSelectors)
+inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON, A15: JSON, A16: JSON, A17: JSON, A18: JSON, A19: JSON, A20: JSON, A21: JSON, A22: JSON, A23: JSON, A24: JSON, A25: JSON](typeSelectors: List[TypeSelector]): JSON[SuperType] with TypeSelectorContainer =
+  addTypeSelectorContainer(jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22, A23, A24, A25)])(typeSelectors)
+inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON, A15: JSON, A16: JSON, A17: JSON, A18: JSON, A19: JSON, A20: JSON, A21: JSON, A22: JSON, A23: JSON, A24: JSON, A25: JSON, A26: JSON](typeSelectors: List[TypeSelector]): JSON[SuperType] with TypeSelectorContainer =
+  addTypeSelectorContainer(jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22, A23, A24, A25, A26)])(typeSelectors)
+inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON, A15: JSON, A16: JSON, A17: JSON, A18: JSON, A19: JSON, A20: JSON, A21: JSON, A22: JSON, A23: JSON, A24: JSON, A25: JSON, A26: JSON, A27: JSON](typeSelectors: List[TypeSelector]): JSON[SuperType] with TypeSelectorContainer =
+  addTypeSelectorContainer(jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22, A23, A24, A25, A26, A27)])(typeSelectors)
+inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5: JSON, A6: JSON, A7: JSON, A8: JSON, A9: JSON, A10: JSON, A11: JSON, A12: JSON, A13: JSON, A14: JSON, A15: JSON, A16: JSON, A17: JSON, A18: JSON, A19: JSON, A20: JSON, A21: JSON, A22: JSON, A23: JSON, A24: JSON, A25: JSON, A26: JSON, A27: JSON, A28: JSON](typeSelectors: List[TypeSelector]): JSON[SuperType] with TypeSelectorContainer =
+  addTypeSelectorContainer(jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22, A23, A24, A25, A26, A27, A28)])(typeSelectors)
 // format: on
 
 // toJsonTypeSwitch is used up to 5 parameters, so I'll add up to 7

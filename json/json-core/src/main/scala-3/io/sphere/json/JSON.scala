@@ -28,24 +28,15 @@ object JSON extends JSONCatsInstances {
       fromFs: FromFormatters,
       toFs: ToFormatters,
       subTypeNameList: Vector[String] = Vector.empty,
-      fieldSet: Set[String] = FromJSON.emptyFieldsSet): JSON[A] with TypeSelectorContainer =
-    new JSON[A] with TypeSelectorContainer {
+      fieldSet: Set[String] = FromJSON.emptyFieldsSet): JSON[A] =
+    new JSON[A] {
       override def read(jval: JValue): JValidation[A] = readFn(jval)
       override def write(value: A): JValue = writeFn(value)
       override val fields: Set[String] = fieldSet
       override def subTypeNames: Vector[String] = subTypeNameList
       override val fromFormatters: FromFormatters = fromFs
       override val toFormatters: ToFormatters = toFs
-
-      override def typeSelectors: List[TypeSelector] = ???
     }
-}
-
-// Compatibility with Scala 2 syntax
-// provide merging
-case class TypeSelector(json: JSON[_]) {}
-trait TypeSelectorContainer {
-  def typeSelectors: List[TypeSelector]
 }
 
 class JSONException(msg: String) extends RuntimeException(msg)
