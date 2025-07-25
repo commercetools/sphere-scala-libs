@@ -7,7 +7,7 @@ import org.json4s.JsonAST.JValue
 trait JSON[A] extends FromJSON[A] with ToJSON[A] {
   // This field is only used in case we derive a trait, for classes/objects it remains empty
   // It uses the JSON names not the Scala names (if there's @JSONTypeHint renaming a class the renamed name is used here)
-  def subTypeNames: List[String] = Nil
+  def subTypeNames: Vector[String] = Vector.empty
 }
 
 object JSON extends JSONCatsInstances {
@@ -19,7 +19,8 @@ object JSON extends JSONCatsInstances {
       fromFs = fromJSON.fromFormatters,
       toFs = toJSON.toFormatters,
       fieldSet = fromJSON.fields,
-      subTypeNameList = Option(fromJSON.fromFormatters).map(_.getSerializedNames).getOrElse(Nil)
+      subTypeNameList =
+        Option(fromJSON.fromFormatters).map(_.serializedNames).getOrElse(Vector.empty)
     )
 
   def instance[A](
@@ -27,13 +28,13 @@ object JSON extends JSONCatsInstances {
       writeFn: A => JValue,
       fromFs: FromFormatters,
       toFs: ToFormatters,
-      subTypeNameList: List[String] = Nil,
+      subTypeNameList: Vector[String] = Vector.empty,
       fieldSet: Set[String] = FromJSON.emptyFieldsSet): JSON[A] with TypeSelectorContainer =
     new JSON[A] with TypeSelectorContainer {
       override def read(jval: JValue): JValidation[A] = readFn(jval)
       override def write(value: A): JValue = writeFn(value)
       override val fields: Set[String] = fieldSet
-      override def subTypeNames: List[String] = subTypeNameList
+      override def subTypeNames: Vector[String] = subTypeNameList
       override val fromFormatters: FromFormatters = fromFs
       override val toFormatters: ToFormatters = toFs
 

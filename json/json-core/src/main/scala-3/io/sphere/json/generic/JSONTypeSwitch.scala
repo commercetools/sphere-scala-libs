@@ -29,7 +29,7 @@ object JSONTypeSwitch {
     ToJSON.instance(
       toJson = { scalaValue =>
         val clazz = scalaValue.getClass
-        val serializedTypeName = formatters.serializedTypeNames(clazz)
+        val serializedTypeName = formatters.serializedNamesByClass(clazz)
         val jsonObj = formatters.formatterByClass(clazz).write(scalaValue) match {
           case JObject(obj) => obj
           case json =>
@@ -46,9 +46,8 @@ object JSONTypeSwitch {
       readFn = {
         case jObject: JObject =>
           val serializedTypeName = (jObject \ formatters.typeDiscriminator).as[String]
-          val scalaTypeName = formatters.scalaNamesFromSerializedNames(serializedTypeName)
           formatters
-            .formatterByScalaName(scalaTypeName)
+            .formatterBySerializedName(serializedTypeName)
             .read(jObject)
             .map(_.asInstanceOf[SuperType])
         case x =>
@@ -66,37 +65,36 @@ object JSONTypeSwitch {
     JSON.instance(
       writeFn = toJson.write,
       readFn = fromJson.read,
-      subTypeNameList = fromFormatters.getSerializedNames,
+      subTypeNameList = fromFormatters.serializedNames,
       fromFs = fromJson.fromFormatters,
       toFs = toJson.toFormatters
     )
   }
 
   inline private def summonFromFormatters[T <: Tuple](
-      d: Int = 0,
       acc: Vector[FromFormatters] = Vector.empty): Vector[FromFormatters] =
     inline erasedValue[T] match {
       case _: EmptyTuple => acc
       case _: (t *: ts) =>
         val traitMetaData = AnnotationReader.readTraitMetaData[t]
         val headFormatter = summonInline[FromJSON[t]].asInstanceOf[FromJSON[Any]]
-        val (formatterMap, nameMap) =
+        val (formatterMap, names) =
           if (traitMetaData.isTrait)
             (
-              headFormatter.fromFormatters.formatterByScalaName,
-              headFormatter.fromFormatters.scalaNamesFromSerializedNames)
+              headFormatter.fromFormatters.formatterBySerializedName,
+              headFormatter.fromFormatters.serializedNames)
           else
             (
-              Map(traitMetaData.top.scalaName -> headFormatter),
-              Map(traitMetaData.top.serializedName -> traitMetaData.top.scalaName)
+              Map(traitMetaData.top.serializedName -> headFormatter),
+              Vector(traitMetaData.top.serializedName)
             )
 
         val f = FromFormatters(
-          scalaNamesFromSerializedNames = nameMap,
-          formatterByScalaName = formatterMap,
+          serializedNames = names,
+          formatterBySerializedName = formatterMap,
           typeDiscriminator = traitMetaData.typeDiscriminator
         )
-        summonFromFormatters[ts](d + 1, acc :+ f)
+        summonFromFormatters[ts](acc :+ f)
     }
 
   inline private def summonToFormatters[T <: Tuple](
@@ -111,7 +109,7 @@ object JSONTypeSwitch {
           if (traitMetaData.isTrait)
             (
               formatterT.toFormatters.formatterByClass,
-              formatterT.toFormatters.serializedTypeNames
+              formatterT.toFormatters.serializedNamesByClass
             )
           else {
             val clazz = summonInline[ClassTag[t]].runtimeClass
@@ -122,7 +120,7 @@ object JSONTypeSwitch {
           }
 
         val f = ToFormatters(
-          serializedTypeNames = serializedTypeNames,
+          serializedNamesByClass = serializedTypeNames,
           formatterByClass = formatterMap,
           typeDiscriminator = traitMetaData.typeDiscriminator
         )
@@ -130,7 +128,7 @@ object JSONTypeSwitch {
     }
 
   case class ToFormatters(
-      serializedTypeNames: Map[Class[_], String],
+      serializedNamesByClass: Map[Class[_], String],
       formatterByClass: Map[Class[_], ToJSON[Any]],
       typeDiscriminator: String
   )
@@ -140,7 +138,7 @@ object JSONTypeSwitch {
         f1.typeDiscriminator == f2.typeDiscriminator,
         "@JSONTypeHintField has to be the same on all traits")
       ToFormatters(
-        serializedTypeNames = f1.serializedTypeNames ++ f2.serializedTypeNames,
+        serializedNamesByClass = f1.serializedNamesByClass ++ f2.serializedNamesByClass,
         formatterByClass = f1.formatterByClass ++ f2.formatterByClass,
         typeDiscriminator = f1.typeDiscriminator
       )
@@ -148,12 +146,10 @@ object JSONTypeSwitch {
   }
 
   case class FromFormatters(
-      scalaNamesFromSerializedNames: Map[String, String],
-      formatterByScalaName: Map[String, FromJSON[Any]],
+      serializedNames: Vector[String],
+      formatterBySerializedName: Map[String, FromJSON[Any]],
       typeDiscriminator: String
-  ) {
-    def getSerializedNames: List[String] = scalaNamesFromSerializedNames.keys.toList
-  }
+  )
 
   object FromFormatters {
     def merge(f1: FromFormatters, f2: FromFormatters): FromFormatters = {
@@ -161,9 +157,8 @@ object JSONTypeSwitch {
         f1.typeDiscriminator == f2.typeDiscriminator,
         "@JSONTypeHintField has to be the same on all traits")
       FromFormatters(
-        scalaNamesFromSerializedNames =
-          f1.scalaNamesFromSerializedNames ++ f2.scalaNamesFromSerializedNames,
-        formatterByScalaName = f1.formatterByScalaName ++ f2.formatterByScalaName,
+        serializedNames = f1.serializedNames ++ f2.serializedNames,
+        formatterBySerializedName = f1.formatterBySerializedName ++ f2.formatterBySerializedName,
         typeDiscriminator = f1.typeDiscriminator
       )
     }
