@@ -35,7 +35,7 @@ class SubTypeNameSpec extends AnyWordSpec with Matchers {
       val format: JSON[SuperType2] =
         jsonTypeSwitch[SuperType2, (SubType1, SubType2)]
 
-      // Should only contain class names no trait names
+      // Should only contain class names, no trait names
       val names = List("SubClass1A", "SubClass2A")
       format.subTypeNames must be(names)
     }

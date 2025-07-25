@@ -18,7 +18,7 @@ case class TypeMetaData(
 ) {
   val typeHint: Option[String] =
     typeHintRaw.filterNot(_.toList.forall(_ == ' '))
-    
+
   val serializedName: String = typeHint.getOrElse(scalaName)
 }
 
