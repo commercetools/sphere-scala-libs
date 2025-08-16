@@ -161,7 +161,7 @@ package object generic extends Logging {
   def mongoTypeSwitch[T: ClassTag, A1 <: T: ClassTag: MongoFormat](selectors: List[TypeSelector[_]]): MongoFormat[T] =
     mongoTypeSwitch[T, A1, A1](selectors)
 
-  <#list 3..126 as i>
+  <#list 3..156 as i>
   <#assign typeParams><#list 1..i-1 as j>A${j}<#if i-1 != j>,</#if></#list></#assign>
   <#assign implTypeParams><#list 1..i as j>A${j} <: T : MongoFormat : ClassTag<#if i !=j>,</#if></#list></#assign>
   def mongoTypeSwitch[T: ClassTag, ${implTypeParams}](selectors: List[TypeSelector[_]]): MongoFormat[T] = mongoTypeSwitch[T, ${typeParams}](typeSelector[A${i}]() :: selectors)
