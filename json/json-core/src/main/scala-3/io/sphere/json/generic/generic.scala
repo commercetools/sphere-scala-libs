@@ -137,4 +137,30 @@ inline def jsonTypeSwitch[SuperType, A1: JSON, A2: JSON, A3: JSON, A4: JSON, A5:
   addTypeSelectorContainer(jsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22, A23, A24, A25, A26, A27, A28)])(typeSelectors)
 // format: on
 
-// toJsonTypeSwitch is used up to 5 parameters, so I'll add up to 7
+// toJsonTypeSwitch is used up to 5 parameters
+// format: off
+inline def toJsonTypeSwitch[SuperType, A1: ToJSON](ignoredList: List[Nothing]): ToJSON[SuperType] =
+  toJsonTypeSwitch[SuperType, Tuple1[A1]]
+inline def toJsonTypeSwitch[SuperType, A1: ToJSON, A2: ToJSON](ignoredList: List[Nothing]): ToJSON[SuperType] =
+  toJsonTypeSwitch[SuperType, (A1, A2)]
+inline def toJsonTypeSwitch[SuperType, A1: ToJSON, A2: ToJSON, A3: ToJSON](ignoredList: List[Nothing]): ToJSON[SuperType] =
+  toJsonTypeSwitch[SuperType, (A1, A2, A3)]
+inline def toJsonTypeSwitch[SuperType, A1: ToJSON, A2: ToJSON, A3: ToJSON, A4: ToJSON](ignoredList: List[Nothing]): ToJSON[SuperType] =
+  toJsonTypeSwitch[SuperType, (A1, A2, A3, A4)]
+inline def toJsonTypeSwitch[SuperType, A1: ToJSON, A2: ToJSON, A3: ToJSON, A4: ToJSON, A5: ToJSON](ignoredList: List[Nothing]): ToJSON[SuperType] =
+  toJsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5)]
+// format: on
+
+// fromJsonTypeSwitch is used up to 4 parameters (only in tests)
+// format: off
+inline def fromJsonTypeSwitch[SuperType, A1: FromJSON](ignoredList: List[Nothing]): FromJSON[SuperType] =
+  fromJsonTypeSwitch[SuperType, Tuple1[A1]]
+inline def fromJsonTypeSwitch[SuperType, A1: FromJSON, A2: FromJSON](ignoredList: List[Nothing]): FromJSON[SuperType] =
+  fromJsonTypeSwitch[SuperType, (A1, A2)]
+inline def fromJsonTypeSwitch[SuperType, A1: FromJSON, A2: FromJSON, A3: FromJSON](ignoredList: List[Nothing]): FromJSON[SuperType] =
+  fromJsonTypeSwitch[SuperType, (A1, A2, A3)]
+inline def fromJsonTypeSwitch[SuperType, A1: FromJSON, A2: FromJSON, A3: FromJSON, A4: FromJSON](ignoredList: List[Nothing]): FromJSON[SuperType] =
+  fromJsonTypeSwitch[SuperType, (A1, A2, A3, A4)]
+inline def fromJsonTypeSwitch[SuperType, A1: FromJSON, A2: FromJSON, A3: FromJSON, A4: FromJSON, A5: FromJSON](ignoredList: List[Nothing]): FromJSON[SuperType] =
+  fromJsonTypeSwitch[SuperType, (A1, A2, A3, A4, A5)]
+// format: on
