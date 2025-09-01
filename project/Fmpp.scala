@@ -9,7 +9,7 @@ import java.io.File
 // inspiration: https://github.com/sbt/sbt-fmpp/blob/master/src/main/scala/FmppPlugin.scala
 
 object Fmpp {
-  private lazy val fmpp = TaskKey[Seq[File]]("fmpp")
+  lazy val fmpp = TaskKey[Seq[File]]("fmpp")
   private lazy val fmppOptions = SettingKey[Seq[String]]("fmppOptions")
   private lazy val FmppConfig = config("fmpp") hide
 
@@ -23,7 +23,6 @@ object Fmpp {
 
   private def fmppConfigSettings(c: Configuration): Seq[Setting[_]] = inConfig(c)(
     Seq(
-      Compile / sourceGenerators += fmpp.taskValue,
       fmpp := fmppTask.value,
       sources := managedSources.value
     ))
