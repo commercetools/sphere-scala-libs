@@ -34,7 +34,9 @@ class SubTypeNameSpec extends AnyWordSpec with Matchers {
         subTypeNames)
     }
 
-    "return only class names in nested trait hierarchies" in {
+    "return all subtype names in nested trait hierarchies" in {
+      // I think this should only return class names, as we have no use for the trait names
+      // But it works like this at the moment, so I added a test
       val format: JSON[SuperType2] =
         jsonTypeSwitch[SuperType2, SubType1, SubType2](Nil)
 

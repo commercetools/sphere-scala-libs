@@ -3,7 +3,6 @@ package io.sphere.json.generic
 import io.sphere.json.JSON
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import io.sphere.json.generic.deriveJSON
 
 class SubTypeNameSpec extends AnyWordSpec with Matchers {
   import SubTypeNameSpec._
