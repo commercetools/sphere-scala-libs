@@ -1,9 +1,9 @@
 package io.sphere.mongo
 
 import com.mongodb.{BasicDBObject, DBObject}
-import org.scalatest.matchers.must.Matchers
-import io.sphere.mongo.format.MongoFormat
 import io.sphere.mongo.format.DefaultMongoFormats._
+import io.sphere.mongo.format.MongoFormat
+import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 object SerializationTest {
@@ -36,18 +36,47 @@ class SerializationTest extends AnyWordSpec with Matchers {
     }
 
     "generate a format that use default values" in {
-      val dbo = new BasicDBObject()
-      dbo.put("a", Integer.valueOf(3))
+      implicit val mongoFormat: MongoFormat[Something] = io.sphere.mongo.generic.deriveMongoFormat
 
-      val mongoFormat: MongoFormat[Something] = io.sphere.mongo.generic.deriveMongoFormat
-      val something = mongoFormat.fromMongoValue(dbo)
-      something must be(Something(Some(3), 2))
+      val sthObj1 = {
+        val dbo = new BasicDBObject()
+        dbo.put("a", Integer.valueOf(3))
+        dbo
+      }
+      val s1 = MongoFormat[Something].fromMongoValue(sthObj1)
+      s1 must be(Something(a = Some(3), b = 2))
+
+      val sthObj2 = new BasicDBObject() // an empty object
+      val s2 = MongoFormat[Something].fromMongoValue(sthObj2)
+      s2 must be(Something(a = None, b = 2))
+
+      val sthObj3 = {
+        val dbo = new BasicDBObject()
+        dbo.put("b", Integer.valueOf(33))
+        dbo
+      }
+      val s3 = MongoFormat[Something].fromMongoValue(sthObj3)
+      s3 must be(Something(a = None, b = 33))
+
+      val sthObj4 = {
+        val dbo = new BasicDBObject()
+        dbo.put("a", Integer.valueOf(33))
+        dbo.put("b", Integer.valueOf(44))
+        dbo
+      }
+      val s4 = MongoFormat[Something].fromMongoValue(sthObj4)
+      s4 must be(Something(a = Some(33), b = 44))
+
     }
   }
 
   "mongoEnum" must {
-    "serialize and deserialize enums" in {
+    "serialize and deserialize enumerations" in {
       val mongo: MongoFormat[Color.Value] = generic.mongoEnum(Color)
+
+      val colors = List(Color.Red, Color.Yellow, Color.Blue)
+      val roundTripColors = colors.map(mongo.toMongoValue).map(mongo.fromMongoValue)
+      colors must be(roundTripColors)
 
       // mongo java driver knows how to encode/decode Strings
       val serializedObject = mongo.toMongoValue(Color.Red).asInstanceOf[String]
@@ -57,5 +86,4 @@ class SerializationTest extends AnyWordSpec with Matchers {
       enumValue must be(Color.Red)
     }
   }
-
 }
