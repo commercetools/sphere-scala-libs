@@ -33,33 +33,31 @@ object JSONSpecScala2 {
 class JSONSpecScala2 extends AnyFunSpec with Matchers {
   import JSONSpecScala2._
 
-    it("must provide derived instances for singleton objects") {
-      implicit val toSingletonJSON = toJsonSingleton(Singleton)
-      implicit val fromSingletonJSON = fromJsonSingleton(Singleton)
-      val json = s"""[${toJSON(Singleton)}]"""
-      withClue(json) {
-        fromJSON[Seq[Singleton.type]](json) must equal(Valid(Seq(Singleton)))
-      }
-
-      // ToJSON
-      implicit val toSingleAJSON = toJsonSingleton(SingletonA)
-      implicit val toSingleBJSON = toJsonSingleton(SingletonB)
-      implicit val toSingleCJSON = toJsonSingleton(SingletonC)
-      implicit val toSingleEnumJSON =
-        toJsonSingletonEnumSwitch[SingletonEnum, SingletonA.type, SingletonB.type, SingletonC.type](
-          Nil)
-      // FromJSON
-      implicit val fromSingleAJSON = fromJsonSingleton(SingletonA)
-      implicit val fromSingleBJSON = fromJsonSingleton(SingletonB)
-      implicit val fromSingleCJSON = fromJsonSingleton(SingletonC)
-      implicit val fromSingleEnumJSON = fromJsonSingletonEnumSwitch[
-        SingletonEnum,
-        SingletonA.type,
-        SingletonB.type,
-        SingletonC.type](Nil)
-
-      List(SingletonA, SingletonB, SingletonC).foreach { s: SingletonEnum =>
-        fromJSON[SingletonEnum](toJSON(s)) must equal(Valid(s))
-      }
+  it("must provide derived instances for singleton objects") {
+    implicit val toSingletonJSON = toJsonSingleton(Singleton)
+    implicit val fromSingletonJSON = fromJsonSingleton(Singleton)
+    val json = s"""[${toJSON(Singleton)}]"""
+    withClue(json) {
+      fromJSON[Seq[Singleton.type]](json) must equal(Valid(Seq(Singleton)))
     }
+
+    // ToJSON
+    implicit val toSingleAJSON = toJsonSingleton(SingletonA)
+    implicit val toSingleBJSON = toJsonSingleton(SingletonB)
+    implicit val toSingleCJSON = toJsonSingleton(SingletonC)
+    implicit val toSingleEnumJSON =
+      toJsonSingletonEnumSwitch[SingletonEnum, SingletonA.type, SingletonB.type, SingletonC.type](
+        Nil)
+    // FromJSON
+    implicit val fromSingleAJSON = fromJsonSingleton(SingletonA)
+    implicit val fromSingleBJSON = fromJsonSingleton(SingletonB)
+    implicit val fromSingleCJSON = fromJsonSingleton(SingletonC)
+    implicit val fromSingleEnumJSON =
+      fromJsonSingletonEnumSwitch[SingletonEnum, SingletonA.type, SingletonB.type, SingletonC.type](
+        Nil)
+
+    List(SingletonA, SingletonB, SingletonC).foreach { s: SingletonEnum =>
+      fromJSON[SingletonEnum](toJSON(s)) must equal(Valid(s))
+    }
+  }
 }
