@@ -11,7 +11,7 @@ import java.io.File
 object Fmpp {
   private lazy val fmpp = TaskKey[Seq[File]]("fmpp")
   private lazy val fmppOptions = SettingKey[Seq[String]]("fmppOptions")
-  private lazy val FmppConfig = config("fmpp") hide
+  private lazy val FmppConfig = config("fmpp").hide
 
   lazy val settings = fmppConfigSettings(Compile) ++ Seq(
     libraryDependencies += "net.sourceforge.fmpp" % "fmpp" % "0.9.16" % FmppConfig.name,
