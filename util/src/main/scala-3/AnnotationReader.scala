@@ -14,7 +14,8 @@ case class Field(
 case class TypeMetaData(
     scalaName: String,
     typeHintRaw: Option[String],
-    fields: Vector[Field]
+    fields: Vector[Field],
+    typeDiscriminator: Option[String]
 ) {
   val typeHint: Option[String] =
     typeHintRaw.filterNot(_.toList.forall(_ == ' '))
@@ -66,11 +67,18 @@ class AnnotationReader(using q: Quotes)(
       case Some(th) => '{ Some($th) }
       case None => '{ None }
     }
+    val typeHintField =
+      sym.annotations.map(findTypeHintField).find(_.isDefined).flatten match {
+        case Some(thf) => '{ Some($thf) }
+        case None => '{ None }
+      }
+
     '{
       TypeMetaData(
         scalaName = $name,
         typeHintRaw = $typeHint,
-        fields = Vector.empty
+        fields = Vector.empty,
+        typeDiscriminator = $typeHintField
       )
     }
   }
@@ -87,12 +95,18 @@ class AnnotationReader(using q: Quotes)(
       case Some(th) => '{ Some($th) }
       case None => '{ None }
     }
+    val typeHintField =
+      sym.annotations.map(findTypeHintField).find(_.isDefined).flatten match {
+        case Some(thf) => '{ Some($thf) }
+        case None => '{ None }
+      }
 
     '{
       TypeMetaData(
         scalaName = $name,
         typeHintRaw = $typeHint,
-        fields = Vector($fields*)
+        fields = Vector($fields*),
+        typeDiscriminator = $typeHintField
       )
     }
   }
@@ -125,6 +139,7 @@ class AnnotationReader(using q: Quotes)(
 
   private def subtypeAnnotation(sym: Symbol): Expr[(String, TypeMetaData)] = {
     val name = Expr(sym.name)
+    // here I can fix both things
     val annots = typeMetaData(sym)
     '{ ($name, $annots) }
   }
@@ -142,11 +157,13 @@ class AnnotationReader(using q: Quotes)(
         case None => '{ None }
       }
 
+    val subTypeAnnots = subtypeAnnotations(sym)
+
     '{
       TraitMetaData(
         top = ${ typeMetaData(sym) },
         typeHintFieldRaw = $typeHintField,
-        subtypes = ${ subtypeAnnotations(sym) }
+        subtypes = $subTypeAnnots
       )
     }
   }

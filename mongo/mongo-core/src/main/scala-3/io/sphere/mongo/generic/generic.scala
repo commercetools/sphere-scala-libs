@@ -7,6 +7,7 @@ import org.bson.BSONObject
 
 import scala.deriving.Mirror
 import scala.compiletime.{constValueTuple, erasedValue, error, summonInline}
+import scala.reflect.ClassTag
 
 inline def deriveMongoFormat[A](using Mirror.Of[A]): MongoFormat[A] = MongoFormat.derived
 
@@ -18,46 +19,59 @@ def mongoEnum(e: Enumeration): MongoFormat[e.Value] = new MongoFormat[e.Value] {
 
 inline def mongoTypeSwitch[SuperType, SubTypeTuple <: Tuple]: MongoFormat[SuperType] = {
   val traitMetaData = MongoAnnotationReader.readTraitMetaData[SuperType]
+  println(s"--> $traitMetaData")
   val typeHintMap = traitMetaData.serializedNamesOfSubTypes
-  val reverseTypeHintMap = typeHintMap.map((on, n) => (n, on))
   val formatters = summonFormatters[SubTypeTuple]()
-  val subTypeNames = summonMetaData[SubTypeTuple]()
+  val subTypeMetaData = summonMetaData[SubTypeTuple]()
 
-  val pairedFormatterWithSubtypeName = subTypeNames.map(_.scalaName).zip(formatters)
+  val pairedFormatterWithSubtypeName = subTypeMetaData.map(_.scalaName).zip(formatters)
   val (caseClassFormatterList, traitFormatters) = pairedFormatterWithSubtypeName.partitionMap {
-    case kv @ (name, formatter) =>
-      formatter match {
-        case traitFormatter: TraitMongoFormat[_] => Right(traitFormatter)
-        case _ => Left(kv)
+    case (scalaName, formatterEither) =>
+      formatterEither match {
+        case Right(traitFormatter: TraitMongoFormat[_]) =>
+          println(s"trait case -${traitFormatter}")
+          Right(traitFormatter)
+
+        case Left(clazz, formatter) =>
+          println(s"class case -$clazz")
+          val serializedName = typeHintMap.getOrElse(scalaName, scalaName)
+          val readFormat = serializedName -> formatter
+          val writeFormat = clazz -> formatter.mapToMongo { bson =>
+            bson.asInstanceOf[BasicDBObject].put(traitMetaData.typeDiscriminator, serializedName)
+            bson
+          }
+          Left((readFormat, writeFormat))
       }
   }
-  val caseClassFormatters = caseClassFormatterList.toMap
+
+  val (ownReadFormatters, ownWriteFormatters) = caseClassFormatterList.unzip
+  val childReadFormatters = traitFormatters.map(_.readFormatters).fold(Map.empty)(_ ++ _)
+  val childWriteFormatters = traitFormatters.map(_.writeFormatters).fold(Map.empty)(_ ++ _)
+
+  val allReadFormatters =
+    (childReadFormatters ++ ownReadFormatters).asInstanceOf[Map[String, MongoFormat[SuperType]]]
+  val allWriteFormatters =
+    (childWriteFormatters ++ ownWriteFormatters).asInstanceOf[Map[Class[_], MongoFormat[SuperType]]]
+
+  println(s">>>> write ${allWriteFormatters.map(_._1.toString)}")
+  println(s"<<<< read  ${allReadFormatters.map(_._1)}")
 
   TraitMongoFormat.instance(
     toMongo = { a =>
-      traitFormatters.view.map(_.attemptWrite(a)).find(_.isSuccess).map(_.get) match {
-        case Some(bson) => bson
-        case None =>
-          val scalaTypeName = a.asInstanceOf[Product].productPrefix
-          val serializedTypeName = typeHintMap.getOrElse(scalaTypeName, scalaTypeName)
-          val bson =
-            caseClassFormatters(scalaTypeName).toMongoValue(a).asInstanceOf[BasicDBObject]
-          bson.put(traitMetaData.typeDiscriminator, serializedTypeName)
-          bson
-      }
+      println(s">>> pname ${a.asInstanceOf[Product].productPrefix}")
+      allWriteFormatters(a.getClass).toMongoValue(a)
     },
     fromMongo = {
       case bson: BasicDBObject =>
-        traitFormatters.view.map(_.attemptRead(bson)).find(_.isSuccess).map(_.get) match {
-          case Some(a) => a.asInstanceOf[SuperType]
-          case None =>
-            val serializedTypeName = bson.get(traitMetaData.typeDiscriminator).asInstanceOf[String]
-            val scalaTypeName = reverseTypeHintMap.getOrElse(serializedTypeName, serializedTypeName)
-            caseClassFormatters(scalaTypeName).fromMongoValue(bson).asInstanceOf[SuperType]
-        }
+        val serializedTypeName = bson.get(traitMetaData.typeDiscriminator).asInstanceOf[String]
+        println(s";;;;; ${traitMetaData.typeDiscriminator} -> $serializedTypeName")
+        allReadFormatters(serializedTypeName).fromMongoValue(bson)
       case x =>
         throw new Exception(s"BsonObject is expected for a Trait subtype, instead got $x")
-    }
+    },
+    readFormattersPassedToParent = allReadFormatters,
+    writeFormattersPassedToParent = allWriteFormatters,
+    typeDiscriminatorPassedToParent = traitMetaData.typeDiscriminator
   )
 }
 
@@ -72,11 +86,19 @@ inline private def summonMetaData[T <: Tuple](
       summonMetaData[ts](acc :+ MongoAnnotationReader.readTypeMetaData[t])
   }
 
+private type FormatterAlias = Either[(Class[_], MongoFormat[Any]), TraitMongoFormat[Any]]
+
 inline private def summonFormatters[T <: Tuple](
-    acc: Vector[MongoFormat[Any]] = Vector.empty): Vector[MongoFormat[Any]] =
+    acc: Vector[FormatterAlias] = Vector.empty): Vector[FormatterAlias] =
   inline erasedValue[T] match {
     case _: EmptyTuple => acc
     case _: (t *: ts) =>
-      val headFormatter = summonInline[MongoFormat[t]].asInstanceOf[MongoFormat[Any]]
-      summonFormatters[ts](acc :+ headFormatter)
+      summonInline[MongoFormat[t]].asInstanceOf[MongoFormat[Any]] match {
+        case traitFormat: TraitMongoFormat[_] => summonFormatters[ts](acc :+ Right(traitFormat))
+
+        case caseClassFormat =>
+          val clazz = summonInline[ClassTag[t]].runtimeClass
+          summonFormatters[ts](acc :+ Left(clazz -> caseClassFormat))
+      }
+
   }
