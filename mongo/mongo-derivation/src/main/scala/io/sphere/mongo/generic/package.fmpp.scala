@@ -116,7 +116,7 @@ package object generic extends Logging {
     * for the subtypes `A1` and `A2`, delegating to their respective MongoFormat instances based
     * on a field that acts as a type hint. */
   def mongoTypeSwitch[T: ClassTag, A1 <: T: ClassTag: MongoFormat, A2 <: T: ClassTag: MongoFormat](
-      selectors: List[TypeSelector[_]]): MongoFormat[T] with TypeSelectorContainer = {
+      selectors: List[TypeSelector[_]]): MongoFormat[T] with MongoTypeSelectorContainer = {
     val allSelectors = typeSelector[A1]() :: typeSelector[A2]() :: selectors
     val readMapBuilder = Map.newBuilder[String, TypeSelector[_]]
     val writeMapBuilder = Map.newBuilder[Class[_], TypeSelector[_]]
@@ -131,7 +131,7 @@ package object generic extends Logging {
     val fieldWithMongoTypeHintField = clazz.getAnnotation(classOf[MongoTypeHintField])
     val typeField = if (fieldWithMongoTypeHintField != null) fieldWithMongoTypeHintField.value() else defaultTypeFieldName
 
-    new MongoFormat[T] with TypeSelectorContainer {
+    new MongoFormat[T] with MongoTypeSelectorContainer {
       def fromMongoValue(any: Any): T = any match {
         case dbo: BSONObject =>
           findTypeValue(dbo, typeField) match {
@@ -167,12 +167,12 @@ package object generic extends Logging {
   <#list 3..126 as i>
   <#assign typeParams><#list 1..i-1 as j>A${j}<#if i-1 != j>,</#if></#list></#assign>
   <#assign implTypeParams><#list 1..i as j>A${j} <: T : MongoFormat : ClassTag<#if i !=j>,</#if></#list></#assign>
-  def mongoTypeSwitch[T: ClassTag, ${implTypeParams}](selectors: List[TypeSelector[_]]): MongoFormat[T] with TypeSelectorContainer =
+  def mongoTypeSwitch[T: ClassTag, ${implTypeParams}](selectors: List[TypeSelector[_]]): MongoFormat[T] with MongoTypeSelectorContainer =
     mongoTypeSwitch[T, ${typeParams}](typeSelector[A${i}]() :: selectors)
   </#list>
 
 
-  trait TypeSelectorContainer {
+  trait MongoTypeSelectorContainer {
     def typeSelectors: List[TypeSelector[_]]
   }
 

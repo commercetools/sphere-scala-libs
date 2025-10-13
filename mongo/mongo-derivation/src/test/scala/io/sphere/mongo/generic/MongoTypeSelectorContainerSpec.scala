@@ -11,8 +11,8 @@ class MongoTypeSelectorContainerSpec extends AnyWordSpec with Matchers {
 
   "TypeSelectorContainer should be able to merge traits" in {
 
-    val typeSelectors1 = CartEvent2.mongo.asInstanceOf[TypeSelectorContainer].typeSelectors
-    val typeSelectors2 = CartEvent1.mongo.asInstanceOf[TypeSelectorContainer].typeSelectors
+    val typeSelectors1 = CartEvent1.mongo.asInstanceOf[MongoTypeSelectorContainer].typeSelectors
+    val typeSelectors2 = CartEvent2.mongo.asInstanceOf[MongoTypeSelectorContainer].typeSelectors
 
     val mergedInstance: MongoFormat[CartEvent] =
       mongoTypeSwitch[CartEvent, CartEvent1](typeSelectors1 ::: typeSelectors2)
