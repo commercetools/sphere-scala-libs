@@ -5,6 +5,8 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.language.postfixOps
+import cats.data.Validated.Invalid
+import cats.data.Validated.Valid
 
 class MoneySpec extends AnyFunSpec with Matchers with ScalaCheckDrivenPropertyChecks {
   import Money.ImplicitsDecimal._
@@ -36,8 +38,17 @@ class MoneySpec extends AnyFunSpec with Matchers with ScalaCheckDrivenPropertyCh
 
     it(
       "should not accept an amount with an invalid scale for the used currency when using the constructor directly.") {
+      val result = Money(1.0001, java.util.Currency.getInstance("EUR"))
+      result.isInvalid must be(true)
+      result match {
+        case Invalid(e) => e mustBe an[IllegalArgumentException]
+        case Valid(a) => fail("Expected an Invalid result")
+      }
+    }
+
+    it("should return an InvalidArgumentException when using the unsafeApply method") {
       an[IllegalArgumentException] must be thrownBy {
-        Money(1.0001, java.util.Currency.getInstance("EUR"))
+        Money.unsafeApply(1.0001, java.util.Currency.getInstance("EUR"))
       }
     }
 
