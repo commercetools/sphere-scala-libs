@@ -16,9 +16,6 @@ import ValidatedFlatMapFeature._
 import io.sphere.util.BaseMoney.bigDecimalToMoneyLong
 import io.sphere.util.Money.ImplicitsDecimal.MoneyNotation
 import cats.data.Validated
-import scala.util.Try
-import scala.util.Failure
-import scala.util.Success
 
 class MoneyOverflowException extends RuntimeException("A Money operation resulted in an overflow.")
 
@@ -267,9 +264,10 @@ object Money {
   }
 
   def apply(amount: BigDecimal, currency: Currency): Validated[Throwable, Money] =
-    Try(unsafeApply(amount, currency)) match {
-      case Failure(exception) => exception.invalid
-      case Success(value) => value.valid
+    try
+      unsafeApply(amount, currency).valid
+    catch {
+      case e: Throwable => e.invalid
     }
 
   def unsafeApply(amount: BigDecimal, currency: Currency): Money = {
