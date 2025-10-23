@@ -23,7 +23,7 @@ class SumTypesDerivingScala3Spec extends AnyWordSpec with Matchers {
 
     "nested trait case 1: @MongoTypeHintField only on a subtype case class" in {
       // This was compile time checked in scala 2, so far I couldn't make it work easily, but it will fail during test running
-      // TODO make this fail in compile time
+      // TODO make this fail in compile time or figure out a way to resolve nested @MongoTypeHintFields
       val exception = intercept[Exception](deriveMongoFormat[Color5])
 
       exception.getMessage must be(
@@ -32,7 +32,7 @@ class SumTypesDerivingScala3Spec extends AnyWordSpec with Matchers {
 
     "nested trait case 2: @MongoTypeHintField on a subtype case class and the supertype" in {
       // This was compile time checked in scala 2, so far I couldn't make it work easily, but it will fail during test running
-      // TODO make this fail in compile time
+      // TODO make this fail in compile time or figure out a way to resolve nested @MongoTypeHintFields
       val exception = intercept[Exception](deriveMongoFormat[Color6])
 
       exception.getMessage must be(
