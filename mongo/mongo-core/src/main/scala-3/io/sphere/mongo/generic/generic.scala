@@ -78,7 +78,8 @@ inline private def summonMetaData[T <: Tuple](
       val data = MongoAnnotationReader.readTypeMetaData[t]
       if (data.typeDiscriminator.exists(_ != topLevelDiscriminator)) {
         // So far I didn't find an easy way to add this as a compile time check.
-        throw new Exception(s"SubType: ${data.scalaName} has a different @MongoTypeHintField then its SuperType")
+        throw new Exception(
+          s"SubType: ${data.scalaName} has a different @MongoTypeHintField then its SuperType")
       }
       summonMetaData[ts](topLevelDiscriminator, acc :+ data)
   }
