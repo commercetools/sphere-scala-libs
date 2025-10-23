@@ -1,7 +1,7 @@
 import pl.project13.scala.sbt.JmhPlugin
 
-lazy val scala213 = "2.13.16"
-lazy val scala3 = "3.3.5"
+lazy val scala213 = "2.13.17"
+lazy val scala3 = "3.3.7"
 
 // sbt-github-actions needs configuration in `ThisBuild`
 ThisBuild / crossScalaVersions := Seq(scala213, scala3)
@@ -57,8 +57,8 @@ lazy val standardSettings = Defaults.coreDefaultSettings ++ Seq(
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "3.2.19" % Test,
     "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % Test,
-    "org.scalacheck" %% "scalacheck" % "1.18.1" % Test,
-    "ch.qos.logback" % "logback-classic" % "1.5.18" % Test
+    "org.scalacheck" %% "scalacheck" % "1.19.0" % Test,
+    "ch.qos.logback" % "logback-classic" % "1.5.20" % Test
   ),
   ThisBuild / shellPrompt := { state ⇒
     scala.Console.CYAN + Project.extract(state).currentRef.project + "> " + scala.Console.RESET

@@ -15,6 +15,7 @@ import scala.math.BigDecimal.RoundingMode
 import ValidatedFlatMapFeature._
 import io.sphere.util.BaseMoney.bigDecimalToMoneyLong
 import io.sphere.util.Money.ImplicitsDecimal.MoneyNotation
+import cats.data.Validated
 
 class MoneyOverflowException extends RuntimeException("A Money operation resulted in an overflow.")
 
@@ -262,7 +263,14 @@ object Money {
     Money(bigDecimalToMoneyLong(centAmountBigDecimalZeroScale), currency)
   }
 
-  def apply(amount: BigDecimal, currency: Currency): Money = {
+  def apply(amount: BigDecimal, currency: Currency): Validated[Throwable, Money] =
+    try
+      unsafeApply(amount, currency).valid
+    catch {
+      case e: Throwable => e.invalid
+    }
+
+  def unsafeApply(amount: BigDecimal, currency: Currency): Money = {
     require(
       amount.scale == currency.getDefaultFractionDigits,
       "The scale of the given amount does not match the scale of the provided currency." +
@@ -271,7 +279,7 @@ object Money {
     fromDecimalAmount(amount, currency)(BigDecimal.RoundingMode.UNNECESSARY)
   }
 
-  def apply(centAmount: Long, currency: Currency): Money = new Money(centAmount, currency)
+  def unsafeApply(centAmount: Long, currency: Currency): Money = new Money(centAmount, currency)
 
   private final val bdOne: BigDecimal = BigDecimal(1)
   final val bdTen: BigDecimal = BigDecimal(10)
