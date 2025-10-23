@@ -2,7 +2,7 @@ package io.sphere.mongo.generic
 
 import io.sphere.util.{AnnotationReader, TraitMetaData, TypeMetaData}
 
-import scala.quoted.{Expr, Quotes, Type, Varargs}
+import scala.quoted.{Expr, Quotes, Type}
 
 object MongoAnnotationReader {
 

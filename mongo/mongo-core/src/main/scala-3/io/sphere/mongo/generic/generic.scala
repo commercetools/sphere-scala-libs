@@ -19,21 +19,18 @@ def mongoEnum(e: Enumeration): MongoFormat[e.Value] = new MongoFormat[e.Value] {
 
 inline def mongoTypeSwitch[SuperType, SubTypeTuple <: Tuple]: MongoFormat[SuperType] = {
   val traitMetaData = MongoAnnotationReader.readTraitMetaData[SuperType]
-  println(s"--> $traitMetaData")
   val typeHintMap = traitMetaData.serializedNamesOfSubTypes
   val formatters = summonFormatters[SubTypeTuple]()
-  val subTypeMetaData = summonMetaData[SubTypeTuple]()
+  val subTypeMetaData = summonMetaData[SubTypeTuple](traitMetaData.typeDiscriminator)
 
   val pairedFormatterWithSubtypeName = subTypeMetaData.map(_.scalaName).zip(formatters)
   val (caseClassFormatterList, traitFormatters) = pairedFormatterWithSubtypeName.partitionMap {
     case (scalaName, formatterEither) =>
       formatterEither match {
         case Right(traitFormatter: TraitMongoFormat[_]) =>
-          println(s"trait case -${traitFormatter}")
           Right(traitFormatter)
 
         case Left(clazz, formatter) =>
-          println(s"class case -$clazz")
           val serializedName = typeHintMap.getOrElse(scalaName, scalaName)
           val readFormat = serializedName -> formatter
           val writeFormat = clazz -> formatter.mapToMongo { bson =>
@@ -53,25 +50,19 @@ inline def mongoTypeSwitch[SuperType, SubTypeTuple <: Tuple]: MongoFormat[SuperT
   val allWriteFormatters =
     (childWriteFormatters ++ ownWriteFormatters).asInstanceOf[Map[Class[_], MongoFormat[SuperType]]]
 
-  println(s">>>> write ${allWriteFormatters.map(_._1.toString)}")
-  println(s"<<<< read  ${allReadFormatters.map(_._1)}")
-
   TraitMongoFormat.instance(
     toMongo = { a =>
-      println(s">>> pname ${a.asInstanceOf[Product].productPrefix}")
       allWriteFormatters(a.getClass).toMongoValue(a)
     },
     fromMongo = {
       case bson: BasicDBObject =>
         val serializedTypeName = bson.get(traitMetaData.typeDiscriminator).asInstanceOf[String]
-        println(s";;;;; ${traitMetaData.typeDiscriminator} -> $serializedTypeName")
         allReadFormatters(serializedTypeName).fromMongoValue(bson)
       case x =>
         throw new Exception(s"BsonObject is expected for a Trait subtype, instead got $x")
     },
     readFormattersPassedToParent = allReadFormatters,
-    writeFormattersPassedToParent = allWriteFormatters,
-    typeDiscriminatorPassedToParent = traitMetaData.typeDiscriminator
+    writeFormattersPassedToParent = allWriteFormatters
   )
 }
 
@@ -79,11 +70,17 @@ private def findTypeValue(dbo: BSONObject, typeField: String): Option[String] =
   Option(dbo.get(typeField)).map(_.toString)
 
 inline private def summonMetaData[T <: Tuple](
+    topLevelDiscriminator: String,
     acc: Vector[TypeMetaData] = Vector.empty): Vector[TypeMetaData] =
   inline erasedValue[T] match {
     case _: EmptyTuple => acc
     case _: (t *: ts) =>
-      summonMetaData[ts](acc :+ MongoAnnotationReader.readTypeMetaData[t])
+      val data = MongoAnnotationReader.readTypeMetaData[t]
+      if (data.typeDiscriminator.exists(_ != topLevelDiscriminator)) {
+        // So far I didn't find an easy way to add this as a compile time check.
+        throw new Exception(s"SubType: ${data.scalaName} has a different @MongoTypeHintField then its SuperType")
+      }
+      summonMetaData[ts](topLevelDiscriminator, acc :+ data)
   }
 
 private type FormatterAlias = Either[(Class[_], MongoFormat[Any]), TraitMongoFormat[Any]]
@@ -94,7 +91,8 @@ inline private def summonFormatters[T <: Tuple](
     case _: EmptyTuple => acc
     case _: (t *: ts) =>
       summonInline[MongoFormat[t]].asInstanceOf[MongoFormat[Any]] match {
-        case traitFormat: TraitMongoFormat[_] => summonFormatters[ts](acc :+ Right(traitFormat))
+        case traitFormat: TraitMongoFormat[_] =>
+          summonFormatters[ts](acc :+ Right(traitFormat))
 
         case caseClassFormat =>
           val clazz = summonInline[ClassTag[t]].runtimeClass

@@ -35,7 +35,6 @@ trait MongoFormat[A] extends Serializable {
 trait TraitMongoFormat[A] extends MongoFormat[A] {
   val readFormatters: Map[String, MongoFormat[A]]
   val writeFormatters: Map[Class[_], MongoFormat[A]]
-  val typeDiscriminator: String
 }
 
 object TraitMongoFormat {
@@ -44,13 +43,11 @@ object TraitMongoFormat {
       fromMongo: Any => A,
       toMongo: A => Any,
       readFormattersPassedToParent: Map[String, MongoFormat[A]],
-      writeFormattersPassedToParent: Map[Class[_], MongoFormat[A]],
-      typeDiscriminatorPassedToParent: String): TraitMongoFormat[A] = new {
+      writeFormattersPassedToParent: Map[Class[_], MongoFormat[A]]): TraitMongoFormat[A] = new {
     override def toMongoValue(a: A): Any = toMongo(a)
     override def fromMongoValue(mongoType: Any): A = fromMongo(mongoType)
     override val readFormatters: Map[String, MongoFormat[A]] = readFormattersPassedToParent
     override val writeFormatters: Map[Class[_], MongoFormat[A]] = writeFormattersPassedToParent
-    override val typeDiscriminator: String = typeDiscriminatorPassedToParent
   }
 }
 
