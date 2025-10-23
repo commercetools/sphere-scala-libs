@@ -1,3 +1,5 @@
+package io.sphere.mongo.generic
+
 import io.sphere.mongo.MongoUtils.dbObj
 import io.sphere.mongo.format.MongoFormat
 import org.scalatest.matchers.must.Matchers
