@@ -1,11 +1,10 @@
-package io.sphere.mongo.generic
-
 import io.sphere.mongo.MongoUtils.dbObj
 import io.sphere.mongo.format.MongoFormat
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import io.sphere.mongo.format.DefaultMongoFormats._
 
+// This is scala2 only because the only use case for this so far is a limitation of the scala 2 approach and it's easier to use version specific implementations than to port this approach to scala3
 class MongoTypeSelectorContainerSpec extends AnyWordSpec with Matchers {
   import MongoTypeSelectorContainerSpec._
 
