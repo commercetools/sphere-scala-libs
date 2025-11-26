@@ -1,7 +1,7 @@
 import pl.project13.scala.sbt.JmhPlugin
 
 lazy val scala212 = "2.12.20"
-lazy val scala213 = "2.13.17"
+lazy val scala213 = "2.13.18"
 lazy val scala3 = "3.3.7"
 
 // sbt-github-actions needs configuration in `ThisBuild`
