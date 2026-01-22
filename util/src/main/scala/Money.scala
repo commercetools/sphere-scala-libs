@@ -4,7 +4,6 @@ import language.implicitConversions
 import java.math.MathContext
 import java.text.NumberFormat
 import java.util.{Currency, Locale}
-
 import cats.Monoid
 import cats.data.ValidatedNel
 import cats.syntax.validated._
@@ -368,8 +367,7 @@ case class HighPrecisionMoney private (
 
   val `type`: String = TypeName
 
-  lazy val amount: BigDecimal =
-    (BigDecimal(preciseAmount) * factor(fractionDigits)).setScale(fractionDigits)
+  lazy val amount: BigDecimal = preciseAmountToAmount(preciseAmount, fractionDigits)
 
   def withFractionDigits(fd: Int)(implicit mode: RoundingMode): HighPrecisionMoney = {
     val scaledAmount = amount.setScale(fd, mode)
@@ -491,6 +489,8 @@ case class HighPrecisionMoney private (
 }
 
 object HighPrecisionMoney {
+  import MoneyRounding._
+
   object ImplicitsDecimal {
     final implicit class HighPrecisionMoneyNotation(val amount: BigDecimal) extends AnyVal {
       def EUR: HighPrecisionMoney = HighPrecisionMoney.EUR(amount)
@@ -584,6 +584,9 @@ object HighPrecisionMoney {
   private def amountToPreciseAmount(amount: BigDecimal, fractionDigits: Int): Long =
     bigDecimalToMoneyLong(amount * Money.cachedCentPower(fractionDigits))
 
+  def preciseAmountToAmount(preciseAmount: Long, fractionDigits: Int): BigDecimal =
+    (BigDecimal(preciseAmount) * factor(fractionDigits)).setScale(fractionDigits)
+
   def fromDecimalAmount(amount: BigDecimal, fractionDigits: Int, currency: Currency)(implicit
       mode: RoundingMode): HighPrecisionMoney = {
     val scaledAmount = amount.setScale(fractionDigits, mode)
@@ -624,12 +627,9 @@ object HighPrecisionMoney {
       centAmount: Option[Long]): ValidatedNel[String, HighPrecisionMoney] =
     for {
       fd <- validateFractionDigits(fractionDigits, currency)
-      amount = BigDecimal(preciseAmount) * factor(fd)
-      scaledAmount = amount.setScale(fd, BigDecimal.RoundingMode.UNNECESSARY)
-      ca <- validateCentAmount(scaledAmount, centAmount, currency)
+      ca <- validateCentAmount(preciseAmount, fractionDigits, centAmount, currency)
       // TODO: revisit this part! the rounding mode might be dynamic and configured elsewhere
-      actualCentAmount = ca.getOrElse(
-        roundToCents(scaledAmount, currency)(BigDecimal.RoundingMode.HALF_EVEN))
+      actualCentAmount = ca.getOrElse(roundHalfEven(preciseAmount, fractionDigits, currency))
     } yield HighPrecisionMoney(preciseAmount, fd, actualCentAmount, currency)
 
   private def validateFractionDigits(
@@ -643,13 +643,14 @@ object HighPrecisionMoney {
       fractionDigits.validNel
 
   private def validateCentAmount(
-      amount: BigDecimal,
+      preciseAmount: Long,
+      fractionDigits: Int,
       centAmount: Option[Long],
       currency: Currency): ValidatedNel[String, Option[Long]] =
     centAmount match {
       case Some(actual) =>
-        val min = roundToCents(amount, currency)(RoundingMode.FLOOR)
-        val max = roundToCents(amount, currency)(RoundingMode.CEILING)
+        val min = roundFloor(preciseAmount, fractionDigits, currency)
+        val max = roundCeiling(preciseAmount, fractionDigits, currency)
 
         if (actual < min || actual > max)
           s"centAmount must be correctly rounded preciseAmount (a number between $min and $max).".invalidNel
