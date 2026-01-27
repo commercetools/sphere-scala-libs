@@ -2,6 +2,7 @@ package io.sphere.mongo
 
 import scala.annotation.meta.getter
 import scala.reflect.{ClassTag, classTag}
+import scala.util.control.NonFatal
 import scala.language.experimental.macros
 import io.sphere.mongo.format.MongoFormat
 import io.sphere.mongo.format._
@@ -57,7 +58,7 @@ package object generic extends Logging {
           case Some(t) => sys.error("Invalid type value '" + t + "'. Excepted '%s'".format(typeValue))
           case None => sys.error("Missing type field.")
         }
-        case _ => sys.error("DB object excepted.")
+        case _ => sys.error("DB object excepted but got %s.".format(any.getClass.getName))
       }
     }
   }
@@ -91,7 +92,7 @@ package object generic extends Logging {
             readField[A1](_firstField, dbo)<#if i!=1><#list 2..i as j>,
             readField[A${j}](_fields(${j-1}), dbo)</#list></#if>
           )
-        case _ => sys.error("Deserialization failed. DBObject expected.")
+        case _ => sys.error("Deserialization failed. DBObject expected but got %s.".format(any.getClass.getName))
       }
       override val fields: Set[String] = calculateFields()
       private def calculateFields(): Set[String] = {
@@ -141,7 +142,7 @@ package object generic extends Logging {
             }
             case None => sys.error("Missing type field '" + typeField + "' in DBObject '%s'.".format(dbo))
           }
-        case _ => sys.error("DBObject expected.")
+        case _ => sys.error("DBObject expected but got %s.".format(any.getClass.getName))
       }
       def toMongoValue(t: T): Any =
         writeMap.get(t.getClass) match {
@@ -152,7 +153,7 @@ package object generic extends Logging {
                 dbo.put(typeField, w.typeValue)
                 dbo
             }
-            case _ => throw new Exception("Excepted 'BSONObject'")
+            case any => throw new Exception("Excepted 'BSONObject' but got %s".format(any.getClass.getName))
           }
           case None => new BasicDBObject(defaultTypeFieldName, defaultTypeValue(t.getClass))
         }
@@ -256,7 +257,9 @@ package object generic extends Logging {
     else if (f.embedded) mf.fromMongoValue(dbo)
     else {
       val value = dbo.get(f.name)
-      if (value != null) mf.fromMongoValue(value)
+      if (value != null)
+        try mf.fromMongoValue(value)
+        catch { case NonFatal(e) => throw new Exception("Could not deserialize field '%s'".format(f.name), e) }
       else {
         default.getOrElse {
           throw new Exception("Missing required field '%s' on deserialization.".format(f.name))
