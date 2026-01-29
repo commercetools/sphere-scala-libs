@@ -28,7 +28,7 @@ object ToJSON extends ToJSONCatsInstances with generic.DeriveToJSON {
 
   private val emptyJArray = JArray(Nil)
   private val emptyJObject = JObject(Nil)
-  
+
   inline def apply[A](implicit instance: ToJSON[A]): ToJSON[A] = instance
   inline def apply[A: JSON]: ToJSON[A] = summon[ToJSON[A]]
 
