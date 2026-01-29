@@ -1,3 +1,3 @@
 libraryDependencies ++= Seq(
-  "org.mongodb" % "mongodb-driver-core" % "5.6.1"
+  "org.mongodb" % "mongodb-driver-core" % "5.6.2"
 )

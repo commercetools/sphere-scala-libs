@@ -38,6 +38,17 @@ class DeriveMongoformatSpec extends AnyWordSpec with Matchers {
           "pictureUrl" -> "http://example.com"))
     }
 
+    "fail with field name if value is not of expected type" in {
+      val e = the[Exception] thrownBy fromMongo[UserWithPicture](
+        dbObj(
+          "userId" -> "foo-123",
+          "pictureSize" -> "wrong type",
+          "pictureUrl" -> "http://example.com"))
+      e.getMessage() mustBe "Could not deserialize field 'pictureSize'"
+      e.getCause() mustNot be(null)
+      e.getCause().getMessage() mustBe "DBObject expected but got java.lang.String."
+    }
+
     "write normal singleton values" in {
       val dbo = toMongo[UserWithPicture](UserWithPicture("foo-123", Medium, "http://example.com"))
       dbo must be(
