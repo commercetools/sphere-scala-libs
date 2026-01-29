@@ -53,116 +53,106 @@ object FromJSON extends FromJSONCatsInstances with generic.DeriveFromJSON {
     override val fromFormatters: FromFormatters = fromFs
   }
 
-  implicit def optionMapReader[@specialized A](implicit
-      c: FromJSON[A]): FromJSON[Option[Map[String, A]]] =
-    new FromJSON[Option[Map[String, A]]] {
-      private val internalMapReader = mapReader[A]
+  given optionMapReader[A](using c: FromJSON[A]): FromJSON[Option[Map[String, A]]] with {
+    private val internalMapReader = mapReader[A]
 
-      def read(jval: JValue): JValidation[Option[Map[String, A]]] = jval match {
-        case JNothing | JNull => validNone
-        case x => internalMapReader.read(x).map(Some.apply)
-      }
+    def read(jval: JValue): JValidation[Option[Map[String, A]]] = jval match {
+      case JNothing | JNull => validNone
+      case x => internalMapReader.read(x).map(Some.apply)
+    }
+  }
+
+  given optionReader[A](using c: FromJSON[A]): FromJSON[Option[A]] with {
+    def read(jval: JValue): JValidation[Option[A]] = jval match {
+      case JNothing | JNull | JObject(Nil) => validNone
+      case JObject(s) if fields.nonEmpty && s.forall(t => !fields.contains(t._1)) =>
+        validNone // if none of the optional fields are in the JSON
+      case x => c.read(x).map(Option.apply)
     }
 
-  implicit def optionReader[@specialized A](implicit c: FromJSON[A]): FromJSON[Option[A]] =
-    new FromJSON[Option[A]] {
-      def read(jval: JValue): JValidation[Option[A]] = jval match {
-        case JNothing | JNull | JObject(Nil) => validNone
-        case JObject(s) if fields.nonEmpty && s.forall(t => !fields.contains(t._1)) =>
-          validNone // if none of the optional fields are in the JSON
-        case x => c.read(x).map(Option.apply)
-      }
+    override val fields: Set[String] = c.fields
+  }
 
-      override val fields: Set[String] = c.fields
-    }
-
-  implicit def listReader[@specialized A](implicit r: FromJSON[A]): FromJSON[List[A]] =
-    new FromJSON[List[A]] {
-
-      def read(jval: JValue): JValidation[List[A]] = jval match {
-        case JArray(l) =>
-          if (l.isEmpty) validList[A]
-          else {
-            // "imperative" style for performances
-            val errors = new ListBuffer[JSONError]()
-            val valids = new ListBuffer[A]()
-            var failedOnce: Boolean = false
-            l.foreach { jval =>
-              r.read(jval) match {
-                case Valid(s) if !failedOnce =>
-                  valids += s
-                case Invalid(nel) =>
-                  errors ++= nel.toList
-                  failedOnce = true
-                case _ => ()
-              }
+  given listReader[A](using r: FromJSON[A]): FromJSON[List[A]] with {
+    def read(jval: JValue): JValidation[List[A]] = jval match {
+      case JArray(l) =>
+        if (l.isEmpty) validList[A]
+        else {
+          // "imperative" style for performances
+          val errors = new ListBuffer[JSONError]()
+          val valids = new ListBuffer[A]()
+          var failedOnce: Boolean = false
+          l.foreach { jval =>
+            r.read(jval) match {
+              case Valid(s) if !failedOnce =>
+                valids += s
+              case Invalid(nel) =>
+                errors ++= nel.toList
+                failedOnce = true
+              case _ => ()
             }
-            if (errors.isEmpty)
-              Valid(valids.result())
-            else
-              Invalid(NonEmptyList.fromListUnsafe(errors.result()))
           }
-        case _ => fail("JSON Array expected.")
-      }
-    }
-
-  implicit def seqReader[@specialized A](implicit r: FromJSON[A]): FromJSON[Seq[A]] =
-    new FromJSON[Seq[A]] {
-      def read(jval: JValue): JValidation[Seq[A]] = listReader(r).read(jval)
-    }
-
-  implicit def setReader[@specialized A](implicit r: FromJSON[A]): FromJSON[Set[A]] =
-    new FromJSON[Set[A]] {
-      def read(jval: JValue): JValidation[Set[A]] = jval match {
-        case JArray(l) =>
-          if (l.isEmpty) Valid(Set.empty)
-          else listReader(r).read(jval).map(Set.apply(_: _*))
-        case _ => fail("JSON Array expected.")
-      }
-    }
-
-  implicit def vectorReader[@specialized A](implicit r: FromJSON[A]): FromJSON[Vector[A]] =
-    new FromJSON[Vector[A]] {
-
-      import scala.collection.immutable.VectorBuilder
-
-      def read(jval: JValue): JValidation[Vector[A]] = jval match {
-        case JArray(l) =>
-          if (l.isEmpty) validEmptyVector
-          else {
-            // "imperative" style for performances
-            val errors = new ListBuffer[JSONError]()
-            val valids = new VectorBuilder[A]()
-            var failedOnce: Boolean = false
-            l.foreach { jval =>
-              r.read(jval) match {
-                case Valid(s) if !failedOnce =>
-                  valids += s
-                case Invalid(nel) =>
-                  errors ++= nel.toList
-                  failedOnce = true
-                case _ => ()
-              }
-            }
-            if (errors.isEmpty)
-              Valid(valids.result())
-            else
-              Invalid(NonEmptyList.fromListUnsafe(errors.result()))
-          }
-        case _ => fail("JSON Array expected.")
-      }
-    }
-
-  implicit def nonEmptyListReader[A](implicit r: FromJSON[A]): FromJSON[NonEmptyList[A]] =
-    new FromJSON[NonEmptyList[A]] {
-      def read(jval: JValue): JValidation[NonEmptyList[A]] =
-        fromJValue[List[A]](jval).andThen {
-          case head :: tail => Valid(NonEmptyList(head, tail))
-          case Nil => fail("Non-empty JSON array expected")
+          if (errors.isEmpty)
+            Valid(valids.result())
+          else
+            Invalid(NonEmptyList.fromListUnsafe(errors.result()))
         }
+      case _ => fail("JSON Array expected.")
     }
+  }
 
-  implicit val intReader: FromJSON[Int] = new FromJSON[Int] {
+  given seqReader[A](using r: FromJSON[A]): FromJSON[Seq[A]] with {
+    def read(jval: JValue): JValidation[Seq[A]] = summon[FromJSON[List[A]]].read(jval)
+  }
+
+  given setReader[A](using r: FromJSON[A]): FromJSON[Set[A]] with {
+    def read(jval: JValue): JValidation[Set[A]] = jval match {
+      case JArray(l) =>
+        if (l.isEmpty) Valid(Set.empty)
+        else summon[FromJSON[List[A]]].read(jval).map(Set.apply(_: _*))
+      case _ => fail("JSON Array expected.")
+    }
+  }
+
+  given vectorReader[A](using r: FromJSON[A]): FromJSON[Vector[A]] with {
+    import scala.collection.immutable.VectorBuilder
+
+    def read(jval: JValue): JValidation[Vector[A]] = jval match {
+      case JArray(l) =>
+        if (l.isEmpty) validEmptyVector
+        else {
+          // "imperative" style for performances
+          val errors = new ListBuffer[JSONError]()
+          val valids = new VectorBuilder[A]()
+          var failedOnce: Boolean = false
+          l.foreach { jval =>
+            r.read(jval) match {
+              case Valid(s) if !failedOnce =>
+                valids += s
+              case Invalid(nel) =>
+                errors ++= nel.toList
+                failedOnce = true
+              case _ => ()
+            }
+          }
+          if (errors.isEmpty)
+            Valid(valids.result())
+          else
+            Invalid(NonEmptyList.fromListUnsafe(errors.result()))
+        }
+      case _ => fail("JSON Array expected.")
+    }
+  }
+
+  given nonEmptyListReader[A](using r: FromJSON[A]): FromJSON[NonEmptyList[A]] with {
+    def read(jval: JValue): JValidation[NonEmptyList[A]] =
+      fromJValue[List[A]](jval).andThen {
+        case head :: tail => Valid(NonEmptyList(head, tail))
+        case Nil => fail("Non-empty JSON array expected")
+      }
+  }
+
+  given intReader: FromJSON[Int] with {
     def read(jval: JValue): JValidation[Int] = jval match {
       case JInt(i) if i.isValidInt => Valid(i.toInt)
       case JLong(i) if i.isValidInt => Valid(i.toInt)
@@ -170,14 +160,14 @@ object FromJSON extends FromJSONCatsInstances with generic.DeriveFromJSON {
     }
   }
 
-  implicit val stringReader: FromJSON[String] = new FromJSON[String] {
+  given stringReader: FromJSON[String] with {
     def read(jval: JValue): JValidation[String] = jval match {
       case JString(s) => Valid(s)
       case _ => fail("JSON String expected.")
     }
   }
 
-  implicit val bigIntReader: FromJSON[BigInt] = new FromJSON[BigInt] {
+  given bigIntReader: FromJSON[BigInt] with {
     def read(jval: JValue): JValidation[BigInt] = jval match {
       case JInt(i) => Valid(i)
       case JLong(l) => Valid(l)
@@ -185,7 +175,7 @@ object FromJSON extends FromJSONCatsInstances with generic.DeriveFromJSON {
     }
   }
 
-  implicit val shortReader: FromJSON[Short] = new FromJSON[Short] {
+  given shortReader: FromJSON[Short] with {
     def read(jval: JValue): JValidation[Short] = jval match {
       case JInt(i) if i.isValidShort => Valid(i.toShort)
       case JLong(l) if l.isValidShort => Valid(l.toShort)
@@ -193,7 +183,7 @@ object FromJSON extends FromJSONCatsInstances with generic.DeriveFromJSON {
     }
   }
 
-  implicit val longReader: FromJSON[Long] = new FromJSON[Long] {
+  given longReader: FromJSON[Long] with {
     def read(jval: JValue): JValidation[Long] = jval match {
       case JInt(i) => Valid(i.toLong)
       case JLong(l) => Valid(l)
@@ -201,14 +191,14 @@ object FromJSON extends FromJSONCatsInstances with generic.DeriveFromJSON {
     }
   }
 
-  implicit val floatReader: FromJSON[Float] = new FromJSON[Float] {
+  given floatReader: FromJSON[Float] with {
     def read(jval: JValue): JValidation[Float] = jval match {
       case JDouble(d) => Valid(d.toFloat)
       case _ => fail("JSON Number in the range of a Float expected.")
     }
   }
 
-  implicit val doubleReader: FromJSON[Double] = new FromJSON[Double] {
+  given doubleReader: FromJSON[Double] with {
     def read(jval: JValue): JValidation[Double] = jval match {
       case JDouble(d) => Valid(d)
       case JInt(i) => Valid(i.toDouble)
@@ -217,7 +207,7 @@ object FromJSON extends FromJSONCatsInstances with generic.DeriveFromJSON {
     }
   }
 
-  implicit val booleanReader: FromJSON[Boolean] = new FromJSON[Boolean] {
+  given booleanReader: FromJSON[Boolean] with {
     private val cachedTrue = Valid(true)
     private val cachedFalse = Valid(false)
 
@@ -227,7 +217,7 @@ object FromJSON extends FromJSONCatsInstances with generic.DeriveFromJSON {
     }
   }
 
-  implicit def mapReader[A: FromJSON]: FromJSON[Map[String, A]] = new FromJSON[Map[String, A]] {
+  given mapReader[A: FromJSON]: FromJSON[Map[String, A]] with {
     def read(json: JValue): JValidation[Map[String, A]] = json match {
       case JObject(fs) =>
         // Perf note: an imperative implementation does not seem faster
@@ -238,8 +228,7 @@ object FromJSON extends FromJSONCatsInstances with generic.DeriveFromJSON {
     }
   }
 
-  implicit val moneyReader: FromJSON[Money] = new FromJSON[Money] {
-
+  given moneyReader: FromJSON[Money] with {
     import Money.*
 
     override val fields = Set(CentAmountField, CurrencyCodeField)
@@ -258,34 +247,32 @@ object FromJSON extends FromJSONCatsInstances with generic.DeriveFromJSON {
     }
   }
 
-  implicit val highPrecisionMoneyReader: FromJSON[HighPrecisionMoney] =
-    new FromJSON[HighPrecisionMoney] {
+  given highPrecisionMoneyReader: FromJSON[HighPrecisionMoney] with {
+    import HighPrecisionMoney.*
 
-      import HighPrecisionMoney.*
+    override val fields = Set(PreciseAmountField, CurrencyCodeField, FractionDigitsField)
 
-      override val fields = Set(PreciseAmountField, CurrencyCodeField, FractionDigitsField)
+    def read(value: JValue): JValidation[HighPrecisionMoney] = value match {
+      case o: JObject =>
+        val validatedFields = (
+          field[Long](PreciseAmountField)(o),
+          field[Int](FractionDigitsField)(o),
+          field[Currency](CurrencyCodeField)(o),
+          field[Option[Long]](CentAmountField)(o))
 
-      def read(value: JValue): JValidation[HighPrecisionMoney] = value match {
-        case o: JObject =>
-          val validatedFields = (
-            field[Long](PreciseAmountField)(o),
-            field[Int](FractionDigitsField)(o),
-            field[Currency](CurrencyCodeField)(o),
-            field[Option[Long]](CentAmountField)(o))
+        validatedFields.tupled.andThen {
+          case (preciseAmount, fractionDigits, currencyCode, centAmount) =>
+            HighPrecisionMoney
+              .fromPreciseAmount(preciseAmount, fractionDigits, currencyCode, centAmount)
+              .leftMap(_.map(JSONParseError.apply))
+        }
 
-          validatedFields.tupled.andThen {
-            case (preciseAmount, fractionDigits, currencyCode, centAmount) =>
-              HighPrecisionMoney
-                .fromPreciseAmount(preciseAmount, fractionDigits, currencyCode, centAmount)
-                .leftMap(_.map(JSONParseError.apply))
-          }
-
-        case _ =>
-          fail("JSON object expected.")
-      }
+      case _ =>
+        fail("JSON object expected.")
     }
+  }
 
-  implicit val baseMoneyReader: FromJSON[BaseMoney] = new FromJSON[BaseMoney] {
+  given baseMoneyReader: FromJSON[BaseMoney] with {
     def read(value: JValue): JValidation[BaseMoney] = value match {
       case o: JObject =>
         field[Option[String]](BaseMoney.TypeField)(o).andThen {
@@ -301,7 +288,7 @@ object FromJSON extends FromJSONCatsInstances with generic.DeriveFromJSON {
     }
   }
 
-  implicit val currencyReader: FromJSON[Currency] = new FromJSON[Currency] {
+  given currencyReader: FromJSON[Currency] with {
     val failMsg = "ISO 4217 code JSON String expected."
 
     def failMsgFor(input: String) = s"Currency '$input' not valid as ISO 4217 code."
@@ -328,11 +315,11 @@ object FromJSON extends FromJSONCatsInstances with generic.DeriveFromJSON {
     }
   }
 
-  implicit val jValueReader: FromJSON[JValue] = new FromJSON[JValue] {
+  given jValueReader: FromJSON[JValue] with {
     def read(jval: JValue): JValidation[JValue] = Valid(jval)
   }
 
-  implicit val jObjectReader: FromJSON[JObject] = new FromJSON[JObject] {
+  given jObjectReader: FromJSON[JObject] with {
     def read(jval: JValue): JValidation[JObject] = jval match {
       case o: JObject => Valid(o)
       case _ => fail("JSON object expected")
@@ -341,7 +328,7 @@ object FromJSON extends FromJSONCatsInstances with generic.DeriveFromJSON {
 
   private val validUnit = Valid(())
 
-  implicit val unitReader: FromJSON[Unit] = new FromJSON[Unit] {
+  given unitReader: FromJSON[Unit] with {
     def read(jval: JValue): JValidation[Unit] = jval match {
       case JNothing | JNull | JObject(Nil) => validUnit
       case _ => fail("Unexpected JSON")
@@ -362,7 +349,7 @@ object FromJSON extends FromJSONCatsInstances with generic.DeriveFromJSON {
     }
 
   // Joda Time
-  implicit val dateTimeReader: FromJSON[DateTime] =
+  given dateTimeReader: FromJSON[DateTime] =
     jsonStringReader("Failed to parse date/time: %s")(parseJodaTime)
 
   private final val UTCDateTimeComponents =
@@ -383,20 +370,20 @@ object FromJSON extends FromJSONCatsInstances with generic.DeriveFromJSON {
       new DateTime(otherwise, DateTimeZone.UTC)
   }
 
-  implicit val timeReader: FromJSON[LocalTime] = jsonStringReader("Failed to parse time: %s") {
+  given timeReader: FromJSON[LocalTime] = jsonStringReader("Failed to parse time: %s") {
     ISODateTimeFormat.localTimeParser.parseDateTime(_).toLocalTime
   }
 
-  implicit val dateReader: FromJSON[LocalDate] = jsonStringReader("Failed to parse date: %s") {
+  given dateReader: FromJSON[LocalDate] = jsonStringReader("Failed to parse date: %s") {
     ISODateTimeFormat.localDateParser.parseDateTime(_).toLocalDate
   }
 
-  implicit val yearMonthReader: FromJSON[YearMonth] =
+  given yearMonthReader: FromJSON[YearMonth] =
     jsonStringReader("Failed to parse year/month: %s") {
       new YearMonth(_)
     }
 
-  implicit val javaInstantReader: FromJSON[time.Instant] =
+  given javaInstantReader: FromJSON[time.Instant] =
     jsonStringReader("Failed to parse date/time: %s") { s =>
       try DateTimeFormats.parseInstantUnsafe(s)
       catch {
@@ -410,19 +397,19 @@ object FromJSON extends FromJSONCatsInstances with generic.DeriveFromJSON {
       }
     }
 
-  implicit val javaLocalTimeReader: FromJSON[time.LocalTime] =
+  given javaLocalTimeReader: FromJSON[time.LocalTime] =
     jsonStringReader("Failed to parse time: %s")(DateTimeFormats.parseLocalTimeUnsafe)
 
-  implicit val javaLocalDateReader: FromJSON[time.LocalDate] =
+  given javaLocalDateReader: FromJSON[time.LocalDate] =
     jsonStringReader("Failed to parse date: %s")(DateTimeFormats.parseLocalDateUnsafe)
 
-  implicit val javaYearMonthReader: FromJSON[time.YearMonth] =
+  given javaYearMonthReader: FromJSON[time.YearMonth] =
     jsonStringReader("Failed to parse year/month: %s")(
       time.YearMonth.parse(_, JavaYearMonthFormatter))
 
-  implicit val uuidReader: FromJSON[UUID] = jsonStringReader("Invalid UUID: '%s'")(UUID.fromString)
+  given uuidReader: FromJSON[UUID] = jsonStringReader("Invalid UUID: '%s'")(UUID.fromString)
 
-  implicit val localeReader: FromJSON[Locale] = new FromJSON[Locale] {
+  given localeReader: FromJSON[Locale] with {
     def read(jval: JValue): JValidation[Locale] = jval match {
       case JString(s) =>
         s match {
