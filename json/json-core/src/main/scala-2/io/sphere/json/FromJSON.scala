@@ -36,13 +36,18 @@ trait FromJSON[@specialized A] extends Serializable {
   val fields: Set[String] = FromJSON.emptyFieldsSet
 }
 
-object FromJSON extends FromJSONInstances with FromJSONCatsInstances {
+object FromJSON extends FromJSONCatsInstances with Logging {
 
   private[FromJSON] val emptyFieldsSet: Set[String] = Set.empty
 
-  import FromJSONInstances._
-
   @inline def apply[A](implicit instance: FromJSON[A]): FromJSON[A] = instance
+
+  private val validNone = Valid(None)
+  private val validNil = Valid(Nil)
+  private val validEmptyAnyVector: Valid[Vector[Any]] = Valid(Vector.empty)
+  private def validList[A]: Valid[List[A]] = validNil
+  private def validEmptyVector[A]: Valid[Vector[A]] =
+    validEmptyAnyVector.asInstanceOf[Valid[Vector[A]]]
 
   implicit def optionMapReader[@specialized A](implicit
       c: FromJSON[A]): FromJSON[Option[Map[String, A]]] =

@@ -1,7 +1,6 @@
 package io.sphere.json
 
 import cats.data.NonEmptyList
-import io.sphere.json.ToJSONInstances.{emptyJArray, emptyJObject}
 import io.sphere.json.generic.JSONTypeSwitch.ToFormatters
 import io.sphere.util.{BaseMoney, DateTimeFormats, HighPrecisionMoney, Money}
 import org.joda.time.*
@@ -25,7 +24,11 @@ trait ToJSON[A] extends Serializable {
 
 class JSONWriteException(msg: String) extends JSONException(msg)
 
-object ToJSON extends ToJSONInstances with ToJSONCatsInstances with generic.DeriveToJSON {
+object ToJSON extends ToJSONCatsInstances with generic.DeriveToJSON {
+
+  private val emptyJArray = JArray(Nil)
+  private val emptyJObject = JObject(Nil)
+  
   inline def apply[A](implicit instance: ToJSON[A]): ToJSON[A] = instance
   inline def apply[A: JSON]: ToJSON[A] = summon[ToJSON[A]]
 

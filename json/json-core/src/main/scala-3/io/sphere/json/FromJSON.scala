@@ -4,7 +4,6 @@ import cats.data.NonEmptyList
 import cats.data.Validated.{Invalid, Valid}
 import cats.syntax.apply.*
 import cats.syntax.traverse.*
-import io.sphere.json.FromJSONInstances.{validEmptyVector, validList, validNone}
 import io.sphere.json.field
 import io.sphere.json.generic.JSONTypeSwitch.FromFormatters
 import io.sphere.util.*
@@ -36,6 +35,13 @@ object FromJSON extends FromJSONCatsInstances with generic.DeriveFromJSON {
   val emptyFieldsSet: Set[String] = Set.empty
 
   inline def apply[A](using instance: FromJSON[A]): FromJSON[A] = instance
+
+  private val validNone = Valid(None)
+  private val validNil = Valid(Nil)
+  private val validEmptyAnyVector: Valid[Vector[Any]] = Valid(Vector.empty)
+  private def validList[A]: Valid[List[A]] = validNil
+  private def validEmptyVector[A]: Valid[Vector[A]] =
+    validEmptyAnyVector.asInstanceOf[Valid[Vector[A]]]
 
   def instance[A](
       readFn: JValue => JValidation[A],

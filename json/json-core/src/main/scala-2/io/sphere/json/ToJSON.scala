@@ -23,7 +23,7 @@ trait ToJSON[@specialized A] extends Serializable {
 
 class JSONWriteException(msg: String) extends JSONException(msg)
 
-object ToJSON extends ToJSONInstances with ToJSONCatsInstances {
+object ToJSON extends ToJSONCatsInstances {
 
   /** construct an instance from a function
     */
@@ -31,7 +31,8 @@ object ToJSON extends ToJSONInstances with ToJSONCatsInstances {
     override def write(value: T): JValue = toJson(value)
   }
 
-  import ToJSONInstances._
+  private val emptyJArray = JArray(Nil)
+  private val emptyJObject = JObject(Nil)
 
   @inline def apply[A](implicit instance: ToJSON[A]): ToJSON[A] = instance
 
