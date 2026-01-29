@@ -9,6 +9,7 @@ import org.bson.types.ObjectId
 import java.util.UUID
 import java.util.regex.Pattern
 import scala.deriving.Mirror
+import scala.util.control.NonFatal
 
 type SimpleMongoType = UUID | String | ObjectId | Short | Int | Long | Float | Double | Boolean |
   Pattern
@@ -137,7 +138,12 @@ object MongoFormat {
     else if (field.embedded) format.fromMongoValue(bson)
     else {
       val value = bson.get(field.serializedName)
-      if (value ne null) format.fromMongoValue(value.asInstanceOf[Any])
+      if (value ne null)
+        try format.fromMongoValue(value.asInstanceOf[Any])
+        catch {
+          case NonFatal(e) =>
+            throw new Exception(s"Could not deserialize field '${field.serializedName}'", e)
+        }
       else
         defaultValue.getOrElse {
           throw new Exception(

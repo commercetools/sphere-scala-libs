@@ -5,6 +5,11 @@ import org.json4s.JsonAST.{JNothing, JObject}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
+import io.sphere.util.BaseMoney
+import io.sphere.util.Money.ImplicitsDecimal._
+
+import java.util.UUID
+
 class NullHandlingSpec extends AnyWordSpec with Matchers {
   "JSON deserialization" must {
     "accept undefined fields and use default values for them" in {
@@ -54,8 +59,24 @@ class NullHandlingSpec extends AnyWordSpec with Matchers {
           Set("Magic wand", "Rusty sword"),
           "The potion of healing"))
     }
+
+    "Use nested FromJSON instances" in {
+
+      // This is relevant because it can fail if the implicits are not in the right scope
+      // If it fails it'll happily autoderive the inner trait (BaseMoney), which leads to successful compilation but incorrect JSON
+      val action = MoneyOptClass(Some(10.EUR))
+
+      val format: JSON[MoneyOptClass] = deriveJSON
+      val json = format.write(action)
+      val action2 = format.read(json).getOrElse(null)
+
+      action must be(action2)
+    }
   }
+
 }
+//
+case class MoneyOptClass(moneyOpt: Option[BaseMoney])
 
 case class Jeans(
     leftPocket: Option[String] = None,

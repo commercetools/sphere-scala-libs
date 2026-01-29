@@ -59,7 +59,7 @@ inline def mongoTypeSwitch[SuperType, SubTypeTuple <: Tuple]: MongoFormat[SuperT
         val serializedTypeName = bson.get(traitMetaData.typeDiscriminator).asInstanceOf[String]
         allReadFormatters(serializedTypeName).fromMongoValue(bson)
       case x =>
-        throw new Exception(s"BsonObject is expected for a Trait subtype, instead got $x")
+        throw new Exception(s"DBObject expected but got ${x.getClass.getName}.")
     },
     readFormattersPassedToParent = allReadFormatters,
     writeFormattersPassedToParent = allWriteFormatters

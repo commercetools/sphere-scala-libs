@@ -89,8 +89,8 @@ jobs:
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
 
-      - name: Download target directories (2.13.17)
-        uses: actions/download-artifact@v5
+      - name: Download target directories (2.13.18)
+        uses: actions/download-artifact@v6
         with:
           name: target-${{ matrix.os }}-2.13.18-${{ matrix.java }}
 
