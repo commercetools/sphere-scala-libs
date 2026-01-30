@@ -15,8 +15,8 @@ object EnumerationInstances {
     * representations of the enumeration values.
     */
   def fromJsonEnum(e: Enumeration): FromJSON[e.Value] = {
-    // We're using an AnyRefMap for performance, it's not for mutability.
-    val validRepresentations = mutable.AnyRefMap(
+    // We're using an HashMap for performance, it's not for mutability.
+    val validRepresentations = mutable.HashMap(
       e.values.iterator.map(value => value.toString -> value.validNel[JSONError]).toSeq: _*
     )
 

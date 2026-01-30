@@ -132,7 +132,8 @@ object MongoFormat {
     def defaultValue = field.defaultArgument.orElse(format.default)
     if (field.ignored)
       defaultValue.getOrElse {
-        throw new Exception(s"Missing default for ignored field '${field.serializedName}'.")
+        throw new Exception(
+          s"Ignored Mongo field '${field.serializedName}' must have a default value.")
       }
     else if (field.embedded) format.fromMongoValue(bson)
     else {

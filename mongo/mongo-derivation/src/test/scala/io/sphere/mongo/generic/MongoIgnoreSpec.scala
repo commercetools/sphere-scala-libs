@@ -24,7 +24,7 @@ class MongoIgnoreSpec extends AnyWordSpec with Matchers with OptionValues {
     "annotated field has no default" must {
       "fail with a suitable message" in {
         val e = the[Exception] thrownBy deriveMongoFormat[MissingDefault].fromMongoValue(dbo)
-        e.getMessage mustBe "Missing default for ignored field 'age'."
+        e.getMessage mustBe "Ignored Mongo field 'age' must have a default value."
       }
     }
     "annotated field has also a default" must {
