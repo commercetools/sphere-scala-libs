@@ -24,7 +24,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        scala: [2.12.21, 2.13.18, 3.3.7]
+        scala: [2.13.18, 3.3.7]
         java: [temurin@21]
     runs-on: ${{ matrix.os }}
     steps:
@@ -50,13 +50,8 @@ jobs:
       - name: Check that workflows are up to date
         run: sbt '++ ${{ matrix.scala }}' githubWorkflowCheck
 
-      - name: Build Scala 2 project
-        if: matrix.scala != '3.3.7'
+      - name: Build project
         run: sbt '++ ${{ matrix.scala }}' test
-
-      - name: Build Scala 3 project
-        if: matrix.scala == '3.3.7'
-        run: sbt '++ ${{ matrix.scala }}' sphere-util/test sphere-json-core/test sphere-mongo-core/test
 
       - name: Compress target directories
         run: tar cf targets.tar benchmarks/target mongo/target json/json-core/target mongo/mongo-core/target json/target util/target json/json-derivation/target target mongo/mongo-derivation/target project/target
@@ -74,7 +69,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        scala: [2.13.18]
+        scala: [3.3.7]
         java: [temurin@21]
     runs-on: ${{ matrix.os }}
     steps:
@@ -93,16 +88,6 @@ jobs:
 
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
-
-      - name: Download target directories (2.12.21)
-        uses: actions/download-artifact@v6
-        with:
-          name: target-${{ matrix.os }}-2.12.21-${{ matrix.java }}
-
-      - name: Inflate target directories (2.12.21)
-        run: |
-          tar xf targets.tar
-          rm targets.tar
 
       - name: Download target directories (2.13.18)
         uses: actions/download-artifact@v6

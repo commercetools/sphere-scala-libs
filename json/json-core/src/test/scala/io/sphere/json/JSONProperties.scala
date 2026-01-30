@@ -56,10 +56,10 @@ object JSONProperties extends Properties("JSON") {
 
   // generate dates between years -4000 and +4000
   implicit val javaInstant: Arbitrary[time.Instant] =
-    Arbitrary(Gen.choose(-188395027761000L, 64092207599999L).map(time.Instant.ofEpochMilli(_)))
+    Arbitrary(Gen.choose(-188395027761000L, 64092207599999L).map(time.Instant.ofEpochMilli))
 
   implicit val javaLocalTime: Arbitrary[time.LocalTime] = Arbitrary(
-    Gen.choose(0, 3600 * 24).map(time.LocalTime.ofSecondOfDay(_)))
+    Gen.choose(0, 3600 * 24 - 1).map(time.LocalTime.ofSecondOfDay(_)))
 
   implicit def arbitraryDate: Arbitrary[LocalDate] =
     Arbitrary(Arbitrary.arbitrary[DateTime].map(_.toLocalDate))

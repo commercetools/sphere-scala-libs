@@ -1,12 +1,11 @@
 package io.sphere.mongo.format
 
-import java.util.{Currency, Locale, UUID}
-import java.util.regex.Pattern
-
 import io.sphere.util.{BaseMoney, HighPrecisionMoney, LangTag, Money}
-import org.bson.{BSONObject, BasicBSONObject}
 import org.bson.types.{BasicBSONList, ObjectId}
+import org.bson.{BSONObject, BasicBSONObject}
 
+import java.util.regex.Pattern
+import java.util.{Currency, Locale, UUID}
 import scala.collection.immutable.VectorBuilder
 import scala.collection.mutable.ListBuffer
 
@@ -50,7 +49,7 @@ trait DefaultMongoFormats {
 
   implicit def optionFormat[@specialized A](implicit f: MongoFormat[A]): MongoFormat[Option[A]] =
     new MongoFormat[Option[A]] {
-      import scala.collection.JavaConverters._
+      import scala.jdk.CollectionConverters._
       override def toMongoValue(a: Option[A]) = a match {
         case Some(aa) => f.toMongoValue(aa)
         case None => MongoNothing
@@ -78,7 +77,7 @@ trait DefaultMongoFormats {
 
   implicit def vecFormat[@specialized A](implicit f: MongoFormat[A]): MongoFormat[Vector[A]] =
     new MongoFormat[Vector[A]] {
-      import scala.collection.JavaConverters._
+      import scala.jdk.CollectionConverters._
       override def toMongoValue(a: Vector[A]): BasicBSONList = {
         val m = new BasicBSONList()
         if (a.nonEmpty) m.addAll(a.map(f.toMongoValue(_).asInstanceOf[AnyRef]).asJavaCollection)
@@ -103,7 +102,7 @@ trait DefaultMongoFormats {
 
   implicit def listFormat[@specialized A](implicit f: MongoFormat[A]): MongoFormat[List[A]] =
     new MongoFormat[List[A]] {
-      import scala.collection.JavaConverters._
+      import scala.jdk.CollectionConverters._
       override def toMongoValue(a: List[A]): BasicBSONList = {
         val m = new BasicBSONList()
         if (a.nonEmpty) m.addAll(a.map(f.toMongoValue(_).asInstanceOf[AnyRef]).asJavaCollection)
@@ -128,7 +127,7 @@ trait DefaultMongoFormats {
 
   implicit def setFormat[@specialized A](implicit f: MongoFormat[A]): MongoFormat[Set[A]] =
     new MongoFormat[Set[A]] {
-      import scala.collection.JavaConverters._
+      import scala.jdk.CollectionConverters._
       override def toMongoValue(a: Set[A]): BasicBSONList = {
         val m = new BasicBSONList()
         if (a.nonEmpty) m.addAll(a.map(f.toMongoValue(_).asInstanceOf[AnyRef]).asJavaCollection)

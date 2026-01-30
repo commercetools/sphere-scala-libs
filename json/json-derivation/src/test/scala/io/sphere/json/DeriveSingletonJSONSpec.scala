@@ -1,5 +1,6 @@
 package io.sphere.json
 
+import cats.data.Validated
 import cats.data.Validated.Valid
 import io.sphere.json.generic._
 import org.json4s.JValue
@@ -35,7 +36,7 @@ class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
     "write normal singleton values" in {
       val userJson = toJValue(UserWithPicture("foo-123", Medium, "http://exmple.com"))
 
-      val Valid(expectedJson) = parseJSON("""
+      val expectedJson = parseValidJSON("""
         {
           "userId": "foo-123",
           "pictureSize": "Medium",
@@ -61,7 +62,7 @@ class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
     "write custom singleton values" in {
       val userJson = toJValue(UserWithPicture("foo-123", Custom, "http://exmple.com"))
 
-      val Valid(expectedJson) = parseJSON("""
+      val expectedJson = parseValidJSON("""
         {
           "userId": "foo-123",
           "pictureSize": "bar",
@@ -103,15 +104,29 @@ class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
       val newJson = toJValue[UserWithPicture](user)
       Valid(newJson) must be(parseJSON(json))
 
-      val Valid(newUser) = fromJValue[UserWithPicture](newJson)
+      val newUser = fromValidJValue[UserWithPicture](newJson)
       newUser must be(user)
     }
   }
 
-  private def filter(jvalue: JValue): JValue =
+  private def filter(jvalue: JValue): JValue = {
+    import org.json4s.jvalue2monadic
     jvalue.removeField {
       case (_, JNothing) => true
       case _ => false
+    }
+  }
+
+  def parseValidJSON(string: String): JValue =
+    parseJSON(string) match {
+      case Valid(a) => a
+      case Validated.Invalid(e) => throw new Exception(e.head.toString)
+    }
+
+  def fromValidJValue[A](jval: JValue)(implicit json: FromJSON[A]): A =
+    json.read(jval) match {
+      case Valid(a) => a
+      case Validated.Invalid(e) => throw new Exception(e.head.toString)
     }
 }
 
