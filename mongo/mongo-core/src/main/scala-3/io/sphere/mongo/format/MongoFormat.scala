@@ -69,7 +69,7 @@ object MongoFormat {
   }
 
   private object Derivation {
-    import scala.compiletime.{constValue, constValueTuple, erasedValue, error, summonInline}
+    import scala.compiletime.{erasedValue, summonInline}
 
     inline def derived[A](using m: Mirror.Of[A]): MongoFormat[A] =
       inline m match {
@@ -102,7 +102,7 @@ object MongoFormat {
             val tuple = Tuple.fromArray(valuesOfClass.toArray)
             mirrorOfProduct.fromTuple(tuple.asInstanceOf[mirrorOfProduct.MirroredElemTypes])
 
-          case x => throw new Exception(s"BasicDBObject is expected for a class, instead got: $x")
+          case x => throw new Exception(s"DBObject expected but got ${x}.")
         },
         fieldSet = fields
       )
@@ -133,7 +133,7 @@ object MongoFormat {
     if (field.ignored)
       defaultValue.getOrElse {
         throw new Exception(
-          s"Ignored Mongo field '${field.serializedName}' must have a default value.")
+          s"Missing default for ignored field '${field.serializedName}'.")
       }
     else if (field.embedded) format.fromMongoValue(bson)
     else {

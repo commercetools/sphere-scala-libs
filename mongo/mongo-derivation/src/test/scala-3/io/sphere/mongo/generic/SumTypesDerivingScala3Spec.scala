@@ -27,7 +27,7 @@ class SumTypesDerivingScala3Spec extends AnyWordSpec with Matchers {
       val exception = intercept[Exception](deriveMongoFormat[Color5])
 
       exception.getMessage must be(
-        "SubType: Custom has a different @MongoTypeHintField then its SuperType")
+        "SubType: Custom has a different @MongoTypeHintField than its SuperType")
     }
 
     "nested trait case 2: @MongoTypeHintField on a subtype case class and the supertype" in {
@@ -36,7 +36,7 @@ class SumTypesDerivingScala3Spec extends AnyWordSpec with Matchers {
       val exception = intercept[Exception](deriveMongoFormat[Color6])
 
       exception.getMessage must be(
-        "SubType: MyColor has a different @MongoTypeHintField then its SuperType")
+        "SubType: MyColor has a different @MongoTypeHintField than its SuperType")
     }
 
     "do not use sealed trait info when using a case class directly" in {

@@ -6,7 +6,7 @@ import io.sphere.util.TypeMetaData
 import org.bson.BSONObject
 
 import scala.deriving.Mirror
-import scala.compiletime.{constValueTuple, erasedValue, error, summonInline}
+import scala.compiletime.{erasedValue, summonInline}
 import scala.reflect.ClassTag
 
 inline def deriveMongoFormat[A](using Mirror.Of[A]): MongoFormat[A] = MongoFormat.derived
@@ -79,7 +79,7 @@ inline private def summonMetaData[T <: Tuple](
       if (data.typeDiscriminator.exists(_ != topLevelDiscriminator)) {
         // So far I didn't find an easy way to add this as a compile time check.
         throw new Exception(
-          s"SubType: ${data.scalaName} has a different @MongoTypeHintField then its SuperType")
+          s"SubType: ${data.scalaName} has a different @MongoTypeHintField than its SuperType")
       }
       summonMetaData[ts](topLevelDiscriminator, acc :+ data)
   }
