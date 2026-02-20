@@ -14,7 +14,7 @@ object DomainObjectsGen {
   val money: Gen[Money] = for {
     currency <- currency
     amount <- Gen.chooseNum[Long](Long.MinValue, Long.MaxValue)
-  } yield Money.unsafeApply(amount, currency)
+  } yield Money.fromCentAmount(amount, JCurrency(currency))
 
   val highPrecisionMoney: Gen[HighPrecisionMoney] = for {
     money <- money

@@ -48,7 +48,7 @@ class MoneySpec extends AnyFunSpec with Matchers with ScalaCheckDrivenPropertyCh
 
     it("should return an InvalidArgumentException when using the unsafeApply method") {
       an[IllegalArgumentException] must be thrownBy {
-        Money.unsafeApply(1.0001, java.util.Currency.getInstance("EUR"))
+        Money.unsafeApply(BigDecimal(1.0001), JCurrency(java.util.Currency.getInstance("EUR")))
       }
     }
 
@@ -167,6 +167,26 @@ class MoneySpec extends AnyFunSpec with Matchers with ScalaCheckDrivenPropertyCh
       forAll(DomainObjectsGen.money) { m =>
         m.toString
       }
+    }
+
+    it("should work with custom types") {
+      val huf1 = Money.fromCentAmount(100, CustomCurrency(HUF0))
+      val huf2 = Money.fromCentAmount(256, CustomCurrency(HUF0))
+
+      val sum = huf1 + huf2
+
+      sum must be(Money.fromCentAmount(356, CustomCurrency(HUF0)))
+    }
+
+    it("custom currency should not be able to be mixed with the predefined ones") {
+      val huf1 = Money.fromCentAmount(100, CustomCurrency(HUF0))
+      val huf2 = Money.fromCentAmount(256, JCurrency(java.util.Currency.getInstance("HUF")))
+
+      val ex = the[IllegalArgumentException] thrownBy {
+        huf1 + huf2
+      }
+
+      ex.getMessage must equal("requirement failed: HUF0 != HUF")
     }
   }
 }

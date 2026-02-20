@@ -1,8 +1,7 @@
 package io.sphere.mongo.format
 
 import java.util.Currency
-
-import io.sphere.util.{BaseMoney, HighPrecisionMoney, Money}
+import io.sphere.util.{BaseMoney, CustomCurrency, HUF0, HighPrecisionMoney, Money}
 import DefaultMongoFormats._
 import io.sphere.mongo.MongoUtils._
 import org.bson.BSONObject
@@ -40,6 +39,16 @@ class BaseMoneyMongoFormatTest extends AnyWordSpec with Matchers {
       )
 
       MongoFormat[BaseMoney].fromMongoValue(dbo) should be(Money.USD(BigDecimal("32.98")))
+    }
+
+    "decide custom currency" in {
+      val dbo = dbObj(
+        "currencyCode" -> "HUF0",
+        "centAmount" -> 3298
+      )
+
+      MongoFormat[BaseMoney].fromMongoValue(dbo) should be(
+        Money.fromCentAmount(3298, CustomCurrency(HUF0)))
     }
   }
 

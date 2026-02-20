@@ -1,6 +1,5 @@
 package io.sphere.util
 
-import java.util.Currency
 import cats.data.Validated.Invalid
 import io.sphere.util.HighPrecisionMoney.ImplicitsDecimalPrecise.HighPrecisionPreciseMoneyNotation
 import org.scalatest.funspec.AnyFunSpec

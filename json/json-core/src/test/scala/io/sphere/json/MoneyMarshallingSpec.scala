@@ -1,8 +1,7 @@
 package io.sphere.json
 
 import java.util.Currency
-
-import io.sphere.util.{BaseMoney, HighPrecisionMoney, Money}
+import io.sphere.util.{BaseMoney, CustomCurrency, HUF0, HighPrecisionMoney, Money}
 import cats.data.Validated.Valid
 import org.json4s.jackson.compactJson
 import org.scalatest.matchers.should.Matchers
@@ -42,6 +41,15 @@ class MoneyMarshallingSpec extends AnyWordSpec with Matchers {
         """
 
       fromJSON[BaseMoney](json) should be(Valid(Money.USD(BigDecimal("32.98"))))
+    }
+
+    "be symmetric for custom types" in {
+      val money = Money.fromCentAmount(1234, CustomCurrency(HUF0))
+      val jsonAst = toJValue(money)
+      val jsonAsString = compactJson(jsonAst)
+      val Valid(readAst) = parseJSON(jsonAsString)
+
+      jsonAst should equal(readAst)
     }
   }
 

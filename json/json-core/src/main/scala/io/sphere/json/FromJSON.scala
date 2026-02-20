@@ -2,13 +2,24 @@ package io.sphere.json
 
 import scala.util.control.NonFatal
 import scala.collection.mutable.ListBuffer
-import java.util.{Currency, Locale, UUID}
+import java.util.{Locale, UUID}
 import cats.data.NonEmptyList
 import cats.data.Validated.{Invalid, Valid}
 import cats.syntax.apply._
 import cats.syntax.traverse._
 import io.sphere.json.field
-import io.sphere.util.{BaseMoney, DateTimeFormats, HighPrecisionMoney, LangTag, Logging, Money}
+import io.sphere.util.{
+  BaseMoney,
+  Currency,
+  CustomCurrency,
+  DateTimeFormats,
+  HUF0,
+  HighPrecisionMoney,
+  JCurrency,
+  LangTag,
+  Logging,
+  Money
+}
 import org.json4s.JsonAST._
 import org.joda.time.format.ISODateTimeFormat
 
@@ -19,6 +30,7 @@ import org.joda.time.DateTimeZone
 import org.joda.time.YearMonth
 import org.joda.time.LocalTime
 import org.joda.time.LocalDate
+import org.json4s.JNumber
 
 /** Type class for types that can be read from JSON. */
 @implicitNotFound("Could not find an instance of FromJSON for ${A}")
@@ -286,16 +298,30 @@ object FromJSON extends FromJSONInstances with Logging {
     }
   }
 
-  implicit val currencyReader: FromJSON[Currency] = new FromJSON[Currency] {
+  implicit val currencyReader: FromJSON[Currency] =
+    new FromJSON[Currency] {
+      def read(jval: JValue): JValidation[Currency] =
+        javaCurrencyReader.read(jval) match {
+          case Valid(a) => Valid(JCurrency(a))
+          case err @ Invalid(_) =>
+            jval match {
+              case JString("HUF0") => Valid(CustomCurrency(HUF0))
+              case _ => err
+            }
+        }
+    }
+
+  implicit val javaCurrencyReader: FromJSON[java.util.Currency] = new FromJSON[java.util.Currency] {
     val failMsg = "ISO 4217 code JSON String expected."
     def failMsgFor(input: String) = s"Currency '$input' not valid as ISO 4217 code."
+    import java.util.{Currency => JavaCurrency}
 
-    private val cachedEUR = Valid(Currency.getInstance("EUR"))
-    private val cachedUSD = Valid(Currency.getInstance("USD"))
-    private val cachedGBP = Valid(Currency.getInstance("GBP"))
-    private val cachedJPY = Valid(Currency.getInstance("JPY"))
+    private val cachedEUR = Valid(JavaCurrency.getInstance("EUR"))
+    private val cachedUSD = Valid(JavaCurrency.getInstance("USD"))
+    private val cachedGBP = Valid(JavaCurrency.getInstance("GBP"))
+    private val cachedJPY = Valid(JavaCurrency.getInstance("JPY"))
 
-    def read(jval: JValue): JValidation[Currency] = jval match {
+    def read(jval: JValue): JValidation[JavaCurrency] = jval match {
       case JString(s) =>
         s match {
           case "EUR" => cachedEUR
@@ -303,7 +329,7 @@ object FromJSON extends FromJSONInstances with Logging {
           case "GBP" => cachedGBP
           case "JPY" => cachedJPY
           case _ =>
-            try Valid(Currency.getInstance(s))
+            try Valid(JavaCurrency.getInstance(s))
             catch {
               case _: IllegalArgumentException => fail(failMsgFor(s))
             }
