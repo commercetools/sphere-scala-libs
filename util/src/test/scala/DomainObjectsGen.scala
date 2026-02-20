@@ -1,6 +1,5 @@
 package io.sphere.util
 
-
 import org.scalacheck.Gen
 
 import scala.collection.JavaConverters._
