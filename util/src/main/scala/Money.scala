@@ -60,7 +60,9 @@ object BaseMoney {
   val TypeField: String = "type"
 
   def requireSameCurrency(m1: BaseMoney, m2: BaseMoney): Unit =
-    require(m1.currency == m2.currency, s"${m1.currency.uniqueCurrencyCode} != ${m2.currency.uniqueCurrencyCode}")
+    require(
+      m1.currency == m2.currency,
+      s"${m1.currency.uniqueCurrencyCode} != ${m2.currency.uniqueCurrencyCode}")
 
   def toScalaRoundingMode(mode: java.math.RoundingMode): RoundingMode =
     BigDecimal.RoundingMode(mode.ordinal())
