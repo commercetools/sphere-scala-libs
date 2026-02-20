@@ -200,20 +200,12 @@ trait DefaultMongoFormats {
       val failMsg = "ISO 4217 code JSON String expected."
       def failMsgFor(input: String) = s"Currency '$input' not valid as ISO 4217 code."
 
-      override def toMongoValue(c: Currency): Any =
-        c match {
-          case JCurrency(currency) => currency.getCurrencyCode
-          case CustomCurrency(currency) => currency.productPrefix
-        }
+      override def toMongoValue(c: Currency): Any = c.uniqueCurrencyCode
       override def fromMongoValue(any: Any): Currency = any match {
         case s: String =>
-          try JCurrency(java.util.Currency.getInstance(s))
+          try Currency.getInstance(s)
           catch {
-            case _: IllegalArgumentException =>
-              // this should be nicer
-              if (s == "HUF0") CustomCurrency(HUF0)
-              else
-                throw new Exception(failMsgFor(s))
+            case _: IllegalArgumentException => throw new Exception(failMsgFor(s))
           }
         case _ => throw new Exception(failMsg)
       }

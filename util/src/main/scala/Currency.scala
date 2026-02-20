@@ -9,10 +9,14 @@ sealed trait Currency {
   def getCurrencyCode: String
 
   // This is derived from the getCurrencyCode field, but it will be different for custom currencies as they would have conflicting getCurrencyCodes with the ISO ones.
-  def uniqueName: String
+  // Eg: for HUF0 .getCurrencyCode will return HUF, but this method will return HUF0
+  def uniqueCurrencyCode: String
 }
 
 object Currency {
+
+  // looks up instances based on the currencyCode returned by `uniqueCurrencyCode`.
+  // `getCurrencyCode` also works for the java.util.Currency instances.
   def getInstance(string: String): Currency =
     CustomCurrency
       .fromString(string)
@@ -37,7 +41,7 @@ case class JCurrency(currency: java.util.Currency) extends Currency {
   def getSymbol(locale: Locale): String = currency.getSymbol(locale)
   def getCurrencyCode: String = currency.getCurrencyCode
   override def toString: String = currency.toString
-  def uniqueName: String = currency.getCurrencyCode
+  def uniqueCurrencyCode: String = currency.getCurrencyCode
 }
 
 sealed abstract class AbstractCustomCurrency(
@@ -53,7 +57,7 @@ case class CustomCurrency(currency: AbstractCustomCurrency) extends Currency {
   def getDefaultFractionDigits: Int = currency.getDefaultFractionDigits
   def getSymbol(locale: Locale): String = currency.getSymbol(locale)
   def getCurrencyCode: String = currency.getCurrencyCode
-  def uniqueName: String = currency.productPrefix
+  def uniqueCurrencyCode: String = currency.productPrefix
 }
 
 object CustomCurrency {
