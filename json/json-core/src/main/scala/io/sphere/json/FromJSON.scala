@@ -10,9 +10,7 @@ import cats.syntax.traverse._
 import io.sphere.util.{
   BaseMoney,
   Currency,
-  CustomCurrency,
   DateTimeFormats,
-  HUF0,
   HighPrecisionMoney,
   JCurrency,
   LangTag,
@@ -301,56 +299,16 @@ object FromJSON extends FromJSONInstances with Logging {
     new FromJSON[Currency] {
       val failMsg = "ISO 4217 code JSON String expected."
       def failMsgFor(input: String) = s"Currency '$input' not valid as ISO 4217 code."
-      import java.util.{Currency => JavaCurrency}
-
-      private val cachedEUR = Valid(JCurrency(JavaCurrency.getInstance("EUR")))
-      private val cachedUSD = Valid(JCurrency(JavaCurrency.getInstance("USD")))
-      private val cachedGBP = Valid(JCurrency(JavaCurrency.getInstance("GBP")))
-      private val cachedJPY = Valid(JCurrency(JavaCurrency.getInstance("JPY")))
 
       def read(jval: JValue): JValidation[Currency] = jval match {
         case JString(s) =>
-          s match {
-            case "EUR" => cachedEUR
-            case "USD" => cachedUSD
-            case "GBP" => cachedGBP
-            case "JPY" => cachedJPY
-            case _ =>
-              try Valid(Currency.getInstance(s))
-              catch {
-                case _: IllegalArgumentException => fail(failMsgFor(s))
-              }
+          try Valid(Currency.getInstance(s))
+          catch {
+            case _: IllegalArgumentException => fail(failMsgFor(s))
           }
         case _ => fail(failMsg)
       }
     }
-
-  implicit val javaCurrencyReader: FromJSON[java.util.Currency] = new FromJSON[java.util.Currency] {
-    val failMsg = "ISO 4217 code JSON String expected."
-    def failMsgFor(input: String) = s"Currency '$input' not valid as ISO 4217 code."
-    import java.util.{Currency => JavaCurrency}
-
-    private val cachedEUR = Valid(JavaCurrency.getInstance("EUR"))
-    private val cachedUSD = Valid(JavaCurrency.getInstance("USD"))
-    private val cachedGBP = Valid(JavaCurrency.getInstance("GBP"))
-    private val cachedJPY = Valid(JavaCurrency.getInstance("JPY"))
-
-    def read(jval: JValue): JValidation[JavaCurrency] = jval match {
-      case JString(s) =>
-        s match {
-          case "EUR" => cachedEUR
-          case "USD" => cachedUSD
-          case "GBP" => cachedGBP
-          case "JPY" => cachedJPY
-          case _ =>
-            try Valid(JavaCurrency.getInstance(s))
-            catch {
-              case _: IllegalArgumentException => fail(failMsgFor(s))
-            }
-        }
-      case _ => fail(failMsg)
-    }
-  }
 
   implicit val jValueReader: FromJSON[JValue] = new FromJSON[JValue] {
     def read(jval: JValue): JValidation[JValue] = Valid(jval)
