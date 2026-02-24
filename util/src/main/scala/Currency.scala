@@ -83,7 +83,7 @@ object CustomCurrency {
     getAvailableCurrencies.find(_.productPrefix == string).map(curr => CustomCurrency(curr))
 }
 
-// Add any new currency to the list above
+// Add any new currency to getAvailableCurrencies above
 case object HUF0 extends AbstractCustomCurrency(0, java.util.Currency.getInstance("HUF"))
 case object TWD0 extends AbstractCustomCurrency(0, java.util.Currency.getInstance("TWD"))
 case object TRY0 extends AbstractCustomCurrency(0, java.util.Currency.getInstance("TRY"))
