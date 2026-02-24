@@ -298,7 +298,8 @@ object FromJSON extends FromJSONInstances with Logging {
   implicit val currencyReader: FromJSON[Currency] =
     new FromJSON[Currency] {
       val typeErrorMsg = "ISO 4217 code JSON String expected."
-      def failMsgFor(input: String) = s"Currency '$input' not valid as ISO 4217 or custom currency code."
+      def failMsgFor(input: String) =
+        s"Currency '$input' not valid as ISO 4217 or custom currency code."
 
       def read(jval: JValue): JValidation[Currency] = jval match {
         case JString(s) =>
