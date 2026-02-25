@@ -49,6 +49,15 @@ class MoneyMarshallingSpec extends AnyWordSpec with Matchers {
       val jsonAsString = compactJson(jsonAst)
       val Valid(readAst) = parseJSON(jsonAsString)
 
+      val json =
+        """
+        {
+          "currencyCode" : "HUF0",
+          "centAmount" : 1234
+        }
+        """
+      fromJSON[BaseMoney](json) should be(Valid(money))
+
       jsonAst should equal(readAst)
     }
   }
