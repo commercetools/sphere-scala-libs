@@ -12,7 +12,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object DefaultMongoFormatsTest {
   case class User(name: String)
