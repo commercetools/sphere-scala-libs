@@ -185,7 +185,7 @@ trait DefaultMongoFormats {
       def failMsgFor(input: String) =
         s"Currency '$input' not valid as ISO 4217 or custom currency code."
 
-      override def toMongoValue(c: Currency): Any = c.uniqueCurrencyCode
+      override def toMongoValue(c: Currency): Any = c.getCurrencyCode
       override def fromMongoValue(any: Any): Currency = any match {
         case s: String =>
           try Currency.getInstance(s)

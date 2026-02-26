@@ -62,7 +62,7 @@ object BaseMoney {
   def requireSameCurrency(m1: BaseMoney, m2: BaseMoney): Unit =
     require(
       m1.currency == m2.currency,
-      s"${m1.currency.uniqueCurrencyCode} != ${m2.currency.uniqueCurrencyCode}")
+      s"${m1.currency.getCurrencyCode} != ${m2.currency.getCurrencyCode}")
 
   def toScalaRoundingMode(mode: java.math.RoundingMode): RoundingMode =
     BigDecimal.RoundingMode(mode.ordinal())

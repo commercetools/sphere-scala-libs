@@ -151,7 +151,7 @@ object ToJSON extends ToJSONInstances {
   }
 
   implicit val currencyWriter: ToJSON[Currency] = new ToJSON[Currency] {
-    def write(c: Currency): JValue = toJValue(c.uniqueCurrencyCode)
+    def write(c: Currency): JValue = toJValue(c.getCurrencyCode)
   }
 
   implicit val jValueWriter: ToJSON[JValue] = new ToJSON[JValue] {
