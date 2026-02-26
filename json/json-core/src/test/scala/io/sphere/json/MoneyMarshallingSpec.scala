@@ -60,6 +60,14 @@ class MoneyMarshallingSpec extends AnyWordSpec with Matchers {
 
       jsonAst should equal(readAst)
     }
+
+    "serialize custom currencies with their unique code" in {
+      val money = Money.fromCentAmount(1234, CustomCurrency(HUF0))
+
+      val expectedJson =
+        """{"type":"centPrecision","currencyCode":"HUF0","centAmount":1234,"fractionDigits":0}"""
+      compactJson(toJValue(money)) should be(expectedJson)
+    }
   }
 
   "High precision money encoding/decoding" should {

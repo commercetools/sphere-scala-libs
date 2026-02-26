@@ -151,9 +151,7 @@ object ToJSON extends ToJSONInstances {
   }
 
   implicit val currencyWriter: ToJSON[Currency] = new ToJSON[Currency] {
-    // Use getCurrencyCode instead of uniqueCurrencyCode.
-    // So the Custom Currencies also show up as "normal"
-    def write(c: Currency): JValue = toJValue(c.getCurrencyCode)
+    def write(c: Currency): JValue = toJValue(c.uniqueCurrencyCode)
   }
 
   implicit val jValueWriter: ToJSON[JValue] = new ToJSON[JValue] {
