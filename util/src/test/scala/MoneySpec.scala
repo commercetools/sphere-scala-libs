@@ -7,6 +7,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import scala.language.postfixOps
 import cats.data.Validated.Invalid
 import cats.data.Validated.Valid
+import io.sphere.util.AbstractCustomCurrency.HUF0
 
 class MoneySpec extends AnyFunSpec with Matchers with ScalaCheckDrivenPropertyChecks {
   import Money.ImplicitsDecimal._

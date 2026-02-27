@@ -1,7 +1,8 @@
 package io.sphere.util
 
 import java.util.{Currency => JavaCurrency, Locale}
-import scala.collection.JavaConverters._ // because of 2.12 compatibility
+import scala.collection.JavaConverters._
+import scala.collection.immutable.ArraySeq // because of 2.12 compatibility
 
 sealed trait Currency {
   def getDefaultFractionDigits: Int
@@ -11,11 +12,11 @@ sealed trait Currency {
 
 object Currency {
 
-  object Cache {
-    val EUR = JCurrency(JavaCurrency.getInstance("EUR"))
-    val USD = JCurrency(JavaCurrency.getInstance("USD"))
-    val GBP = JCurrency(JavaCurrency.getInstance("GBP"))
-    val JPY = JCurrency(JavaCurrency.getInstance("JPY"))
+  private object Cache {
+    val EUR: JCurrency = JCurrency(JavaCurrency.getInstance("EUR"))
+    val USD: JCurrency = JCurrency(JavaCurrency.getInstance("USD"))
+    val GBP: JCurrency = JCurrency(JavaCurrency.getInstance("GBP"))
+    val JPY: JCurrency = JCurrency(JavaCurrency.getInstance("JPY"))
   }
 
   def getInstance(string: String): Currency =
@@ -60,6 +61,16 @@ sealed abstract class AbstractCustomCurrency(
   override def toString: String = parentCurrency.toString
 }
 
+object AbstractCustomCurrency {
+  // Add any new currency to getAvailableCurrencies above
+  case object HUF0 extends AbstractCustomCurrency(0, java.util.Currency.getInstance("HUF"))
+  case object TWD0 extends AbstractCustomCurrency(0, java.util.Currency.getInstance("TWD"))
+  case object TRY0 extends AbstractCustomCurrency(0, java.util.Currency.getInstance("TRY"))
+  case object ILS0 extends AbstractCustomCurrency(0, java.util.Currency.getInstance("ILS"))
+  case object KZT0 extends AbstractCustomCurrency(0, java.util.Currency.getInstance("KZT"))
+  case object CZK0 extends AbstractCustomCurrency(0, java.util.Currency.getInstance("CZK"))
+}
+
 case class CustomCurrency(currency: AbstractCustomCurrency) extends Currency {
   def getDefaultFractionDigits: Int = currency.getDefaultFractionDigits
   def getSymbol(locale: Locale): String = currency.getSymbol(locale)
@@ -67,18 +78,13 @@ case class CustomCurrency(currency: AbstractCustomCurrency) extends Currency {
 }
 
 object CustomCurrency {
+  import AbstractCustomCurrency._
+  val getAvailableCurrencies: ArraySeq[AbstractCustomCurrency] =
+    ArraySeq(HUF0, TWD0, TRY0, ILS0, KZT0, CZK0)
 
-  def getAvailableCurrencies: Vector[AbstractCustomCurrency] =
-    Vector(HUF0, TWD0, TRY0, ILS0, KZT0, CZK0)
+  private val fromStringLookup =
+    getAvailableCurrencies.map(curr => curr.productPrefix -> CustomCurrency(curr))
 
   def fromString(string: String): Option[CustomCurrency] =
-    getAvailableCurrencies.find(_.productPrefix == string).map(curr => CustomCurrency(curr))
+    fromStringLookup.collectFirst { case (name, instance) if name == string => instance }
 }
-
-// Add any new currency to getAvailableCurrencies above
-case object HUF0 extends AbstractCustomCurrency(0, java.util.Currency.getInstance("HUF"))
-case object TWD0 extends AbstractCustomCurrency(0, java.util.Currency.getInstance("TWD"))
-case object TRY0 extends AbstractCustomCurrency(0, java.util.Currency.getInstance("TRY"))
-case object ILS0 extends AbstractCustomCurrency(0, java.util.Currency.getInstance("ILS"))
-case object KZT0 extends AbstractCustomCurrency(0, java.util.Currency.getInstance("KZT"))
-case object CZK0 extends AbstractCustomCurrency(0, java.util.Currency.getInstance("CZK"))

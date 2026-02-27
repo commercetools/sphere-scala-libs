@@ -2,16 +2,7 @@ package io.sphere.mongo.format
 
 import java.util.{Locale, UUID}
 import java.util.regex.Pattern
-import io.sphere.util.{
-  BaseMoney,
-  Currency,
-  CustomCurrency,
-  HUF0,
-  HighPrecisionMoney,
-  JCurrency,
-  LangTag,
-  Money
-}
+import io.sphere.util.{BaseMoney, Currency, HighPrecisionMoney, LangTag, Money}
 import org.bson.{BSONObject, BasicBSONObject}
 import org.bson.types.{BasicBSONList, ObjectId}
 
@@ -183,7 +174,7 @@ trait DefaultMongoFormats {
   implicit val javaCurrencyFormat: MongoFormat[java.util.Currency] =
     new MongoFormat[java.util.Currency] {
       val typeErrorMsg = "ISO 4217 code JSON String expected."
-      def failMsgFor(input: String) = s"Currency '$input' not valid as ISO 4217."
+      def failMsgFor(input: String) = s"Currency '$input' not valid as ISO 4217 code."
 
       override def toMongoValue(c: java.util.Currency): Any = c.getCurrencyCode
       override def fromMongoValue(any: Any): java.util.Currency = any match {

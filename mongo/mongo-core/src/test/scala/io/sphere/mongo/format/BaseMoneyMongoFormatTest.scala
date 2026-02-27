@@ -1,9 +1,10 @@
 package io.sphere.mongo.format
 
 import java.util.Currency
-import io.sphere.util.{BaseMoney, CustomCurrency, HUF0, HighPrecisionMoney, Money}
+import io.sphere.util.{BaseMoney, CustomCurrency, HighPrecisionMoney, Money}
 import DefaultMongoFormats._
 import io.sphere.mongo.MongoUtils._
+import io.sphere.util.AbstractCustomCurrency.HUF0
 import org.bson.BSONObject
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers

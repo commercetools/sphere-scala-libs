@@ -1,8 +1,9 @@
 package io.sphere.json
 
 import java.util.Currency
-import io.sphere.util.{BaseMoney, CustomCurrency, HUF0, HighPrecisionMoney, Money}
+import io.sphere.util.{BaseMoney, CustomCurrency, HighPrecisionMoney, Money}
 import cats.data.Validated.Valid
+import io.sphere.util.AbstractCustomCurrency.HUF0
 import org.json4s.jackson.compactJson
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -43,7 +44,7 @@ class MoneyMarshallingSpec extends AnyWordSpec with Matchers {
       fromJSON[BaseMoney](json) should be(Valid(Money.USD(BigDecimal("32.98"))))
     }
 
-    "be symmetric for custom types" in {
+    "be symmetric for custom currencies" in {
       val money = Money.fromCentAmount(1234, CustomCurrency(HUF0))
       val jsonAst = toJValue(money)
       val jsonAsString = compactJson(jsonAst)
@@ -66,6 +67,14 @@ class MoneyMarshallingSpec extends AnyWordSpec with Matchers {
 
       val expectedJson =
         """{"type":"centPrecision","currencyCode":"HUF0","centAmount":1234,"fractionDigits":0}"""
+      compactJson(toJValue(money)) should be(expectedJson)
+    }
+
+    "serialize the ISO currency counterpart of a custom currency" in {
+      val money = Money.fromCentAmount(1234, Currency.getInstance("HUF"))
+
+      val expectedJson =
+        """{"type":"centPrecision","currencyCode":"HUF","centAmount":1234,"fractionDigits":2}"""
       compactJson(toJValue(money)) should be(expectedJson)
     }
   }
