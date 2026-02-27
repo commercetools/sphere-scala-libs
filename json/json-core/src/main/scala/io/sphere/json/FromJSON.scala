@@ -294,6 +294,21 @@ object FromJSON extends FromJSONInstances with Logging {
       case _ => fail("JSON object expected.")
     }
   }
+  // This can probably be removed later, but we still need both because of the api-reference repo
+  implicit val javaCurrencyReader: FromJSON[java.util.Currency] =
+    new FromJSON[java.util.Currency] {
+      val typeErrorMsg = "ISO 4217 code JSON String expected."
+      def failMsgFor(input: String) = s"Currency '$input' not valid as ISO 4217."
+
+      def read(jval: JValue): JValidation[java.util.Currency] = jval match {
+        case JString(s) =>
+          try Valid(java.util.Currency.getInstance(s))
+          catch {
+            case _: IllegalArgumentException => fail(failMsgFor(s))
+          }
+        case _ => fail(typeErrorMsg)
+      }
+    }
 
   implicit val currencyReader: FromJSON[Currency] =
     new FromJSON[Currency] {

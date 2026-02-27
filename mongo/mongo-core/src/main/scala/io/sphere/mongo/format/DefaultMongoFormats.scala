@@ -179,6 +179,23 @@ trait DefaultMongoFormats {
       }
     }
 
+  // This can probably be removed later, but we still need both because of the api-reference repo
+  implicit val javaCurrencyFormat: MongoFormat[java.util.Currency] =
+    new MongoFormat[java.util.Currency] {
+      val typeErrorMsg = "ISO 4217 code JSON String expected."
+      def failMsgFor(input: String) = s"Currency '$input' not valid as ISO 4217."
+
+      override def toMongoValue(c: java.util.Currency): Any = c.getCurrencyCode
+      override def fromMongoValue(any: Any): java.util.Currency = any match {
+        case s: String =>
+          try java.util.Currency.getInstance(s)
+          catch {
+            case _: IllegalArgumentException => throw new Exception(failMsgFor(s))
+          }
+        case _ => throw new Exception(typeErrorMsg)
+      }
+    }
+
   implicit val currencyFormat: MongoFormat[Currency] =
     new MongoFormat[Currency] {
       val typeErrorMsg = "ISO 4217 code JSON String expected."

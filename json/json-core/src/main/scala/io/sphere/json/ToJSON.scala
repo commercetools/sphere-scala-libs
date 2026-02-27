@@ -150,6 +150,11 @@ object ToJSON extends ToJSONInstances {
     }
   }
 
+  // This can probably be removed later, but we still need both because of the api-reference repo
+  implicit val javaCurrencyWriter: ToJSON[java.util.Currency] = new ToJSON[java.util.Currency] {
+    def write(c: java.util.Currency): JValue = toJValue(c.getCurrencyCode)
+  }
+
   implicit val currencyWriter: ToJSON[Currency] = new ToJSON[Currency] {
     def write(c: Currency): JValue = toJValue(c.getCurrencyCode)
   }
