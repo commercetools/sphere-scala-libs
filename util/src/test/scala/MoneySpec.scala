@@ -7,7 +7,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import scala.language.postfixOps
 import cats.data.Validated.Invalid
 import cats.data.Validated.Valid
-import io.sphere.util.AbstractCustomCurrency.HUF0
+import io.sphere.util.CustomCurrency.HUF0
 
 class MoneySpec extends AnyFunSpec with Matchers with ScalaCheckDrivenPropertyChecks {
   import Money.ImplicitsDecimal._
@@ -171,16 +171,16 @@ class MoneySpec extends AnyFunSpec with Matchers with ScalaCheckDrivenPropertyCh
     }
 
     it("should work with custom types") {
-      val huf1 = Money.fromCentAmount(100, CustomCurrency(HUF0))
-      val huf2 = Money.fromCentAmount(256, CustomCurrency(HUF0))
+      val huf1 = Money.fromCentAmount(100, HUF0)
+      val huf2 = Money.fromCentAmount(256, HUF0)
 
       val sum = huf1 + huf2
 
-      sum must be(Money.fromCentAmount(356, CustomCurrency(HUF0)))
+      sum must be(Money.fromCentAmount(356, HUF0))
     }
 
     it("custom currency should not be able to be mixed with the predefined ones") {
-      val huf1 = Money.fromCentAmount(100, CustomCurrency(HUF0))
+      val huf1 = Money.fromCentAmount(100, HUF0)
       val huf2 = Money.fromCentAmount(256, JCurrency(java.util.Currency.getInstance("HUF")))
 
       val ex = the[IllegalArgumentException] thrownBy {

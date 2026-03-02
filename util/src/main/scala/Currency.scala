@@ -1,8 +1,7 @@
 package io.sphere.util
 
 import java.util.{Currency => JavaCurrency, Locale}
-import scala.collection.JavaConverters._
-import scala.collection.immutable.ArraySeq // because of 2.12 compatibility
+import scala.collection.JavaConverters._ // because of 2.12 compatibility
 
 sealed trait Currency {
   def getDefaultFractionDigits: Int
@@ -40,7 +39,7 @@ object Currency {
   def getAvailableCurrencies: Vector[Currency] = {
     val defaultCurrencies = java.util.Currency.getAvailableCurrencies.asScala.toVector
       .map(JCurrency.apply)
-    val customCurrencies = CustomCurrency.getAvailableCurrencies.map(CustomCurrency.apply)
+    val customCurrencies = CustomCurrency.getAvailableCurrencies
     defaultCurrencies ++ customCurrencies
   }
 }
@@ -52,39 +51,32 @@ case class JCurrency(currency: java.util.Currency) extends Currency {
   override def toString: String = currency.toString
 }
 
-sealed abstract class AbstractCustomCurrency(
+sealed abstract class CustomCurrency(
     val getDefaultFractionDigits: Int,
     parentCurrency: java.util.Currency)
-    extends Product {
+    extends Currency
+    with Product {
   final def getSymbol(locale: Locale): String = parentCurrency.getSymbol(locale)
-  final def getCurrencyCode: String = parentCurrency.getCurrencyCode
-  override def toString: String = parentCurrency.toString
-}
-
-object AbstractCustomCurrency {
-  // Add any new currency to getAvailableCurrencies above
-  case object HUF0 extends AbstractCustomCurrency(0, java.util.Currency.getInstance("HUF"))
-  case object TWD0 extends AbstractCustomCurrency(0, java.util.Currency.getInstance("TWD"))
-  case object TRY0 extends AbstractCustomCurrency(0, java.util.Currency.getInstance("TRY"))
-  case object ILS0 extends AbstractCustomCurrency(0, java.util.Currency.getInstance("ILS"))
-  case object KZT0 extends AbstractCustomCurrency(0, java.util.Currency.getInstance("KZT"))
-  case object CZK0 extends AbstractCustomCurrency(0, java.util.Currency.getInstance("CZK"))
-}
-
-case class CustomCurrency(currency: AbstractCustomCurrency) extends Currency {
-  def getDefaultFractionDigits: Int = currency.getDefaultFractionDigits
-  def getSymbol(locale: Locale): String = currency.getSymbol(locale)
-  def getCurrencyCode: String = currency.productPrefix
+  final def getCurrencyCode: String = productPrefix
+  override def toString: String = productPrefix
 }
 
 object CustomCurrency {
-  import AbstractCustomCurrency._
-  val getAvailableCurrencies: ArraySeq[AbstractCustomCurrency] =
-    ArraySeq(HUF0, TWD0, TRY0, ILS0, KZT0, CZK0)
+  // Add any new currency to getAvailableCurrencies below
+  case object HUF0 extends CustomCurrency(0, java.util.Currency.getInstance("HUF"))
+  case object TWD0 extends CustomCurrency(0, java.util.Currency.getInstance("TWD"))
+  case object TRY0 extends CustomCurrency(0, java.util.Currency.getInstance("TRY"))
+  case object ILS0 extends CustomCurrency(0, java.util.Currency.getInstance("ILS"))
+  case object KZT0 extends CustomCurrency(0, java.util.Currency.getInstance("KZT"))
+  case object CZK0 extends CustomCurrency(0, java.util.Currency.getInstance("CZK"))
 
-  private val fromStringLookup =
-    getAvailableCurrencies.map(curr => curr.productPrefix -> CustomCurrency(curr))
+  // Wanted to use just a single immutable ArraySeq, instead of Vector & Array below, but it's not on 2.12
+  val getAvailableCurrencies: Vector[CustomCurrency] =
+    Vector(HUF0, TWD0, TRY0, ILS0, KZT0, CZK0)
+
+  // Array supposed to be the fastest for the `.find` and it's the only Array that's available in all Scala versions
+  private val fasterAvailableCurrencies = getAvailableCurrencies.toArray
 
   def fromString(string: String): Option[CustomCurrency] =
-    fromStringLookup.collectFirst { case (name, instance) if name == string => instance }
+    fasterAvailableCurrencies.find(curr => curr.getCurrencyCode == string)
 }

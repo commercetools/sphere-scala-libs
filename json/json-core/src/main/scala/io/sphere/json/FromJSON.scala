@@ -12,7 +12,6 @@ import io.sphere.util.{
   Currency,
   DateTimeFormats,
   HighPrecisionMoney,
-  JCurrency,
   LangTag,
   Logging,
   Money

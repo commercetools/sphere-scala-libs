@@ -1,9 +1,9 @@
 package io.sphere.json
 
 import java.util.Currency
-import io.sphere.util.{BaseMoney, CustomCurrency, HighPrecisionMoney, Money}
+import io.sphere.util.{BaseMoney, HighPrecisionMoney, Money}
 import cats.data.Validated.Valid
-import io.sphere.util.AbstractCustomCurrency.HUF0
+import io.sphere.util.CustomCurrency.HUF0
 import org.json4s.jackson.compactJson
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -45,7 +45,7 @@ class MoneyMarshallingSpec extends AnyWordSpec with Matchers {
     }
 
     "be symmetric for custom currencies" in {
-      val money = Money.fromCentAmount(1234, CustomCurrency(HUF0))
+      val money = Money.fromCentAmount(1234, HUF0)
       val jsonAst = toJValue(money)
       val jsonAsString = compactJson(jsonAst)
       val Valid(readAst) = parseJSON(jsonAsString)
@@ -63,7 +63,7 @@ class MoneyMarshallingSpec extends AnyWordSpec with Matchers {
     }
 
     "serialize custom currencies with their unique code" in {
-      val money = Money.fromCentAmount(1234, CustomCurrency(HUF0))
+      val money = Money.fromCentAmount(1234, HUF0)
 
       val expectedJson =
         """{"type":"centPrecision","currencyCode":"HUF0","centAmount":1234,"fractionDigits":0}"""

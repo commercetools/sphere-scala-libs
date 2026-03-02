@@ -253,8 +253,8 @@ object Money {
   def fromDecimalAmount(amount: BigDecimal, currency: java.util.Currency)(implicit
       mode: RoundingMode): Money = fromDecimalAmount(amount, JCurrency(currency))
 
-  def fromDecimalAmount(amount: BigDecimal, currency: AbstractCustomCurrency)(implicit
-      mode: RoundingMode): Money = fromDecimalAmount(amount, CustomCurrency(currency))
+  def fromDecimalAmount(amount: BigDecimal, currency: CustomCurrency)(implicit
+      mode: RoundingMode): Money = fromDecimalAmount(amount, currency)
 
   def fromDecimalAmount(amount: BigDecimal, currency: Currency)(implicit
       mode: RoundingMode): Money = {
@@ -317,8 +317,6 @@ object Money {
 
   def fromCentAmount(centAmount: Long, currency: java.util.Currency): Money =
     new Money(centAmount, JCurrency(currency))
-  def fromCentAmount(centAmount: Long, currency: AbstractCustomCurrency): Money =
-    new Money(centAmount, CustomCurrency(currency))
   def fromCentAmount(centAmount: Long, currency: Currency): Money =
     new Money(centAmount, currency)
 
@@ -586,10 +584,6 @@ object HighPrecisionMoney {
       implicit mode: RoundingMode): HighPrecisionMoney =
     fromDecimalAmount(amount, fractionDigits, JCurrency(currency))
 
-  def fromDecimalAmount(amount: BigDecimal, fractionDigits: Int, currency: AbstractCustomCurrency)(
-      implicit mode: RoundingMode): HighPrecisionMoney =
-    fromDecimalAmount(amount, fractionDigits, CustomCurrency(currency))
-
   def fromDecimalAmount(amount: BigDecimal, fractionDigits: Int, currency: Currency)(implicit
       mode: RoundingMode): HighPrecisionMoney = {
     val scaledAmount = amount.setScale(fractionDigits, mode)
@@ -614,12 +608,6 @@ object HighPrecisionMoney {
       fractionDigits: Int,
       currency: java.util.Currency): HighPrecisionMoney =
     fromCentAmount(centAmount, fractionDigits, JCurrency(currency))
-
-  def fromCentAmount(
-      centAmount: Long,
-      fractionDigits: Int,
-      currency: AbstractCustomCurrency): HighPrecisionMoney =
-    fromCentAmount(centAmount, fractionDigits, CustomCurrency(currency))
 
   def fromCentAmount(
       centAmount: Long,

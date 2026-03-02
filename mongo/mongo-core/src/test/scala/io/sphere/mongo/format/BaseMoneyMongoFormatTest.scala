@@ -1,10 +1,10 @@
 package io.sphere.mongo.format
 
 import java.util.Currency
-import io.sphere.util.{BaseMoney, CustomCurrency, HighPrecisionMoney, Money}
+import io.sphere.util.{BaseMoney, HighPrecisionMoney, Money}
 import DefaultMongoFormats._
 import io.sphere.mongo.MongoUtils._
-import io.sphere.util.AbstractCustomCurrency.HUF0
+import io.sphere.util.CustomCurrency.HUF0
 import org.bson.BSONObject
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers
@@ -48,8 +48,7 @@ class BaseMoneyMongoFormatTest extends AnyWordSpec with Matchers {
         "centAmount" -> 3298
       )
 
-      MongoFormat[BaseMoney].fromMongoValue(dbo) should be(
-        Money.fromCentAmount(3298, CustomCurrency(HUF0)))
+      MongoFormat[BaseMoney].fromMongoValue(dbo) should be(Money.fromCentAmount(3298, HUF0))
     }
   }
 
