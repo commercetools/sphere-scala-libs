@@ -2,8 +2,8 @@ package io.sphere.json
 
 import cats.data.NonEmptyList
 
-import java.util.{Currency, Locale, UUID}
-import io.sphere.util.{BaseMoney, DateTimeFormats, HighPrecisionMoney, Money}
+import java.util.{Locale, UUID}
+import io.sphere.util.{BaseMoney, Currency, DateTimeFormats, HighPrecisionMoney, Money}
 import org.json4s.JsonAST._
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
@@ -148,6 +148,11 @@ object ToJSON extends ToJSONInstances {
       case m: Money => moneyWriter.write(m)
       case m: HighPrecisionMoney => highPrecisionMoneyWriter.write(m)
     }
+  }
+
+  // This can probably be removed later, but we still need both because of the api-reference repo
+  implicit val javaCurrencyWriter: ToJSON[java.util.Currency] = new ToJSON[java.util.Currency] {
+    def write(c: java.util.Currency): JValue = toJValue(c.getCurrencyCode)
   }
 
   implicit val currencyWriter: ToJSON[Currency] = new ToJSON[Currency] {

@@ -1,6 +1,5 @@
 package io.sphere.util
 
-import java.util.Currency
 import cats.data.Validated.Invalid
 import io.sphere.util.HighPrecisionMoney.ImplicitsDecimalPrecise.HighPrecisionPreciseMoneyNotation
 import org.scalatest.funspec.AnyFunSpec
@@ -181,7 +180,7 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
     }
 
     it("should validate centAmount") {
-      val Invalid(errors) = HighPrecisionMoney.fromPreciseAmount(123456L, 4, Euro, Some(1))
+      val Invalid(errors) = HighPrecisionMoney.fromPreciseAmount(123456L, 4, Euro, Some(1L))
 
       errors.toList must be(
         List(

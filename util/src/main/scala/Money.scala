@@ -2,9 +2,6 @@ package io.sphere.util
 
 import language.implicitConversions
 import java.math.MathContext
-import java.text.NumberFormat
-import java.util.{Currency, Locale}
-
 import cats.Monoid
 import cats.data.ValidatedNel
 import cats.syntax.validated._
@@ -63,7 +60,9 @@ object BaseMoney {
   val TypeField: String = "type"
 
   def requireSameCurrency(m1: BaseMoney, m2: BaseMoney): Unit =
-    require(m1.currency eq m2.currency, s"${m1.currency} != ${m2.currency}")
+    require(
+      m1.currency == m2.currency,
+      s"${m1.currency.getCurrencyCode} != ${m2.currency.getCurrencyCode}")
 
   def toScalaRoundingMode(mode: java.math.RoundingMode): RoundingMode =
     BigDecimal.RoundingMode(mode.ordinal())
@@ -218,10 +217,6 @@ case class Money private (centAmount: Long, currency: Currency)
 
   override def toString: String = Money.toString(centAmount, fractionDigits, currency)
 
-  def toString(nf: NumberFormat, locale: Locale): String = {
-    require(nf.getCurrency eq this.currency)
-    nf.format(this.amount.doubleValue) + " " + this.currency.getSymbol(locale)
-  }
 }
 
 object Money {
@@ -255,6 +250,12 @@ object Money {
   final val FractionDigitsField: String = "fractionDigits"
   final val TypeName: String = "centPrecision"
 
+  def fromDecimalAmount(amount: BigDecimal, currency: java.util.Currency)(implicit
+      mode: RoundingMode): Money = fromDecimalAmount(amount, JCurrency(currency))
+
+  def fromDecimalAmount(amount: BigDecimal, currency: CustomCurrency)(implicit
+      mode: RoundingMode): Money = fromDecimalAmount(amount, currency)
+
   def fromDecimalAmount(amount: BigDecimal, currency: Currency)(implicit
       mode: RoundingMode): Money = {
     val fractionDigits = currency.getDefaultFractionDigits
@@ -263,14 +264,14 @@ object Money {
     Money(bigDecimalToMoneyLong(centAmountBigDecimalZeroScale), currency)
   }
 
-  def apply(amount: BigDecimal, currency: Currency): Validated[Throwable, Money] =
+  def apply(amount: BigDecimal, currency: java.util.Currency): Validated[Throwable, Money] =
     try
-      unsafeApply(amount, currency).valid
+      unsafeApply(amount, JCurrency(currency)).valid
     catch {
       case e: Throwable => e.invalid
     }
 
-  def unsafeApply(amount: BigDecimal, currency: Currency): Money = {
+  def unsafeApply(amount: BigDecimal, currency: io.sphere.util.Currency): Money = {
     require(
       amount.scale == currency.getDefaultFractionDigits,
       "The scale of the given amount does not match the scale of the provided currency." +
@@ -278,8 +279,6 @@ object Money {
     )
     fromDecimalAmount(amount, currency)(BigDecimal.RoundingMode.UNNECESSARY)
   }
-
-  def unsafeApply(centAmount: Long, currency: Currency): Money = new Money(centAmount, currency)
 
   private final val bdOne: BigDecimal = BigDecimal(1)
   final val bdTen: BigDecimal = BigDecimal(10)
@@ -316,6 +315,8 @@ object Money {
       case other => bdOne / bdTen.pow(other)
     }
 
+  def fromCentAmount(centAmount: Long, currency: java.util.Currency): Money =
+    new Money(centAmount, JCurrency(currency))
   def fromCentAmount(centAmount: Long, currency: Currency): Money =
     new Money(centAmount, currency)
 
@@ -333,7 +334,7 @@ object Money {
       case _ => fromCentAmount(0L, currency)
     }
 
-  implicit def moneyMonoid(implicit c: Currency, mode: RoundingMode): Monoid[Money] =
+  implicit def moneyMonoid(implicit c: CustomCurrency, mode: RoundingMode): Monoid[Money] =
     new Monoid[Money] {
       def combine(x: Money, y: Money): Money = x + y
       val empty: Money = Money.zero(c)
@@ -483,11 +484,6 @@ case class HighPrecisionMoney private (
 
   override def toString: String = Money.toString(preciseAmount, fractionDigits, currency)
 
-  def toString(nf: NumberFormat, locale: Locale): String = {
-    require(nf.getCurrency eq this.currency)
-
-    nf.format(this.amount.doubleValue) + " " + this.currency.getSymbol(locale)
-  }
 }
 
 object HighPrecisionMoney {
@@ -584,6 +580,10 @@ object HighPrecisionMoney {
   private def amountToPreciseAmount(amount: BigDecimal, fractionDigits: Int): Long =
     bigDecimalToMoneyLong(amount * Money.cachedCentPower(fractionDigits))
 
+  def fromDecimalAmount(amount: BigDecimal, fractionDigits: Int, currency: java.util.Currency)(
+      implicit mode: RoundingMode): HighPrecisionMoney =
+    fromDecimalAmount(amount, fractionDigits, JCurrency(currency))
+
   def fromDecimalAmount(amount: BigDecimal, fractionDigits: Int, currency: Currency)(implicit
       mode: RoundingMode): HighPrecisionMoney = {
     val scaledAmount = amount.setScale(fractionDigits, mode)
@@ -606,6 +606,12 @@ object HighPrecisionMoney {
   def fromCentAmount(
       centAmount: Long,
       fractionDigits: Int,
+      currency: java.util.Currency): HighPrecisionMoney =
+    fromCentAmount(centAmount, fractionDigits, JCurrency(currency))
+
+  def fromCentAmount(
+      centAmount: Long,
+      fractionDigits: Int,
       currency: Currency): HighPrecisionMoney =
     HighPrecisionMoney(
       centToPreciseAmount(centAmount, fractionDigits, currency),
@@ -615,6 +621,13 @@ object HighPrecisionMoney {
 
   def zero(fractionDigits: Int, currency: Currency): HighPrecisionMoney =
     fromCentAmount(0L, fractionDigits, currency)
+
+  def fromPreciseAmount(
+      preciseAmount: Long,
+      fractionDigits: Int,
+      currency: java.util.Currency,
+      centAmount: Option[Long]): ValidatedNel[String, HighPrecisionMoney] =
+    fromPreciseAmount(preciseAmount, fractionDigits, JCurrency(currency), centAmount)
 
   /* centAmount provides an escape hatch in cases where the default rounding mode is not applicable */
   def fromPreciseAmount(

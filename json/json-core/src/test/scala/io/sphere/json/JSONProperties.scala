@@ -1,9 +1,8 @@
 package io.sphere.json
 
 import scala.language.higherKinds
-import io.sphere.util.Money
-import java.util.{Currency, Locale, UUID}
-
+import io.sphere.util.{Currency, Money}
+import java.util.{Locale, UUID}
 import cats.Eq
 import cats.data.NonEmptyList
 import cats.syntax.eq._
