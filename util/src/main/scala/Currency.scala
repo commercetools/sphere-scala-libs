@@ -90,6 +90,7 @@ object CustomCurrency {
     case "ILS0" => ILS0
     case "KZT0" => KZT0
     case "CZK0" => CZK0
-    case _ => throw new Exception(s"Currency '$input' not valid as a custom currency code.")
+    case _ =>
+      throw new IllegalArgumentException(s"Currency '$input' not valid as a custom currency code.")
   }
 }
