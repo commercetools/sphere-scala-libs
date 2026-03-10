@@ -1,7 +1,7 @@
 package io.sphere.util
 
 import java.util.{Currency => JavaCurrency, Locale}
-import scala.collection.JavaConverters._ // because of 2.12 compatibility
+import scala.collection.JavaConverters._
 
 sealed trait Currency {
   def getDefaultFractionDigits: Int

@@ -1,15 +1,14 @@
 package io.sphere.json
 
-import scala.language.higherKinds
-import io.sphere.util.{Currency, Money}
-import java.util.{Locale, UUID}
 import cats.Eq
 import cats.data.NonEmptyList
 import cats.syntax.eq._
+import io.sphere.util.{Currency, Money}
 import org.joda.time._
 import org.scalacheck._
-import java.time
 
+import java.time
+import java.util.{Locale, UUID}
 import scala.math.BigDecimal.RoundingMode
 
 object JSONProperties extends Properties("JSON") {

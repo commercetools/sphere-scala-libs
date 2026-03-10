@@ -1,8 +1,5 @@
 package io.sphere.json
 
-import scala.util.control.NonFatal
-import scala.collection.mutable.ListBuffer
-import java.util.{Locale, UUID}
 import cats.data.NonEmptyList
 import cats.data.Validated.{Invalid, Valid}
 import cats.syntax.apply._
@@ -16,17 +13,15 @@ import io.sphere.util.{
   Logging,
   Money
 }
-import org.json4s.JsonAST._
 import org.joda.time.format.ISODateTimeFormat
+import org.joda.time.{DateTime, DateTimeZone, LocalDate, LocalTime, YearMonth}
+import org.json4s.JsonAST._
 
-import scala.annotation.implicitNotFound
 import java.time
-import org.joda.time.DateTime
-import org.joda.time.DateTimeZone
-import org.joda.time.YearMonth
-import org.joda.time.LocalTime
-import org.joda.time.LocalDate
-import org.json4s.JNumber
+import java.util.{Locale, UUID}
+import scala.annotation.implicitNotFound
+import scala.collection.mutable.ListBuffer
+import scala.util.control.NonFatal
 
 /** Type class for types that can be read from JSON. */
 @implicitNotFound("Could not find an instance of FromJSON for ${A}")

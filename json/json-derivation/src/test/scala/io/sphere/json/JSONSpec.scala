@@ -3,13 +3,13 @@ package io.sphere.json
 import cats.data.Validated.{Invalid, Valid}
 import cats.data.ValidatedNel
 import cats.syntax.apply._
-import org.json4s.JsonAST._
 import io.sphere.json.field
 import io.sphere.json.generic._
 import io.sphere.util.Money
 import org.joda.time._
-import org.scalatest.matchers.must.Matchers
+import org.json4s.JsonAST._
 import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.must.Matchers
 
 object JSONSpec {
   case class Project(nr: Int, name: String, version: Int = 1, milestones: List[Milestone] = Nil)

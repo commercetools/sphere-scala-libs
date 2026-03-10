@@ -1,12 +1,6 @@
 package json
 
-import java.util.UUID
-
 import io.sphere.json._
-import io.sphere.json.generic._
-import io.sphere.util.BaseMoney
-import org.json4s.StringInput
-import org.json4s.jackson._
 import org.openjdk.jmh.annotations._
 
 @State(Scope.Benchmark)

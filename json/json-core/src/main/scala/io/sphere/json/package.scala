@@ -6,10 +6,11 @@ import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.core.exc.{InputCoercionException, StreamConstraintsException}
 import com.fasterxml.jackson.databind.JsonMappingException
 import io.sphere.util.Logging
-import org.json4s.{DefaultFormats, JsonInput, StringInput}
 import org.json4s.JsonAST._
 import org.json4s.ParserUtil.ParseException
 import org.json4s.jackson.compactJson
+import org.json4s.{DefaultFormats, JsonInput, StringInput}
+
 import java.time.format.DateTimeFormatter
 
 /** Provides functions for reading & writing JSON, via type classes JSON/JSONR/JSONW. */

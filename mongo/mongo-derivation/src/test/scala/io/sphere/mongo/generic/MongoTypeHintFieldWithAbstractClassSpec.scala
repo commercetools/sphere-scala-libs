@@ -1,10 +1,10 @@
 package io.sphere.mongo.generic
 
 import io.sphere.mongo.MongoUtils.dbObj
+import io.sphere.mongo.format.DefaultMongoFormats._
 import io.sphere.mongo.format.{MongoFormat, fromMongo, toMongo}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import io.sphere.mongo.format.DefaultMongoFormats._
 
 class MongoTypeHintFieldWithAbstractClassSpec extends AnyWordSpec with Matchers {
   import MongoTypeHintFieldWithAbstractClassSpec._

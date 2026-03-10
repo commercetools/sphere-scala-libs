@@ -1,11 +1,11 @@
 package io.sphere.json
 
-import java.util.UUID
-
 import io.sphere.json.ToJSONProduct._
 import org.json4s._
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+
+import java.util.UUID
 
 case class User(id: UUID, firstName: String, age: Int)
 

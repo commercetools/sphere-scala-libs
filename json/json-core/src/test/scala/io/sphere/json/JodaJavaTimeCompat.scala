@@ -1,22 +1,9 @@
 package io.sphere.json
 
-import org.joda.time.DateTime
-import org.joda.time.DateTimeZone
-import org.joda.time.LocalDate
-import org.joda.time.LocalTime
-import org.joda.time.YearMonth
-import org.scalacheck.Arbitrary
-import org.scalacheck.Gen
-import org.scalacheck.Prop
-import org.scalacheck.Properties
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.AnyWordSpec
+import org.joda.time.{DateTime, DateTimeZone, LocalTime}
+import org.scalacheck.{Arbitrary, Gen, Prop, Properties}
 
-import java.time.{Instant => JInstant}
-import java.time.{LocalDate => JLocalDate}
-import java.time.{LocalTime => JLocalTime}
-import java.time.{YearMonth => JYearMonth}
-import cats.data.Validated
+import java.time.{Instant => JInstant, LocalTime => JLocalTime}
 
 class JodaJavaTimeCompat extends Properties("Joda - java.time compat") {
   val epochMillis = Gen.choose(-188395027761000L, 64092207599999L)

@@ -1,17 +1,17 @@
 package io.sphere.util
 
-import scala.util.Try
-
 import java.time.format._
 import java.time.temporal.ChronoField
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.LocalDateTime
-import java.time.ZonedDateTime
-import java.time.ZoneId
-import java.time.ZoneOffset
-import java.time.OffsetDateTime
-import java.time.Instant
+import java.time.{
+  Instant,
+  LocalDate,
+  LocalDateTime,
+  LocalTime,
+  OffsetDateTime,
+  ZoneOffset,
+  ZonedDateTime
+}
+import scala.util.Try
 
 object DateTimeFormats {
 
