@@ -1,7 +1,5 @@
 package io.sphere.util
 
-import java.util.Currency
-
 import org.scalacheck.Gen
 
 import scala.jdk.CollectionConverters._
@@ -9,12 +7,12 @@ import scala.jdk.CollectionConverters._
 object DomainObjectsGen {
 
   private val currency: Gen[Currency] =
-    Gen.oneOf(Currency.getAvailableCurrencies.asScala.toSeq)
+    Gen.oneOf(Currency.getAvailableCurrencies)
 
   val money: Gen[Money] = for {
     currency <- currency
     amount <- Gen.chooseNum[Long](Long.MinValue, Long.MaxValue)
-  } yield Money.unsafeApply(amount, currency)
+  } yield Money.fromCentAmount(amount, currency)
 
   val highPrecisionMoney: Gen[HighPrecisionMoney] = for {
     money <- money

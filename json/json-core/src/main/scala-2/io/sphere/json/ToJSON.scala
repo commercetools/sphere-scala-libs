@@ -1,12 +1,9 @@
 package io.sphere.json
+
 import cats.data.NonEmptyList
 
-import scala.annotation.implicitNotFound
-import java.time
-import org.json4s.JsonAST.JValue
-import java.util.{Currency, Locale, UUID}
-import java.time
-import io.sphere.util.{BaseMoney, DateTimeFormats, HighPrecisionMoney, Money}
+import java.util.{Locale, UUID}
+import io.sphere.util.{BaseMoney, Currency, DateTimeFormats, HighPrecisionMoney, Money}
 import org.json4s.JsonAST._
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
@@ -14,6 +11,9 @@ import org.joda.time.LocalTime
 import org.joda.time.LocalDate
 import org.joda.time.YearMonth
 import org.joda.time.format.ISODateTimeFormat
+
+import scala.annotation.implicitNotFound
+import java.time
 
 /** Type class for types that can be written to JSON. */
 @implicitNotFound("Could not find an instance of ToJSON for ${A}")
@@ -25,16 +25,16 @@ class JSONWriteException(msg: String) extends JSONException(msg)
 
 object ToJSON extends ToJSONCatsInstances {
 
+  private val emptyJArray = JArray(Nil)
+  private val emptyJObject = JObject(Nil)
+
+  @inline def apply[A](implicit instance: ToJSON[A]): ToJSON[A] = instance
+
   /** construct an instance from a function
     */
   def instance[T](toJson: T => JValue): ToJSON[T] = new ToJSON[T] {
     override def write(value: T): JValue = toJson(value)
   }
-
-  private val emptyJArray = JArray(Nil)
-  private val emptyJObject = JObject(Nil)
-
-  @inline def apply[A](implicit instance: ToJSON[A]): ToJSON[A] = instance
 
   implicit def optionWriter[@specialized A](implicit c: ToJSON[A]): ToJSON[Option[A]] =
     new ToJSON[Option[A]] {
@@ -119,7 +119,6 @@ object ToJSON extends ToJSONCatsInstances {
   }
 
   implicit val moneyWriter: ToJSON[Money] = new ToJSON[Money] {
-
     import Money._
 
     def write(m: Money): JValue = JObject(
@@ -133,9 +132,7 @@ object ToJSON extends ToJSONCatsInstances {
 
   implicit val highPrecisionMoneyWriter: ToJSON[HighPrecisionMoney] =
     new ToJSON[HighPrecisionMoney] {
-
       import HighPrecisionMoney._
-
       def write(m: HighPrecisionMoney): JValue = JObject(
         JField(BaseMoney.TypeField, toJValue(m.`type`)) ::
           JField(CurrencyCodeField, toJValue(m.currency)) ::
@@ -151,6 +148,11 @@ object ToJSON extends ToJSONCatsInstances {
       case m: Money => moneyWriter.write(m)
       case m: HighPrecisionMoney => highPrecisionMoneyWriter.write(m)
     }
+  }
+
+  // This can probably be removed later, but we still need both because of the api-reference repo
+  implicit val javaCurrencyWriter: ToJSON[java.util.Currency] = new ToJSON[java.util.Currency] {
+    def write(c: java.util.Currency): JValue = toJValue(c.getCurrencyCode)
   }
 
   implicit val currencyWriter: ToJSON[Currency] = new ToJSON[Currency] {
@@ -218,5 +220,4 @@ object ToJSON extends ToJSONCatsInstances {
       case Right(r) => toJValue(r)
     }
   }
-
 }

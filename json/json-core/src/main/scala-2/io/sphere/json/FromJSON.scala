@@ -1,30 +1,32 @@
 package io.sphere.json
 
-import org.json4s.JsonAST._
-
 import scala.util.control.NonFatal
 import scala.collection.mutable.ListBuffer
-import java.util.{Currency, Locale, UUID}
+import java.util.{Locale, UUID}
 import cats.data.NonEmptyList
 import cats.data.Validated.{Invalid, Valid}
 import cats.syntax.apply._
 import cats.syntax.traverse._
-import io.sphere.json.field
-import io.sphere.util.{BaseMoney, DateTimeFormats, HighPrecisionMoney, LangTag, Logging, Money}
+import io.sphere.util.{
+  BaseMoney,
+  Currency,
+  DateTimeFormats,
+  HighPrecisionMoney,
+  LangTag,
+  Logging,
+  Money
+}
 import org.json4s.JsonAST._
+import org.joda.time.format.ISODateTimeFormat
 
+import scala.annotation.implicitNotFound
 import java.time
-import java.util.{Currency, Locale, UUID}
-import scala.collection.mutable.ListBuffer
-import scala.util.control.NonFatal
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import org.joda.time.YearMonth
 import org.joda.time.LocalTime
 import org.joda.time.LocalDate
-import org.joda.time.format.ISODateTimeFormat
-
-import scala.annotation.implicitNotFound
+import org.json4s.JNumber
 
 /** Type class for types that can be read from JSON. */
 @implicitNotFound("Could not find an instance of FromJSON for ${A}")
@@ -68,7 +70,6 @@ object FromJSON extends FromJSONCatsInstances with Logging {
           validNone // if none of the optional fields are in the JSON
         case x => c.read(x).map(Option.apply)
       }
-
       override val fields: Set[String] = c.fields
     }
 
@@ -119,7 +120,6 @@ object FromJSON extends FromJSONCatsInstances with Logging {
 
   implicit def vectorReader[@specialized A](implicit r: FromJSON[A]): FromJSON[Vector[A]] =
     new FromJSON[Vector[A]] {
-
       import scala.collection.immutable.VectorBuilder
 
       def read(jval: JValue): JValidation[Vector[A]] = jval match {
@@ -216,7 +216,6 @@ object FromJSON extends FromJSONCatsInstances with Logging {
   implicit val booleanReader: FromJSON[Boolean] = new FromJSON[Boolean] {
     private val cachedTrue = Valid(true)
     private val cachedFalse = Valid(false)
-
     def read(jval: JValue): JValidation[Boolean] = jval match {
       case JBool(b) => if (b) cachedTrue else cachedFalse
       case _ => fail("JSON Boolean expected")
@@ -235,7 +234,6 @@ object FromJSON extends FromJSONCatsInstances with Logging {
   }
 
   implicit val moneyReader: FromJSON[Money] = new FromJSON[Money] {
-
     import Money._
 
     override val fields = Set(CentAmountField, CurrencyCodeField)
@@ -256,7 +254,6 @@ object FromJSON extends FromJSONCatsInstances with Logging {
 
   implicit val highPrecisionMoneyReader: FromJSON[HighPrecisionMoney] =
     new FromJSON[HighPrecisionMoney] {
-
       import HighPrecisionMoney._
 
       override val fields = Set(PreciseAmountField, CurrencyCodeField, FractionDigitsField)
@@ -296,33 +293,37 @@ object FromJSON extends FromJSONCatsInstances with Logging {
       case _ => fail("JSON object expected.")
     }
   }
+  // This can probably be removed later, but we still need both because of the api-reference repo
+  implicit val javaCurrencyReader: FromJSON[java.util.Currency] =
+    new FromJSON[java.util.Currency] {
+      val typeErrorMsg = "ISO 4217 code JSON String expected."
+      def failMsgFor(input: String) = s"Currency '$input' not valid as ISO 4217 code."
 
-  implicit val currencyReader: FromJSON[Currency] = new FromJSON[Currency] {
-    val failMsg = "ISO 4217 code JSON String expected."
-
-    def failMsgFor(input: String) = s"Currency '$input' not valid as ISO 4217 code."
-
-    private val cachedEUR = Valid(Currency.getInstance("EUR"))
-    private val cachedUSD = Valid(Currency.getInstance("USD"))
-    private val cachedGBP = Valid(Currency.getInstance("GBP"))
-    private val cachedJPY = Valid(Currency.getInstance("JPY"))
-
-    def read(jval: JValue): JValidation[Currency] = jval match {
-      case JString(s) =>
-        s match {
-          case "EUR" => cachedEUR
-          case "USD" => cachedUSD
-          case "GBP" => cachedGBP
-          case "JPY" => cachedJPY
-          case _ =>
-            try Valid(Currency.getInstance(s))
-            catch {
-              case _: IllegalArgumentException => fail(failMsgFor(s))
-            }
-        }
-      case _ => fail(failMsg)
+      def read(jval: JValue): JValidation[java.util.Currency] = jval match {
+        case JString(s) =>
+          try Valid(java.util.Currency.getInstance(s))
+          catch {
+            case _: IllegalArgumentException => fail(failMsgFor(s))
+          }
+        case _ => fail(typeErrorMsg)
+      }
     }
-  }
+
+  implicit val currencyReader: FromJSON[Currency] =
+    new FromJSON[Currency] {
+      val typeErrorMsg = "ISO 4217 code JSON String expected."
+      def failMsgFor(input: String) =
+        s"Currency '$input' not valid as ISO 4217 or custom currency code."
+
+      def read(jval: JValue): JValidation[Currency] = jval match {
+        case JString(s) =>
+          try Valid(Currency.getInstance(s))
+          catch {
+            case _: IllegalArgumentException => fail(failMsgFor(s))
+          }
+        case _ => fail(typeErrorMsg)
+      }
+    }
 
   implicit val jValueReader: FromJSON[JValue] = new FromJSON[JValue] {
     def read(jval: JValue): JValidation[JValue] = Valid(jval)
@@ -363,7 +364,6 @@ object FromJSON extends FromJSONCatsInstances with Logging {
 
   private final val UTCDateTimeComponents =
     raw"(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})\.(\d{3})Z".r
-
   private def parseJodaTime(s: String): DateTime = s match {
     case UTCDateTimeComponents(year, month, days, hours, minutes, seconds, millis) =>
       new DateTime(
@@ -428,5 +428,4 @@ object FromJSON extends FromJSONCatsInstances with Logging {
       case _ => fail("JSON string expected.")
     }
   }
-
 }

@@ -1,11 +1,11 @@
 package io.sphere.mongo.format
 
-import io.sphere.util.{BaseMoney, HighPrecisionMoney, LangTag, Money}
-import org.bson.types.{BasicBSONList, ObjectId}
-import org.bson.{BSONObject, BasicBSONObject}
-
+import java.util.{Locale, UUID}
 import java.util.regex.Pattern
-import java.util.{Currency, Locale, UUID}
+import io.sphere.util.{BaseMoney, Currency, HighPrecisionMoney, LangTag, Money}
+import org.bson.{BSONObject, BasicBSONObject}
+import org.bson.types.{BasicBSONList, ObjectId}
+
 import scala.collection.immutable.VectorBuilder
 import scala.collection.mutable.ListBuffer
 
@@ -170,20 +170,39 @@ trait DefaultMongoFormats {
       }
     }
 
-  implicit val currencyFormat: MongoFormat[Currency] = new MongoFormat[Currency] {
-    val failMsg = "ISO 4217 code JSON String expected."
-    def failMsgFor(input: String) = s"Currency '$input' not valid as ISO 4217 code."
+  // This can probably be removed later, but we still need both because of the api-reference repo
+  implicit val javaCurrencyFormat: MongoFormat[java.util.Currency] =
+    new MongoFormat[java.util.Currency] {
+      val typeErrorMsg = "ISO 4217 code JSON String expected."
+      def failMsgFor(input: String) = s"Currency '$input' not valid as ISO 4217 code."
 
-    override def toMongoValue(c: Currency): Any = c.getCurrencyCode
-    override def fromMongoValue(any: Any): Currency = any match {
-      case s: String =>
-        try Currency.getInstance(s)
-        catch {
-          case _: IllegalArgumentException => throw new Exception(failMsgFor(s))
-        }
-      case _ => throw new Exception(failMsg)
+      override def toMongoValue(c: java.util.Currency): Any = c.getCurrencyCode
+      override def fromMongoValue(any: Any): java.util.Currency = any match {
+        case s: String =>
+          try java.util.Currency.getInstance(s)
+          catch {
+            case _: IllegalArgumentException => throw new Exception(failMsgFor(s))
+          }
+        case _ => throw new Exception(typeErrorMsg)
+      }
     }
-  }
+
+  implicit val currencyFormat: MongoFormat[Currency] =
+    new MongoFormat[Currency] {
+      val typeErrorMsg = "ISO 4217 code JSON String expected."
+      def failMsgFor(input: String) =
+        s"Currency '$input' not valid as ISO 4217 or custom currency code."
+
+      override def toMongoValue(c: Currency): Any = c.getCurrencyCode
+      override def fromMongoValue(any: Any): Currency = any match {
+        case s: String =>
+          try Currency.getInstance(s)
+          catch {
+            case _: IllegalArgumentException => throw new Exception(failMsgFor(s))
+          }
+        case _ => throw new Exception(typeErrorMsg)
+      }
+    }
 
   implicit val moneyFormat: MongoFormat[Money] = new MongoFormat[Money] {
     import Money._

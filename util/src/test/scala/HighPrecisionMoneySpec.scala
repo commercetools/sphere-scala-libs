@@ -1,6 +1,5 @@
 package io.sphere.util
 
-import java.util.Currency
 import cats.data.Validated.Invalid
 import io.sphere.util.HighPrecisionMoney.ImplicitsDecimalPrecise.HighPrecisionPreciseMoneyNotation
 import org.scalatest.funspec.AnyFunSpec
@@ -168,22 +167,20 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
     }
 
     it("should validate fractionDigits (min)") {
-      val Invalid(errors) = HighPrecisionMoney.fromPreciseAmount(123456L, 1, Euro, None): @unchecked
+      val Invalid(errors) = HighPrecisionMoney.fromPreciseAmount(123456L, 1, Euro, None)
 
       errors.toList must be(
         List("fractionDigits must be > 2 (default fraction digits defined by currency EUR)."))
     }
 
     it("should validate fractionDigits (max)") {
-      val Invalid(errors) =
-        HighPrecisionMoney.fromPreciseAmount(123456L, 100, Euro, None): @unchecked
+      val Invalid(errors) = HighPrecisionMoney.fromPreciseAmount(123456L, 100, Euro, None)
 
       errors.toList must be(List("fractionDigits must be <= 20."))
     }
 
     it("should validate centAmount") {
-      val Invalid(errors) =
-        HighPrecisionMoney.fromPreciseAmount(123456L, 4, Euro, Some(1)): @unchecked
+      val Invalid(errors) = HighPrecisionMoney.fromPreciseAmount(123456L, 4, Euro, Some(1L))
 
       errors.toList must be(
         List(
