@@ -12,7 +12,7 @@ import org.joda.time.format.ISODateTimeFormat
 import org.json4s.JsonAST.*
 
 import java.time
-import java.util.{Currency, Locale, UUID}
+import java.util.{Locale, UUID}
 import scala.collection.mutable.ListBuffer
 import scala.util.control.NonFatal
 
@@ -289,29 +289,17 @@ object FromJSON extends FromJSONCatsInstances with generic.DeriveFromJSON {
   }
 
   given currencyReader: FromJSON[Currency] with {
-    val failMsg = "ISO 4217 code JSON String expected."
-
-    def failMsgFor(input: String) = s"Currency '$input' not valid as ISO 4217 code."
-
-    private val cachedEUR = Valid(Currency.getInstance("EUR"))
-    private val cachedUSD = Valid(Currency.getInstance("USD"))
-    private val cachedGBP = Valid(Currency.getInstance("GBP"))
-    private val cachedJPY = Valid(Currency.getInstance("JPY"))
+    val typeErrorMsg = "ISO 4217 code JSON String expected."
+    def failMsgFor(input: String) =
+      s"Currency '$input' not valid as ISO 4217 or custom currency code."
 
     def read(jval: JValue): JValidation[Currency] = jval match {
       case JString(s) =>
-        s match {
-          case "EUR" => cachedEUR
-          case "USD" => cachedUSD
-          case "GBP" => cachedGBP
-          case "JPY" => cachedJPY
-          case _ =>
-            try Valid(Currency.getInstance(s))
-            catch {
-              case _: IllegalArgumentException => fail(failMsgFor(s))
-            }
+        try Valid(Currency.getInstance(s))
+        catch {
+          case _: IllegalArgumentException => fail(failMsgFor(s))
         }
-      case _ => fail(failMsg)
+      case _ => fail(typeErrorMsg)
     }
   }
 

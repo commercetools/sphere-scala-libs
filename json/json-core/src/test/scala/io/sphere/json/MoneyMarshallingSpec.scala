@@ -48,7 +48,7 @@ class MoneyMarshallingSpec extends AnyWordSpec with Matchers {
       val money = Money.fromCentAmount(1234, HUF0)
       val jsonAst = toJValue(money)
       val jsonAsString = compactJson(jsonAst)
-      val Valid(readAst) = parseJSON(jsonAsString)
+      val Valid(readAst) = parseJSON(jsonAsString): @unchecked
 
       val json =
         """

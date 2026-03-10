@@ -2,13 +2,13 @@ package io.sphere.json
 
 import cats.data.NonEmptyList
 import io.sphere.json.generic.JSONTypeSwitch.ToFormatters
-import io.sphere.util.{BaseMoney, DateTimeFormats, HighPrecisionMoney, Money}
+import io.sphere.util.{BaseMoney, Currency, DateTimeFormats, HighPrecisionMoney, Money}
 import org.joda.time.*
 import org.joda.time.format.ISODateTimeFormat
 import org.json4s.JsonAST.*
 
 import java.time
-import java.util.{Currency, Locale, UUID}
+import java.util.{Locale, UUID}
 
 /** Type class for types that can be written to JSON. */
 trait ToJSON[A] extends Serializable {

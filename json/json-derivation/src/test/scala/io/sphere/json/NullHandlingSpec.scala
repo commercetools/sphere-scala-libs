@@ -61,7 +61,6 @@ class NullHandlingSpec extends AnyWordSpec with Matchers {
     }
 
     "Use nested FromJSON instances" in {
-
       // This is relevant because it can fail if the implicits are not in the right scope
       // If it fails it'll happily autoderive the inner trait (BaseMoney), which leads to successful compilation but incorrect JSON
       val action = MoneyOptClass(Some(10.EUR))
