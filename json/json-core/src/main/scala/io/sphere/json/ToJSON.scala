@@ -1,19 +1,14 @@
 package io.sphere.json
 
 import cats.data.NonEmptyList
-
-import java.util.{Locale, UUID}
 import io.sphere.util.{BaseMoney, Currency, DateTimeFormats, HighPrecisionMoney, Money}
-import org.json4s.JsonAST._
-import org.joda.time.DateTime
-import org.joda.time.DateTimeZone
-import org.joda.time.LocalTime
-import org.joda.time.LocalDate
-import org.joda.time.YearMonth
 import org.joda.time.format.ISODateTimeFormat
+import org.joda.time.{DateTime, DateTimeZone, LocalDate, LocalTime, YearMonth}
+import org.json4s.JsonAST._
 
-import scala.annotation.implicitNotFound
 import java.time
+import java.util.{Locale, UUID}
+import scala.annotation.implicitNotFound
 
 /** Type class for types that can be written to JSON. */
 @implicitNotFound("Could not find an instance of ToJSON for ${A}")

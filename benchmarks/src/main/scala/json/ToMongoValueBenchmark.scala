@@ -1,7 +1,7 @@
 package json
 
-import io.sphere.mongo.format._
 import io.sphere.mongo.format.DefaultMongoFormats._
+import io.sphere.mongo.format._
 import org.openjdk.jmh.annotations.{
   Benchmark,
   BenchmarkMode,

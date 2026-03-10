@@ -2,19 +2,11 @@ package io.sphere.util
 
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.must.Matchers
-import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-
-import scala.language.postfixOps
-import org.scalatest.prop.Tables
-import java.time.LocalDateTime
-
 import org.scalatest.prop.TableDrivenPropertyChecks._
-import java.time.Instant
-import java.time.ZoneOffset
-import scala.util.Success
-import scala.util.Failure
-import scala.util.Try
-import java.time.LocalDate
+import org.scalatest.prop.Tables
+
+import java.time.{LocalDate, LocalDateTime}
+import scala.util.{Failure, Success, Try}
 
 class DateTimeFormatsSpec extends AnyFunSpec with Matchers {
 

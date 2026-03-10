@@ -1,11 +1,11 @@
 package io.sphere.mongo.format
 
+import io.sphere.mongo.MongoUtils._
+import io.sphere.mongo.format.DefaultMongoFormats._
 import io.sphere.mongo.generic._
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import io.sphere.mongo.MongoUtils._
-import DefaultMongoFormats._
 
 object OptionMongoFormatSpec {
 

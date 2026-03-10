@@ -1,9 +1,9 @@
 package io.sphere.mongo
 
 import com.mongodb.{BasicDBObject, DBObject}
-import org.scalatest.matchers.must.Matchers
-import io.sphere.mongo.format.MongoFormat
 import io.sphere.mongo.format.DefaultMongoFormats._
+import io.sphere.mongo.format.MongoFormat
+import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 object SerializationTest {

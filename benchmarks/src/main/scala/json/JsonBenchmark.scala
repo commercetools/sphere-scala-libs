@@ -1,16 +1,15 @@
 package json
 
-import java.util.UUID
-
 import io.sphere.json._
 import io.sphere.json.generic._
-import io.sphere.mongo.generic._
-import io.sphere.mongo.format.MongoFormat
 import io.sphere.mongo.format.DefaultMongoFormats._
 import io.sphere.mongo.format._
+import io.sphere.mongo.generic._
 import io.sphere.util.BaseMoney
 import org.joda.time.format.ISODateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone}
+
+import java.util.UUID
 
 case class Reference(typeId: String, id: UUID)
 

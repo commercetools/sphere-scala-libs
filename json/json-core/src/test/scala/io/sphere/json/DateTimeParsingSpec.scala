@@ -1,10 +1,11 @@
 package io.sphere.json
 
+import cats.data.Validated.Valid
 import org.json4s.JString
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+
 import java.time.Instant
-import cats.data.Validated.Valid
 
 class DateTimeParsingSpec extends AnyWordSpec with Matchers {
 

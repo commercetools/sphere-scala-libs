@@ -1,6 +1,5 @@
 package json
 
-import org.json4s.StringInput
 import org.json4s.jackson._
 import org.openjdk.jmh.annotations._
 

@@ -1,9 +1,8 @@
 package io.sphere.json.catsinstances
 
-import cats.syntax.invariant._
-import cats.syntax.functor._
 import cats.syntax.contravariant._
-import io.sphere.json.JSON
+import cats.syntax.functor._
+import cats.syntax.invariant._
 import io.sphere.json._
 import org.json4s.JsonAST
 import org.json4s.JsonAST.JString

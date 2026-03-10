@@ -7,6 +7,8 @@ lazy val scala3 = "3.3.7"
 // sbt-github-actions needs configuration in `ThisBuild`
 ThisBuild / crossScalaVersions := Seq(scala212, scala213, scala3)
 ThisBuild / scalaVersion := scala213
+ThisBuild / semanticdbEnabled := true
+ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 ThisBuild / githubWorkflowPublishTargetBranches := List()
 ThisBuild / githubWorkflowJavaVersions := List(JavaSpec.temurin("21"))
 ThisBuild / githubWorkflowBuildPreamble ++= List(
@@ -65,8 +67,9 @@ lazy val standardSettings = Defaults.coreDefaultSettings ++ Seq(
   javacOptions ++= Seq("-deprecation", "-Xlint:unchecked"),
   // targets Java 8 bytecode (scalac & javac)
   scalacOptions ++= {
-    if (scalaVersion.value.startsWith("2.12") || scalaVersion.value.startsWith("3")) Seq.empty
-    else Seq("-target", "8")
+    if (scalaVersion.value.startsWith("2.12")) Seq.empty
+    else if (scalaVersion.value.startsWith("3")) Seq("-Wunused:imports")
+    else Seq("-target", "8", "-Wunused:imports")
   },
   ThisBuild / javacOptions ++= Seq("-source", "8", "-target", "8"),
   Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
@@ -108,11 +111,18 @@ lazy val `sphere-json-core` = project
   .settings(crossScalaVersions := Seq(scala212, scala213, scala3))
   .dependsOn(`sphere-util`)
 
+def excludeFromScalafix(file: File): Boolean =
+  file.getName.endsWith(".fmpp.scala") || file.getName.endsWith("Macros.scala")
+
 lazy val `sphere-json-derivation` = project
   .in(file("./json/json-derivation"))
   .settings(standardSettings: _*)
   .settings(Fmpp.settings: _*)
   .settings(crossScalaVersions := Seq(scala212, scala213))
+  .settings(
+    Compile / scalafix / unmanagedSources ~= (_.filterNot(excludeFromScalafix)),
+    Test / scalafix / unmanagedSources ~= (_.filterNot(excludeFromScalafix))
+  )
   .dependsOn(`sphere-json-core`)
 
 lazy val `sphere-json` = project
@@ -134,6 +144,10 @@ lazy val `sphere-mongo-derivation` = project
   .settings(standardSettings: _*)
   .settings(Fmpp.settings: _*)
   .settings(crossScalaVersions := Seq(scala212, scala213))
+  .settings(
+    Compile / scalafix / unmanagedSources ~= (_.filterNot(excludeFromScalafix)),
+    Test / scalafix / unmanagedSources ~= (_.filterNot(excludeFromScalafix))
+  )
   .dependsOn(`sphere-mongo-core`)
 
 lazy val `sphere-mongo` = project
