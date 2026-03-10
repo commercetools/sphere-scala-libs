@@ -33,7 +33,7 @@ trait FromJSON[@specialized A] extends Serializable {
   val fields: Set[String] = FromJSON.emptyFieldsSet
 }
 
-object FromJSON extends FromJSONInstances with Logging {
+object FromJSON extends FromJSONCatsInstances with Logging {
 
   private[FromJSON] val emptyFieldsSet: Set[String] = Set.empty
 

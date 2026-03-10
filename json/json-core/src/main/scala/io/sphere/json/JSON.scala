@@ -12,7 +12,7 @@ trait JSON[A] extends FromJSON[A] with ToJSON[A] {
   def subTypeNames: List[String] = Nil
 }
 
-object JSON extends JSONInstances with JSONLowPriorityImplicits {
+object JSON extends JSONCatsInstances with JSONLowPriorityImplicits {
   @inline def apply[A](implicit instance: JSON[A]): JSON[A] = instance
 }
 
