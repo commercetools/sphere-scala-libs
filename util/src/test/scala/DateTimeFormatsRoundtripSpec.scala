@@ -1,10 +1,23 @@
 package io.sphere.util
 
 import org.joda.time.format.ISODateTimeFormat
-import org.joda.time.{DateTime => JodaDateTime, DateTimeZone => JodaDateTimeZone, LocalDate => JodaLocalDate, LocalTime => JodaLocalTime}
+import org.joda.time.{
+  DateTime => JodaDateTime,
+  DateTimeZone => JodaDateTimeZone,
+  LocalDate => JodaLocalDate,
+  LocalTime => JodaLocalTime
+}
 import org.scalacheck.{Arbitrary, Gen, Prop, Properties}
 
-import java.time.{Instant, LocalDate, LocalDateTime, LocalTime, OffsetDateTime, ZoneOffset, ZonedDateTime}
+import java.time.{
+  Instant,
+  LocalDate,
+  LocalDateTime,
+  LocalTime,
+  OffsetDateTime,
+  ZoneOffset,
+  ZonedDateTime
+}
 
 class DateTimeFormatsRoundtripSpec extends Properties("DateTimeFormats roundtrip") {
   val epochMillis = Gen.choose(

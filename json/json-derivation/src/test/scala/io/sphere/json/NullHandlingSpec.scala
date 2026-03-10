@@ -1,14 +1,11 @@
 package io.sphere.json
 
 import io.sphere.json.generic._
+import io.sphere.util.BaseMoney
+import io.sphere.util.Money.ImplicitsDecimal._
 import org.json4s.JsonAST.{JNothing, JObject}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-
-import io.sphere.util.BaseMoney
-import io.sphere.util.Money.ImplicitsDecimal._
-
-import java.util.UUID
 
 class NullHandlingSpec extends AnyWordSpec with Matchers {
   "JSON deserialization" must {
