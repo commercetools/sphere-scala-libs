@@ -6,7 +6,7 @@ import cats.syntax.apply._
 import io.sphere.json.field
 import io.sphere.json.generic._
 import io.sphere.util.Money
-import org.joda.time.DateTime
+import org.joda.time._
 import org.json4s.JsonAST._
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.must.Matchers

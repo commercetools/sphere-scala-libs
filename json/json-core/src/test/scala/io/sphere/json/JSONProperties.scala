@@ -9,7 +9,6 @@ import org.scalacheck._
 
 import java.time
 import java.util.{Locale, UUID}
-import scala.language.higherKinds
 import scala.math.BigDecimal.RoundingMode
 
 object JSONProperties extends Properties("JSON") {
