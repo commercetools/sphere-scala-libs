@@ -12,14 +12,11 @@ import io.sphere.util.BaseMoney
 import org.joda.time.format.ISODateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone}
 
-import scala.collection.generic.CanBuildFrom
-import scala.language.higherKinds
-
 case class Reference(typeId: String, id: UUID)
 
 object Reference {
-  implicit val json: JSON[Reference] = jsonProduct(apply _)
-  implicit val mongoFormat: MongoFormat[Reference] = mongoProduct(apply _)
+  implicit val json: JSON[Reference] = deriveJSON
+  implicit val mongoFormat: MongoFormat[Reference] = deriveMongoFormat
 }
 
 case class Price(id: String, value: BaseMoney, validUntil: DateTime)
@@ -35,15 +32,15 @@ object Price {
     }
   }
 
-  implicit val json: JSON[Price] = jsonProduct(apply _)
-  implicit val mongoFormat: MongoFormat[Price] = mongoProduct(apply _)
+  implicit val json: JSON[Price] = deriveJSON
+  implicit val mongoFormat: MongoFormat[Price] = deriveMongoFormat
 }
 
 case class ProductVariant(id: Long, prices: Vector[Price], attributes: Map[String, String])
 
 object ProductVariant {
-  implicit val json: JSON[ProductVariant] = jsonProduct(apply _)
-  implicit val mongoFormat: MongoFormat[ProductVariant] = mongoProduct(apply _)
+  implicit val json: JSON[ProductVariant] = deriveJSON
+  implicit val mongoFormat: MongoFormat[ProductVariant] = deriveMongoFormat
 }
 
 case class Product(
@@ -53,8 +50,8 @@ case class Product(
     variants: Vector[ProductVariant])
 
 object Product {
-  implicit val json: JSON[Product] = jsonProduct(apply _)
-  implicit val mongoFormat: MongoFormat[Product] = mongoProduct(apply _)
+  implicit val json: JSON[Product] = deriveJSON
+  implicit val mongoFormat: MongoFormat[Product] = deriveMongoFormat
 }
 
 object JsonBenchmark {
