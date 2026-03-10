@@ -2,8 +2,6 @@ package io.sphere.util
 
 import org.scalacheck.Gen
 
-import scala.jdk.CollectionConverters._
-
 object DomainObjectsGen {
 
   private val currency: Gen[Currency] =

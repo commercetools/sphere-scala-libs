@@ -5,7 +5,6 @@ import io.sphere.json.{FromJSON, JSON, JSONParseError, ToJSON}
 import org.json4s.DefaultJsonFormats.given
 import org.json4s.{JObject, JString, jvalue2monadic, jvalue2readerSyntax}
 
-import scala.compiletime.{constValue, constValueTuple}
 import scala.reflect.ClassTag
 
 object JSONTypeSwitch {

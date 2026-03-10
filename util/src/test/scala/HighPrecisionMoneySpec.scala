@@ -3,11 +3,10 @@ package io.sphere.util
 import cats.data.Validated.Invalid
 import io.sphere.util.HighPrecisionMoney.ImplicitsDecimalPrecise.HighPrecisionPreciseMoneyNotation
 import org.scalatest.funspec.AnyFunSpec
-import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.collection.mutable.ArrayBuffer
-import scala.language.postfixOps
 
 class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDrivenPropertyChecks {
   import HighPrecisionMoney.ImplicitsString._

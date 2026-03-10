@@ -1,11 +1,11 @@
 package io.sphere.mongo.format
 
-import java.util.{Locale, UUID}
-import java.util.regex.Pattern
 import io.sphere.util.{BaseMoney, Currency, HighPrecisionMoney, LangTag, Money}
-import org.bson.{BSONObject, BasicBSONObject}
 import org.bson.types.{BasicBSONList, ObjectId}
+import org.bson.{BSONObject, BasicBSONObject}
 
+import java.util.regex.Pattern
+import java.util.{Locale, UUID}
 import scala.collection.immutable.VectorBuilder
 import scala.collection.mutable.ListBuffer
 

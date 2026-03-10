@@ -1,18 +1,17 @@
 package io.sphere.util
 
-import language.implicitConversions
-import java.math.MathContext
 import cats.Monoid
-import cats.data.ValidatedNel
+import cats.data.{Validated, ValidatedNel}
 import cats.syntax.validated._
-
-import scala.math._
-import BigDecimal.RoundingMode._
-import scala.math.BigDecimal.RoundingMode
-import ValidatedFlatMapFeature._
 import io.sphere.util.BaseMoney.bigDecimalToMoneyLong
 import io.sphere.util.Money.ImplicitsDecimal.MoneyNotation
-import cats.data.Validated
+import io.sphere.util.ValidatedFlatMapFeature._
+
+import java.math.MathContext
+import scala.language.implicitConversions
+import scala.math.BigDecimal.RoundingMode
+import scala.math.BigDecimal.RoundingMode._
+import scala.math._
 
 class MoneyOverflowException extends RuntimeException("A Money operation resulted in an overflow.")
 

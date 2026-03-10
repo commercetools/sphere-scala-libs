@@ -1,14 +1,14 @@
 package io.sphere.mongo.format
 
-import java.util.Currency
-import io.sphere.util.{BaseMoney, HighPrecisionMoney, Money}
-import DefaultMongoFormats._
 import io.sphere.mongo.MongoUtils._
+import io.sphere.mongo.format.DefaultMongoFormats._
 import io.sphere.util.CustomCurrency.HUF0
+import io.sphere.util.{BaseMoney, HighPrecisionMoney, Money}
 import org.bson.BSONObject
-import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
+import java.util.Currency
 import scala.jdk.CollectionConverters._
 
 class BaseMoneyMongoFormatTest extends AnyWordSpec with Matchers {

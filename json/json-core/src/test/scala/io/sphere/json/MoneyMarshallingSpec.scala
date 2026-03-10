@@ -1,12 +1,13 @@
 package io.sphere.json
 
-import java.util.Currency
-import io.sphere.util.{BaseMoney, HighPrecisionMoney, Money}
 import cats.data.Validated.Valid
 import io.sphere.util.CustomCurrency.HUF0
+import io.sphere.util.{BaseMoney, HighPrecisionMoney, Money}
 import org.json4s.jackson.compactJson
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+
+import java.util.Currency
 
 class MoneyMarshallingSpec extends AnyWordSpec with Matchers {
   "money encoding/decoding" should {

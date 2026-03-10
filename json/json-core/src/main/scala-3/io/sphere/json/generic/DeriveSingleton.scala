@@ -26,7 +26,7 @@ object DeriveSingleton {
 
   private object Derivation {
 
-    import scala.compiletime.{constValue, constValueTuple, erasedValue, summonInline}
+    import scala.compiletime.{constValueTuple, erasedValue, summonInline}
 
     inline def derived[A](using m: Mirror.Of[A]): DeriveSingleton[A] =
       inline m match {

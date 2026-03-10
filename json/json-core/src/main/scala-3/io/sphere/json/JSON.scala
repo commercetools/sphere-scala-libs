@@ -1,7 +1,6 @@
 package io.sphere.json
 
-import cats.implicits.*
-import io.sphere.json.generic.JSONTypeSwitch.{FromFormatters, ToFormatters, fromJsonTypeSwitch}
+import io.sphere.json.generic.JSONTypeSwitch.{FromFormatters, ToFormatters}
 import org.json4s.JsonAST.JValue
 
 trait JSON[A] extends FromJSON[A] with ToJSON[A] {

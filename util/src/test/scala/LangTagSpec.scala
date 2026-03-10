@@ -3,8 +3,6 @@ package io.sphere.util
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.must.Matchers
 
-import scala.language.postfixOps
-
 class LangTagSpec extends AnyFunSpec with Matchers {
   describe("LangTag") {
     it("should accept valid language tags") {

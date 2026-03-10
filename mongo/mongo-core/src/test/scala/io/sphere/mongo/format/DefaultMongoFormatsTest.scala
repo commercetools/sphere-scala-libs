@@ -1,6 +1,5 @@
 package io.sphere.mongo.format
 
-import java.util.Locale
 import com.mongodb.DBObject
 import io.sphere.mongo.MongoUtils
 import io.sphere.mongo.format.DefaultMongoFormats._
@@ -12,6 +11,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
+import java.util.Locale
 import scala.jdk.CollectionConverters._
 
 object DefaultMongoFormatsTest {
