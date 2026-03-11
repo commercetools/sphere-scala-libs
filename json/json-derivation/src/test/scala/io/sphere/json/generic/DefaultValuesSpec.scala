@@ -37,6 +37,6 @@ object DefaultValuesSpec {
       value: Option[String]
   )
   object Test2 {
-    implicit val json: JSON[Test2] = deriveJSON[Test2]
+    implicit val json: JSON[Test2] = deriveJSON
   }
 }
