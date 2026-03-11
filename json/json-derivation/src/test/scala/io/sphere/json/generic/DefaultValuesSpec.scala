@@ -9,7 +9,7 @@ class DefaultValuesSpec extends AnyWordSpec with Matchers {
 
   "deriving JSON" must {
     "handle default values" in {
-      val json = "{  }"
+      val json = "{}"
       val test = getFromJSON[Test](json)
       test.value1 must be("hello")
       test.value2 must be(None)
@@ -31,13 +31,12 @@ object DefaultValuesSpec {
       value3: Option[String] = Some("hi")
   )
   object Test {
-    implicit val json: JSON[Test] = deriveJSON[Test]
+    implicit val json: JSON[Test] = deriveJSON
   }
-
   case class Test2(
       value: Option[String]
   )
   object Test2 {
-    implicit val json: JSON[Test2] = deriveJSON[Test2]
+    implicit val json: JSON[Test2] = deriveJSON
   }
 }
