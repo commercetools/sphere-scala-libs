@@ -1,7 +1,6 @@
-package io.sphere.mongo.generic
+package io.sphere.json.generic
 
 import io.sphere.json._
-import io.sphere.json.generic._
 import org.json4s.DefaultReaders._
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -31,7 +30,7 @@ object JSONKeySpec {
       @JSONKey("new_sub_value_2") value2: String
   )
   object SubTest {
-    implicit val mongo: JSON[SubTest] = deriveJSON
+    implicit val json: JSON[SubTest] = deriveJSON
   }
 
   case class Test(
@@ -40,6 +39,6 @@ object JSONKeySpec {
       @JSONEmbedded subTest: SubTest
   )
   object Test {
-    implicit val mongo: JSON[Test] = deriveJSON
+    implicit val json: JSON[Test] = deriveJSON
   }
 }
