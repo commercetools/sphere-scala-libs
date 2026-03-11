@@ -6,7 +6,6 @@ import cats.data.ValidatedNel
 import cats.syntax.apply._
 import cats.syntax.validated._
 import scala.annotation.meta.getter
-import scala.collection.mutable.AnyRefMap
 import scala.collection.mutable.ListBuffer
 import scala.language.experimental.macros
 import scala.reflect.{ClassTag, classTag}
@@ -50,8 +49,8 @@ package object generic extends Logging {
   /** Creates a FromJSON instance for an Enumeration type that encodes the `toString`
     * representations of the enumeration values. */
   def fromJsonEnum(e: Enumeration): FromJSON[e.Value] = {
-    // We're using an AnyRefMap for performance, it's not for mutability.
-    val validRepresentations = AnyRefMap(
+    // We're using a HashMap for performance, it's not for mutability.
+    val validRepresentations = scala.collection.mutable.HashMap(
       e.values.iterator.map { value =>
         value.toString -> value.validNel[JSONError]
       }.toSeq:_*
