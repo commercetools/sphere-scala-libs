@@ -31,7 +31,7 @@ object DefaultValuesSpec {
       value3: Option[String] = Some("hi")
   )
   object Test {
-    implicit val mongo: JSON[Test] = deriveJSON
+    implicit val json: JSON[Test] = deriveJSON
   }
   case class Test2(
       value: Option[String]
