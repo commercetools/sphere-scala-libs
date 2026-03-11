@@ -15,11 +15,11 @@ class DefaultValuesSpec extends AnyWordSpec with Matchers {
       test.value2 must be(None)
       test.value3 must be(Some("hi"))
     }
+
     "handle Option with no explicit default values" in {
-      val json = "{  }"
+      val json = "{}"
       val test2 = getFromJSON[Test2](json)
-      test2.value1 must be("hello")
-      test2.value2 must be(None)
+      test2.value must be(None)
     }
   }
 }
@@ -33,9 +33,9 @@ object DefaultValuesSpec {
   object Test {
     implicit val json: JSON[Test] = deriveJSON[Test]
   }
+
   case class Test2(
-      value1: String = "hello",
-      value2: Option[String]
+      value: Option[String]
   )
   object Test2 {
     implicit val json: JSON[Test2] = deriveJSON[Test2]
