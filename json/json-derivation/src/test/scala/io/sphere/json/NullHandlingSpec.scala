@@ -7,13 +7,13 @@ import org.scalatest.wordspec.AnyWordSpec
 
 class NullHandlingSpec extends AnyWordSpec with Matchers {
   "JSON deserialization" must {
-    "should accept undefined fields and use default values for them" in {
+    "accept undefined fields and use default values for them" in {
       val jeans = getFromJSON[Jeans]("{}")
 
       jeans must be(Jeans(None, None, Set.empty, "secret"))
     }
 
-    "should accept null values and use default values for them" in {
+    "accept null values and use default values for them" in {
       val jeans = getFromJSON[Jeans]("""
           {
             "leftPocket": null,
@@ -26,7 +26,7 @@ class NullHandlingSpec extends AnyWordSpec with Matchers {
       jeans must be(Jeans(None, None, Set.empty, "secret"))
     }
 
-    "should accept JNothing values and use default values for them" in {
+    "accept JNothing values and use default values for them" in {
       val jeans = getFromJValue[Jeans](
         JObject(
           "leftPocket" -> JNothing,
@@ -37,7 +37,7 @@ class NullHandlingSpec extends AnyWordSpec with Matchers {
       jeans must be(Jeans(None, None, Set.empty, "secret"))
     }
 
-    "should accept not-null values and use them" in {
+    "accept not-null values and use them" in {
       val jeans = getFromJSON[Jeans]("""
           {
             "leftPocket": "Axe",

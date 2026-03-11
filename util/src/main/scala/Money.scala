@@ -252,9 +252,6 @@ object Money {
   def fromDecimalAmount(amount: BigDecimal, currency: java.util.Currency)(implicit
       mode: RoundingMode): Money = fromDecimalAmount(amount, JCurrency(currency))
 
-  def fromDecimalAmount(amount: BigDecimal, currency: CustomCurrency)(implicit
-      mode: RoundingMode): Money = fromDecimalAmount(amount, currency)
-
   def fromDecimalAmount(amount: BigDecimal, currency: Currency)(implicit
       mode: RoundingMode): Money = {
     val fractionDigits = currency.getDefaultFractionDigits
