@@ -2,6 +2,7 @@ package io.sphere.json
 
 import cats.data.Validated.Valid
 import io.sphere.json.generic._
+import io.sphere.util.test._
 import org.json4s.JValue
 import org.json4s.JsonAST.JNothing
 import org.json4s.jackson.JsonMethods.{compact, render}
@@ -35,13 +36,13 @@ class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
     "write normal singleton values" in {
       val userJson = toJValue(UserWithPicture("foo-123", Medium, "http://exmple.com"))
 
-      val Valid(expectedJson) = parseJSON("""
+      val expectedJson = parseJSON("""
         {
           "userId": "foo-123",
           "pictureSize": "Medium",
           "pictureUrl": "http://exmple.com"
         }
-        """)
+        """).expectValid
 
       filter(userJson) must be(expectedJson)
     }
@@ -61,13 +62,13 @@ class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
     "write custom singleton values" in {
       val userJson = toJValue(UserWithPicture("foo-123", Custom, "http://exmple.com"))
 
-      val Valid(expectedJson) = parseJSON("""
+      val expectedJson = parseJSON("""
         {
           "userId": "foo-123",
           "pictureSize": "bar",
           "pictureUrl": "http://exmple.com"
         }
-        """)
+        """).expectValid
 
       filter(userJson) must be(expectedJson)
     }
@@ -103,7 +104,7 @@ class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
       val newJson = toJValue[UserWithPicture](user)
       Valid(newJson) must be(parseJSON(json))
 
-      val Valid(newUser) = fromJValue[UserWithPicture](newJson)
+      val newUser = fromJValue[UserWithPicture](newJson).expectValid
       newUser must be(user)
     }
   }
