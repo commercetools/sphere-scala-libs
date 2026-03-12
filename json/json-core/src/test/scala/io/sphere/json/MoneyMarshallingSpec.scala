@@ -3,6 +3,7 @@ package io.sphere.json
 import cats.data.Validated.Valid
 import io.sphere.util.CustomCurrency.HUF0
 import io.sphere.util.{BaseMoney, HighPrecisionMoney, Money}
+import io.sphere.util.test._
 import org.json4s.jackson.compactJson
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -15,7 +16,7 @@ class MoneyMarshallingSpec extends AnyWordSpec with Matchers {
       val money = Money.EUR(34.56)
       val jsonAst = toJValue(money)
       val jsonAsString = compactJson(jsonAst)
-      val Valid(readAst) = parseJSON(jsonAsString)
+      val readAst = parseJSON(jsonAsString).expectValid
 
       jsonAst should equal(readAst)
     }
@@ -49,7 +50,7 @@ class MoneyMarshallingSpec extends AnyWordSpec with Matchers {
       val money = Money.fromCentAmount(1234, HUF0)
       val jsonAst = toJValue(money)
       val jsonAsString = compactJson(jsonAst)
-      val Valid(readAst) = parseJSON(jsonAsString)
+      val readAst = parseJSON(jsonAsString).expectValid
 
       val json =
         """
@@ -87,9 +88,9 @@ class MoneyMarshallingSpec extends AnyWordSpec with Matchers {
       val money = HighPrecisionMoney.fromDecimalAmount(34.123456, 6, Currency.getInstance("EUR"))
       val jsonAst = toJValue(money)
       val jsonAsString = compactJson(jsonAst)
-      val Valid(readAst) = parseJSON(jsonAsString)
-      val Valid(decodedMoney) = fromJSON[HighPrecisionMoney](jsonAsString)
-      val Valid(decodedBaseMoney) = fromJSON[BaseMoney](jsonAsString)
+      val readAst = parseJSON(jsonAsString).expectValid
+      val decodedMoney = fromJSON[HighPrecisionMoney](jsonAsString).expectValid
+      val decodedBaseMoney = fromJSON[BaseMoney](jsonAsString).expectValid
 
       jsonAst should equal(readAst)
       decodedMoney should equal(money)
@@ -112,7 +113,7 @@ class MoneyMarshallingSpec extends AnyWordSpec with Matchers {
     }
 
     "decode with centAmount" in {
-      val Valid(json) = parseJSON("""
+      val json = parseJSON("""
         {
           "type": "highPrecision",
           "currencyCode": "USD",
@@ -120,9 +121,9 @@ class MoneyMarshallingSpec extends AnyWordSpec with Matchers {
           "centAmount": 1,
           "fractionDigits": 4
         }
-        """)
+        """).expectValid
 
-      val Valid(parsed) = fromJValue[BaseMoney](json)
+      val parsed = fromJValue[BaseMoney](json).expectValid
 
       toJValue(parsed) should be(json)
     }
