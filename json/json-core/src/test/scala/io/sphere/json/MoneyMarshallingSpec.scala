@@ -1,6 +1,6 @@
 package io.sphere.json
 
-import cats.data.Validated.Valid
+import cats.data.Validated.{Invalid, Valid}
 import io.sphere.util.CustomCurrency.HUF0
 import io.sphere.util.{BaseMoney, HighPrecisionMoney, Money}
 import org.json4s.jackson.compactJson
@@ -153,7 +153,12 @@ class MoneyMarshallingSpec extends AnyWordSpec with Matchers {
         }
         """
 
-      fromJSON[BaseMoney](json).isValid should be(false)
+      fromJSON[BaseMoney](json) match {
+        case Invalid(errors) =>
+          errors.toList.map(_.toString) should be(
+            List("fractionDigits must be > 0 (default fraction digits defined by currency HUF0)."))
+        case Valid(_) => fail("Expected Invalid but got Valid")
+      }
     }
   }
 
