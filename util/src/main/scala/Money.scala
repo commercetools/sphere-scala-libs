@@ -359,12 +359,7 @@ case class HighPrecisionMoney private (
     with Ordered[Money] {
   import HighPrecisionMoney._
 
-  require(
-    fractionDigits > currency.getDefaultFractionDigits,
-    s"`fractionDigits` must be > than the default fraction digits of the currency (${currency.getDefaultFractionDigits})."
-  )
-
-  require(fractionDigits <= MaxFractionDigits, s"`fractionDigits` must be <= $MaxFractionDigits.")
+  HighPrecisionMoney.requireValidFractionDigits(fractionDigits, currency)
 
   val `type`: String = TypeName
 
@@ -644,15 +639,24 @@ object HighPrecisionMoney {
         roundToCents(scaledAmount, currency)(BigDecimal.RoundingMode.HALF_EVEN))
     } yield HighPrecisionMoney(preciseAmount, fd, actualCentAmount, currency)
 
+  private def requireValidFractionDigits(fractionDigits: Int, currency: Currency): Int = {
+    if (fractionDigits <= currency.getDefaultFractionDigits)
+      throw new IllegalArgumentException(
+        s"fractionDigits must be > ${currency.getDefaultFractionDigits} (default fraction digits defined by currency ${currency.getCurrencyCode}).")
+
+    if (fractionDigits > MaxFractionDigits)
+      throw new IllegalArgumentException(s"fractionDigits must be <= $MaxFractionDigits.")
+
+    fractionDigits
+  }
+
   private def validateFractionDigits(
       fractionDigits: Int,
       currency: Currency): ValidatedNel[String, Int] =
-    if (fractionDigits <= currency.getDefaultFractionDigits)
-      s"fractionDigits must be > ${currency.getDefaultFractionDigits} (default fraction digits defined by currency ${currency.getCurrencyCode}).".invalidNel
-    else if (fractionDigits > MaxFractionDigits)
-      s"fractionDigits must be <= $MaxFractionDigits.".invalidNel
-    else
-      fractionDigits.validNel
+    Validated
+      .catchNonFatal(requireValidFractionDigits(fractionDigits, currency))
+      .leftMap(_.getMessage)
+      .toValidatedNel
 
   private def validateCentAmount(
       amount: BigDecimal,

@@ -30,7 +30,7 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
       }
 
       assert(
-        thrown.getMessage == "requirement failed: `fractionDigits` must be > than the default fraction digits of the currency (2).")
+        thrown.getMessage == "fractionDigits must be > 2 (default fraction digits defined by currency EUR).")
     }
 
     it("should convert precise amount to long value correctly") {
