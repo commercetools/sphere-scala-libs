@@ -360,8 +360,11 @@ case class HighPrecisionMoney private (
   import HighPrecisionMoney._
 
   require(
-    fractionDigits >= currency.getDefaultFractionDigits,
-    "`fractionDigits` should be  >= than the default fraction digits of the currency.")
+    fractionDigits > currency.getDefaultFractionDigits,
+    s"`fractionDigits` must be > than the default fraction digits of the currency (${currency.getDefaultFractionDigits})."
+  )
+
+  require(fractionDigits <= MaxFractionDigits, s"`fractionDigits` must be <= $MaxFractionDigits.")
 
   val `type`: String = TypeName
 
@@ -538,7 +541,7 @@ object HighPrecisionMoney {
       currencyCode: String,
       fractionDigits: Option[Int]): HighPrecisionMoney = {
     val currency = Currency.getInstance(currencyCode)
-    val fd = fractionDigits.getOrElse(currency.getDefaultFractionDigits)
+    val fd = fractionDigits.getOrElse(currency.getDefaultFractionDigits + 1)
 
     fromDecimalAmount(amount, fd, currency)(BigDecimal.RoundingMode.HALF_EVEN)
   }

@@ -140,6 +140,21 @@ class MoneyMarshallingSpec extends AnyWordSpec with Matchers {
 
       fromJSON[BaseMoney](json).isValid should be(false)
     }
+
+    "fail to decode high precision money with fractionDigits equal to currency default" in {
+      val json =
+        """
+        {
+         "type": "highPrecision",
+         "currencyCode": "HUF0",
+         "centAmount": 100,
+         "preciseAmount": 100500,
+         "fractionDigits": 0
+        }
+        """
+
+      fromJSON[BaseMoney](json).isValid should be(false)
+    }
   }
 
 }
