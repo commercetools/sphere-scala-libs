@@ -30,7 +30,7 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
       }
 
       assert(
-        thrown.getMessage == "requirement failed: `fractionDigits` should be  >= than the default fraction digits of the currency.")
+        thrown.getMessage == "fractionDigits must be > 2 (default fraction digits defined by currency EUR).")
     }
 
     it("should convert precise amount to long value correctly") {
@@ -38,11 +38,11 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
     }
 
     it("should reduce fraction digits as expected") {
-      "0.0001".EUR_PRECISE(4).withFractionDigits(2).preciseAmount must equal(0)
+      "0.0001".EUR_PRECISE(4).withFractionDigits(3).preciseAmount must equal(0)
     }
 
     it("should support the unary '-' operator.") {
-      -"0.01".EUR_PRECISE(2) must equal("-0.01".EUR_PRECISE(2))
+      -"0.010".EUR_PRECISE(3) must equal("-0.010".EUR_PRECISE(3))
     }
 
     it("should throw error on overflow in the unary '-' operator.") {
@@ -92,7 +92,7 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
     }
 
     it("should support the binary '*' operator.") {
-      ("0.002".EUR_PRECISE(3)) * ("5.00".EUR_PRECISE(2)) must equal(
+      ("0.002".EUR_PRECISE(3)) * ("5.000".EUR_PRECISE(3)) must equal(
         "0.010".EUR_PRECISE(3)
       )
 
@@ -112,7 +112,7 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
     }
 
     it("should support the binary '%' operator.") {
-      ("0.010".EUR_PRECISE(3)) % ("5.00".EUR_PRECISE(2)) must equal(
+      ("0.010".EUR_PRECISE(3)) % ("5.000".EUR_PRECISE(3)) must equal(
         "0.010".EUR_PRECISE(3)
       )
 
@@ -194,7 +194,9 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
       "0.010".EUR_PRECISE(3).toString must be("0.010 EUR")
       "0.000".EUR_PRECISE(3).toString must be("0.000 EUR")
       "94.500".EUR_PRECISE(3).toString must be("94.500 EUR")
-      "94".JPY_PRECISE(0).toString must be("94 JPY")
+
+      // fractionDigits=1 for a 0-fraction-digit currency like JPY is unrealistic, but allowed
+      "94.0".JPY_PRECISE(1).toString must be("94.0 JPY")
     }
 
     it("should not fail on toString") {

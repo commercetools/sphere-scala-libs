@@ -27,3 +27,4 @@ src_managed
 metals.sbt
 .vscode
 *.worksheet.sc
+.cursor 
