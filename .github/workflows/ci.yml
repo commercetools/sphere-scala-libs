@@ -56,10 +56,10 @@ jobs:
 
       - name: Build Scala 3 project
         if: matrix.scala == '3.3.7'
-        run: sbt '++ ${{ matrix.scala }}' sphere-util/test sphere-json-core/test sphere-mongo-core/test
+        run: sbt '++ ${{ matrix.scala }}' sphere-util/test sphere-util-test/test sphere-json-core/test sphere-mongo-core/test
 
       - name: Compress target directories
-        run: tar cf targets.tar benchmarks/target mongo/target json/json-core/target mongo/mongo-core/target json/target util/target json/json-derivation/target target mongo/mongo-derivation/target project/target
+        run: tar cf targets.tar benchmarks/target mongo/target json/json-core/target mongo/mongo-core/target json/target util/target json/json-derivation/target target util-test/target mongo/mongo-derivation/target project/target
 
       - name: Upload target directories
         uses: actions/upload-artifact@v5

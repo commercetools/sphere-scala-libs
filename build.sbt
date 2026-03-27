@@ -25,7 +25,11 @@ ThisBuild / githubWorkflowBuild := Seq(
     name = Some("Build Scala 2 project"),
     cond = Some(s"matrix.scala != '$scala3'")),
   WorkflowStep.Sbt(
-    commands = List("sphere-util/test", "sphere-json-core/test", "sphere-mongo-core/test"),
+    commands = List(
+      "sphere-util/test",
+      "sphere-util-test/test",
+      "sphere-json-core/test",
+      "sphere-mongo-core/test"),
     name = Some("Build Scala 3 project"),
     cond = Some(s"matrix.scala == '$scala3'")
   )

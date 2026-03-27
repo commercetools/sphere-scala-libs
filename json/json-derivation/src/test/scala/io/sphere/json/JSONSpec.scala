@@ -1,6 +1,6 @@
 package io.sphere.json
 
-import cats.data.Validated.{Invalid, Valid}
+import cats.data.Validated.Valid
 import cats.data.ValidatedNel
 import cats.syntax.apply._
 import io.sphere.json.field
