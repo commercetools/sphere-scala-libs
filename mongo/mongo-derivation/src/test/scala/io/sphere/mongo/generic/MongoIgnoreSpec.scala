@@ -9,12 +9,10 @@ import org.scalatest.wordspec.AnyWordSpec
 
 object MongoIgnoreSpec {
   private val aName = "aName"
-  private val dbo = dbObj("name" -> aName)
 
   private case class MissingDefault(name: String, @MongoIgnore age: Int)
 
-  private val defaultAge = 100
-  private case class Complete(name: String, @MongoIgnore age: Int = defaultAge)
+  private case class Complete(name: String, @MongoIgnore age: Int = 100)
 }
 
 class MongoIgnoreSpec extends AnyWordSpec with Matchers with OptionValues {
@@ -23,13 +21,15 @@ class MongoIgnoreSpec extends AnyWordSpec with Matchers with OptionValues {
   "MongoIgnore" when {
     "annotated field has no default" must {
       "fail with a suitable message" in {
-        val e = the[Exception] thrownBy deriveMongoFormat[MissingDefault].fromMongoValue(dbo)
+        val format = deriveMongoFormat[MissingDefault]
+        val e = the[Exception] thrownBy format.fromMongoValue(dbObj("name" -> aName))
         e.getMessage mustBe "Ignored Mongo field 'age' must have a default value."
       }
     }
-    "annotated field has also a default" must {
-      "omit the field in serialization" in {
-        deriveMongoFormat[Complete].toMongoValue(Complete(aName)) mustBe dbo
+    "annotated field has a default value" must {
+      "omit the field from the BSON" in {
+        val format = deriveMongoFormat[Complete]
+        format.toMongoValue(Complete(aName)) mustBe dbObj("name" -> aName)
       }
     }
   }
