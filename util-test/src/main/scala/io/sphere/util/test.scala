@@ -3,7 +3,6 @@ package io.sphere.util
 import cats.data.Validated.{Invalid, Valid}
 import cats.data.ValidatedNel
 
-// These should only be used in tests
 package object test {
   implicit class ValidatedNelTestOps[Err, A](val validatedNel: ValidatedNel[Err, A])
       extends AnyVal {

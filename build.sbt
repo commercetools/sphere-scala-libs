@@ -90,6 +90,7 @@ lazy val `sphere-libs` = project
   .settings(publishArtifact := false, publish := {}, crossScalaVersions := Seq())
   .aggregate(
     `sphere-util`,
+    `sphere-util-test`,
     `sphere-json`,
     `sphere-json-core`,
     `sphere-json-derivation`,
@@ -104,12 +105,20 @@ lazy val `sphere-util` = project
   .settings(standardSettings: _*)
   .settings(crossScalaVersions := Seq(scala212, scala213, scala3))
   .settings(homepage := Some(url("https://github.com/commercetools/sphere-scala-libs/README.md")))
+  .dependsOn(`sphere-util-test` % Test)
+
+lazy val `sphere-util-test` = project
+  .in(file("./util-test"))
+  .settings(standardSettings: _*)
+  .settings(crossScalaVersions := Seq(scala212, scala213, scala3))
+  .settings(homepage := Some(url("https://github.com/commercetools/sphere-scala-libs/README.md")))
 
 lazy val `sphere-json-core` = project
   .in(file("./json/json-core"))
   .settings(standardSettings: _*)
   .settings(crossScalaVersions := Seq(scala212, scala213, scala3))
   .dependsOn(`sphere-util`)
+  .dependsOn(`sphere-util-test` % Test)
 
 def excludeFromScalafix(file: File): Boolean =
   file.getName.endsWith(".fmpp.scala") || file.getName.endsWith("Macros.scala")
@@ -124,6 +133,7 @@ lazy val `sphere-json-derivation` = project
     Test / scalafix / unmanagedSources ~= (_.filterNot(excludeFromScalafix))
   )
   .dependsOn(`sphere-json-core`)
+  .dependsOn(`sphere-util-test` % Test)
 
 lazy val `sphere-json` = project
   .in(file("./json"))
@@ -138,6 +148,7 @@ lazy val `sphere-mongo-core` = project
   .settings(standardSettings: _*)
   .settings(crossScalaVersions := Seq(scala212, scala213, scala3))
   .dependsOn(`sphere-util`)
+  .dependsOn(`sphere-util-test` % Test)
 
 lazy val `sphere-mongo-derivation` = project
   .in(file("./mongo/mongo-derivation"))
@@ -149,6 +160,7 @@ lazy val `sphere-mongo-derivation` = project
     Test / scalafix / unmanagedSources ~= (_.filterNot(excludeFromScalafix))
   )
   .dependsOn(`sphere-mongo-core`)
+  .dependsOn(`sphere-util-test` % Test)
 
 lazy val `sphere-mongo` = project
   .in(file("./mongo"))
