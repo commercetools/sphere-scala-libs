@@ -3,10 +3,11 @@ package io.sphere.json.generic
 import cats.data.Validated.Valid
 import io.sphere.json._
 import org.json4s._
+import org.scalatest.Inside
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class JsonTypeHintFieldSpec extends AnyWordSpec with Matchers {
+class JsonTypeHintFieldSpec extends AnyWordSpec with Matchers with Inside {
   import JsonTypeHintFieldSpec._
 
   "JSONTypeHintField" must {
@@ -20,9 +21,13 @@ class JsonTypeHintFieldSpec extends AnyWordSpec with Matchers {
 
       val json = toJValue[UserWithPicture](user)
       json must be(expected)
+
+      inside(fromJValue[UserWithPicture](json)) { case Valid(parsedUser) =>
+        parsedUser must be(user)
+      }
     }
 
-    "allow to set another field to distinguish between types (fromMongo)" in {
+    "allow to set another field to distinguish between types (fromJSON)" in {
       val json =
         """
         {
@@ -32,7 +37,7 @@ class JsonTypeHintFieldSpec extends AnyWordSpec with Matchers {
         }
         """
 
-      val Valid(user) = fromJSON[UserWithPicture](json)
+      val user = fromJSON[UserWithPicture](json).getOrElse(null)
 
       user must be(UserWithPicture("foo-123", Medium, "http://example.com"))
     }
