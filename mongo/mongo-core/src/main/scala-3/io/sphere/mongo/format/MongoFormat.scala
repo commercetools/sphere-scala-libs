@@ -19,7 +19,7 @@ trait MongoFormat[A] extends Serializable {
   def fromMongoValue(mongoType: Any): A
 
   //  /** needed JSON fields - ignored if empty */
-  val fields: Set[String] = MongoFormat.emptyFields
+  val fields: Set[String] = MongoFormat.emptyFieldsSet
 
   def default: Option[A] = None
 
@@ -53,7 +53,7 @@ object TraitMongoFormat {
 }
 
 object MongoFormat {
-  private val emptyFields: Set[String] = Set.empty
+  private val emptyFieldsSet: Set[String] = Set.empty
 
   inline def apply[A: MongoFormat]: MongoFormat[A] = summon
   inline given derived[A](using Mirror.Of[A]): MongoFormat[A] = Derivation.derived
@@ -61,7 +61,7 @@ object MongoFormat {
   def instance[A](
       fromMongo: Any => A,
       toMongo: A => Any,
-      fieldSet: Set[String] = emptyFields): MongoFormat[A] = new {
+      fieldSet: Set[String] = emptyFieldsSet): MongoFormat[A] = new {
 
     override def toMongoValue(a: A): Any = toMongo(a)
     override def fromMongoValue(mongoType: Any): A = fromMongo(mongoType)
