@@ -1,6 +1,5 @@
 package io.sphere.json
 
-import cats.data.Validated
 import cats.data.Validated.Valid
 import io.sphere.json.generic._
 import io.sphere.util.test._
@@ -118,17 +117,6 @@ class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
     }
   }
 
-  def parseValidJSON(string: String): JValue =
-    parseJSON(string) match {
-      case Valid(a) => a
-      case Validated.Invalid(e) => throw new Exception(e.head.toString)
-    }
-
-  def fromValidJValue[A](jval: JValue)(implicit json: FromJSON[A]): A =
-    json.read(jval) match {
-      case Valid(a) => a
-      case Validated.Invalid(e) => throw new Exception(e.head.toString)
-    }
 }
 
 sealed abstract class PictureSize(val weight: Int, val height: Int)
