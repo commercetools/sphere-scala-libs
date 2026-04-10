@@ -10,7 +10,7 @@ class JsonTypeHintFieldSpec extends AnyWordSpec with Matchers {
   import JsonTypeHintFieldSpec._
 
   "JSONTypeHintField" must {
-    "allow to set another field to distinguish between types (toMongo)" in {
+    "allow to set another field to distinguish between types (toJSON)" in {
       val user = UserWithPicture("foo-123", Medium, "http://example.com")
       val expected = JObject(
         List(
@@ -22,7 +22,7 @@ class JsonTypeHintFieldSpec extends AnyWordSpec with Matchers {
       json must be(expected)
     }
 
-    "allow to set another field to distinguish between types (fromMongo)" in {
+    "allow to set another field to distinguish between types (fromJSON)" in {
       val json =
         """
         {
