@@ -2,13 +2,11 @@ package io.sphere.mongo
 
 import com.mongodb.BasicDBObject
 import io.sphere.mongo.format.{DefaultMongoFormats, MongoFormat}
-import io.sphere.mongo.generic.{MongoAnnotationReader, MongoTypeHint}
+import io.sphere.mongo.generic.MongoTypeHint
 import io.sphere.mongo.MongoUtils.dbObj
 import DefaultMongoFormats.given
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-
-import java.util.UUID
 
 object ProductTypes {
   // For semi-automatic derivarion + default value argument

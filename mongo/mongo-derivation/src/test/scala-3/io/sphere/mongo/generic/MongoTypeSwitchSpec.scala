@@ -1,6 +1,5 @@
 package io.sphere.mongo.generic
 
-import io.sphere.mongo.MongoUtils.*
 import io.sphere.mongo.format.DefaultMongoFormats.given
 import io.sphere.mongo.format.MongoFormat
 import org.bson.BSONObject

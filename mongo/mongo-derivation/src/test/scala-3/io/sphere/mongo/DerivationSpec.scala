@@ -1,6 +1,6 @@
 package io.sphere.mongo
 
-import io.sphere.mongo.generic.{MongoAnnotationReader, MongoEmbedded, MongoKey, MongoTypeHintField}
+import io.sphere.mongo.generic.{MongoAnnotationReader, MongoEmbedded, MongoTypeHintField}
 import io.sphere.mongo.format.DefaultMongoFormats.given
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.must.Matchers
