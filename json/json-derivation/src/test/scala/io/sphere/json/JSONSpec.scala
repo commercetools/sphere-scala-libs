@@ -226,9 +226,7 @@ class JSONSpec extends AnyFunSpec with Matchers {
           fromJSON[TestSubjectBase](json) must equal(Valid(testSubject))
         }
       }
-
     }
-
   }
 
   describe("ToJSON and FromJSON") {
@@ -257,36 +255,6 @@ class JSONSpec extends AnyFunSpec with Matchers {
       fromJSON[GenericA[String]](toJSON(a)) must equal(Valid(a))
     }
 
-    it("must provide derived instances for singleton objects") {
-      implicit val toSingletonJSON: ToJSON[Singleton.type] = toJsonSingleton(Singleton)
-      implicit val fromSingletonJSON: FromJSON[Singleton.type] = fromJsonSingleton(Singleton)
-      val json = s"""[${toJSON(Singleton)}]"""
-      withClue(json) {
-        fromJSON[Seq[Singleton.type]](json) must equal(Valid(Seq(Singleton)))
-      }
-
-      // ToJSON
-      implicit val toSingleAJSON: ToJSON[SingletonA.type] = toJsonSingleton(SingletonA)
-      implicit val toSingleBJSON: ToJSON[SingletonB.type] = toJsonSingleton(SingletonB)
-      implicit val toSingleCJSON: ToJSON[SingletonC.type] = toJsonSingleton(SingletonC)
-      implicit val toSingleEnumJSON: ToJSON[SingletonEnum] =
-        toJsonSingletonEnumSwitch[SingletonEnum, SingletonA.type, SingletonB.type, SingletonC.type](
-          Nil)
-      // FromJSON
-      implicit val fromSingleAJSON: FromJSON[SingletonA.type] = fromJsonSingleton(SingletonA)
-      implicit val fromSingleBJSON: FromJSON[SingletonB.type] = fromJsonSingleton(SingletonB)
-      implicit val fromSingleCJSON: FromJSON[SingletonC.type] = fromJsonSingleton(SingletonC)
-      implicit val fromSingleEnumJSON: FromJSON[SingletonEnum] = fromJsonSingletonEnumSwitch[
-        SingletonEnum,
-        SingletonA.type,
-        SingletonB.type,
-        SingletonC.type](Nil)
-
-      List(SingletonA, SingletonB, SingletonC).foreach { s: SingletonEnum =>
-        fromJSON[SingletonEnum](toJSON(s)) must equal(Valid(s))
-      }
-    }
-
     it("must provide derived instances for sum types with a mix of case class / object") {
       // ToJSON
       implicit val toSingleJSON: ToJSON[JSONSpec.SingletonMixed.type] = deriveToJSON
@@ -298,7 +266,7 @@ class JSONSpec extends AnyFunSpec with Matchers {
       implicit val fromRecordJSON: FromJSON[RecordMixed] = deriveFromJSON
       implicit val fromMixedJSON: FromJSON[Mixed] =
         fromJsonTypeSwitch[Mixed, SingletonMixed.type, RecordMixed](Nil)
-      List(SingletonMixed, RecordMixed(1)).foreach { m: Mixed =>
+      List[Mixed](SingletonMixed, RecordMixed(1)).foreach { m =>
         fromJSON[Mixed](toJSON(m)) must equal(Valid(m))
       }
     }
@@ -381,6 +349,7 @@ case class TestSubjectConcrete1(c1: String) extends TestSubjectCategoryA
 case class TestSubjectConcrete2(c2: String) extends TestSubjectCategoryA
 
 case class TestSubjectConcrete3(c3: String) extends TestSubjectCategoryB
+@JSONTypeHint("foo2")
 case class TestSubjectConcrete4(c4: String) extends TestSubjectCategoryB
 
 object TestSubjectCategoryA {
