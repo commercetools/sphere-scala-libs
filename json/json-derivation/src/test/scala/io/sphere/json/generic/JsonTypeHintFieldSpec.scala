@@ -3,11 +3,10 @@ package io.sphere.json.generic
 import io.sphere.json.*
 import io.sphere.util.test.*
 import org.json4s.*
-import org.scalatest.Inside
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class JsonTypeHintFieldSpec extends AnyWordSpec with Matchers with Inside {
+class JsonTypeHintFieldSpec extends AnyWordSpec with Matchers {
   import JsonTypeHintFieldSpec._
 
   "JSONTypeHintField" must {
