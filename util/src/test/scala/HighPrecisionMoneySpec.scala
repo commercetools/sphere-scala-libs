@@ -1,7 +1,7 @@
 package io.sphere.util
 
-import cats.data.Validated.Invalid
 import io.sphere.util.HighPrecisionMoney.ImplicitsDecimalPrecise.HighPrecisionPreciseMoneyNotation
+import io.sphere.util.test._
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -166,26 +166,22 @@ class HighPrecisionMoneySpec extends AnyFunSpec with Matchers with ScalaCheckDri
     }
 
     it("should validate fractionDigits (min)") {
-      val Invalid(errors) = HighPrecisionMoney.fromPreciseAmount(123456L, 1, Euro, None): @unchecked
+      val error = HighPrecisionMoney.fromPreciseAmount(123456L, 1, Euro, None).expectError
 
-      errors.toList must be(
-        List("fractionDigits must be > 2 (default fraction digits defined by currency EUR)."))
+      error must be("fractionDigits must be > 2 (default fraction digits defined by currency EUR).")
     }
 
     it("should validate fractionDigits (max)") {
-      val Invalid(errors) =
-        HighPrecisionMoney.fromPreciseAmount(123456L, 100, Euro, None): @unchecked
+      val error = HighPrecisionMoney.fromPreciseAmount(123456L, 100, Euro, None).expectError
 
-      errors.toList must be(List("fractionDigits must be <= 20."))
+      error must be("fractionDigits must be <= 20.")
     }
 
     it("should validate centAmount") {
-      val Invalid(errors) =
-        HighPrecisionMoney.fromPreciseAmount(123456L, 4, Euro, Some(1L)): @unchecked
+      val error = HighPrecisionMoney.fromPreciseAmount(123456L, 4, Euro, Some(1L)).expectError
 
-      errors.toList must be(
-        List(
-          "centAmount must be correctly rounded preciseAmount (a number between 1234 and 1235)."))
+      error must be(
+        "centAmount must be correctly rounded preciseAmount (a number between 1234 and 1235).")
     }
 
     it("should provide convenient toString") {

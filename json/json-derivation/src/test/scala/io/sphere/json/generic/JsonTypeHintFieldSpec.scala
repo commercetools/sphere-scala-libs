@@ -1,7 +1,7 @@
 package io.sphere.json.generic
 
-import cats.data.Validated.Valid
 import io.sphere.json._
+import io.sphere.util.test._
 import org.json4s._
 import org.scalatest.Inside
 import org.scalatest.matchers.must.Matchers
@@ -37,7 +37,7 @@ class JsonTypeHintFieldSpec extends AnyWordSpec with Matchers with Inside {
         }
         """
 
-      val user = fromJSON[UserWithPicture](json).getOrElse(null)
+      val user = fromJSON[UserWithPicture](json).expectValid
 
       user must be(UserWithPicture("foo-123", Medium, "http://example.com"))
     }

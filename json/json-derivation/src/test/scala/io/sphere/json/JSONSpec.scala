@@ -1,11 +1,12 @@
 package io.sphere.json
 
-import cats.data.Validated.{Invalid, Valid}
+import cats.data.Validated.Valid
 import cats.data.ValidatedNel
 import cats.syntax.apply._
 import io.sphere.json.field
 import io.sphere.json.generic._
 import io.sphere.util.Money
+import io.sphere.util.test._
 import org.joda.time._
 import org.json4s.JsonAST._
 import org.scalatest.funspec.AnyFunSpec
@@ -109,7 +110,7 @@ class JSONSpec extends AnyFunSpec with Matchers {
         "milestones":[{"name":"Bravo", "date": "xxx"}]
       }
       """
-      val Invalid(errs) = fromJSON[Project](wrongTypeJSON): @unchecked
+      val errs = fromJSON[Project](wrongTypeJSON).expectErrors
       errs.toList must equal(
         List(
           JSONFieldError(List("nr"), "JSON Number in the range of an Int expected."),
@@ -137,24 +138,24 @@ class JSONSpec extends AnyFunSpec with Matchers {
     }
 
     it("must handle empty String") {
-      val Invalid(err) = fromJSON[Int](""): @unchecked
-      err.toList.head mustBe a[JSONParseError]
+      val err = fromJSON[Int]("").expectError
+      err mustBe a[JSONParseError]
     }
 
     it("must provide user-friendly error by empty String") {
-      val Invalid(err) = fromJSON[Int](""): @unchecked
-      err.toList mustEqual List(JSONParseError("No content to map due to end-of-input"))
+      val err = fromJSON[Int]("").expectError
+      err mustEqual JSONParseError("No content to map due to end-of-input")
     }
 
     it("must handle incorrect json") {
-      val Invalid(err) = fromJSON[Int]("""{"key: "value"}"""): @unchecked
-      err.toList.head mustBe a[JSONParseError]
+      val err = fromJSON[Int]("""{"key: "value"}""").expectError
+      err mustBe a[JSONParseError]
     }
 
     it("must provide user-friendly error by incorrect json") {
-      val Invalid(err) = fromJSON[Int]("""{"key: "value"}"""): @unchecked
-      err.toList mustEqual List(JSONParseError(
-        "Unexpected character ('v' (code 118)): was expecting a colon to separate field name and value"))
+      val err = fromJSON[Int]("""{"key: "value"}""").expectError
+      err mustEqual JSONParseError(
+        "Unexpected character ('v' (code 118)): was expecting a colon to separate field name and value")
     }
 
     it("must provide derived JSON instances for sum types") {
