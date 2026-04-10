@@ -97,16 +97,10 @@ lazy val `sphere-util-test` = project
   .settings(standardSettings: _*)
   .settings(libraryDependencies ++= Seq("org.scalatest" %% "scalatest" % scalaTestVersion))
   .settings(publishArtifact := false, publish := {})
-  .settings(crossScalaVersions := Seq(scala212, scala213, scala3))
   .settings(homepage := Some(url("https://github.com/commercetools/sphere-scala-libs/README.md")))
 
 lazy val `sphere-json-core` = project
   .in(file("./json/json-core"))
-  .settings(standardSettings: _*)
-  .dependsOn(`sphere-util`)
-
-lazy val `sphere-mongo-core` = project
-  .in(file("./mongo/mongo-core"))
   .settings(standardSettings: _*)
   .dependsOn(`sphere-util`)
   .dependsOn(`sphere-util-test` % Test)
@@ -139,7 +133,6 @@ lazy val `sphere-json` = project
 lazy val `sphere-mongo-core` = project
   .in(file("./mongo/mongo-core"))
   .settings(standardSettings: _*)
-  .settings(crossScalaVersions := Seq(scala212, scala213, scala3))
   .dependsOn(`sphere-util`)
   .dependsOn(`sphere-util-test` % Test)
 

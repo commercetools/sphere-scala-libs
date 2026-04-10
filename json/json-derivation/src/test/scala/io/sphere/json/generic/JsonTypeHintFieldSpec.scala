@@ -1,8 +1,8 @@
 package io.sphere.json.generic
 
-import io.sphere.json._
-import io.sphere.util.test._
-import org.json4s._
+import io.sphere.json.*
+import io.sphere.util.test.*
+import org.json4s.*
 import org.scalatest.Inside
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -22,9 +22,8 @@ class JsonTypeHintFieldSpec extends AnyWordSpec with Matchers with Inside {
       val json = toJValue[UserWithPicture](user)
       json must be(expected)
 
-      inside(fromJValue[UserWithPicture](json)) { case Valid(parsedUser) =>
-        parsedUser must be(user)
-      }
+      val parsedUser = fromJValue[UserWithPicture](json).expectValid
+      parsedUser must be(user)
     }
 
     "allow to set another field to distinguish between types (fromJSON)" in {
