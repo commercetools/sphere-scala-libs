@@ -5,6 +5,7 @@ import cats.implicits.toTraverseOps
 import io.sphere.json.{JSON, JSONParseError, JValidation, parseJSON}
 import io.sphere.json.generic.deriveJSON
 import io.sphere.json.generic.jsonTypeSwitch
+import io.sphere.util.test.*
 import org.json4s.JsonAST.JObject
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -25,14 +26,14 @@ class JsonTypeSwitchSpec extends AnyWordSpec with Matchers {
         val b = B(123)
         val jsonB = JSON[A].write(b)
 
-        val b2 = JSON[A].read(jsonB).getOrElse(null)
+        val b2 = JSON[A].read(jsonB).expectValid
 
         b2 must be(b)
 
         val c = C(2345345)
         val jsonC = JSON[A].write(c)
 
-        val c2 = JSON[A].read(jsonC).getOrElse(null)
+        val c2 = JSON[A].read(jsonC).expectValid
 
         c2 must be(c)
       }
@@ -118,7 +119,7 @@ class JsonTypeSwitchSpec extends AnyWordSpec with Matchers {
             SubTrait3.O5,
             SubTrait3.O6)
 
-        val res = objs.map(formatSuper.write).map(formatSuper.read).sequence.getOrElse(null)
+        val res = objs.map(formatSuper.write).map(formatSuper.read).sequence.expectValid
 
         res must be(objs)
 
@@ -139,7 +140,7 @@ class JsonTypeSwitchSpec extends AnyWordSpec with Matchers {
             SubTrait3.O6,
             SubTrait4.O7)
 
-        val res = objs.map(formatSuper.write).map(formatSuper.read).sequence.getOrElse(null)
+        val res = objs.map(formatSuper.write).map(formatSuper.read).sequence.expectValid
 
         res must be(objs)
 
@@ -150,10 +151,10 @@ class JsonTypeSwitchSpec extends AnyWordSpec with Matchers {
   }
 
   def check[A](a: A, json: String)(using format: JSON[A]): Unit = {
-    val parsedJson = parseJSON(json).getOrElse(null)
+    val parsedJson = parseJSON(json).expectValid
     val json2 = format.write(a)
     json2 must be(parsedJson)
-    format.read(json2).getOrElse(null) must be(a)
+    format.read(json2).expectValid must be(a)
   }
 
   type FormatTest[A] = JSON[A] ?=> Any
