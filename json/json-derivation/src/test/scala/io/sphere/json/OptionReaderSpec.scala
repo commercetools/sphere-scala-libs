@@ -1,6 +1,9 @@
 package io.sphere.json
 
 import io.sphere.json.generic._
+import io.sphere.util.BaseMoney
+import io.sphere.util.Money.ImplicitsDecimal._
+import io.sphere.util.test._
 import org.json4s.{JArray, JLong, JNothing, JObject, JString}
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
@@ -29,6 +32,8 @@ object OptionReaderSpec {
   object ListClass {
     implicit val json: JSON[ListClass] = deriveJSON
   }
+
+  case class MoneyOptClass(moneyOpt: Option[BaseMoney])
 }
 
 class OptionReaderSpec extends AnyWordSpec with Matchers with OptionValues {
@@ -144,6 +149,18 @@ class OptionReaderSpec extends AnyWordSpec with Matchers with OptionValues {
 
       parseJSON(toJSON(result)) mustEqual parseJSON(json)
     }
+  }
+
+  "use predefined Option & BaseMoney instances instead of deriving them" in {
+    // This is relevant because some instances can get derived when the instances are not in the right scope
+    // I had it happen for Option[BaseMoney] while I was moving things around
+    // This test ensures we use the predefined instances
+    val action = MoneyOptClass(Some(10.EUR))
+
+    val format: JSON[MoneyOptClass] = deriveJSON
+    val action2 = format.read(format.write(action)).expectValid
+
+    action must be(action2)
   }
 
 }
