@@ -1,8 +1,8 @@
 package io.sphere.util
 
-import org.scalatest.Assertions._
 import cats.data.Validated.{Invalid, Valid}
 import cats.data.ValidatedNel
+import org.scalatest.Assertions._
 
 package object test {
   implicit class ValidatedNelTestOps[Err, A](val validatedNel: ValidatedNel[Err, A])
