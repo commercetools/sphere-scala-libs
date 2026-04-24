@@ -36,16 +36,4 @@ object SubTypeNameSpec {
   @JSONTypeHint("Obj2") case object ObjHidden extends SuperType
   case class Class1(int: Int) extends SuperType
   @JSONTypeHint("Class2") case class ClassHidden(int: Int) extends SuperType
-
-  sealed trait SuperType2
-  sealed trait SubType1 extends SuperType2
-  object SubType1 {
-    case class SubClass1A(x: Int) extends SubType1
-    implicit val json: JSON[SubType1] = deriveJSON
-  }
-  sealed trait SubType2 extends SuperType2
-  object SubType2 {
-    case class SubClass2A(x: Int) extends SubType2
-    implicit val json: JSON[SubType2] = deriveJSON
-  }
 }
