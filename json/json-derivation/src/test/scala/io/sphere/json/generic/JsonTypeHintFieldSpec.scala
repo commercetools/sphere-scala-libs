@@ -1,8 +1,8 @@
 package io.sphere.json.generic
 
-import io.sphere.json.*
-import io.sphere.util.test.*
-import org.json4s.*
+import io.sphere.json._
+import io.sphere.util.test._
+import org.json4s._
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

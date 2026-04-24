@@ -66,7 +66,7 @@ private def addTypeSelectorContainer[A](derviedJson: JSON[A])(
     override def read(jval: JValue): JValidation[A] = fromJson.read(jval)
     override def write(value: A): JValue = toJson.write(value)
     override val fields: Set[String] = fromJson.fields
-    override def subTypeNames: Vector[String] = Vector.empty
+    override def subTypeNames: Vector[String] = mergedFromFormatters.serializedNames
     override val fromFormatters: FromFormatters = mergedFromFormatters
     override val toFormatters: ToFormatters = mergedToFormatters
 
