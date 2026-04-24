@@ -225,7 +225,9 @@ class JSONSpec extends AnyFunSpec with Matchers {
         withClue(json) {
           fromJSON[TestSubjectBase](json) must equal(Valid(testSubject))
         }
+
       }
+
     }
   }
 
@@ -349,7 +351,6 @@ case class TestSubjectConcrete1(c1: String) extends TestSubjectCategoryA
 case class TestSubjectConcrete2(c2: String) extends TestSubjectCategoryA
 
 case class TestSubjectConcrete3(c3: String) extends TestSubjectCategoryB
-@JSONTypeHint("foo2")
 case class TestSubjectConcrete4(c4: String) extends TestSubjectCategoryB
 
 object TestSubjectCategoryA {
