@@ -225,10 +225,10 @@ class JSONSpec extends AnyFunSpec with Matchers {
         withClue(json) {
           fromJSON[TestSubjectBase](json) must equal(Valid(testSubject))
         }
-
       }
 
     }
+    
   }
 
   describe("ToJSON and FromJSON") {
