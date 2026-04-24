@@ -2,6 +2,8 @@ package io.sphere.json.generic
 
 import io.sphere.json._
 import org.json4s.DefaultReaders._
+import org.json4s.MonadicJValue.jvalueToMonadic
+import org.json4s.jvalue2readerSyntax
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
