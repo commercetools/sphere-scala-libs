@@ -228,7 +228,7 @@ class JSONSpec extends AnyFunSpec with Matchers {
       }
 
     }
-    
+
   }
 
   describe("ToJSON and FromJSON") {
