@@ -101,3 +101,22 @@ inline private def summonFormatters[T <: Tuple](
       }
 
   }
+
+// format: off
+inline def mongoTypeSwitch[SuperType, A1: MongoFormat](typeSelectors: List[Nothing]): MongoFormat[SuperType] =
+  mongoTypeSwitch[SuperType, Tuple1[A1]]
+inline def mongoTypeSwitch[SuperType, A1: MongoFormat, A2: MongoFormat](typeSelectors: List[Nothing]): MongoFormat[SuperType] =
+  mongoTypeSwitch[SuperType, (A1, A2)]
+inline def mongoTypeSwitch[SuperType, A1: MongoFormat, A2: MongoFormat, A3: MongoFormat](typeSelectors: List[Nothing]): MongoFormat[SuperType] =
+  mongoTypeSwitch[SuperType, (A1, A2, A3)]
+inline def mongoTypeSwitch[SuperType, A1: MongoFormat, A2: MongoFormat, A3: MongoFormat, A4: MongoFormat](typeSelectors: List[Nothing]): MongoFormat[SuperType] =
+  mongoTypeSwitch[SuperType, (A1, A2, A3, A4)]
+inline def mongoTypeSwitch[SuperType, A1: MongoFormat, A2: MongoFormat, A3: MongoFormat, A4: MongoFormat, A5: MongoFormat](typeSelectors: List[Nothing]): MongoFormat[SuperType] =
+  mongoTypeSwitch[SuperType, (A1, A2, A3, A4, A5)]
+inline def mongoTypeSwitch[SuperType, A1: MongoFormat, A2: MongoFormat, A3: MongoFormat, A4: MongoFormat, A5: MongoFormat, A6: MongoFormat](typeSelectors: List[Nothing]): MongoFormat[SuperType] =
+  mongoTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6)]
+inline def mongoTypeSwitch[SuperType, A1: MongoFormat, A2: MongoFormat, A3: MongoFormat, A4: MongoFormat, A5: MongoFormat, A6: MongoFormat, A7: MongoFormat](typeSelectors: List[Nothing]): MongoFormat[SuperType] =
+  mongoTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7)]
+inline def mongoTypeSwitch[SuperType, A1: MongoFormat, A2: MongoFormat, A3: MongoFormat, A4: MongoFormat, A5: MongoFormat, A6: MongoFormat, A7: MongoFormat, A8: MongoFormat](typeSelectors: List[Nothing]): MongoFormat[SuperType] =
+  mongoTypeSwitch[SuperType, (A1, A2, A3, A4, A5, A6, A7, A8)]
+// format: on

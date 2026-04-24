@@ -1,21 +1,17 @@
 package io.sphere.mongo.generic
 
-import io.sphere.mongo.format.DefaultMongoFormats.given
+import io.sphere.mongo.format.DefaultMongoFormats._
 import io.sphere.mongo.format.MongoFormat
 import org.bson.BSONObject
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 class MongoTypeSwitchSpec extends AnyWordSpec with Matchers {
-
-  sealed trait A
-  case class B(int: Int) extends A
-  case class C(int: Int) extends A
-  @MongoTypeHint("D2") case class D(int: Int) extends A
+  import MongoTypeSwitchSpec._
 
   "mongoTypeSwitch" must {
     "derive a subset of a sealed trait" in {
-      val format = mongoTypeSwitch[A, (B, C)]
+      val format = mongoTypeSwitch[A, B, C](Nil)
 
       val b = B(123)
       val bson = format.toMongoValue(b)
@@ -33,7 +29,7 @@ class MongoTypeSwitchSpec extends AnyWordSpec with Matchers {
     }
 
     "derive a subset of a sealed trait with a mongoKey" in {
-      val format = mongoTypeSwitch[A, (B, D)]
+      val format = mongoTypeSwitch[A, B, D](Nil)
 
       val d = D(123)
       val bson = format.toMongoValue(d).asInstanceOf[BSONObject]
@@ -43,5 +39,21 @@ class MongoTypeSwitchSpec extends AnyWordSpec with Matchers {
       d2 must be(d)
 
     }
+  }
+}
+
+object MongoTypeSwitchSpec {
+  sealed trait A
+  case class B(int: Int) extends A
+  object B {
+    implicit val mongo: MongoFormat[B] = deriveMongoFormat
+  }
+  case class C(int: Int) extends A
+  object C {
+    implicit val mongo: MongoFormat[C] = deriveMongoFormat
+  }
+  @MongoTypeHint("D2") case class D(int: Int) extends A
+  object D {
+    implicit val mongo: MongoFormat[D] = deriveMongoFormat
   }
 }
