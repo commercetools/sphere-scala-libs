@@ -55,7 +55,6 @@ class NullHandlingSpec extends AnyWordSpec with Matchers {
           "The potion of healing"))
     }
   }
-
 }
 
 case class Jeans(
