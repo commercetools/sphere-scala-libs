@@ -4,12 +4,15 @@ import cats.data.Validated.Valid
 import cats.implicits._
 import io.sphere.json.{JSON, JValidation, parseJSON}
 import io.sphere.util.test._
-import org.json4s._
 import org.json4s.DefaultReaders.StringReader
+import org.json4s._
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-/** Shared test case logic for jsonTypeSwitch, usable from both Scala 2 and Scala 3. */
+/** Shared test case logic for jsonTypeSwitch, because the scala 3 tests has a new syntax for
+  * jsonTypeSwitch (using tuples, instead of fixed parameter lists) This way we can tests both
+  * syntaxes
+  */
 trait JsonTypeSwitchSpecCommon { self: AnyWordSpec with Matchers =>
   import JsonTypeSwitchModels._
 

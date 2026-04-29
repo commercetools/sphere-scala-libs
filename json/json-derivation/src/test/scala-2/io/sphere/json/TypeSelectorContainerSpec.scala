@@ -1,7 +1,6 @@
 package io.sphere.json
 
 import io.sphere.json.generic.{TypeSelectorContainer, deriveJSON, jsonTypeSwitch}
-import org.json4s._
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
