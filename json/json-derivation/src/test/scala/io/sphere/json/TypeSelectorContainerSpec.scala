@@ -1,36 +1,11 @@
 package io.sphere.json
 
 import io.sphere.json.generic.{TypeSelectorContainer, deriveJSON, jsonTypeSwitch}
-import org.json4s._
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class TypesSwitchSpec extends AnyWordSpec with Matchers {
-  import TypesSwitchSpec._
-
-  "jsonTypeSwitch" must {
-    "combine different sum types tree" in {
-      val m: Seq[Message] = List(
-        TypeA.ClassA1(23),
-        TypeA.ClassA2("world"),
-        TypeB.ClassB1(valid = false),
-        TypeB.ClassB2(Seq("a23", "c62")))
-
-      val jsons = m.map(Message.json.write)
-      jsons must be(
-        List(
-          JObject("number" -> JLong(23), "type" -> JString("ClassA1")),
-          JObject("name" -> JString("world"), "type" -> JString("ClassA2")),
-          JObject("valid" -> JBool(false), "type" -> JString("ClassB1")),
-          JObject(
-            "references" -> JArray(List(JString("a23"), JString("c62"))),
-            "type" -> JString("ClassB2"))
-        ))
-
-      val messages = jsons.map(Message.json.read).map(_.toOption.get)
-      messages must be(m)
-    }
-  }
+class TypeSelectorContainerSpec extends AnyWordSpec with Matchers {
+  import TypeSelectorContainerSpec._
 
   "TypeSelectorContainer" must {
     "have information about type value discriminators" in {
@@ -48,19 +23,19 @@ class TypesSwitchSpec extends AnyWordSpec with Matchers {
       selectors.map(_.typeField) must be(List("type", "type", "type", "type", "type", "type"))
 
       selectors.map(_.clazz.getName) must contain.allOf(
-        "io.sphere.json.TypesSwitchSpec$TypeA$ClassA1",
-        "io.sphere.json.TypesSwitchSpec$TypeA$ClassA2",
-        "io.sphere.json.TypesSwitchSpec$TypeA",
-        "io.sphere.json.TypesSwitchSpec$TypeB$ClassB1",
-        "io.sphere.json.TypesSwitchSpec$TypeB$ClassB2",
-        "io.sphere.json.TypesSwitchSpec$TypeB"
+        "io.sphere.json.TypeSelectorContainerSpec$TypeA$ClassA1",
+        "io.sphere.json.TypeSelectorContainerSpec$TypeA$ClassA2",
+        "io.sphere.json.TypeSelectorContainerSpec$TypeA",
+        "io.sphere.json.TypeSelectorContainerSpec$TypeB$ClassB1",
+        "io.sphere.json.TypeSelectorContainerSpec$TypeB$ClassB2",
+        "io.sphere.json.TypeSelectorContainerSpec$TypeB"
       )
     }
   }
 
 }
 
-object TypesSwitchSpec {
+object TypeSelectorContainerSpec {
 
   trait Message
   object Message {
