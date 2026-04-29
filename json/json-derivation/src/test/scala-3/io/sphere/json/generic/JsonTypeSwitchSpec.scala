@@ -1,128 +1,55 @@
 package io.sphere.json.generic
 
-import cats.data.Validated.Valid
-import cats.implicits.toTraverseOps
-import io.sphere.json.{JSON, JSONParseError, JValidation, parseJSON}
-import io.sphere.json.generic.deriveJSON
-import io.sphere.json.generic.jsonTypeSwitch
-import io.sphere.util.test.*
-import org.json4s.JsonAST.JObject
+import cats.implicits._
+import io.sphere.json.JSON
+import io.sphere.util.test._
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.json4s.*
-import org.json4s.DefaultReaders.StringReader
 
-class JsonTypeSwitchSpec extends AnyWordSpec with Matchers {
-  import JsonTypeSwitchSpec.*
+class JsonTypeSwitchSpec extends AnyWordSpec with Matchers with JsonTypeSwitchBehaviors {
+  import JsonTypeSwitchModels._
 
   "jsonTypeSwitch" must {
 
     {
       given JSON[B] = deriveJSON[B]
-      "derive a subset of a sealed trait".withFormatters(
-        newSyntax = jsonTypeSwitch[A, (B, C)],
-        oldSyntax = jsonTypeSwitch[A, B, C](Nil)
-      ) {
-        val b = B(123)
-        val jsonB = JSON[A].write(b)
 
-        val b2 = JSON[A].read(jsonB).expectValid
-
-        b2 must be(b)
-
-        val c = C(2345345)
-        val jsonC = JSON[A].write(c)
-
-        val c2 = JSON[A].read(jsonC).expectValid
-
-        c2 must be(c)
+      "derive a subset of a sealed trait (old syntax)" in {
+        testDeriveASubsetOfASealedTrait(jsonTypeSwitch[A, B, C](Nil))
+      }
+      "derive a subset of a sealed trait (new syntax)" in {
+        testDeriveASubsetOfASealedTrait(jsonTypeSwitch[A, (B, C)])
       }
     }
 
-    "derive a subset of a sealed trait with a mongoKey".withFormatters(
-      newSyntax = jsonTypeSwitch[A, (B, D)],
-      oldSyntax = jsonTypeSwitch[A, B, D](Nil)
-    ) {
-      val d = D(123)
-      val json = JSON[A].write(d)
-      val d2 = JSON[A].read(json)
-
-      (json \ "type").as[String] must be("D2")
-      d2 must be(Valid(d))
+    "derive a subset of a sealed trait with a mongoKey (old syntax)" in {
+      testDeriveSubsetWithMongoKey(jsonTypeSwitch[A, B, D](Nil))
+    }
+    "derive a subset of a sealed trait with a mongoKey (new syntax)" in {
+      testDeriveSubsetWithMongoKey(jsonTypeSwitch[A, (B, D)])
     }
 
-    "combine different sum types tree".withFormatters(
-      newSyntax = jsonTypeSwitch[Message, (TypeA, TypeB)],
-      oldSyntax = jsonTypeSwitch[Message, TypeA, TypeB](Nil)
-    ) {
-      val m: Seq[Message] = List(
-        TypeA.ClassA1(23),
-        TypeA.ClassA2("world"),
-        TypeB.ClassB1(valid = false),
-        TypeB.ClassB2(Seq("a23", "c62")))
-
-      val jsons = m.map(JSON[Message].write)
-      jsons must be(
-        List(
-          JObject("number" -> JLong(23), "type" -> JString("ClassA1")),
-          JObject("name" -> JString("world"), "type" -> JString("ClassA2")),
-          JObject("valid" -> JBool(false), "type" -> JString("ClassB1")),
-          JObject(
-            "references" -> JArray(List(JString("a23"), JString("c62"))),
-            "type" -> JString("ClassB2"))
-        ))
-
-      val messages = jsons.map(JSON[Message].read).map(_.toOption.get)
-      messages must be(m)
+    "combine different sum types tree (old syntax)" in {
+      testCombineSumTypes(jsonTypeSwitch[Message, TypeA, TypeB](Nil))
+    }
+    "combine different sum types tree (new syntax)" in {
+      testCombineSumTypes(jsonTypeSwitch[Message, (TypeA, TypeB)])
     }
 
     {
-      given JSON[B] = new JSON[B] {
-        override def read(jval: JValue): JValidation[B] = jval match {
-          case JObject(List(_, "field" -> JString(s"Custom-B-${n}"))) =>
-            Valid(B(n.toInt))
-          case _ => ???
-        }
+      given JSON[B] = customJsonB
 
-        override def write(value: B): JValue =
-          JObject(List("field" -> JString(s"Custom-B-${value.int}")))
+      "handle custom implementations for subtypes (old syntax)" in {
+        testCustomSubtypeImpl(jsonTypeSwitch[A, B, D, C](Nil))
       }
-
-      "handle custom implementations for subtypes".withFormatters(
-        newSyntax = jsonTypeSwitch[A, (B, D, C)],
-        oldSyntax = jsonTypeSwitch[A, B, D, C](Nil)
-      ) {
-        check[A](D(2345), """ {"type": "D2", "int": 2345 } """)
-        check[A](C(4), """ {"type": "C", "int": 4 } """)
-        check[A](B(34), """ {"type": "B", "field": "Custom-B-34" } """)
+      "handle custom implementations for subtypes (new syntax)" in {
+        testCustomSubtypeImpl(jsonTypeSwitch[A, (B, D, C)])
       }
     }
 
     "handle the PlatformFormattedNotification case" when {
-      // This means deriving a formatter for a supertrait that has 3 sub traits.
-      // 1 of them passed in as a type parameter and fully being derived
-      // the other 2 sub traits passed in as a value parameter, through their combined type selectors
-
       "using the /old/ syntax" in {
-        val formatSub2 = jsonTypeSwitch[SubTrait2, SubTrait2.O3.type, SubTrait2.O4.type](Nil)
-        val formatSub3 = jsonTypeSwitch[SubTrait3, SubTrait3.O5.type, SubTrait3.O6.type](Nil)
-
-        val typeSelectors = formatSub2.typeSelectors ++ formatSub3.typeSelectors
-        val formatSuper: JSON[SuperTrait] = jsonTypeSwitch[SuperTrait, SubTrait1](typeSelectors)
-
-        val objs =
-          List[SuperTrait](
-            SubTrait1.O1,
-            SubTrait1.O2,
-            SubTrait2.O3,
-            SubTrait2.O4,
-            SubTrait3.O5,
-            SubTrait3.O6)
-
-        val res = objs.map(formatSuper.write).map(formatSuper.read).sequence.expectValid
-
-        res must be(objs)
-
+        testPlatformFormattedNotificationCase()
       }
 
       "using the /new/ syntax" in {
@@ -140,98 +67,9 @@ class JsonTypeSwitchSpec extends AnyWordSpec with Matchers {
             SubTrait3.O6,
             SubTrait4.O7)
 
-        val res = objs.map(formatSuper.write).map(formatSuper.read).sequence.expectValid
-
+        val res = objs.map(formatSuper.write).traverse(formatSuper.read).expectValid
         res must be(objs)
-
-      }
-
-    }
-
-  }
-
-  def check[A](a: A, json: String)(using format: JSON[A]): Unit = {
-    val parsedJson = parseJSON(json).expectValid
-    val json2 = format.write(a)
-    json2 must be(parsedJson)
-    format.read(json2).expectValid must be(a)
-  }
-
-  type FormatTest[A] = JSON[A] ?=> Any
-  extension (string: String) {
-    def withFormatters[A](newSyntax: JSON[A], oldSyntax: JSON[A])(f: FormatTest[A]): Unit = {
-      s"$string with newSyntax" in {
-        f(using newSyntax)
-      }
-
-      s"$string with oldSyntax" in {
-        f(using oldSyntax)
       }
     }
-  }
-}
-
-object JsonTypeSwitchSpec {
-  sealed trait A
-  case class B(int: Int) extends A
-  case class C(int: Int) extends A
-  @JSONTypeHint("D2") case class D(int: Int) extends A
-
-  trait Message
-
-  sealed trait TypeA extends Message
-  object TypeA {
-    case class ClassA1(number: Int) extends TypeA
-    case class ClassA2(name: String) extends TypeA
-    implicit val json: JSON[TypeA] = deriveJSON[TypeA]
-  }
-
-  sealed trait TypeB extends Message
-  object TypeB {
-    case class ClassB1(valid: Boolean) extends TypeB
-    case class ClassB2(references: Seq[String]) extends TypeB
-    implicit val json: JSON[TypeB] = deriveJSON[TypeB]
-  }
-
-  trait SuperTrait
-
-  sealed trait SubTrait1 extends SuperTrait
-
-  object SubTrait1 {
-    case object O1 extends SubTrait1
-
-    case object O2 extends SubTrait1
-
-    given JSON[SubTrait1] = deriveJSON
-  }
-
-  sealed trait SubTrait2 extends SuperTrait
-
-  object SubTrait2 {
-    case object O3 extends SubTrait2
-
-    case object O4 extends SubTrait2
-
-    given JSON[SubTrait2] = deriveJSON
-  }
-
-  sealed trait SubTrait3 extends SuperTrait
-
-  object SubTrait3 {
-    case object O5 extends SubTrait3
-
-    case object O6 extends SubTrait3
-
-    given JSON[SubTrait3] = deriveJSON
-  }
-
-  sealed trait SubTrait4 extends SuperTrait
-
-  object SubTrait4 {
-    case object O7 extends SubTrait4
-
-    case object O8 extends SubTrait4
-
-    given JSON[SubTrait4] = deriveJSON
   }
 }
