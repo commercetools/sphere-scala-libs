@@ -1,12 +1,10 @@
 package io.sphere.json.generic
 
-import cats.implicits._
 import io.sphere.json.JSON
-import io.sphere.util.test._
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class JsonTypeSwitchSpec extends AnyWordSpec with Matchers with JsonTypeSwitchBehaviors {
+class JsonTypeSwitchSpec extends AnyWordSpec with Matchers with JsonTypeSwitchSpecCommon {
   import JsonTypeSwitchModels._
 
   "jsonTypeSwitch" must {

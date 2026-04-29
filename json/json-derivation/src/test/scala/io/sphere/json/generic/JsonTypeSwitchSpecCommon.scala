@@ -10,7 +10,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 /** Shared test case logic for jsonTypeSwitch, usable from both Scala 2 and Scala 3. */
-trait JsonTypeSwitchBehaviors { self: AnyWordSpec with Matchers =>
+trait JsonTypeSwitchSpecCommon { self: AnyWordSpec with Matchers =>
   import JsonTypeSwitchModels._
 
   def testDeriveASubsetOfASealedTrait(format: JSON[A]): Unit = {
