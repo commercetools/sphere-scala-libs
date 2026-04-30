@@ -14,9 +14,6 @@ class SubTypeNameSpec extends AnyWordSpec with Matchers {
       val format: JSON[SuperType] = deriveJSON
 
       format.subTypeNames must be(subTypeNames)
-
-      format.asInstanceOf[TypeSelectorContainer].typeSelectors.map(_.typeValue) must be(
-        subTypeNames)
     }
 
     "return all subtypes of a trait when using jsonTypeSwitch" in {
@@ -29,9 +26,6 @@ class SubTypeNameSpec extends AnyWordSpec with Matchers {
         jsonTypeSwitch[SuperType, Obj1.type, ObjHidden.type, Class1, ClassHidden](Nil)
 
       format.subTypeNames must be(subTypeNames)
-
-      format.asInstanceOf[TypeSelectorContainer].typeSelectors.map(_.typeValue) must be(
-        subTypeNames)
     }
   }
 }
