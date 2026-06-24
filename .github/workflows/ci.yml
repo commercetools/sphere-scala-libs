@@ -29,7 +29,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -45,18 +45,18 @@ jobs:
         uses: sbt/setup-sbt@v1
 
       - name: Check formatting
-        run: sbt '++ ${{ matrix.scala }}' scalafmtCheckAll
+        run: sbt '++ ${{ matrix.scala }}; scalafmtCheckAll'
 
       - name: Check that workflows are up to date
-        run: sbt '++ ${{ matrix.scala }}' githubWorkflowCheck
+        run: sbt '++ ${{ matrix.scala }}; githubWorkflowCheck'
 
       - name: Build Scala 2 project
         if: matrix.scala != '3.3.8'
-        run: sbt '++ ${{ matrix.scala }}' test
+        run: sbt '++ ${{ matrix.scala }}; test'
 
       - name: Build Scala 3 project
         if: matrix.scala == '3.3.8'
-        run: sbt '++ ${{ matrix.scala }}' sphere-util/test sphere-util-test/test sphere-json-core/test sphere-mongo-core/test
+        run: sbt '++ ${{ matrix.scala }}; sphere-util/test; sphere-util-test/test; sphere-json-core/test; sphere-mongo-core/test'
 
       - name: Compress target directories
         run: tar cf targets.tar benchmarks/target mongo/target json/json-core/target mongo/mongo-core/target json/target util/target json/json-derivation/target target util-test/target mongo/mongo-derivation/target project/target
@@ -79,7 +79,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
