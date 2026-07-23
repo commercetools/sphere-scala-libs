@@ -3,7 +3,7 @@ package io.sphere.mongo.format
 import com.mongodb.BasicDBObject
 import io.sphere.mongo.generic.{MongoAnnotationReader, mongoTypeSwitch}
 import io.sphere.util.Field
-import org.bson.BSONObject
+import org.bson.{BSONObject, BasicBSONObject}
 import org.bson.types.ObjectId
 
 import java.util.UUID
@@ -126,6 +126,9 @@ object MongoFormat {
           if (field.embedded) innerBson.entrySet().forEach(p => bson.put(p.getKey, p.getValue))
           else bson.put(field.serializedName, innerBson)
         case MongoNothing =>
+        // collections/maps return BasicBSONList / BasicBSONObject, not BasicDBObject
+        case other =>
+          bson.put(field.serializedName, other)
       }
 
   private def readField(bson: BSONObject)(field: Field, format: MongoFormat[Any]): Any = {

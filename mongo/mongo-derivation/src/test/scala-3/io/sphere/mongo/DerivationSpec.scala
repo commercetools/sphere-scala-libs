@@ -21,6 +21,18 @@ class DerivationSpec extends AnyWordSpec with Matchers {
       roundtrip mustBe container
     }
 
+    "support collection and map fields" in {
+      case class Container(ints: List[Int], tags: Set[String], meta: Map[String, String])
+
+      val format = io.sphere.mongo.generic.deriveMongoFormat[Container]
+
+      val container = Container(List(1, 2, 3), Set("a", "b"), Map("k" -> "v"))
+      val bson = format.toMongoValue(container)
+      val roundtrip = format.fromMongoValue(bson)
+
+      roundtrip mustBe container
+    }
+
     "support ADT" in {
       sealed trait Root
       case object Object1 extends Root
