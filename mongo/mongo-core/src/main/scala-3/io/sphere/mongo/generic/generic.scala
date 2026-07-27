@@ -56,8 +56,14 @@ inline def mongoTypeSwitch[SuperType, SubTypeTuple <: Tuple]: MongoFormat[SuperT
     },
     fromMongo = {
       case bson: BasicDBObject =>
-        val serializedTypeName = bson.get(traitMetaData.typeDiscriminator).asInstanceOf[String]
-        allReadFormatters(serializedTypeName).fromMongoValue(bson)
+        val serializedTypeName = findTypeValue(bson, traitMetaData.typeDiscriminator).getOrElse(
+          throw new Exception(s"Missing type field '${traitMetaData.typeDiscriminator}'."))
+        allReadFormatters
+          .getOrElse(
+            serializedTypeName,
+            throw new Exception(
+              s"Invalid value '$serializedTypeName' for type field '${traitMetaData.typeDiscriminator}'."))
+          .fromMongoValue(bson)
       case x =>
         throw new Exception(s"DBObject expected but got ${x.getClass.getName}.")
     },

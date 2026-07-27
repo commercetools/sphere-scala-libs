@@ -3,7 +3,7 @@ package io.sphere.mongo.format
 import com.mongodb.BasicDBObject
 import io.sphere.mongo.generic.{MongoAnnotationReader, mongoTypeSwitch}
 import io.sphere.util.Field
-import org.bson.{BSONObject, BasicBSONObject}
+import org.bson.BSONObject
 import org.bson.types.ObjectId
 
 import java.util.UUID

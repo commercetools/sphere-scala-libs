@@ -20,6 +20,12 @@ class JsonTypeSwitchSpec extends AnyWordSpec with Matchers with JsonTypeSwitchSp
       "derive a subset of a sealed trait (new syntax)" in {
         testDeriveASubsetOfASealedTrait(jsonTypeSwitch[A, (B, C)])
       }
+      "return an invalid result on malformed sum-type JSON (old syntax)" in {
+        testMalformedSumTypeJson(jsonTypeSwitch[A, B, C](Nil))
+      }
+      "return an invalid result on malformed sum-type JSON (new syntax)" in {
+        testMalformedSumTypeJson(jsonTypeSwitch[A, (B, C)])
+      }
     }
 
     "derive a subset of a sealed trait with a mongoKey (old syntax)" in {

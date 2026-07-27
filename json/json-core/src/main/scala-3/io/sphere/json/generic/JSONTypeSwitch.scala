@@ -2,8 +2,7 @@ package io.sphere.json.generic
 
 import cats.data.Validated
 import io.sphere.json.{FromJSON, JSON, JSONParseError, ToJSON}
-import org.json4s.DefaultJsonFormats.given
-import org.json4s.{JObject, JString, jvalue2monadic, jvalue2readerSyntax}
+import org.json4s.{JObject, JString, jvalue2monadic}
 
 import scala.reflect.ClassTag
 
@@ -42,11 +41,19 @@ object JSONTypeSwitch {
     FromJSON.instance(
       readFn = {
         case jObject: JObject =>
-          val serializedTypeName = (jObject \ formatters.typeDiscriminator).as[String]
-          formatters
-            .formatterBySerializedName(serializedTypeName)
-            .read(jObject)
-            .map(_.asInstanceOf[SuperType])
+          (jObject \ formatters.typeDiscriminator) match {
+            case JString(serializedTypeName) =>
+              formatters.formatterBySerializedName.get(serializedTypeName) match {
+                case Some(formatter) =>
+                  formatter.read(jObject).map(_.asInstanceOf[SuperType])
+                case None =>
+                  Validated.invalidNel(JSONParseError(
+                    s"Invalid value '$serializedTypeName' for type field '${formatters.typeDiscriminator}'."))
+              }
+            case _ =>
+              Validated.invalidNel(
+                JSONParseError(s"Missing type field '${formatters.typeDiscriminator}'."))
+          }
         case x =>
           Validated.invalidNel(JSONParseError(s"JSON object expected. Got: '$x'"))
       },
