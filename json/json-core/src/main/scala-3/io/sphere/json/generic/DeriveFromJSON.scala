@@ -34,8 +34,8 @@ trait DeriveFromJSON {
 
       val fieldNames: Vector[String] = fieldsAndJsons.flatMap { (field, fromJson) =>
         if (field.ignored) Vector.empty
-        else if (field.embedded) fromJson.fields.toVector :+ field.scalaName
-        else Vector(field.scalaName)
+        else if (field.embedded) fromJson.fields.toVector
+        else Vector(field.serializedName)
       }
 
       def readField(field: Field, fromJson: FromJSON[Any], jObject: JObject): JValidation[Any] =

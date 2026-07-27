@@ -89,8 +89,9 @@ object MongoFormat {
       }
 
       val fields: Set[String] = fieldsAndFormatters.toSet.flatMap((field, formatter) =>
-        if (field.embedded) formatter.fields + field.scalaName
-        else Set(field.scalaName))
+        if (field.ignored) Set.empty[String]
+        else if (field.embedded) formatter.fields
+        else Set(field.serializedName))
 
       instance(
         toMongo = { a =>

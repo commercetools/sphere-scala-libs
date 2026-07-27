@@ -26,6 +26,12 @@ class MongoKeySpec extends AnyWordSpec with Matchers {
       val newTest = MongoFormat[Test].fromMongoValue(dbo)
       newTest must be(test)
     }
+
+    "decode an Option of a case class that has a renamed field (@MongoKey)" in {
+      val sub = SubTest(value2 = "other_value2")
+      val bson = MongoFormat[Option[SubTest]].toMongoValue(Some(sub))
+      MongoFormat[Option[SubTest]].fromMongoValue(bson) must be(Some(sub))
+    }
   }
 }
 
