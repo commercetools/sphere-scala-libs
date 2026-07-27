@@ -84,7 +84,8 @@ object MongoFormat {
 
       fieldsAndFormatters.foreach { (field, _) =>
         if (field.ignored && field.defaultArgument.isEmpty)
-          throw new Exception(s"Ignored Mongo field '${field.scalaName}' must have a default value.")
+          throw new Exception(
+            s"Ignored Mongo field '${field.scalaName}' must have a default value.")
       }
 
       val fields: Set[String] = fieldsAndFormatters.toSet.flatMap((field, formatter) =>

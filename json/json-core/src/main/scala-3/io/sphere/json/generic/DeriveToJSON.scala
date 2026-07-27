@@ -46,11 +46,12 @@ trait DeriveToJSON {
 
   private def addField(jObject: JObject, field: Field, jValue: JValue): JValue =
     if (field.ignored) jObject
-    else jValue match {
-      case o: JObject =>
-        if (field.embedded) JObject(jObject.obj ++ o.obj)
-        else JObject(jObject.obj :+ (field.serializedName -> o))
-      case other => JObject(jObject.obj :+ (field.serializedName -> other))
-    }
+    else
+      jValue match {
+        case o: JObject =>
+          if (field.embedded) JObject(jObject.obj ++ o.obj)
+          else JObject(jObject.obj :+ (field.serializedName -> o))
+        case other => JObject(jObject.obj :+ (field.serializedName -> other))
+      }
 
 }
