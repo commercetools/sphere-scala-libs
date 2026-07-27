@@ -52,7 +52,8 @@ class MongoTypeSwitchSpec extends AnyWordSpec with Matchers {
       val format = mongoTypeSwitch[A, B, C](Nil)
       val bson = dbObj("int" -> 1, "type" -> "Nope")
       val ex = intercept[Exception](format.fromMongoValue(bson))
-      ex.getMessage must be("""Invalid type value 'Nope' in DBObject '{"int": 1, "type": "Nope"}'.""")
+      ex.getMessage must be(
+        """Invalid type value 'Nope' in DBObject '{"int": 1, "type": "Nope"}'.""")
     }
   }
 }
