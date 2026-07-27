@@ -2,6 +2,8 @@ package io.sphere.json.generic
 
 import io.sphere.json._
 import org.json4s.DefaultReaders._
+import org.json4s.MonadicJValue.jvalueToMonadic
+import org.json4s.jvalue2readerSyntax
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -21,6 +23,12 @@ class JSONKeySpec extends AnyWordSpec with Matchers {
 
       val newTest = getFromJValue[Test](json)
       newTest must be(test)
+    }
+
+    "decode an Option of a case class that has a renamed field (@JSONKey)" in {
+      val sub = SubTest(value2 = "other_value2")
+      val json = toJValue[Option[SubTest]](Some(sub))
+      getFromJValue[Option[SubTest]](json) must be(Some(sub))
     }
   }
 }
