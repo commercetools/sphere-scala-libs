@@ -63,15 +63,8 @@ class AnnotationReader(using q: Quotes)(
 
   private def typeMetaDataForEnumObjects(sym: Symbol): Expr[TypeMetaData] = {
     val name = Expr(sym.name)
-    val typeHint = sym.annotations.map(findTypeHint).find(_.isDefined).flatten match {
-      case Some(th) => '{ Some($th) }
-      case None => '{ None }
-    }
-    val typeHintField =
-      sym.annotations.map(findTypeHintField).find(_.isDefined).flatten match {
-        case Some(thf) => '{ Some($thf) }
-        case None => '{ None }
-      }
+    val typeHint = collectFirstAnnotation(sym, findTypeHint)
+    val typeHintField = collectFirstAnnotation(sym, findTypeHintField)
 
     '{
       TypeMetaData(
@@ -91,15 +84,8 @@ class AnnotationReader(using q: Quotes)(
         Expr(sym.name.stripSuffix("$"))
       else
         Expr(sym.name)
-    val typeHint = sym.annotations.map(findTypeHint).find(_.isDefined).flatten match {
-      case Some(th) => '{ Some($th) }
-      case None => '{ None }
-    }
-    val typeHintField =
-      sym.annotations.map(findTypeHintField).find(_.isDefined).flatten match {
-        case Some(thf) => '{ Some($thf) }
-        case None => '{ None }
-      }
+    val typeHint = collectFirstAnnotation(sym, findTypeHint)
+    val typeHintField = collectFirstAnnotation(sym, findTypeHintField)
 
     '{
       TypeMetaData(
@@ -115,10 +101,7 @@ class AnnotationReader(using q: Quotes)(
     val embedded = Expr(s.annotations.exists(embeddedExists))
     val ignored = Expr(s.annotations.exists(ignoredExists))
     val name = Expr(s.name)
-    val key = s.annotations.map(findKey).find(_.isDefined).flatten match {
-      case Some(k) => '{ Some($k) }
-      case None => '{ None }
-    }
+    val key = collectFirstAnnotation(s, findKey)
     val defArgOpt = companion
       .methodMember(s"$$lessinit$$greater$$default$$${paramIdx + 1}")
       .headOption
@@ -150,11 +133,7 @@ class AnnotationReader(using q: Quotes)(
 
   def readTraitMetaData[T: Type]: Expr[TraitMetaData] = {
     val sym = TypeRepr.of[T].typeSymbol
-    val typeHintField =
-      sym.annotations.map(findTypeHintField).find(_.isDefined).flatten match {
-        case Some(thf) => '{ Some($thf) }
-        case None => '{ None }
-      }
+    val typeHintField = collectFirstAnnotation(sym, findTypeHintField)
 
     val subTypeAnnots = subtypeAnnotations(sym)
 
@@ -166,5 +145,13 @@ class AnnotationReader(using q: Quotes)(
       )
     }
   }
+
+  private def collectFirstAnnotation(
+      sym: Symbol,
+      find: Tree => Option[Expr[String]]): Expr[Option[String]] =
+    sym.annotations.flatMap(find).headOption match {
+      case Some(x) => '{ Some($x) }
+      case None => '{ None }
+    }
 
 }

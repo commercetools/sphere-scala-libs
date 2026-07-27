@@ -28,15 +28,13 @@ class JsonAnnotationReader(using q: Quotes) {
     findAnnotation[JSONIgnore](tree).isDefined
 
   private def findKey(tree: Tree): Option[Expr[String]] =
-    findAnnotation[JSONKey](tree).map(_.asExprOf[JSONKey]).map(a => '{ $a.value })
+    findAnnotation[JSONKey](tree).map(a => '{ ${ a.asExprOf[JSONKey] }.value })
 
   private def findTypeHint(tree: Tree): Option[Expr[String]] =
-    findAnnotation[JSONTypeHint](tree).map(_.asExprOf[JSONTypeHint]).map(a => '{ $a.value })
+    findAnnotation[JSONTypeHint](tree).map(a => '{ ${ a.asExprOf[JSONTypeHint] }.value })
 
   private def findTypeHintField(tree: Tree): Option[Expr[String]] =
-    findAnnotation[JSONTypeHintField](tree)
-      .map(_.asExprOf[JSONTypeHintField])
-      .map(a => '{ $a.value })
+    findAnnotation[JSONTypeHintField](tree).map(a => '{ ${ a.asExprOf[JSONTypeHintField] }.value })
 
   private val annotationReader =
     new AnnotationReader(embeddedExists, ignoredExists, findKey, findTypeHint, findTypeHintField)

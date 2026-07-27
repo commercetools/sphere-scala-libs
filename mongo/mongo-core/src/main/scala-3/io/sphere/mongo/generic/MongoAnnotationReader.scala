@@ -30,15 +30,13 @@ class MongoAnnotationReader(using q: Quotes) {
     findAnnotation[MongoIgnore](tree).isDefined
 
   private def findKey(tree: Tree): Option[Expr[String]] =
-    findAnnotation[MongoKey](tree).map(_.asExprOf[MongoKey]).map(a => '{ $a.value })
+    findAnnotation[MongoKey](tree).map(a => '{ ${ a.asExprOf[MongoKey] }.value })
 
   private def findTypeHint(tree: Tree): Option[Expr[String]] =
-    findAnnotation[MongoTypeHint](tree).map(_.asExprOf[MongoTypeHint]).map(a => '{ $a.value })
+    findAnnotation[MongoTypeHint](tree).map(a => '{ ${ a.asExprOf[MongoTypeHint] }.value })
 
   private def findTypeHintField(tree: Tree): Option[Expr[String]] =
-    findAnnotation[MongoTypeHintField](tree)
-      .map(_.asExprOf[MongoTypeHintField])
-      .map(a => '{ $a.value })
+    findAnnotation[MongoTypeHintField](tree).map(a => '{ ${ a.asExprOf[MongoTypeHintField] }.value })
 
   private val annotationReader =
     new AnnotationReader(embeddedExists, ignoredExists, findKey, findTypeHint, findTypeHintField)
