@@ -6,7 +6,7 @@ import org.json4s.JsonAST.JValue
 trait JSON[A] extends FromJSON[A] with ToJSON[A] {
   // This field is only used in case we derive a trait, for classes/objects it remains empty
   // It uses the JSON names not the Scala names (if there's @JSONTypeHint renaming a class the renamed name is used here)
-  def subTypeNames: Vector[String] = Vector.empty
+  def subTypeNames: List[String] = Nil
 }
 
 object JSON extends JSONCatsInstances {
@@ -32,7 +32,7 @@ object JSON extends JSONCatsInstances {
       override def read(jval: JValue): JValidation[A] = readFn(jval)
       override def write(value: A): JValue = writeFn(value)
       override val fields: Set[String] = fieldSet
-      override def subTypeNames: Vector[String] = subTypeNameList
+      override def subTypeNames: List[String] = subTypeNameList.toList
       override val fromFormatters: FromFormatters = fromFs
       override val toFormatters: ToFormatters = toFs
     }

@@ -18,7 +18,7 @@ case class TypeMetaData(
     typeDiscriminator: Option[String]
 ) {
   val typeHint: Option[String] =
-    typeHintRaw.filterNot(_.toList.forall(_ == ' '))
+    typeHintRaw.filterNot(_.trim.isEmpty)
 
   val serializedName: String = typeHint.getOrElse(scalaName)
 }
@@ -139,7 +139,6 @@ class AnnotationReader(using q: Quotes)(
 
   private def subtypeAnnotation(sym: Symbol): Expr[(String, TypeMetaData)] = {
     val name = Expr(sym.name)
-    // here I can fix both things
     val annots = typeMetaData(sym)
     '{ ($name, $annots) }
   }
