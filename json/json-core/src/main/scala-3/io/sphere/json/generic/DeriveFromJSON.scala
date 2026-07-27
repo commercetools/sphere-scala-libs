@@ -26,7 +26,6 @@ trait DeriveFromJSON {
       val fromJsons: Vector[FromJSON[Any]] = summonFromJsons[mirrorOfProduct.MirroredElemTypes]
       val fieldsAndJsons: Vector[(Field, FromJSON[Any])] = caseClassMetaData.fields.zip(fromJsons)
 
-      // an @JSONIgnore field is never read from JSON, so it must have a default to fall back on
       fieldsAndJsons.foreach { (field, _) =>
         if (field.ignored && field.defaultArgument.isEmpty)
           throw new JSONException(
@@ -40,11 +39,11 @@ trait DeriveFromJSON {
       }
 
       def readField(field: Field, fromJson: FromJSON[Any], jObject: JObject): JValidation[Any] =
-        if (field.ignored)
-          Validated.fromOption(
-            field.defaultArgument,
-            throw new JSONException("Missing default for ignored field."))
-        else if (field.embedded)
+        if (field.ignored) {
+          // 1. Ignored fields are never read from JSON (present or not); always load the default.
+          // 2. The default is guaranteed to exist — validated above.
+          Validated.valid(field.defaultArgument.get)
+        } else if (field.embedded)
           fromJson.read(jObject)
         else
           io.sphere.json.field(field.serializedName, field.defaultArgument)(jObject)(fromJson)

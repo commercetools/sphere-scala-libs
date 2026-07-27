@@ -82,6 +82,11 @@ object MongoFormat {
       val formatters = summonFormatters[mirrorOfProduct.MirroredElemTypes]
       val fieldsAndFormatters = caseClassMetaData.fields.zip(formatters)
 
+      fieldsAndFormatters.foreach { (field, _) =>
+        if (field.ignored && field.defaultArgument.isEmpty)
+          throw new Exception(s"Ignored Mongo field '${field.scalaName}' must have a default value.")
+      }
+
       val fields: Set[String] = fieldsAndFormatters.toSet.flatMap((field, formatter) =>
         if (field.embedded) formatter.fields + field.scalaName
         else Set(field.scalaName))
