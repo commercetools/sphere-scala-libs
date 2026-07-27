@@ -31,8 +31,12 @@ object JSONTypeSwitch {
           case json =>
             throw new Exception(s"This code only handles objects as of now, but got: $json")
         }
-        val typeDiscriminator = formatters.typeDiscriminator -> JString(serializedTypeName)
-        JObject(typeDiscriminator :: jsonObj)
+        // Match the Scala 2 behaviour: leave the discriminator untouched if the subtype's own
+        // formatter already wrote it, could happen with handrolled formatters
+        if (jsonObj.exists(_._1 == formatters.typeDiscriminator))
+          JObject(jsonObj)
+        else
+          JObject(jsonObj :+ (formatters.typeDiscriminator -> JString(serializedTypeName)))
       },
       toFs = formatters
     )
