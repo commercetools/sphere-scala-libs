@@ -24,7 +24,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        scala: [2.13.18, 3.3.7]
+        scala: [2.13.18, 3.3.8]
         java: [temurin@21]
     runs-on: ${{ matrix.os }}
     steps:
@@ -51,11 +51,7 @@ jobs:
         run: sbt '++ ${{ matrix.scala }}; githubWorkflowCheck'
 
       - name: Build project
-        run: sbt '++ ${{ matrix.scala }}' test
-
-      - name: Build Scala 3 project
-        if: matrix.scala == '3.3.8'
-        run: sbt '++ ${{ matrix.scala }}; sphere-util/test; sphere-util-test/test; sphere-json-core/test; sphere-mongo-core/test'
+        run: sbt '++ ${{ matrix.scala }}; test'
 
       - name: Compress target directories
         run: tar cf targets.tar benchmarks/target mongo/target json/json-core/target mongo/mongo-core/target json/target util/target json/json-derivation/target target util-test/target mongo/mongo-derivation/target project/target
@@ -73,7 +69,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        scala: [3.3.7]
+        scala: [3.3.8]
         java: [temurin@21]
     runs-on: ${{ matrix.os }}
     steps:
