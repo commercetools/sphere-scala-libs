@@ -59,6 +59,15 @@ trait JsonTypeSwitchSpecCommon { self: AnyWordSpec with Matchers =>
     messages must be(m)
   }
 
+  def testMalformedSumTypeJson(format: JSON[A]): Unit = {
+    // missing discriminator field must accumulate an error, not throw
+    format.read(JObject("int" -> JLong(1))).isInvalid must be(true)
+    // non-string discriminator must accumulate an error, not throw
+    format.read(JObject("type" -> JLong(5), "int" -> JLong(1))).isInvalid must be(true)
+    // unknown discriminator value must accumulate an error, not throw
+    format.read(JObject("type" -> JString("Nope"), "int" -> JLong(1))).isInvalid must be(true)
+  }
+
   def testCustomSubtypeImpl(format: JSON[A]): Unit = {
     check[A](D(2345), """ {"type": "D2", "int": 2345 } """)(format)
     check[A](C(4), """ {"type": "C", "int": 4 } """)(format)

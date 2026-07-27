@@ -14,6 +14,11 @@ class JsonTypeSwitchSpec extends AnyWordSpec with Matchers with JsonTypeSwitchSp
       testDeriveASubsetOfASealedTrait(format)
     }
 
+    "return an invalid result on malformed sum-type JSON" in {
+      val format: JSON[A] = jsonTypeSwitch[A, B, C](Nil)
+      testMalformedSumTypeJson(format)
+    }
+
     "derive a subset of a sealed trait with a mongoKey" in {
       val format: JSON[A] = jsonTypeSwitch[A, B, D](Nil)
       testDeriveSubsetWithMongoKey(format)

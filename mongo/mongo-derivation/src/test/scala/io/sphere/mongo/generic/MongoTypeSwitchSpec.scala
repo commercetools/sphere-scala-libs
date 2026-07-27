@@ -2,6 +2,7 @@ package io.sphere.mongo.generic
 
 import io.sphere.mongo.format.DefaultMongoFormats._
 import io.sphere.mongo.format.MongoFormat
+import io.sphere.mongo.MongoUtils.dbObj
 import org.bson.BSONObject
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -38,6 +39,21 @@ class MongoTypeSwitchSpec extends AnyWordSpec with Matchers {
       bson.get("type") must be("D2")
       d2 must be(d)
 
+    }
+
+    "throw a descriptive error when the type field is missing" in {
+      val format = mongoTypeSwitch[A, B, C](Nil)
+      val bson = dbObj("int" -> 1)
+      val ex = intercept[Exception](format.fromMongoValue(bson))
+      ex.getMessage must be("""Missing type field 'type' in DBObject '{"int": 1}'.""")
+    }
+
+    "throw a descriptive error for an unknown type field value" in {
+      val format = mongoTypeSwitch[A, B, C](Nil)
+      val bson = dbObj("int" -> 1, "type" -> "Nope")
+      val ex = intercept[Exception](format.fromMongoValue(bson))
+      ex.getMessage must be(
+        """Invalid type value 'Nope' in DBObject '{"int": 1, "type": "Nope"}'.""")
     }
   }
 }
