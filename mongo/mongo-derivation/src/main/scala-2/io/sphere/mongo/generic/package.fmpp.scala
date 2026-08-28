@@ -137,7 +137,12 @@ package object generic extends Logging {
         case dbo: BSONObject =>
           findTypeValue(dbo, typeField) match {
             case Some(t) => readMap.get(t) match {
-              case Some(r) => r.read(dbo).asInstanceOf[T]
+              case Some(r) =>
+                // Subtype formats read the type hint from the default field name; when the sum type
+                // uses a custom type field, make sure the default one is present for them.
+                if (typeField != defaultTypeFieldName)
+                  dbo.put(defaultTypeFieldName, t)
+                r.read(dbo).asInstanceOf[T]
               case None => sys.error("Invalid type value '" + t + "' in DBObject '%s'.".format(dbo))
             }
             case None => sys.error("Missing type field '" + typeField + "' in DBObject '%s'.".format(dbo))
@@ -147,12 +152,17 @@ package object generic extends Logging {
       def toMongoValue(t: T): Any =
         writeMap.get(t.getClass) match {
           case Some(w) => w.write(t) match {
-            case dbo: BSONObject => findTypeValue(dbo, typeField) match {
-              case Some(_) => dbo
-              case None =>
-                dbo.put(typeField, w.typeValue)
-                dbo
-            }
+            case dbo: BSONObject =>
+              // Subtype formats write the type hint under the default field name; when the sum type
+              // uses a custom type field, move it there instead of emitting both.
+              if (typeField != defaultTypeFieldName)
+                dbo.removeField(defaultTypeFieldName)
+              findTypeValue(dbo, typeField) match {
+                case Some(_) => dbo
+                case None =>
+                  dbo.put(typeField, w.typeValue)
+                  dbo
+              }
             case any => throw new Exception("Excepted 'BSONObject' but got %s".format(any.getClass.getName))
           }
           case None => new BasicDBObject(defaultTypeFieldName, defaultTypeValue(t.getClass))
