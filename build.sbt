@@ -92,7 +92,7 @@ lazy val `sphere-libs` = project
 
 lazy val `sphere-util` = project
   .in(file("./util"))
-  .settings(standardSettings: _*)
+  .settings(standardSettings*)
   .settings(homepage := Some(uri("https://github.com/commercetools/sphere-scala-libs/README.md")))
   .dependsOn(`sphere-util-test` % Test)
 
@@ -105,7 +105,7 @@ lazy val `sphere-util-test` = project
 
 lazy val `sphere-json-core` = project
   .in(file("./json/json-core"))
-  .settings(standardSettings: _*)
+  .settings(standardSettings*)
   .dependsOn(`sphere-util`)
   .dependsOn(`sphere-util-test` % Test)
 
@@ -114,8 +114,8 @@ def excludeFromScalafix(file: File): Boolean =
 
 lazy val `sphere-json-derivation` = project
   .in(file("./json/json-derivation"))
-  .settings(standardSettings: _*)
-  .settings(Fmpp.settings: _*)
+  .settings(standardSettings*)
+  .settings(Fmpp.settings*)
   .settings(
     Compile / scalafix / unmanagedSources ~= (_.filterNot(excludeFromScalafix)),
     Test / scalafix / unmanagedSources ~= (_.filterNot(excludeFromScalafix))
@@ -136,14 +136,14 @@ lazy val `sphere-json` = project
 
 lazy val `sphere-mongo-core` = project
   .in(file("./mongo/mongo-core"))
-  .settings(standardSettings: _*)
+  .settings(standardSettings*)
   .dependsOn(`sphere-util`)
   .dependsOn(`sphere-util-test` % Test)
 
 lazy val `sphere-mongo-derivation` = project
   .in(file("./mongo/mongo-derivation"))
-  .settings(standardSettings: _*)
-  .settings(Fmpp.settings: _*)
+  .settings(standardSettings*)
+  .settings(Fmpp.settings*)
   .settings(
     Compile / scalafix / unmanagedSources ~= (_.filterNot(excludeFromScalafix)),
     Test / scalafix / unmanagedSources ~= (_.filterNot(excludeFromScalafix))
