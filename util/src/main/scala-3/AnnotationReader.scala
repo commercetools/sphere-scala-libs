@@ -131,9 +131,27 @@ class AnnotationReader(using q: Quotes)(
     '{ Map($subtypes*) }
   }
 
+  private def typeHintFieldConstant(sym: Symbol): Option[String] =
+    sym.annotations
+      .find(t => findTypeHintField(t).isDefined)
+      .flatMap {
+        case Apply(_, args) => args.collectFirst { case Literal(StringConstant(v)) => v }
+        case _ => None
+      }
+
   def readTraitMetaData[T: Type]: Expr[TraitMetaData] = {
     val sym = TypeRepr.of[T].typeSymbol
     val typeHintField = collectFirstAnnotation(sym, findTypeHintField)
+
+    val traitDiscriminator = typeHintFieldConstant(sym).getOrElse("type")
+    sym.children.foreach { child =>
+      typeHintFieldConstant(child).foreach { childDiscriminator =>
+        if (childDiscriminator != traitDiscriminator)
+          report.errorAndAbort(
+            s"Sub type '${child.name}' has a different type hint field " +
+              s"('$childDiscriminator') than its super type '${sym.name}' ('$traitDiscriminator').")
+      }
+    }
 
     val subTypeAnnots = subtypeAnnotations(sym)
 

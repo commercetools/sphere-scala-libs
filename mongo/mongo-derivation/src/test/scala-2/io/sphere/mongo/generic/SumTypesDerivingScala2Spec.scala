@@ -20,16 +20,6 @@ class SumTypesDerivingScala2Spec extends AnyWordSpec with Matchers {
       check(Color4.format, Color4.Custom("2356"), dbObj("color" -> "custom", "rgb" -> "2356"))
     }
 
-    "not allow specifying different custom field" in {
-      // to serialize Custom, should we use type "color" or "color-custom"?
-      "deriveMongoFormat[Color5]" mustNot compile
-    }
-
-    "not allow specifying different custom field on intermediate level" in {
-      // to serialize Custom, should we use type "color" or "color-custom"?
-      "deriveMongoFormat[Color6]" mustNot compile
-    }
-
     "do not use sealed trait info when using a case class directly" in {
       check(Color8.format, Color8.Custom("2356"), dbObj("type" -> "Custom", "rgb" -> "2356"))
 
@@ -100,27 +90,6 @@ object SumTypesDerivingScala2Spec {
     @MongoTypeHint("red") case object Red extends Color4
     @MongoTypeHint("custom") case class Custom(rgb: String) extends Color4
     val format = deriveMongoFormat[Color4]
-  }
-
-  @MongoTypeHintField("color")
-  sealed trait Color5
-  object Color5 {
-    @MongoTypeHint("red")
-    case object Red extends Color5
-    @MongoTypeHintField("color-custom")
-    @MongoTypeHint("custom")
-    case class Custom(rgb: String) extends Color5
-  }
-
-  @MongoTypeHintField("color")
-  sealed trait Color6
-  object Color6 {
-    @MongoTypeHintField("color-custom")
-    abstract class MyColor extends Color6
-    @MongoTypeHint("red")
-    case object Red extends MyColor
-    @MongoTypeHint("custom")
-    case class Custom(rgb: String) extends MyColor
   }
 
   sealed trait Color8

@@ -24,6 +24,16 @@ class SumTypesDerivingSpec extends AnyWordSpec with Matchers {
       check(Color3.format, Color3.Custom("2356"), dbObj("type" -> "custom", "rgb" -> "2356"))
     }
 
+    "not allow specifying different custom field" in {
+      // to serialize Custom, should we use type "color" or "color-custom"?
+      "deriveMongoFormat[Color5]" mustNot compile
+    }
+
+    "not allow specifying different custom field on intermediate level" in {
+      // to serialize Custom, should we use type "color" or "color-custom"?
+      "deriveMongoFormat[Color6]" mustNot compile
+    }
+
     "use intermediate level" in {
       check(Color7.format, Color7.Red, dbObj("type" -> "Red"))
       check(Color7.format, Color7.Blue, dbObj("type" -> "Blue"))
@@ -62,6 +72,27 @@ object SumTypesDerivingSpec {
     @MongoTypeHint("red") case object Red extends Color3
     @MongoTypeHint("custom") case class Custom(rgb: String) extends Color3
     val format = deriveMongoFormat[Color3]
+  }
+
+  @MongoTypeHintField("color")
+  sealed trait Color5
+  object Color5 {
+    @MongoTypeHint("red")
+    case object Red extends Color5
+    @MongoTypeHintField("color-custom")
+    @MongoTypeHint("custom")
+    case class Custom(rgb: String) extends Color5
+  }
+
+  @MongoTypeHintField("color")
+  sealed trait Color6
+  object Color6 {
+    @MongoTypeHintField("color-custom")
+    sealed abstract class MyColor extends Color6
+    @MongoTypeHint("red")
+    case object Red extends MyColor
+    @MongoTypeHint("custom")
+    case class Custom(rgb: String) extends MyColor
   }
 
   sealed trait Color7

@@ -21,7 +21,7 @@ inline def mongoTypeSwitch[SuperType, SubTypeTuple <: Tuple]: MongoFormat[SuperT
   val traitMetaData = MongoAnnotationReader.readTraitMetaData[SuperType]
   val typeHintMap = traitMetaData.serializedNamesOfSubTypes
   val formatters = summonFormatters[SubTypeTuple]()
-  val subTypeMetaData = summonMetaData[SubTypeTuple](traitMetaData.typeDiscriminator)
+  val subTypeMetaData = summonMetaData[SubTypeTuple]()
 
   val pairedFormatterWithSubtypeName = subTypeMetaData.map(_.scalaName).zip(formatters)
   val (caseClassFormatterList, traitFormatters) = pairedFormatterWithSubtypeName.partitionMap {
@@ -76,18 +76,12 @@ private def findTypeValue(dbo: BSONObject, typeField: String): Option[String] =
   Option(dbo.get(typeField)).map(_.toString)
 
 inline private def summonMetaData[T <: Tuple](
-    topLevelDiscriminator: String,
     acc: Vector[TypeMetaData] = Vector.empty): Vector[TypeMetaData] =
   inline erasedValue[T] match {
     case _: EmptyTuple => acc
     case _: (t *: ts) =>
       val data = MongoAnnotationReader.readTypeMetaData[t]
-      if (data.typeDiscriminator.exists(_ != topLevelDiscriminator)) {
-        // So far I didn't find an easy way to add this as a compile time check.
-        throw new Exception(
-          s"SubType: ${data.scalaName} has a different @MongoTypeHintField than its SuperType")
-      }
-      summonMetaData[ts](topLevelDiscriminator, acc :+ data)
+      summonMetaData[ts](acc :+ data)
   }
 
 private type FormatterAlias = Either[(Class[_], MongoFormat[Any]), TraitMongoFormat[Any]]
