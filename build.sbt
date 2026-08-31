@@ -84,7 +84,7 @@ lazy val standardSettings = Seq(
   Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
-    "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % Test,
+    "org.scalatestplus" %% "scalacheck-1-17" % "3.2.18.0" % Test,
     "org.scalacheck" %% "scalacheck" % "1.20.0" % Test,
     "ch.qos.logback" % "logback-classic" % "1.6.3" % Test
   ),
