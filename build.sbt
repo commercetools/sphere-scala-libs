@@ -85,7 +85,7 @@ lazy val standardSettings = Seq(
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
     "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % Test,
-    "org.scalacheck" %% "scalacheck" % "1.19.0" % Test,
+    "org.scalacheck" %% "scalacheck" % "1.20.0" % Test,
     "ch.qos.logback" % "logback-classic" % "1.6.3" % Test
   ),
   ThisBuild / shellPrompt := { state =>
@@ -95,7 +95,7 @@ lazy val standardSettings = Seq(
 
 lazy val `sphere-libs` = project
   .in(file("."))
-  .settings(standardSettings*)
+  .settings(standardSettings *)
   .settings(publishArtifact := false, publish := {}, crossScalaVersions := Seq())
   .aggregate(
     `sphere-util`,
@@ -111,14 +111,14 @@ lazy val `sphere-libs` = project
 
 lazy val `sphere-util` = project
   .in(file("./util"))
-  .settings(standardSettings*)
+  .settings(standardSettings *)
   .settings(crossScalaVersions := Seq(scala212, scala213, scala3))
   .settings(homepage := Some(uri("https://github.com/commercetools/sphere-scala-libs/README.md")))
   .dependsOn(`sphere-util-test` % Test)
 
 lazy val `sphere-util-test` = project
   .in(file("./util-test"))
-  .settings(standardSettings*)
+  .settings(standardSettings *)
   .settings(libraryDependencies ++= Seq("org.scalatest" %% "scalatest" % scalaTestVersion))
   .settings(publishArtifact := false, publish := {})
   .settings(crossScalaVersions := Seq(scala212, scala213, scala3))
@@ -126,7 +126,7 @@ lazy val `sphere-util-test` = project
 
 lazy val `sphere-json-core` = project
   .in(file("./json/json-core"))
-  .settings(standardSettings*)
+  .settings(standardSettings *)
   .settings(crossScalaVersions := Seq(scala212, scala213, scala3))
   .dependsOn(`sphere-util`)
   .dependsOn(`sphere-util-test` % Test)
@@ -136,8 +136,8 @@ def excludeFromScalafix(file: File): Boolean =
 
 lazy val `sphere-json-derivation` = project
   .in(file("./json/json-derivation"))
-  .settings(standardSettings*)
-  .settings(Fmpp.settings*)
+  .settings(standardSettings *)
+  .settings(Fmpp.settings *)
   .settings(crossScalaVersions := Seq(scala212, scala213))
   .settings(
     Compile / scalafix / unmanagedSources ~= (_.filterNot(excludeFromScalafix)),
@@ -148,7 +148,7 @@ lazy val `sphere-json-derivation` = project
 
 lazy val `sphere-json` = project
   .in(file("./json"))
-  .settings(standardSettings*)
+  .settings(standardSettings *)
   .settings(homepage := Some(
     uri("https://github.com/commercetools/sphere-scala-libs/blob/master/json/README.md")))
   .settings(crossScalaVersions := Seq(scala212, scala213))
@@ -156,15 +156,15 @@ lazy val `sphere-json` = project
 
 lazy val `sphere-mongo-core` = project
   .in(file("./mongo/mongo-core"))
-  .settings(standardSettings*)
+  .settings(standardSettings *)
   .settings(crossScalaVersions := Seq(scala212, scala213, scala3))
   .dependsOn(`sphere-util`)
   .dependsOn(`sphere-util-test` % Test)
 
 lazy val `sphere-mongo-derivation` = project
   .in(file("./mongo/mongo-derivation"))
-  .settings(standardSettings*)
-  .settings(Fmpp.settings*)
+  .settings(standardSettings *)
+  .settings(Fmpp.settings *)
   .settings(crossScalaVersions := Seq(scala212, scala213))
   .settings(
     Compile / scalafix / unmanagedSources ~= (_.filterNot(excludeFromScalafix)),
@@ -175,7 +175,7 @@ lazy val `sphere-mongo-derivation` = project
 
 lazy val `sphere-mongo` = project
   .in(file("./mongo"))
-  .settings(standardSettings*)
+  .settings(standardSettings *)
   .settings(homepage := Some(
     uri("https://github.com/commercetools/sphere-scala-libs/blob/master/mongo/README.md")))
   .settings(crossScalaVersions := Seq(scala212, scala213))
@@ -184,7 +184,7 @@ lazy val `sphere-mongo` = project
 // benchmarks
 
 lazy val benchmarks = project
-  .settings(standardSettings*)
+  .settings(standardSettings *)
   .settings(publishArtifact := false, publish := {})
   .settings(crossScalaVersions := Seq(scala212, scala213))
   .enablePlugins(JmhPlugin)
