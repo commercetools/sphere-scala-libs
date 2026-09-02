@@ -65,8 +65,8 @@ lazy val standardSettings = Seq(
   Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
-    "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % Test,
-    "org.scalacheck" %% "scalacheck" % "1.19.0" % Test,
+    "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test,
+    "org.scalacheck" %% "scalacheck" % "1.20.0" % Test,
     "ch.qos.logback" % "logback-classic" % "1.6.3" % Test
   ),
   ThisBuild / shellPrompt := { state =>
@@ -76,7 +76,7 @@ lazy val standardSettings = Seq(
 
 lazy val `sphere-libs` = project
   .in(file("."))
-  .settings(standardSettings*)
+  .settings(standardSettings *)
   .settings(publishArtifact := false, publish := {}, crossScalaVersions := Seq())
   .aggregate(
     `sphere-util`,
@@ -98,7 +98,7 @@ lazy val `sphere-util` = project
 
 lazy val `sphere-util-test` = project
   .in(file("./util-test"))
-  .settings(standardSettings*)
+  .settings(standardSettings *)
   .settings(libraryDependencies ++= Seq("org.scalatest" %% "scalatest" % scalaTestVersion))
   .settings(publishArtifact := false, publish := {})
   .settings(homepage := Some(uri("https://github.com/commercetools/sphere-scala-libs/README.md")))
@@ -129,7 +129,7 @@ lazy val `sphere-json-derivation` = project
 
 lazy val `sphere-json` = project
   .in(file("./json"))
-  .settings(standardSettings*)
+  .settings(standardSettings *)
   .settings(homepage := Some(
     uri("https://github.com/commercetools/sphere-scala-libs/blob/master/json/README.md")))
   .dependsOn(`sphere-json-core`, `sphere-json-derivation`)
@@ -157,7 +157,7 @@ lazy val `sphere-mongo-derivation` = project
 
 lazy val `sphere-mongo` = project
   .in(file("./mongo"))
-  .settings(standardSettings*)
+  .settings(standardSettings *)
   .settings(homepage := Some(
     uri("https://github.com/commercetools/sphere-scala-libs/blob/master/mongo/README.md")))
   .dependsOn(`sphere-mongo-core`, `sphere-mongo-derivation`)
@@ -165,7 +165,7 @@ lazy val `sphere-mongo` = project
 // benchmarks
 
 lazy val benchmarks = project
-  .settings(standardSettings*)
+  .settings(standardSettings *)
   .settings(publishArtifact := false, publish := {})
   .enablePlugins(JmhPlugin)
   .dependsOn(`sphere-util`, `sphere-json`, `sphere-mongo`)
