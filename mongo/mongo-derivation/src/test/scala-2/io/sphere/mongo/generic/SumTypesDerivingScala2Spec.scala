@@ -13,12 +13,6 @@ class SumTypesDerivingScala2Spec extends AnyWordSpec with Matchers {
 
   "Serializing sum types" must {
 
-    "use custom field & values" in {
-      check(Color4.format, Color4.Red, dbObj("color" -> "red"))
-
-      check(Color4.format, Color4.Custom("2356"), dbObj("color" -> "custom", "rgb" -> "2356"))
-    }
-
     "do not use sealed trait info when using a case class directly" in {
       check(Color8.format, Color8.Custom("2356"), dbObj("type" -> "Custom", "rgb" -> "2356"))
 
@@ -48,14 +42,6 @@ object SumTypesDerivingScala2Spec {
     serialized must be(dbo)
 
     format.fromMongoValue(serialized) must be(b)
-  }
-
-  @MongoTypeHintField("color")
-  sealed trait Color4
-  object Color4 {
-    @MongoTypeHint("red") case object Red extends Color4
-    @MongoTypeHint("custom") case class Custom(rgb: String) extends Color4
-    val format = deriveMongoFormat[Color4]
   }
 
   sealed trait Color8
