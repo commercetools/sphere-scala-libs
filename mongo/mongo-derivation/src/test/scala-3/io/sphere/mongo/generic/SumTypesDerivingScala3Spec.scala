@@ -14,7 +14,7 @@ class SumTypesDerivingScala3Spec extends AnyWordSpec with Matchers {
 
   "Serializing sum types" must {
 
-    "do not use sealed trait info when using a case class directly" in {
+    "The typeDiscriminator should be handle by the trait" in {
       check(Color8.format, Color8.Custom("2356"), dbObj("type" -> "Custom", "rgb" -> "2356"))
 
       check(Color8.Custom.format, Color8.Custom("2356"), dbObj("rgb" -> "2356"))

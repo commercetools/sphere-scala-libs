@@ -6,8 +6,8 @@ import io.sphere.mongo.format._
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class DeriveMongoformatSpec extends AnyWordSpec with Matchers {
-  import DeriveMongoformatSpec._
+class DeriveMongoFormatSpec extends AnyWordSpec with Matchers {
+  import DeriveMongoFormatSpec._
 
   "deriving MongoFormat" must {
     "read normal singleton values" in {
@@ -113,7 +113,7 @@ class DeriveMongoformatSpec extends AnyWordSpec with Matchers {
   }
 }
 
-object DeriveMongoformatSpec {
+object DeriveMongoFormatSpec {
   sealed trait PictureSize
   case object Small extends PictureSize
   case object Medium extends PictureSize
