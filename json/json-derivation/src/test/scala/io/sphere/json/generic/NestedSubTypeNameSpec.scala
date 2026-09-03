@@ -12,8 +12,7 @@ class NestedSubTypeNameSpec extends AnyWordSpec with Matchers {
       jsonTypeSwitch[SuperType2, SubType1, SubType2](Nil)
 
     // Should only contain leaf class names, no trait names and no duplicates
-    val names = List("SubClass1A", "SubClass2A")
-    format.subTypeNames must be(names)
+    format.subTypeNames must be(List("SubClass1A", "SubClass2A"))
   }
 
   "resolve only leaf classes to their type-hint values in nested trait hierarchies" in {
@@ -23,7 +22,6 @@ class NestedSubTypeNameSpec extends AnyWordSpec with Matchers {
     format.subTypeName(classOf[SubType1.SubClass1A]) must be(Some("SubClass1A"))
     format.subTypeName(classOf[SubType2.SubClass2A]) must be(Some("SubClass2A"))
   }
-
 }
 
 object NestedSubTypeNameSpec {
