@@ -97,6 +97,11 @@ class DeriveMongoformatSpec extends AnyWordSpec with Matchers {
       newUser must be(user)
     }
 
+    "derive a case class with collection and map fields" in {
+      val value = ClassWithCollections(List(1, 2, 3), Set("a", "b"), Map("k" -> "v"))
+      fromMongo[ClassWithCollections](toMongo[ClassWithCollections](value)) must be(value)
+    }
+
     "fail to derive if trait is not sealed" in {
       // Sealed
       "implicit val mongo: MongoFormat[SealedSub] = deriveMongoFormat[SealedSub]" must compile
@@ -136,6 +141,11 @@ object DeriveMongoformatSpec {
 
   object UserWithPicture {
     implicit val mongo: MongoFormat[UserWithPicture] = deriveMongoFormat
+  }
+
+  case class ClassWithCollections(ints: List[Int], tags: Set[String], meta: Map[String, String])
+  object ClassWithCollections {
+    implicit val mongo: MongoFormat[ClassWithCollections] = deriveMongoFormat
   }
 
   sealed trait SealedParent
