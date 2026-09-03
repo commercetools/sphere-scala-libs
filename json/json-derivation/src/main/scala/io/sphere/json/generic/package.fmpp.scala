@@ -416,6 +416,12 @@ package object generic extends Logging {
           .toList
           .distinct
 
+      override def subTypeName(clazz: Class[_]): Option[String] =
+        allSelectors.iterator
+          .filterNot(_.serializer.isInstanceOf[TypeSelectorContainer])
+          .find(_.clazz == clazz)
+          .map(_.typeValue)
+
       def read(jval: JValue): ValidatedNel[JSONError, T] = fromJSON.read(jval)
 
       def write(t: T): JValue = toJSON.write(t)
