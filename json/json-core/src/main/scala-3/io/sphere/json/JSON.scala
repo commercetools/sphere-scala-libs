@@ -7,6 +7,9 @@ trait JSON[A] extends FromJSON[A] with ToJSON[A] {
   // This field is only used in case we derive a trait, for classes/objects it remains empty
   // It uses the JSON names not the Scala names (if there's @JSONTypeHint renaming a class the renamed name is used here)
   def subTypeNames: List[String] = Nil
+
+  // Serialized type-hint value for a subtype's runtime class; only resolves when deriving a trait/sum
+  def subTypeName(clazz: Class[_]): Option[String] = None
 }
 
 object JSON extends JSONCatsInstances {
@@ -33,6 +36,8 @@ object JSON extends JSONCatsInstances {
       override def write(value: A): JValue = writeFn(value)
       override val fields: Set[String] = fieldSet
       override def subTypeNames: List[String] = subTypeNameList.toList
+      override def subTypeName(clazz: Class[_]): Option[String] =
+        Option(toFs).flatMap(_.serializedNamesByClass.get(clazz))
       override val fromFormatters: FromFormatters = fromFs
       override val toFormatters: ToFormatters = toFs
     }

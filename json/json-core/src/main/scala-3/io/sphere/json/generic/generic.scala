@@ -67,6 +67,8 @@ private def addTypeSelectorContainer[A](derviedJson: JSON[A])(
     override def write(value: A): JValue = toJson.write(value)
     override val fields: Set[String] = fromJson.fields
     override def subTypeNames: List[String] = mergedFromFormatters.serializedNames.toList
+    override def subTypeName(clazz: Class[_]): Option[String] =
+      mergedToFormatters.serializedNamesByClass.get(clazz)
     override val fromFormatters: FromFormatters = mergedFromFormatters
     override val toFormatters: ToFormatters = mergedToFormatters
 
