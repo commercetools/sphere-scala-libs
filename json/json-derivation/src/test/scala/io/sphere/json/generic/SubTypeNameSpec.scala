@@ -38,8 +38,8 @@ class SubTypeNameSpec extends AnyWordSpec with Matchers {
   "JSON.subTypeName" must {
 
     def check(format: JSON[SuperType]): Unit = {
-      format.subTypeName(classOf[Obj1.type]) must be(Some("Obj1"))
-      format.subTypeName(classOf[ObjHidden.type]) must be(Some("Obj2"))
+      format.subTypeName(Obj1.getClass) must be(Some("Obj1"))
+      format.subTypeName(ObjHidden.getClass) must be(Some("Obj2"))
       format.subTypeName(classOf[Class1]) must be(Some("Class1"))
       format.subTypeName(classOf[ClassHidden]) must be(Some("Class2"))
     }
