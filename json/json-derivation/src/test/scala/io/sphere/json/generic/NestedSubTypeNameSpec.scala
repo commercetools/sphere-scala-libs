@@ -23,6 +23,14 @@ class NestedSubTypeNameSpec extends AnyWordSpec with Matchers {
     format.subTypeName(classOf[SubType1.SubClass1A]) must be(Some("SubClass1A"))
     format.subTypeName(classOf[SubType2.SubClass2A]) must be(Some("SubClass2A"))
   }
+
+  "resolve only leaf classes to their type-hint values in nested trait hierarchies" in {
+    val format: JSON[SuperType2] =
+      jsonTypeSwitch[SuperType2, SubType1, SubType2](Nil)
+
+    format.subTypeName(classOf[SubType1.SubClass1A]) must be(Some("SubClass1A"))
+    format.subTypeName(classOf[SubType2.SubClass2A]) must be(Some("SubClass2A"))
+  }
 }
 
 object NestedSubTypeNameSpec {
