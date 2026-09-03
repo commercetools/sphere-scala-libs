@@ -409,7 +409,12 @@ package object generic extends Logging {
     new JSON[T] with TypeSelectorContainer {
       override def typeSelectors: List[TypeSelector[_]] = allSelectors
 
-      override def subTypeNames: List[String] = allSelectors.map(_.typeValue)
+      override def subTypeNames: List[String] =
+        allSelectors.iterator
+          .filterNot(_.serializer.isInstanceOf[TypeSelectorContainer])
+          .map(_.typeValue)
+          .toList
+          .distinct
 
       def read(jval: JValue): ValidatedNel[JSONError, T] = fromJSON.read(jval)
 

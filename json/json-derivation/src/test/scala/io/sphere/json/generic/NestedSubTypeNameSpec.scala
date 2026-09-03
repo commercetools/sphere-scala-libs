@@ -7,18 +7,12 @@ import org.scalatest.wordspec.AnyWordSpec
 class NestedSubTypeNameSpec extends AnyWordSpec with Matchers {
   import NestedSubTypeNameSpec._
 
-  "return all subtype names in nested trait hierarchies" in {
+  "return only leaf class names in nested trait hierarchies" in {
     val format: JSON[SuperType2] =
       jsonTypeSwitch[SuperType2, SubType1, SubType2](Nil)
 
-    val names =
-      // There are 2 strange things about this list:
-      // 1: Trait names are also listen, not only class names, even though we don't use those
-      // 2: Class names seem to be duplicated
-      // I don't think this behaviour is necessarily intentional, but it works like this at the moment.
-      List("SubClass1A", "SubClass1A", "SubType1", "SubClass2A", "SubClass2A", "SubType2")
-    format.asInstanceOf[TypeSelectorContainer].typeSelectors.map(_.typeValue) must be(names)
-    format.subTypeNames must be(names)
+    // Should only contain leaf class names, no trait names and no duplicates
+    format.subTypeNames must be(List("SubClass1A", "SubClass2A"))
   }
 }
 
