@@ -413,8 +413,8 @@ package object generic extends Logging {
         allSelectors.iterator
           .filterNot(_.serializer.isInstanceOf[TypeSelectorContainer])
           .map(_.typeValue)
-          .distinct
           .toList
+          .distinct
 
       def read(jval: JValue): ValidatedNel[JSONError, T] = fromJSON.read(jval)
 
