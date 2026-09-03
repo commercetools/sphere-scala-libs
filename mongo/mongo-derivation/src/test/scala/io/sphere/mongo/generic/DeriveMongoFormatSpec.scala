@@ -6,8 +6,8 @@ import io.sphere.mongo.format._
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class DeriveMongoformatSpec extends AnyWordSpec with Matchers {
-  import DeriveMongoformatSpec._
+class DeriveMongoFormatSpec extends AnyWordSpec with Matchers {
+  import DeriveMongoFormatSpec._
 
   "deriving MongoFormat" must {
     "read normal singleton values" in {
@@ -97,6 +97,11 @@ class DeriveMongoformatSpec extends AnyWordSpec with Matchers {
       newUser must be(user)
     }
 
+    "derive a case class with collection and map fields" in {
+      val value = ClassWithCollections(List(1, 2, 3), Set("a", "b"), Map("k" -> "v"))
+      fromMongo[ClassWithCollections](toMongo[ClassWithCollections](value)) must be(value)
+    }
+
     "fail to derive if trait is not sealed" in {
       // Sealed
       "implicit val mongo: MongoFormat[SealedSub] = deriveMongoFormat[SealedSub]" must compile
@@ -108,7 +113,7 @@ class DeriveMongoformatSpec extends AnyWordSpec with Matchers {
   }
 }
 
-object DeriveMongoformatSpec {
+object DeriveMongoFormatSpec {
   sealed trait PictureSize
   case object Small extends PictureSize
   case object Medium extends PictureSize
@@ -136,6 +141,11 @@ object DeriveMongoformatSpec {
 
   object UserWithPicture {
     implicit val mongo: MongoFormat[UserWithPicture] = deriveMongoFormat
+  }
+
+  case class ClassWithCollections(ints: List[Int], tags: Set[String], meta: Map[String, String])
+  object ClassWithCollections {
+    implicit val mongo: MongoFormat[ClassWithCollections] = deriveMongoFormat
   }
 
   sealed trait SealedParent
