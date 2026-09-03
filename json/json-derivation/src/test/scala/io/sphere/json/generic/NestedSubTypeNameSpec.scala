@@ -7,11 +7,11 @@ import org.scalatest.wordspec.AnyWordSpec
 class NestedSubTypeNameSpec extends AnyWordSpec with Matchers {
   import NestedSubTypeNameSpec._
 
-  "return only class names in nested trait hierarchies" in {
+  "return only leaf class names in nested trait hierarchies" in {
     val format: JSON[SuperType2] =
-      jsonTypeSwitch[SuperType2, (SubType1, SubType2)]
+      jsonTypeSwitch[SuperType2, SubType1, SubType2](Nil)
 
-    // Should only contain class names, no trait names
+    // Should only contain leaf class names, no trait names and no duplicates
     val names = List("SubClass1A", "SubClass2A")
     format.subTypeNames must be(names)
   }
