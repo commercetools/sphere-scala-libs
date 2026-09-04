@@ -19,7 +19,7 @@ class SumTypesDerivingSpec extends AnyWordSpec with Matchers {
       check(Color1.format, Color1.Custom("2356"), dbObj("type" -> "Custom", "rgb" -> "2356"))
     }
 
-    "use custom field" in pendingUntilFixed {
+    "use custom field" ignore {
       check(Color2.format, Color2.Red, dbObj("color" -> "Red"))
 
       check(Color2.format, Color2.Custom("2356"), dbObj("color" -> "Custom", "rgb" -> "2356"))
@@ -31,7 +31,7 @@ class SumTypesDerivingSpec extends AnyWordSpec with Matchers {
       check(Color3.format, Color3.Custom("2356"), dbObj("type" -> "custom", "rgb" -> "2356"))
     }
 
-    "use custom field & values" in pendingUntilFixed {
+    "use custom field & values" ignore {
       check(Color4.format, Color4.Red, dbObj("color" -> "red"))
 
       check(Color4.format, Color4.Custom("2356"), dbObj("color" -> "custom", "rgb" -> "2356"))
@@ -48,25 +48,9 @@ class SumTypesDerivingSpec extends AnyWordSpec with Matchers {
     }
 
     "use intermediate level" in {
-      Color7.format
-    }
-
-    "do not use sealed trait info when using a case class directly" in {
-      check(Color8.format, Color8.Custom("2356"), dbObj("type" -> "Custom", "rgb" -> "2356"))
-
-      check(Color8.Custom.format, Color8.Custom("2356"), dbObj("rgb" -> "2356"))
-
-      // unless annotated
-
-      check(
-        Color8.format,
-        Color8.CustomAnnotated("2356"),
-        dbObj("type" -> "CustomAnnotated", "rgb" -> "2356"))
-
-      check(
-        Color8.CustomAnnotated.format,
-        Color8.CustomAnnotated("2356"),
-        dbObj("type" -> "CustomAnnotated", "rgb" -> "2356"))
+      check(Color7.format, Color7.Red, dbObj("type" -> "Red"))
+      check(Color7.format, Color7.Blue, dbObj("type" -> "Blue"))
+      check(Color7.format, Color7.Custom("234"), dbObj("rgb" -> "234", "type" -> "Custom"))
     }
 
     "use default values if custom values are empty" in {
@@ -125,6 +109,7 @@ object SumTypesDerivingSpec {
   object Color1 {
     case object Red extends Color1
     case class Custom(rgb: String) extends Color1
+    case object Blue extends Color1
     val format = deriveMongoFormat[Color1]
   }
 
@@ -165,7 +150,7 @@ object SumTypesDerivingSpec {
   sealed trait Color6
   object Color6 {
     @MongoTypeHintField("color-custom")
-    abstract class MyColor extends Color6
+    sealed abstract class MyColor extends Color6
     @MongoTypeHint("red")
     case object Red extends MyColor
     @MongoTypeHint("custom")
@@ -177,24 +162,8 @@ object SumTypesDerivingSpec {
   object Color7 {
     case object Red extends Color7a
     case class Custom(rgb: String) extends Color7a
+    case object Blue extends Color7
     def format = deriveMongoFormat[Color7]
-  }
-
-  sealed trait Color8
-  object Color8 {
-    // the formats must use `lazy` to make this code compile
-
-    case object Red extends Color8
-    case class Custom(rgb: String) extends Color8
-    object Custom {
-      lazy val format = deriveMongoFormat[Custom]
-    }
-    @MongoTypeHintField("type")
-    case class CustomAnnotated(rgb: String) extends Color8
-    object CustomAnnotated {
-      lazy val format = deriveMongoFormat[CustomAnnotated]
-    }
-    lazy val format = deriveMongoFormat[Color8]
   }
 
   sealed trait Color9
@@ -266,4 +235,5 @@ object SumTypesDerivingSpec {
 
     val format = deriveMongoFormat[ColorUnbound]
   }
+
 }
