@@ -39,7 +39,7 @@ inline def fromJsonTypeSwitch[SuperType, SubTypes <: Tuple]: FromJSON[SuperType]
 // Compatibility with the scala-2 methods, that will be deprecated later
 // fromJsonTypeSwitch is not used, so no old syntax support will be added for now
 // Compatibility with Scala 2 syntax
-case class TypeSelector(clazz: Class[?], typeValue: String, json: JSON[?])
+case class TypeSelector(json: JSON[?])
 
 // Compatibility with Scala 2 syntax
 trait TypeSelectorContainer {
@@ -74,7 +74,7 @@ private def addTypeSelectorContainer[A](derviedJson: JSON[A])(
 
     override def typeSelectors: List[TypeSelector] =
       toFormatters.serializedNamesByClass
-        .map((cls, serializedName) => TypeSelector(cls, serializedName, this))
+        .map((cls, serializedName) => TypeSelector(this))
         .toList
   }
 }
