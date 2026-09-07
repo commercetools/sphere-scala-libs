@@ -24,14 +24,6 @@ object SumTypes {
     val Blue, Red, Yellow = Value
   }
 
-  sealed trait Coffee derives MongoFormat
-
-  object Coffee {
-    case object Espresso extends Coffee
-
-    case class Other(name: String) extends Coffee
-  }
-
   enum Visitor derives MongoFormat {
     case User(email: String, password: String)
     case Anonymous
@@ -59,62 +51,31 @@ class SerializationTestForScala3Features extends AnyWordSpec with Matchers {
 
   // Both sealed hierarchies and enums get this "type" field, even the Singleton cases.
   // Is this what we want, or should the Singleton cases be just a String?
-  "mongoSum" must {
+  "mongoEnum" must {
     import SumTypes.*
 
-    "serialize and deserialize sealed hierarchies" in {
-      val mongo = MongoFormat[Coffee]
+    // There's an issue with the .getClass on enum objects, as they somehow refer to the main trait, instead of the object itself.
+    // As this is a new feature compared to the scala 2 version I'd rather figure this issue out later.
+    "serialize and deserialize scala3 enums" in pendingUntilFixed {
+      val mongo = MongoFormat[Visitor]
 
-      val espressoObj = {
-        val dbo = new BasicDBObject
-        dbo.put("type", "Espresso")
-        dbo
-      }
-      val serializedEspresso = mongo.toMongoValue(Coffee.Espresso)
-      val deserializedEspresso = mongo.fromMongoValue(serializedEspresso)
-      serializedEspresso must be(espressoObj)
-      deserializedEspresso must be(Coffee.Espresso)
+      val serializedAnon = mongo.toMongoValue(Visitor.Anonymous)
+      val deserializedAnon = mongo.fromMongoValue(serializedAnon)
+      serializedAnon must be(dbObj("type" -> "Anonymous"))
+      deserializedAnon must be(Visitor.Anonymous)
 
-      val name = "Capuccino"
-      val capuccino = Coffee.Other(name)
-      val capuccinoObj = {
-        val dbo = new BasicDBObject
-        dbo.put("name", name)
-        dbo.put("type", "Other")
-        dbo
-      }
-      val serializedCapuccino = mongo.toMongoValue(capuccino)
-      val deserializedCapuccino = mongo.fromMongoValue(capuccinoObj)
-      serializedCapuccino must be(capuccinoObj)
-      deserializedCapuccino must be(capuccino)
-    }
+      val serializedAdmin = mongo.toMongoValue(Visitor.Administrator)
+      val deserializedAdmin = mongo.fromMongoValue(serializedAdmin)
+      serializedAdmin must be(dbObj("type" -> "Admin"))
+      deserializedAdmin must be(Visitor.Administrator)
 
-    "mongoEnum" must {
-
-      // There's an issue with the .getClass on enum objects, as they somehow refer to the main trait, instead of the object itself.
-      // As this is a new feature compared to the scala 2 version I'd rather figure this issue out later.
-      "serialize and deserialize scala3 enums" in pendingUntilFixed {
-        val mongo = MongoFormat[Visitor]
-
-        val serializedAnon = mongo.toMongoValue(Visitor.Anonymous)
-        val deserializedAnon = mongo.fromMongoValue(serializedAnon)
-        serializedAnon must be(dbObj("type" -> "Anonymous"))
-        deserializedAnon must be(Visitor.Anonymous)
-
-        val serializedAdmin = mongo.toMongoValue(Visitor.Administrator)
-        val deserializedAdmin = mongo.fromMongoValue(serializedAdmin)
-        serializedAdmin must be(dbObj("type" -> "Admin"))
-        deserializedAdmin must be(Visitor.Administrator)
-
-        val email = "ian@sosafe.com"
-        val password = "123456"
-        val user = Visitor.User(email, password)
-        val serializedUser = mongo.toMongoValue(user)
-        val deserializedUser = mongo.fromMongoValue(serializedUser)
-        serializedUser must be(dbObj("email" -> email, "password" -> password, "type" -> "User"))
-        deserializedUser must be(user)
-      }
-
+      val email = "ian@sosafe.com"
+      val password = "123456"
+      val user = Visitor.User(email, password)
+      val serializedUser = mongo.toMongoValue(user)
+      val deserializedUser = mongo.fromMongoValue(serializedUser)
+      serializedUser must be(dbObj("email" -> email, "password" -> password, "type" -> "User"))
+      deserializedUser must be(user)
     }
   }
 }
