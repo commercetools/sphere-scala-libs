@@ -10,6 +10,18 @@ class SumTypesDerivingScala3Spec extends AnyWordSpec with Matchers {
 
   "Serializing sum types" must {
 
+    "use custom field" in {
+      check(Color2.format, Color2.Red, dbObj("color" -> "Red"))
+
+      check(Color2.format, Color2.Custom("2356"), dbObj("color" -> "Custom", "rgb" -> "2356"))
+    }
+
+    "use custom field & values" in {
+      check(Color4.format, Color4.Red, dbObj("color" -> "red"))
+
+      check(Color4.format, Color4.Custom("2356"), dbObj("color" -> "custom", "rgb" -> "2356"))
+    }
+
     "The typeDiscriminator should be handle by the trait" in {
       check(Color8.format, Color8.Custom("2356"), dbObj("type" -> "Custom", "rgb" -> "2356"))
 

@@ -19,22 +19,10 @@ class SumTypesDerivingSpec extends AnyWordSpec with Matchers {
       check(Color1.format, Color1.Custom("2356"), dbObj("type" -> "Custom", "rgb" -> "2356"))
     }
 
-    "use custom field" ignore {
-      check(Color2.format, Color2.Red, dbObj("color" -> "Red"))
-
-      check(Color2.format, Color2.Custom("2356"), dbObj("color" -> "Custom", "rgb" -> "2356"))
-    }
-
     "use custom values" in {
       check(Color3.format, Color3.Red, dbObj("type" -> "red"))
 
       check(Color3.format, Color3.Custom("2356"), dbObj("type" -> "custom", "rgb" -> "2356"))
-    }
-
-    "use custom field & values" ignore {
-      check(Color4.format, Color4.Red, dbObj("color" -> "red"))
-
-      check(Color4.format, Color4.Custom("2356"), dbObj("color" -> "custom", "rgb" -> "2356"))
     }
 
     "not allow specifying different custom field" in {
