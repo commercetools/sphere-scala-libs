@@ -24,11 +24,16 @@ class SumTypesDerivingScala3Spec extends AnyWordSpec with Matchers {
       check(
         Color8.format,
         Color8.CustomAnnotated("1111"),
-        dbObj("type" -> "CustomAnnotated", "rgb" -> "1111"))
+        dbObj("type" -> "CustomAnnotated", "rgb" -> "1111")
+      )
 
       // I decided to drop adding the type field to case classes directly.
       // It's not used and the trait should handle it
-      check(Color8.CustomAnnotated.format, Color8.CustomAnnotated("2356"), dbObj("rgb" -> "2356"))
+      check(
+        Color8.CustomAnnotated.format,
+        Color8.CustomAnnotated("2356"),
+        dbObj("rgb" -> "2356")
+      )
     }
 
   }
