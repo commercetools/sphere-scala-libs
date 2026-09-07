@@ -175,7 +175,6 @@ object SumTypesDerivingSpec {
     object Custom {
       lazy val format = deriveMongoFormat[Custom]
     }
-
     @MongoTypeHintField("type")
     case class CustomAnnotated(rgb: String) extends Color8
     object CustomAnnotated {
@@ -253,5 +252,4 @@ object SumTypesDerivingSpec {
 
     val format = deriveMongoFormat[ColorUnbound]
   }
-
 }
