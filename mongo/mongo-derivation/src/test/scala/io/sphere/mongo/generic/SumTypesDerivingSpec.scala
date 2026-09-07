@@ -166,6 +166,24 @@ object SumTypesDerivingSpec {
     def format = deriveMongoFormat[Color7]
   }
 
+  sealed trait Color8
+  object Color8 {
+    // the formats must use `lazy` to make this code compile
+
+    case object Red extends Color8
+    case class Custom(rgb: String) extends Color8
+    object Custom {
+      lazy val format = deriveMongoFormat[Custom]
+    }
+
+    @MongoTypeHintField("type")
+    case class CustomAnnotated(rgb: String) extends Color8
+    object CustomAnnotated {
+      lazy val format = deriveMongoFormat[CustomAnnotated]
+    }
+    lazy val format = deriveMongoFormat[Color8]
+  }
+
   sealed trait Color9
   object Color9 {
     @MongoTypeHint("")

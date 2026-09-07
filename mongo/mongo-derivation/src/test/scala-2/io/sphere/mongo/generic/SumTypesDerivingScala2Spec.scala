@@ -1,15 +1,12 @@
 package io.sphere.mongo.generic
 
-import com.mongodb.DBObject
 import io.sphere.mongo.MongoUtils.dbObj
-import io.sphere.mongo.format.DefaultMongoFormats._
-import io.sphere.mongo.format.MongoFormat
 import org.scalatest.Assertion
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 class SumTypesDerivingScala2Spec extends AnyWordSpec with Matchers {
-  import SumTypesDerivingScala2Spec._
+  import SumTypesDerivingSpec._
 
   "Serializing sum types" must {
 
@@ -31,33 +28,5 @@ class SumTypesDerivingScala2Spec extends AnyWordSpec with Matchers {
         dbObj("type" -> "CustomAnnotated", "rgb" -> "2356"))
     }
 
-  }
-}
-
-object SumTypesDerivingScala2Spec {
-  import Matchers._
-
-  def check[A, B <: A](format: MongoFormat[A], b: B, dbo: DBObject): Assertion = {
-    val serialized = format.toMongoValue(b)
-    serialized must be(dbo)
-
-    format.fromMongoValue(serialized) must be(b)
-  }
-
-  sealed trait Color8
-  object Color8 {
-    // the formats must use `lazy` to make this code compile
-
-    case object Red extends Color8
-    case class Custom(rgb: String) extends Color8
-    object Custom {
-      lazy val format = deriveMongoFormat[Custom]
-    }
-    @MongoTypeHintField("type")
-    case class CustomAnnotated(rgb: String) extends Color8
-    object CustomAnnotated {
-      lazy val format = deriveMongoFormat[CustomAnnotated]
-    }
-    lazy val format = deriveMongoFormat[Color8]
   }
 }
