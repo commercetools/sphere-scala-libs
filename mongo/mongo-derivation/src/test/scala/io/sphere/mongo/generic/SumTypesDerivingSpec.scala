@@ -109,7 +109,6 @@ object SumTypesDerivingSpec {
   object Color1 {
     case object Red extends Color1
     case class Custom(rgb: String) extends Color1
-    case object Blue extends Color1
     val format = deriveMongoFormat[Color1]
   }
 
@@ -150,7 +149,7 @@ object SumTypesDerivingSpec {
   sealed trait Color6
   object Color6 {
     @MongoTypeHintField("color-custom")
-    sealed abstract class MyColor extends Color6
+    abstract class MyColor extends Color6
     @MongoTypeHint("red")
     case object Red extends MyColor
     @MongoTypeHint("custom")
