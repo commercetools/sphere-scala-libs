@@ -10,13 +10,13 @@ class SumTypesDerivingScala2Spec extends AnyWordSpec with Matchers {
 
   "Serializing sum types" must {
 
-    "use custom field" pendingUntilFixed {
+    "use custom field".pendingUntilFixed {
       check(Color2.format, Color2.Red, dbObj("color" -> "Red"))
 
       check(Color2.format, Color2.Custom("2356"), dbObj("color" -> "Custom", "rgb" -> "2356"))
     }
 
-    "use custom field & values" pendingUntilFixed {
+    "use custom field & values".pendingUntilFixed {
       check(Color4.format, Color4.Red, dbObj("color" -> "red"))
 
       check(Color4.format, Color4.Custom("2356"), dbObj("color" -> "custom", "rgb" -> "2356"))
