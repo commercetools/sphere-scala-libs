@@ -20,6 +20,11 @@ object Reflect extends Logging {
     CaseClassMeta(getCaseClassFieldMeta(clazz))
   })
 
+  /** For a class nested in an object it is the *enclosing* signature that gets parsed, the same one
+    * for every sibling — so without this memo N siblings cost N full parses.
+    */
+  private val parseScalaSig = new Memoizer[Class[_], Option[ScalaSig]](ScalaSigParser.parse)
+
   private def getCompanionClass(clazz: Class[_]): Class[_] =
     Class.forName(clazz.getName + "$", true, clazz.getClassLoader)
   private def getCompanionObject(companionClass: Class[_]): Object =
@@ -31,10 +36,10 @@ object Reflect extends Logging {
       val companionObject = getCompanionObject(companionClass)
 
       val maybeSym = clazz.getName.split("\\$") match {
-        case Array(_) => ScalaSigParser.parse(clazz).flatMap(_.topLevelClasses.headOption)
+        case Array(_) => parseScalaSig(clazz).flatMap(_.topLevelClasses.headOption)
         case Array(h, t @ _*) =>
           val name = t.last
-          val topSymbol = ScalaSigParser.parse(Class.forName(h, true, clazz.getClassLoader))
+          val topSymbol = parseScalaSig(Class.forName(h, true, clazz.getClassLoader))
           topSymbol.flatMap(_.symbols.collectFirst { case s: ClassSymbol if s.name == name => s })
       }
 

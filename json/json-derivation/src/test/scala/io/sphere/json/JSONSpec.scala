@@ -237,13 +237,14 @@ class JSONSpec extends AnyFunSpec with Matchers {
       implicit val birdToJSON: ToJSON[Bird] = deriveToJSON
       implicit val dogToJSON: ToJSON[Dog] = deriveToJSON
       implicit val catToJSON: ToJSON[Cat] = deriveToJSON
-      implicit val animalToJSON: ToJSON[Animal] = toJsonTypeSwitch[Animal, Bird, Dog, Cat](Nil)
+      implicit val animalToJSON: ToJSON[Animal] =
+        toJsonTypeSwitch[Animal](List(subTo[Bird], subTo[Dog], subTo[Cat]))
       // FromJSON
       implicit val birdFromJSON: FromJSON[Bird] = deriveFromJSON
       implicit val dogFromJSON: FromJSON[Dog] = deriveFromJSON
       implicit val catFromJSON: FromJSON[Cat] = deriveFromJSON
       implicit val animalFromJSON: FromJSON[Animal] =
-        fromJsonTypeSwitch[Animal, Bird, Dog, Cat](Nil)
+        fromJsonTypeSwitch[Animal](List(subFrom[Bird], subFrom[Dog], subFrom[Cat]))
 
       List[Animal](Bird("Peewee"), Dog("Hasso"), Cat("Felidae")).foreach { a =>
         fromJSON[Animal](toJSON(a)) must equal(Valid(a))
@@ -262,12 +263,12 @@ class JSONSpec extends AnyFunSpec with Matchers {
       implicit val toSingleJSON: ToJSON[JSONSpec.SingletonMixed.type] = deriveToJSON
       implicit val toRecordJSON: ToJSON[RecordMixed] = deriveToJSON
       implicit val toMixedJSON: ToJSON[Mixed] =
-        toJsonTypeSwitch[Mixed, SingletonMixed.type, RecordMixed](Nil)
+        toJsonTypeSwitch[Mixed](List(subTo[SingletonMixed.type], subTo[RecordMixed]))
       // FromJSON
       implicit val fromSingleJSON: FromJSON[JSONSpec.SingletonMixed.type] = deriveFromJSON
       implicit val fromRecordJSON: FromJSON[RecordMixed] = deriveFromJSON
       implicit val fromMixedJSON: FromJSON[Mixed] =
-        fromJsonTypeSwitch[Mixed, SingletonMixed.type, RecordMixed](Nil)
+        fromJsonTypeSwitch[Mixed](List(subFrom[SingletonMixed.type], subFrom[RecordMixed]))
       List[Mixed](SingletonMixed, RecordMixed(1)).foreach { m =>
         fromJSON[Mixed](toJSON(m)) must equal(Valid(m))
       }
@@ -291,11 +292,14 @@ class JSONSpec extends AnyFunSpec with Matchers {
       implicit val to3: ToJSON[TestSubjectConcrete3] = deriveToJSON
       implicit val to4: ToJSON[TestSubjectConcrete4] = deriveToJSON
       implicit val toA: ToJSON[TestSubjectCategoryA] =
-        toJsonTypeSwitch[TestSubjectCategoryA, TestSubjectConcrete1, TestSubjectConcrete2](Nil)
+        toJsonTypeSwitch[TestSubjectCategoryA](
+          List(subTo[TestSubjectConcrete1], subTo[TestSubjectConcrete2]))
       implicit val toB: ToJSON[TestSubjectCategoryB] =
-        toJsonTypeSwitch[TestSubjectCategoryB, TestSubjectConcrete3, TestSubjectConcrete4](Nil)
+        toJsonTypeSwitch[TestSubjectCategoryB](
+          List(subTo[TestSubjectConcrete3], subTo[TestSubjectConcrete4]))
       implicit val toBase: ToJSON[TestSubjectBase] =
-        toJsonTypeSwitch[TestSubjectBase, TestSubjectCategoryA, TestSubjectCategoryB](Nil)
+        toJsonTypeSwitch[TestSubjectBase](
+          List(subTo[TestSubjectCategoryA], subTo[TestSubjectCategoryB]))
 
       // FromJSON
       implicit val from1: FromJSON[TestSubjectConcrete1] = deriveFromJSON
@@ -303,11 +307,14 @@ class JSONSpec extends AnyFunSpec with Matchers {
       implicit val from3: FromJSON[TestSubjectConcrete3] = deriveFromJSON
       implicit val from4: FromJSON[TestSubjectConcrete4] = deriveFromJSON
       implicit val fromA: FromJSON[TestSubjectCategoryA] =
-        fromJsonTypeSwitch[TestSubjectCategoryA, TestSubjectConcrete1, TestSubjectConcrete2](Nil)
+        fromJsonTypeSwitch[TestSubjectCategoryA](
+          List(subFrom[TestSubjectConcrete1], subFrom[TestSubjectConcrete2]))
       implicit val fromB: FromJSON[TestSubjectCategoryB] =
-        fromJsonTypeSwitch[TestSubjectCategoryB, TestSubjectConcrete3, TestSubjectConcrete4](Nil)
+        fromJsonTypeSwitch[TestSubjectCategoryB](
+          List(subFrom[TestSubjectConcrete3], subFrom[TestSubjectConcrete4]))
       implicit val fromBase: FromJSON[TestSubjectBase] =
-        fromJsonTypeSwitch[TestSubjectBase, TestSubjectCategoryA, TestSubjectCategoryB](Nil)
+        fromJsonTypeSwitch[TestSubjectBase](
+          List(subFrom[TestSubjectCategoryA], subFrom[TestSubjectCategoryB]))
 
       val testSubjects = List[TestSubjectBase](
         TestSubjectConcrete1("testSubject1"),
@@ -366,6 +373,6 @@ object TestSubjectBase {
     implicit val jsonA: JSON[TestSubjectCategoryA] = TestSubjectCategoryA.json
     implicit val jsonB: JSON[TestSubjectCategoryB] = TestSubjectCategoryB.json
 
-    jsonTypeSwitch[TestSubjectBase, TestSubjectCategoryA, TestSubjectCategoryB](Nil)
+    jsonTypeSwitch[TestSubjectBase](List(sub[TestSubjectCategoryA], sub[TestSubjectCategoryB]))
   }
 }

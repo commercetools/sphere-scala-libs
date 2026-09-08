@@ -217,9 +217,9 @@ package object generic extends Logging {
     *
     * This can be used as an alternative to an enum.
     */
-  def toJsonSingletonEnumSwitch[T: ClassTag, A <: T : ClassTag : ToJSON](selectors: List[TypeSelectorToJSON[_]]): ToJSON[T] with TypeSelectorToJSONContainer = {
-    val inSelectors: List[TypeSelectorToJSON[_]] = typeSelectorToJSON[A]() :: selectors
-    val allSelectors = inSelectors.flatMap(s => s.serializer match {
+  def toJsonSingletonEnumSwitch[T: ClassTag](selectors: List[TypeSelectorToJSON[_]]): ToJSON[T] with TypeSelectorToJSONContainer = {
+    require(selectors.nonEmpty, "toJsonSingletonEnumSwitch needs at least one subtype")
+    val allSelectors = selectors.flatMap(s => s.serializer match {
       case container: TypeSelectorToJSONContainer => container.typeSelectors :+ s
       case _ => s :: Nil
     })
@@ -250,10 +250,10 @@ package object generic extends Logging {
     *
     * This can be used as an alternative to an enum.
     */
-  def fromJsonSingletonEnumSwitch[T: ClassTag, A <: T : ClassTag : FromJSON](selectors: List[TypeSelectorFromJSON[_]]): FromJSON[T] with TypeSelectorFromJSONContainer = {
+  def fromJsonSingletonEnumSwitch[T: ClassTag](selectors: List[TypeSelectorFromJSON[_]]): FromJSON[T] with TypeSelectorFromJSONContainer = {
+    require(selectors.nonEmpty, "fromJsonSingletonEnumSwitch needs at least one subtype")
     val readMapBuilder = Map.newBuilder[String, TypeSelectorFromJSON[_]]
-    val inSelectors: List[TypeSelectorFromJSON[_]] = typeSelectorFromJSON[A]() :: selectors
-    val allSelectors = inSelectors.flatMap(s => s.jsonr match {
+    val allSelectors = selectors.flatMap(s => s.jsonr match {
       case container: TypeSelectorFromJSONContainer => container.typeSelectors :+ s
       case _ => s :: Nil
     })
@@ -283,15 +283,15 @@ package object generic extends Logging {
     *
     * This can be used as an alternative to an enum.
     */
-  def jsonSingletonEnumSwitch[T: ClassTag, A <: T : ClassTag : FromJSON : ToJSON](selectors: List[TypeSelector[_]]): JSON[T] with TypeSelectorContainer = {
-    val inSelectors = typeSelector[A]() :: selectors
-    val allSelectors = inSelectors.flatMap(s => s.serializer match {
+  def jsonSingletonEnumSwitch[T: ClassTag](selectors: List[TypeSelector[_]]): JSON[T] with TypeSelectorContainer = {
+    require(selectors.nonEmpty, "jsonSingletonEnumSwitch needs at least one subtype")
+    val allSelectors = selectors.flatMap(s => s.serializer match {
       case container: TypeSelectorContainer => container.typeSelectors :+ s
       case _ => s :: Nil
     })
 
-    val toJSON = toJsonSingletonEnumSwitch[T, A](selectors)
-    val fromJSON = fromJsonSingletonEnumSwitch[T, A](selectors)
+    val toJSON = toJsonSingletonEnumSwitch[T](selectors)
+    val fromJSON = fromJsonSingletonEnumSwitch[T](selectors)
 
     new JSON[T] with TypeSelectorContainer {
       override def typeSelectors: List[TypeSelector[_]] = allSelectors
@@ -302,30 +302,11 @@ package object generic extends Logging {
     }
   }
 
-  <#list 2..20 as i>
-  <#assign typeParams><#list 1..i-1 as j>A${j}<#if i-1 != j>,</#if></#list></#assign>
-  <#assign implTypeParams><#list 1..i as j>A${j} <: T : ToJSON : ClassTag<#if i !=j>,</#if></#list></#assign>
-  def toJsonSingletonEnumSwitch[T: ClassTag, ${implTypeParams}](selectors: List[TypeSelectorToJSON[_]]): ToJSON[T] with TypeSelectorToJSONContainer = toJsonSingletonEnumSwitch[T, ${typeParams}](typeSelectorToJSON[A${i}]() :: selectors)
-  </#list>
-
-  <#list 2..20 as i>
-  <#assign typeParams><#list 1..i-1 as j>A${j}<#if i-1 != j>,</#if></#list></#assign>
-  <#assign implTypeParams><#list 1..i as j>A${j} <: T : FromJSON : ClassTag<#if i !=j>,</#if></#list></#assign>
-  def fromJsonSingletonEnumSwitch[T: ClassTag, ${implTypeParams}](selectors: List[TypeSelectorFromJSON[_]]): FromJSON[T] with TypeSelectorFromJSONContainer = fromJsonSingletonEnumSwitch[T, ${typeParams}](typeSelectorFromJSON[A${i}]() :: selectors)
-  </#list>
-
-  <#list 2..20 as i>
-  <#assign typeParams><#list 1..i-1 as j>A${j}<#if i-1 != j>,</#if></#list></#assign>
-  <#assign implTypeParams><#list 1..i as j>A${j} <: T : FromJSON : ToJSON : ClassTag<#if i !=j>,</#if></#list></#assign>
-  def jsonSingletonEnumSwitch[T: ClassTag, ${implTypeParams}](selectors: List[TypeSelector[_]]): JSON[T] with TypeSelectorContainer = jsonSingletonEnumSwitch[T, ${typeParams}](typeSelector[A${i}]() :: selectors)
-  </#list>
-
-  /** Creates a `ToJSON[T]` instance for some supertype `T`. The instance acts as a type-switch
-    * for the subtypes `A1` and `A2`, delegating to their respective JSON instances based
-    * on a field that acts as a type hint. */
-  def toJsonTypeSwitch[T: ClassTag, A1 <: T: ClassTag: ToJSON, A2 <: T: ClassTag: ToJSON](selectors: List[TypeSelectorToJSON[_]]): ToJSON[T] with TypeSelectorToJSONContainer = {
-    val inSelectors = typeSelectorToJSON[A1]() :: typeSelectorToJSON[A2]() :: selectors
-    val allSelectors = inSelectors.flatMap(s => s.serializer match {
+  /** Creates a `ToJSON[T]` that switches on a type-hint field, delegating to the given subtype
+    * selectors' instances. */
+  def toJsonTypeSwitch[T: ClassTag](selectors: List[TypeSelectorToJSON[_]]): ToJSON[T] with TypeSelectorToJSONContainer = {
+    require(selectors.nonEmpty, "toJsonTypeSwitch needs at least one subtype")
+    val allSelectors = selectors.flatMap(s => s.serializer match {
       case container: TypeSelectorToJSONContainer => container.typeSelectors :+ s
       case _ => s :: Nil
     })
@@ -338,14 +319,17 @@ package object generic extends Logging {
 
     val writeMap = writeMapBuilder.result()
 
+    // Always from the top-level type, so that it matches what fromJsonTypeSwitch reads.
+    val typeField = typeFieldOf(classTag[T].runtimeClass)
+
     new ToJSON[T] with TypeSelectorToJSONContainer {
       override def typeSelectors: List[TypeSelectorToJSON[_]] = allSelectors
 
       def write(t: T): JValue = writeMap.get(t.getClass) match {
         case Some(ts) =>
           ts.write(t) match {
-            case o @ JObject(obj) if obj.exists(_._1 == ts.typeField) => o
-            case j: JObject => j ~ JField(ts.typeField, JString(ts.typeValue))
+            case o @ JObject(obj) if obj.exists(_._1 == typeField) => o
+            case j: JObject => j ~ JField(typeField, JString(ts.typeValue))
             case j => throw new IllegalStateException("The json is not an object but a " + j.getClass)
           }
 
@@ -354,12 +338,11 @@ package object generic extends Logging {
     }
   }
 
-  /** Creates a `FromJSON[T]` instance for some supertype `T`. The instance acts as a type-switch
-    * for the subtypes `A1` and `A2`, delegating to their respective JSON instances based
-    * on a field that acts as a type hint. */
-  def fromJsonTypeSwitch[T: ClassTag, A1 <: T: ClassTag: FromJSON, A2 <: T: ClassTag: FromJSON](selectors: List[TypeSelectorFromJSON[_]]): FromJSON[T] with TypeSelectorFromJSONContainer = {
-    val inSelectors = typeSelectorFromJSON[A1]() :: typeSelectorFromJSON[A2]() :: selectors
-    val allSelectors = inSelectors.flatMap(s => s.jsonr match {
+  /** Creates a `FromJSON[T]` that switches on a type-hint field, delegating to the given subtype
+    * selectors' instances. */
+  def fromJsonTypeSwitch[T: ClassTag](selectors: List[TypeSelectorFromJSON[_]]): FromJSON[T] with TypeSelectorFromJSONContainer = {
+    require(selectors.nonEmpty, "fromJsonTypeSwitch needs at least one subtype")
+    val allSelectors = selectors.flatMap(s => s.jsonr match {
       case container: TypeSelectorFromJSONContainer => container.typeSelectors :+ s
       case _ => s :: Nil
     })
@@ -371,10 +354,7 @@ package object generic extends Logging {
     }
 
     val readMap = readMapBuilder.result()
-    val clazz = classTag[T].runtimeClass
-
-    val fieldWithJSONTypeHint = clazz.getAnnotation(classOf[JSONTypeHintField])
-    val typeField = if (fieldWithJSONTypeHint != null) fieldWithJSONTypeHint.value() else defaultTypeFieldName
+    val typeField = typeFieldOf(classTag[T].runtimeClass)
 
     new FromJSON[T] with TypeSelectorFromJSONContainer {
       override def typeSelectors: List[TypeSelectorFromJSON[_]] = allSelectors
@@ -393,18 +373,17 @@ package object generic extends Logging {
     }
   }
 
-  /** Creates a `JSON[T]` instance for some supertype `T`. The instance acts as a type-switch
-    * for the subtypes `A1` and `A2`, delegating to their respective JSON instances based
-    * on a field that acts as a type hint. */
-  def jsonTypeSwitch[T: ClassTag, A1 <: T: ClassTag: FromJSON: ToJSON, A2 <: T: ClassTag: FromJSON: ToJSON](selectors: List[TypeSelector[_]]): JSON[T] with TypeSelectorContainer = {
-    val inSelectors = typeSelector[A1]() :: typeSelector[A2]() :: selectors
-    val allSelectors = inSelectors.flatMap(s => s.serializer match {
+  /** Creates a `JSON[T]` that switches on a type-hint field, delegating to the given subtype
+    * selectors' instances. */
+  def jsonTypeSwitch[T: ClassTag](selectors: List[TypeSelector[_]]): JSON[T] with TypeSelectorContainer = {
+    require(selectors.nonEmpty, "jsonTypeSwitch needs at least one subtype")
+    val allSelectors = selectors.flatMap(s => s.serializer match {
       case container: TypeSelectorContainer => container.typeSelectors :+ s
       case _ => s :: Nil
     })
 
-    val toJSON = toJsonTypeSwitch[T, A1, A2](selectors)
-    val fromJSON = fromJsonTypeSwitch[T, A1, A2](selectors)
+    val toJSON = toJsonTypeSwitch[T](selectors)
+    val fromJSON = fromJsonTypeSwitch[T](selectors)
 
     new JSON[T] with TypeSelectorContainer {
       override def typeSelectors: List[TypeSelector[_]] = allSelectors
@@ -428,28 +407,6 @@ package object generic extends Logging {
     }
   }
 
-  // special case with only one sub-type
-  def jsonTypeSwitch[T: ClassTag, A1 <: T: ClassTag: FromJSON: ToJSON](selectors: List[TypeSelector[_]]): JSON[T] with TypeSelectorContainer =
-    jsonTypeSwitch[T, A1, A1](selectors)
-
-  <#list 3..126 as i>
-  <#assign typeParams><#list 1..i-1 as j>A${j}<#if i-1 != j>,</#if></#list></#assign>
-  <#assign implTypeParams><#list 1..i as j>A${j} <: T : ToJSON : ClassTag<#if i !=j>,</#if></#list></#assign>
-  def toJsonTypeSwitch[T: ClassTag, ${implTypeParams}](selectors: List[TypeSelectorToJSON[_]]): ToJSON[T] with TypeSelectorToJSONContainer = toJsonTypeSwitch[T, ${typeParams}](typeSelectorToJSON[A${i}]() :: selectors)
-  </#list>
-
-  <#list 3..126 as i>
-  <#assign typeParams><#list 1..i-1 as j>A${j}<#if i-1 != j>,</#if></#list></#assign>
-  <#assign implTypeParams><#list 1..i as j>A${j} <: T : FromJSON : ClassTag<#if i !=j>,</#if></#list></#assign>
-  def fromJsonTypeSwitch[T: ClassTag, ${implTypeParams}](selectors: List[TypeSelectorFromJSON[_]]): FromJSON[T] with TypeSelectorFromJSONContainer = fromJsonTypeSwitch[T, ${typeParams}](typeSelectorFromJSON[A${i}]() :: selectors)
-  </#list>
-
-  <#list 3..126 as i>
-  <#assign typeParams><#list 1..i-1 as j>A${j}<#if i-1 != j>,</#if></#list></#assign>
-  <#assign implTypeParams><#list 1..i as j>A${j} <: T : JSON : ClassTag<#if i !=j>,</#if></#list></#assign>
-  def jsonTypeSwitch[T: ClassTag, ${implTypeParams}](selectors: List[TypeSelector[_]]): JSON[T] with TypeSelectorContainer = jsonTypeSwitch[T, ${typeParams}](typeSelector[A${i}]() :: selectors)
-  </#list>
-
   trait TypeSelectorBase {
     def typeField: String
     def typeValue: String
@@ -469,7 +426,8 @@ package object generic extends Logging {
     def write(a: Any): JValue = toJValue(a.asInstanceOf[A])
   }
 
-  private def typeSelectorToJSON[A: ClassTag: ToJSON](): TypeSelectorToJSON[_] = {
+  /** Builds the write-side selector for the subtype `A` of a `toJsonTypeSwitch`. */
+  def subTo[A: ClassTag: ToJSON]: TypeSelectorToJSON[A] = {
     val clazz = classTag[A].runtimeClass
     val (typeField, typeValue) = getJSONClass(clazz).typeHint match {
       case Some(hint) => (hint.field, hint.value)
@@ -491,7 +449,8 @@ package object generic extends Logging {
     def read(o: JValue): ValidatedNel[JSONError, A] = fromJValue[A](o)
   }
 
-  private def typeSelectorFromJSON[A: ClassTag: FromJSON](): TypeSelectorFromJSON[_] = {
+  /** Builds the read-side selector for the subtype `A` of a `fromJsonTypeSwitch`. */
+  def subFrom[A: ClassTag: FromJSON]: TypeSelectorFromJSON[A] = {
     val clazz = classTag[A].runtimeClass
     val (typeField, typeValue) = getJSONClass(clazz).typeHint match {
       case Some(hint) => (hint.field, hint.value)
@@ -512,7 +471,8 @@ package object generic extends Logging {
     def write(a: Any): JValue = toJValue(a.asInstanceOf[A])
   }
 
-  private def typeSelector[A: ClassTag: FromJSON: ToJSON](): TypeSelector[_] = {
+  /** Builds the selector for the subtype `A` of a `jsonTypeSwitch`. */
+  def sub[A: ClassTag: FromJSON: ToJSON]: TypeSelector[A] = {
     val clazz = classTag[A].runtimeClass
     val (typeField, typeValue) = getJSONClass(clazz).typeHint match {
       case Some(hint) => (hint.field, hint.value)
@@ -523,6 +483,11 @@ package object generic extends Logging {
 
   private def defaultTypeValue(clazz: Class[_]): String =
     clazz.getSimpleName.replace("$", "")
+
+  private def typeFieldOf(clazz: Class[_]): String = {
+    val fieldWithJSONTypeHint = clazz.getAnnotation(classOf[JSONTypeHintField])
+    if (fieldWithJSONTypeHint != null) fieldWithJSONTypeHint.value() else defaultTypeFieldName
+  }
 
   private def findTypeValue(o: JObject, typeField: String): Option[String] =
     o.obj.find(_._1 == typeField).flatMap(_._2.extractOpt[String])

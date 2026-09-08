@@ -10,28 +10,28 @@ class JsonTypeSwitchSpec extends AnyWordSpec with Matchers with JsonTypeSwitchSp
   "jsonTypeSwitch" must {
 
     "derive a subset of a sealed trait" in {
-      val format: JSON[A] = jsonTypeSwitch[A, B, C](Nil)
+      val format: JSON[A] = jsonTypeSwitch[A](List(sub[B], sub[C]))
       testDeriveASubsetOfASealedTrait(format)
     }
 
     "return an invalid result on malformed sum-type JSON" in {
-      val format: JSON[A] = jsonTypeSwitch[A, B, C](Nil)
+      val format: JSON[A] = jsonTypeSwitch[A](List(sub[B], sub[C]))
       testMalformedSumTypeJson(format)
     }
 
     "derive a subset of a sealed trait with a mongoKey" in {
-      val format: JSON[A] = jsonTypeSwitch[A, B, D](Nil)
+      val format: JSON[A] = jsonTypeSwitch[A](List(sub[B], sub[D]))
       testDeriveSubsetWithMongoKey(format)
     }
 
     "combine different sum types tree" in {
-      val format: JSON[Message] = jsonTypeSwitch[Message, TypeA, TypeB](Nil)
+      val format: JSON[Message] = jsonTypeSwitch[Message](List(sub[TypeA], sub[TypeB]))
       testCombineSumTypes(format)
     }
 
     "handle custom implementations for subtypes" in {
       implicit val jsonB: JSON[B] = customJsonB
-      val format: JSON[A] = jsonTypeSwitch[A, B, D, C](Nil)
+      val format: JSON[A] = jsonTypeSwitch[A](List(sub[B], sub[D], sub[C]))
       testCustomSubtypeImpl(format)
     }
 

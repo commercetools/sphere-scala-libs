@@ -26,7 +26,8 @@ class SubTypeNameSpec extends AnyWordSpec with Matchers {
       implicit val classhF: JSON[ClassHidden] = deriveJSON
 
       val format: JSON[SuperType] =
-        jsonTypeSwitch[SuperType, Obj1.type, ObjHidden.type, Class1, ClassHidden](Nil)
+        jsonTypeSwitch[SuperType](
+          List(sub[Obj1.type], sub[ObjHidden.type], sub[Class1], sub[ClassHidden]))
 
       format.subTypeNames must be(subTypeNames)
 
@@ -54,7 +55,9 @@ class SubTypeNameSpec extends AnyWordSpec with Matchers {
       implicit val class1F: JSON[Class1] = deriveJSON
       implicit val classhF: JSON[ClassHidden] = deriveJSON
 
-      check(jsonTypeSwitch[SuperType, Obj1.type, ObjHidden.type, Class1, ClassHidden](Nil))
+      check(
+        jsonTypeSwitch[SuperType](
+          List(sub[Obj1.type], sub[ObjHidden.type], sub[Class1], sub[ClassHidden])))
     }
 
     "return None for a plain case class" in {

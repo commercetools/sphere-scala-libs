@@ -1,6 +1,6 @@
 package io.sphere.json
 
-import io.sphere.json.generic.{TypeSelectorContainer, deriveJSON, jsonTypeSwitch}
+import io.sphere.json.generic.{TypeSelectorContainer, deriveJSON, jsonTypeSwitch, sub}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -43,7 +43,7 @@ object TypeSelectorContainerSpec {
     // ex if we define TypeA.Class1 && TypeB.Class1
     // as both will use the same type value discriminator
     implicit val json: JSON[Message] with TypeSelectorContainer =
-      jsonTypeSwitch[Message, TypeA, TypeB](Nil)
+      jsonTypeSwitch[Message](List(sub[TypeA], sub[TypeB]))
   }
 
   sealed trait TypeA extends Message
