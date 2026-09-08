@@ -14,54 +14,39 @@ class JsonTypeSwitchSpec extends AnyWordSpec with Matchers with JsonTypeSwitchSp
     {
       given JSON[B] = deriveJSON[B]
 
-      "derive a subset of a sealed trait (old syntax)" in {
-        testDeriveASubsetOfASealedTrait(jsonTypeSwitch[A, B, C](Nil))
+      "derive a subset of a sealed trait" in {
+        testDeriveASubsetOfASealedTrait(jsonTypeSwitch[A](List(sub[B], sub[C])))
       }
-      "derive a subset of a sealed trait (new syntax)" in {
-        testDeriveASubsetOfASealedTrait(jsonTypeSwitch[A, (B, C)])
-      }
-      "return an invalid result on malformed sum-type JSON (old syntax)" in {
-        testMalformedSumTypeJson(jsonTypeSwitch[A, B, C](Nil))
-      }
-      "return an invalid result on malformed sum-type JSON (new syntax)" in {
-        testMalformedSumTypeJson(jsonTypeSwitch[A, (B, C)])
+      "return an invalid result on malformed sum-type JSON" in {
+        testMalformedSumTypeJson(jsonTypeSwitch[A](List(sub[B], sub[C])))
       }
     }
 
-    "derive a subset of a sealed trait with a mongoKey (old syntax)" in {
-      testDeriveSubsetWithMongoKey(jsonTypeSwitch[A, B, D](Nil))
-    }
-    "derive a subset of a sealed trait with a mongoKey (new syntax)" in {
-      testDeriveSubsetWithMongoKey(jsonTypeSwitch[A, (B, D)])
+    "derive a subset of a sealed trait with a mongoKey" in {
+      testDeriveSubsetWithMongoKey(jsonTypeSwitch[A](List(sub[B], sub[D])))
     }
 
-    "combine different sum types tree (old syntax)" in {
-      testCombineSumTypes(jsonTypeSwitch[Message, TypeA, TypeB](Nil))
-    }
-    "combine different sum types tree (new syntax)" in {
-      testCombineSumTypes(jsonTypeSwitch[Message, (TypeA, TypeB)])
+    "combine different sum types tree" in {
+      testCombineSumTypes(jsonTypeSwitch[Message](List(sub[TypeA], sub[TypeB])))
     }
 
     {
       given JSON[B] = customJsonB
 
-      "handle custom implementations for subtypes (old syntax)" in {
-        testCustomSubtypeImpl(jsonTypeSwitch[A, B, D, C](Nil))
-      }
-      "handle custom implementations for subtypes (new syntax)" in {
-        testCustomSubtypeImpl(jsonTypeSwitch[A, (B, D, C)])
+      "handle custom implementations for subtypes" in {
+        testCustomSubtypeImpl(jsonTypeSwitch[A](List(sub[B], sub[D], sub[C])))
       }
     }
 
     "handle the PlatformFormattedNotification case" when {
-      "using the /old/ syntax" in {
+      "merging the sub-switches' selectors" in {
         testPlatformFormattedNotificationCase()
       }
 
-      "using the /new/ syntax" in {
-        type Trait234 = SubTrait2 *: (SubTrait3, SubTrait4)
-
-        val formatSuper: JSON[SuperTrait] = jsonTypeSwitch[SuperTrait, SubTrait1 *: Trait234]
+      "listing the sub-traits directly" in {
+        val formatSuper: JSON[SuperTrait] =
+          jsonTypeSwitch[SuperTrait](
+            List(sub[SubTrait1], sub[SubTrait2], sub[SubTrait3], sub[SubTrait4]))
 
         val objs =
           List[SuperTrait](

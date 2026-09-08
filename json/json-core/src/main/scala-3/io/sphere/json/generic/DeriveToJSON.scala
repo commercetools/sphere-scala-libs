@@ -16,7 +16,7 @@ trait DeriveToJSON {
 
     inline def derived[A](using m: Mirror.Of[A]): ToJSON[A] =
       inline m match {
-        case s: Mirror.SumOf[A] => toJsonTypeSwitch[A, s.MirroredElemTypes]
+        case s: Mirror.SumOf[A] => toJsonTypeSwitch[A](subsTo[s.MirroredElemTypes])
         case p: Mirror.ProductOf[A] => deriveCaseClass(p)
       }
 
