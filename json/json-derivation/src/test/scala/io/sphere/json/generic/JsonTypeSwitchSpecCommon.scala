@@ -75,11 +75,11 @@ trait JsonTypeSwitchSpecCommon { self: AnyWordSpec with Matchers =>
   }
 
   def testPlatformFormattedNotificationCase(): Unit = {
-    val formatSub2 = jsonTypeSwitch[SubTrait2, SubTrait2.O3.type, SubTrait2.O4.type](Nil)
-    val formatSub3 = jsonTypeSwitch[SubTrait3, SubTrait3.O5.type, SubTrait3.O6.type](Nil)
+    val formatSub2 = jsonTypeSwitch[SubTrait2](List(sub[SubTrait2.O3.type], sub[SubTrait2.O4.type]))
+    val formatSub3 = jsonTypeSwitch[SubTrait3](List(sub[SubTrait3.O5.type], sub[SubTrait3.O6.type]))
 
     val typeSelectors = formatSub2.typeSelectors ++ formatSub3.typeSelectors
-    val formatSuper: JSON[SuperTrait] = jsonTypeSwitch[SuperTrait, SubTrait1](typeSelectors)
+    val formatSuper: JSON[SuperTrait] = jsonTypeSwitch[SuperTrait](sub[SubTrait1] :: typeSelectors)
 
     val objs =
       List[SuperTrait](
