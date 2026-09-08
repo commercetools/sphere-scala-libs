@@ -18,10 +18,6 @@ class TypeSelectorContainerSpec extends AnyWordSpec with Matchers {
         "ClassB2",
         "TypeB")
 
-      // I don't think it's useful to allow different type fields. How is it possible to deserialize one json
-      // if different type fields are used?
-      selectors.map(_.typeField) must be(List("type", "type", "type", "type", "type", "type"))
-
       selectors.map(_.clazz.getName) must contain.allOf(
         "io.sphere.json.TypeSelectorContainerSpec$TypeA$ClassA1",
         "io.sphere.json.TypeSelectorContainerSpec$TypeA$ClassA2",

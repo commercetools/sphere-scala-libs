@@ -72,10 +72,7 @@ package object generic extends Logging {
     * representations of the enumeration values. */
   def jsonEnum(e: Enumeration): JSON[e.Value] = JSONofToAndFrom(toJsonEnum(e), fromJsonEnum(e))
 
-  private def jsonSingletonTypeValue[T](singleton: T): String = {
-    val clazz = singleton.getClass
-    getJSONClass(clazz).typeHint.fold(defaultTypeValue(clazz))(_.value)
-  }
+  private def jsonSingletonTypeValue[T](singleton: T): String = typeValueOf(singleton.getClass)
 
   /** Creates a ToJSON instance for a singleton object that encodes only the type value
     * as a JSON string. */
@@ -408,7 +405,6 @@ package object generic extends Logging {
   }
 
   trait TypeSelectorBase {
-    def typeField: String
     def typeValue: String
     def clazz: Class[_]
   }
@@ -422,18 +418,14 @@ package object generic extends Logging {
     def serializer: ToJSON[A]
   }
 
-  final class TypeSelectorToJSONImpl[A] private[generic](val typeField: String, val typeValue: String, val clazz: Class[_])(implicit val serializer: ToJSON[A]) extends TypeSelectorToJSON[A] {
+  final class TypeSelectorToJSONImpl[A] private[generic](val typeValue: String, val clazz: Class[_])(implicit val serializer: ToJSON[A]) extends TypeSelectorToJSON[A] {
     def write(a: Any): JValue = toJValue(a.asInstanceOf[A])
   }
 
   /** Builds the write-side selector for the subtype `A` of a `toJsonTypeSwitch`. */
   def subTo[A: ClassTag: ToJSON]: TypeSelectorToJSON[A] = {
     val clazz = classTag[A].runtimeClass
-    val (typeField, typeValue) = getJSONClass(clazz).typeHint match {
-      case Some(hint) => (hint.field, hint.value)
-      case None => (defaultTypeFieldName, defaultTypeValue(clazz))
-    }
-    new TypeSelectorToJSONImpl[A](typeField, typeValue, clazz)
+    new TypeSelectorToJSONImpl[A](typeValueOf(clazz), clazz)
   }
 
   trait TypeSelectorFromJSONContainer {
@@ -445,25 +437,21 @@ package object generic extends Logging {
     def jsonr: FromJSON[A]
   }
 
-  final class TypeSelectorFromJSONImpl[A] private[generic](val typeField: String, val typeValue: String, val clazz: Class[_])(implicit val jsonr: FromJSON[A]) extends TypeSelectorFromJSON[A] {
+  final class TypeSelectorFromJSONImpl[A] private[generic](val typeValue: String, val clazz: Class[_])(implicit val jsonr: FromJSON[A]) extends TypeSelectorFromJSON[A] {
     def read(o: JValue): ValidatedNel[JSONError, A] = fromJValue[A](o)
   }
 
   /** Builds the read-side selector for the subtype `A` of a `fromJsonTypeSwitch`. */
   def subFrom[A: ClassTag: FromJSON]: TypeSelectorFromJSON[A] = {
     val clazz = classTag[A].runtimeClass
-    val (typeField, typeValue) = getJSONClass(clazz).typeHint match {
-      case Some(hint) => (hint.field, hint.value)
-      case None => (defaultTypeFieldName, defaultTypeValue(clazz))
-    }
-    new TypeSelectorFromJSONImpl[A](typeField, typeValue, clazz)
+    new TypeSelectorFromJSONImpl[A](typeValueOf(clazz), clazz)
   }
 
   trait TypeSelectorContainer extends TypeSelectorFromJSONContainer with TypeSelectorToJSONContainer {
     def typeSelectors: List[TypeSelector[_]]
   }
 
-  final class TypeSelector[A] private[generic](val typeField: String, val typeValue: String, val clazz: Class[_])
+  final class TypeSelector[A] private[generic](val typeValue: String, val clazz: Class[_])
                                               (implicit val jsonr: FromJSON[A], val serializer: ToJSON[A])
     extends TypeSelectorFromJSON[A] with TypeSelectorToJSON[A] {
 
@@ -474,15 +462,14 @@ package object generic extends Logging {
   /** Builds the selector for the subtype `A` of a `jsonTypeSwitch`. */
   def sub[A: ClassTag: FromJSON: ToJSON]: TypeSelector[A] = {
     val clazz = classTag[A].runtimeClass
-    val (typeField, typeValue) = getJSONClass(clazz).typeHint match {
-      case Some(hint) => (hint.field, hint.value)
-      case None => (defaultTypeFieldName, defaultTypeValue(clazz))
-    }
-    new TypeSelector[A](typeField, typeValue, clazz)
+    new TypeSelector[A](typeValueOf(clazz), clazz)
   }
 
   private def defaultTypeValue(clazz: Class[_]): String =
     clazz.getSimpleName.replace("$", "")
+
+  private def typeValueOf(clazz: Class[_]): String =
+    getJSONClass(clazz).typeHint.fold(defaultTypeValue(clazz))(_.value)
 
   private def typeFieldOf(clazz: Class[_]): String = {
     val fieldWithJSONTypeHint = clazz.getAnnotation(classOf[JSONTypeHintField])
