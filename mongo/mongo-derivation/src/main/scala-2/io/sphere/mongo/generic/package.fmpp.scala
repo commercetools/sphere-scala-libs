@@ -113,15 +113,13 @@ package object generic extends Logging {
   </#list>
 
 
-  /** Derives a `MongoFormat[T]` instance for some supertype `T`. The instance acts as a type-switch
-    * for the subtypes `A1` and `A2`, delegating to their respective MongoFormat instances based
-    * on a field that acts as a type hint. */
-  def mongoTypeSwitch[T: ClassTag, A1 <: T: ClassTag: MongoFormat, A2 <: T: ClassTag: MongoFormat](
-      selectors: List[TypeSelector[_]]): MongoFormat[T] with MongoTypeSelectorContainer = {
-    val allSelectors = typeSelector[A1]() :: typeSelector[A2]() :: selectors
+  /** Creates a `MongoFormat[T]` that switches on a type-hint field, delegating to the given subtype
+    * selectors' instances. */
+  def mongoTypeSwitch[T: ClassTag](selectors: List[TypeSelector[_]]): MongoFormat[T] with MongoTypeSelectorContainer = {
+    require(selectors.nonEmpty, "mongoTypeSwitch needs at least one subtype")
     val readMapBuilder = Map.newBuilder[String, TypeSelector[_]]
     val writeMapBuilder = Map.newBuilder[Class[_], TypeSelector[_]]
-    allSelectors.foreach { s =>
+    selectors.foreach { s =>
       readMapBuilder += (s.typeValue -> s)
       writeMapBuilder += (s.clazz -> s)
     }
@@ -157,21 +155,9 @@ package object generic extends Logging {
           }
           case None => new BasicDBObject(defaultTypeFieldName, defaultTypeValue(t.getClass))
         }
-      override def typeSelectors: List[TypeSelector[_]] = allSelectors
+      override def typeSelectors: List[TypeSelector[_]] = selectors
     }
   }
-
-  // special case with only one sub-type
-  def mongoTypeSwitch[T: ClassTag, A1 <: T: ClassTag: MongoFormat](selectors: List[TypeSelector[_]]): MongoFormat[T] =
-    mongoTypeSwitch[T, A1, A1](selectors)
-
-  <#list 3..126 as i>
-  <#assign typeParams><#list 1..i-1 as j>A${j}<#if i-1 != j>,</#if></#list></#assign>
-  <#assign implTypeParams><#list 1..i as j>A${j} <: T : MongoFormat : ClassTag<#if i !=j>,</#if></#list></#assign>
-  def mongoTypeSwitch[T: ClassTag, ${implTypeParams}](selectors: List[TypeSelector[_]]): MongoFormat[T] with MongoTypeSelectorContainer =
-    mongoTypeSwitch[T, ${typeParams}](typeSelector[A${i}]() :: selectors)
-  </#list>
-
 
   trait MongoTypeSelectorContainer {
     def typeSelectors: List[TypeSelector[_]]
@@ -271,11 +257,12 @@ package object generic extends Logging {
   private def findTypeValue(dbo: BSONObject, typeField: String): Option[String] =
     Option(dbo.get(typeField)).map(_.toString)
 
-  private def typeSelector[A: ClassTag: MongoFormat](): TypeSelector[_] = {
+  /** Builds the selector for the subtype `A` of a `mongoTypeSwitch`. */
+  def sub[A: ClassTag: MongoFormat]: TypeSelector[A] = {
     val clazz = classTag[A].runtimeClass
-    val (_, typeValue) = getMongoClassMeta(clazz).typeHint match {
-      case Some(hint) => (hint.field, hint.value)
-      case None => (defaultTypeFieldName, defaultTypeValue(clazz))
+    val typeValue = getMongoClassMeta(clazz).typeHint match {
+      case Some(hint) => hint.value
+      case None => defaultTypeValue(clazz)
     }
     new TypeSelector[A](typeValue, clazz)
   }

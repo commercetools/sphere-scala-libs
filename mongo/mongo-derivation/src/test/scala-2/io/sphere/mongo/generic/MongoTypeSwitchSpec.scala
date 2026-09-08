@@ -7,12 +7,13 @@ import org.bson.BSONObject
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
+// scala-2 only until the scala 3 side takes a selector list too; then it moves back to src/test/scala.
 class MongoTypeSwitchSpec extends AnyWordSpec with Matchers {
   import MongoTypeSwitchSpec._
 
   "mongoTypeSwitch" must {
     "derive a subset of a sealed trait" in {
-      val format = mongoTypeSwitch[A, B, C](Nil)
+      val format = mongoTypeSwitch[A](List(sub[B], sub[C]))
 
       val b = B(123)
       val bson = format.toMongoValue(b)
@@ -30,7 +31,7 @@ class MongoTypeSwitchSpec extends AnyWordSpec with Matchers {
     }
 
     "derive a subset of a sealed trait with a mongoKey" in {
-      val format = mongoTypeSwitch[A, B, D](Nil)
+      val format = mongoTypeSwitch[A](List(sub[B], sub[D]))
 
       val d = D(123)
       val bson = format.toMongoValue(d).asInstanceOf[BSONObject]
@@ -42,14 +43,14 @@ class MongoTypeSwitchSpec extends AnyWordSpec with Matchers {
     }
 
     "throw a descriptive error when the type field is missing" in {
-      val format = mongoTypeSwitch[A, B, C](Nil)
+      val format = mongoTypeSwitch[A](List(sub[B], sub[C]))
       val bson = dbObj("int" -> 1)
       val ex = intercept[Exception](format.fromMongoValue(bson))
       ex.getMessage must be("""Missing type field 'type' in DBObject '{"int": 1}'.""")
     }
 
     "throw a descriptive error for an unknown type field value" in {
-      val format = mongoTypeSwitch[A, B, C](Nil)
+      val format = mongoTypeSwitch[A](List(sub[B], sub[C]))
       val bson = dbObj("int" -> 1, "type" -> "Nope")
       val ex = intercept[Exception](format.fromMongoValue(bson))
       ex.getMessage must be(
