@@ -14,32 +14,26 @@ case class Field(
 case class TypeMetaData(
     scalaName: String,
     typeHintRaw: Option[String],
-    fields: Vector[Field],
-    typeDiscriminator: Option[String]
+    fields: Vector[Field]
 ) {
   val typeHint: Option[String] =
     typeHintRaw.filterNot(_.trim.isEmpty)
-
-  val serializedName: String = typeHint.getOrElse(scalaName)
 }
 
-/** This class also works for case classes not only traits, in case of case classes only the `top`
-  * field would be populated
-  */
 case class TraitMetaData(
-    top: TypeMetaData,
     typeHintFieldRaw: Option[String],
     subtypes: Map[String, TypeMetaData]
 ) {
-  def isTrait: Boolean = subtypes.nonEmpty
-
-  private val defaultTypeDiscriminatorName = "type"
   val typeDiscriminator: String =
-    typeHintFieldRaw.getOrElse(defaultTypeDiscriminatorName)
+    typeHintFieldRaw.getOrElse(TraitMetaData.defaultTypeDiscriminatorName)
 
   val serializedNamesOfSubTypes: Map[String, String] = subtypes.map { case (scalaName, classMeta) =>
     scalaName -> classMeta.typeHint.getOrElse(scalaName)
   }
+}
+
+object TraitMetaData {
+  val defaultTypeDiscriminatorName = "type"
 }
 
 class AnnotationReader(using q: Quotes)(
@@ -64,35 +58,53 @@ class AnnotationReader(using q: Quotes)(
   private def typeMetaDataForEnumObjects(sym: Symbol): Expr[TypeMetaData] = {
     val name = Expr(sym.name)
     val typeHint = collectFirstAnnotation(sym, findTypeHint)
-    val typeHintField = collectFirstAnnotation(sym, findTypeHintField)
 
     '{
       TypeMetaData(
         scalaName = $name,
         typeHintRaw = $typeHint,
-        fields = Vector.empty,
-        typeDiscriminator = $typeHintField
+        fields = Vector.empty
       )
     }
+  }
+
+  private def scalaName(sym: Symbol): String =
+    if (sym.flags.is(Flags.Case) && sym.flags.is(Flags.Module)) sym.name.stripSuffix("$")
+    else sym.name
+
+  /** The `serializedName` of `T`, without building the rest of its metadata. Cheap enough to expand
+    * once per subtype of a type switch, which reading the whole `TraitMetaData` is not.
+    */
+  def readSerializedName[T: Type]: Expr[String] = {
+    val sym = TypeRepr.of[T].typeSymbol
+    val name = Expr(scalaName(sym))
+    sym.annotations.flatMap(findTypeHint).headOption match {
+      case Some(hint) => '{ if ($hint.trim.isEmpty) $name else $hint }
+      case None => name
+    }
+  }
+
+  /** The `typeDiscriminator` of `T`, without building the rest of its metadata. */
+  def readTypeDiscriminator[T: Type]: Expr[String] = {
+    val sym = TypeRepr.of[T].typeSymbol
+    checkSubtypeDiscriminators(sym)
+    sym.annotations
+      .flatMap(findTypeHintField)
+      .headOption
+      .getOrElse(Expr(TraitMetaData.defaultTypeDiscriminatorName))
   }
 
   private def typeMetaData(sym: Symbol): Expr[TypeMetaData] = {
     val caseParams = sym.primaryConstructor.paramSymss.take(1).flatten
     val fields = Varargs(caseParams.zipWithIndex.map(collectFieldInfo(sym.companionModule)))
-    val name =
-      if (sym.flags.is(Flags.Case) && sym.flags.is(Flags.Module))
-        Expr(sym.name.stripSuffix("$"))
-      else
-        Expr(sym.name)
+    val name = Expr(scalaName(sym))
     val typeHint = collectFirstAnnotation(sym, findTypeHint)
-    val typeHintField = collectFirstAnnotation(sym, findTypeHintField)
 
     '{
       TypeMetaData(
         scalaName = $name,
         typeHintRaw = $typeHint,
-        fields = Vector($fields*),
-        typeDiscriminator = $typeHintField
+        fields = Vector($fields*)
       )
     }
   }
@@ -139,11 +151,9 @@ class AnnotationReader(using q: Quotes)(
         case _ => None
       }
 
-  def readTraitMetaData[T: Type]: Expr[TraitMetaData] = {
-    val sym = TypeRepr.of[T].typeSymbol
-    val typeHintField = collectFirstAnnotation(sym, findTypeHintField)
-
-    val traitDiscriminator = typeHintFieldConstant(sym).getOrElse("type")
+  private def checkSubtypeDiscriminators(sym: Symbol): Unit = {
+    val traitDiscriminator =
+      typeHintFieldConstant(sym).getOrElse(TraitMetaData.defaultTypeDiscriminatorName)
     sym.children.foreach { child =>
       typeHintFieldConstant(child).foreach { childDiscriminator =>
         if (childDiscriminator != traitDiscriminator)
@@ -152,12 +162,18 @@ class AnnotationReader(using q: Quotes)(
               s"('$childDiscriminator') than its super type '${sym.name}' ('$traitDiscriminator').")
       }
     }
+  }
+
+  def readTraitMetaData[T: Type]: Expr[TraitMetaData] = {
+    val sym = TypeRepr.of[T].typeSymbol
+    val typeHintField = collectFirstAnnotation(sym, findTypeHintField)
+
+    checkSubtypeDiscriminators(sym)
 
     val subTypeAnnots = subtypeAnnotations(sym)
 
     '{
       TraitMetaData(
-        top = ${ typeMetaData(sym) },
         typeHintFieldRaw = $typeHintField,
         subtypes = $subTypeAnnots
       )

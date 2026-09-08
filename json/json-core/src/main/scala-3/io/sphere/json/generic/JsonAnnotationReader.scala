@@ -9,11 +9,21 @@ object AnnotationReader {
 
   inline def readTraitMetaData[T]: TraitMetaData = ${ readTraitMetaDataImpl[T] }
 
+  inline def readSerializedName[T]: String = ${ readSerializedNameImpl[T] }
+
+  inline def readTypeDiscriminator[T]: String = ${ readTypeDiscriminatorImpl[T] }
+
   private def readTypeMetaDataImpl[T: Type](using Quotes): Expr[TypeMetaData] =
     JsonAnnotationReader().readTypeMetaData[T]
 
   private def readTraitMetaDataImpl[T: Type](using Quotes): Expr[TraitMetaData] =
     JsonAnnotationReader().readTraitMetaData[T]
+
+  private def readSerializedNameImpl[T: Type](using Quotes): Expr[String] =
+    JsonAnnotationReader().readSerializedName[T]
+
+  private def readTypeDiscriminatorImpl[T: Type](using Quotes): Expr[String] =
+    JsonAnnotationReader().readTypeDiscriminator[T]
 }
 
 class JsonAnnotationReader(using q: Quotes) {
@@ -41,4 +51,6 @@ class JsonAnnotationReader(using q: Quotes) {
 
   export annotationReader.readTypeMetaData
   export annotationReader.readTraitMetaData
+  export annotationReader.readSerializedName
+  export annotationReader.readTypeDiscriminator
 }

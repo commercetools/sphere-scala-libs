@@ -7,15 +7,15 @@ import org.scalatest.wordspec.AnyWordSpec
 
 /** A sealed trait far wider than either version used to support: Scala 2 was capped at ~125
   * subtypes by the JVM method-parameter limit (each subtype was a type parameter carrying two
-  * implicit params), Scala 3 at ~25 by `-Xmax-inlines`. Both caps went away when the subtypes moved
-  * from type parameters to a value-level selector list, and this spec is what keeps them away - if
-  * either ceiling comes back, this stops compiling.
+  * implicit params), Scala 3 at ~25 by `-Xmax-inlines` and then at ~52 by the JVM's 64KB method
+  * limit, because `sub` expanded its whole body into the calling method. Both caps went away - the
+  * subtypes moved from type parameters to a value-level selector list, and a Scala 3 `sub[A]` now
+  * expands to little more than the summons plus one call (~49 bytes, so ~1300 per method). This
+  * spec is what keeps them away: if either ceiling comes back, it stops compiling.
   *
-  * The structure is not arbitrary. Scala 3's `sub` is `inline`, so it expands into its calling
-  * method and the binding limit is now the JVM's 64KB per method - measured at ~52 `sub` calls.
-  * Hence the selectors are built in chunks of 25. Each subtype's instance also lives in its own
-  * companion, so the 200 `deriveJSON` expansions land in 200 tiny class initialisers instead of one
-  * huge one; Scala 2 needs those companions regardless, having no automatic derivation.
+  * Each subtype's instance lives in its own companion, so the 200 `deriveJSON` expansions land in
+  * 200 tiny class initialisers instead of one huge one; Scala 2 needs those companions regardless,
+  * having no automatic derivation.
   */
 class WideTypeSwitchSpec extends AnyWordSpec with Matchers {
   import WideTypeSwitchSpec._
@@ -437,231 +437,211 @@ object WideTypeSwitchSpec {
   object C200 { implicit val json: JSON[C200] = deriveJSON[C200] }
   // format: on
 
-  private def subs1 = List(
-    sub[C1],
-    sub[C2],
-    sub[C3],
-    sub[C4],
-    sub[C5],
-    sub[C6],
-    sub[C7],
-    sub[C8],
-    sub[C9],
-    sub[C10],
-    sub[C11],
-    sub[C12],
-    sub[C13],
-    sub[C14],
-    sub[C15],
-    sub[C16],
-    sub[C17],
-    sub[C18],
-    sub[C19],
-    sub[C20],
-    sub[C21],
-    sub[C22],
-    sub[C23],
-    sub[C24],
-    sub[C25]
-  )
+  val json: JSON[Wide] = jsonTypeSwitch[Wide](
+    List(
+      sub[C1],
+      sub[C2],
+      sub[C3],
+      sub[C4],
+      sub[C5],
+      sub[C6],
+      sub[C7],
+      sub[C8],
+      sub[C9],
+      sub[C10],
+      sub[C11],
+      sub[C12],
+      sub[C13],
+      sub[C14],
+      sub[C15],
+      sub[C16],
+      sub[C17],
+      sub[C18],
+      sub[C19],
+      sub[C20],
+      sub[C21],
+      sub[C22],
+      sub[C23],
+      sub[C24],
+      sub[C25],
+      sub[C26],
+      sub[C27],
+      sub[C28],
+      sub[C29],
+      sub[C30],
+      sub[C31],
+      sub[C32],
+      sub[C33],
+      sub[C34],
+      sub[C35],
+      sub[C36],
+      sub[C37],
+      sub[C38],
+      sub[C39],
+      sub[C40],
+      sub[C41],
+      sub[C42],
+      sub[C43],
+      sub[C44],
+      sub[C45],
+      sub[C46],
+      sub[C47],
+      sub[C48],
+      sub[C49],
+      sub[C50],
+      sub[C51],
+      sub[C52],
+      sub[C53],
+      sub[C54],
+      sub[C55],
+      sub[C56],
+      sub[C57],
+      sub[C58],
+      sub[C59],
+      sub[C60],
+      sub[C61],
+      sub[C62],
+      sub[C63],
+      sub[C64],
+      sub[C65],
+      sub[C66],
+      sub[C67],
+      sub[C68],
+      sub[C69],
+      sub[C70],
+      sub[C71],
+      sub[C72],
+      sub[C73],
+      sub[C74],
+      sub[C75],
+      sub[C76],
+      sub[C77],
+      sub[C78],
+      sub[C79],
+      sub[C80],
+      sub[C81],
+      sub[C82],
+      sub[C83],
+      sub[C84],
+      sub[C85],
+      sub[C86],
+      sub[C87],
+      sub[C88],
+      sub[C89],
+      sub[C90],
+      sub[C91],
+      sub[C92],
+      sub[C93],
+      sub[C94],
+      sub[C95],
+      sub[C96],
+      sub[C97],
+      sub[C98],
+      sub[C99],
+      sub[C100],
+      sub[C101],
+      sub[C102],
+      sub[C103],
+      sub[C104],
+      sub[C105],
+      sub[C106],
+      sub[C107],
+      sub[C108],
+      sub[C109],
+      sub[C110],
+      sub[C111],
+      sub[C112],
+      sub[C113],
+      sub[C114],
+      sub[C115],
+      sub[C116],
+      sub[C117],
+      sub[C118],
+      sub[C119],
+      sub[C120],
+      sub[C121],
+      sub[C122],
+      sub[C123],
+      sub[C124],
+      sub[C125],
+      sub[C126],
+      sub[C127],
+      sub[C128],
+      sub[C129],
+      sub[C130],
+      sub[C131],
+      sub[C132],
+      sub[C133],
+      sub[C134],
+      sub[C135],
+      sub[C136],
+      sub[C137],
+      sub[C138],
+      sub[C139],
+      sub[C140],
+      sub[C141],
+      sub[C142],
+      sub[C143],
+      sub[C144],
+      sub[C145],
+      sub[C146],
+      sub[C147],
+      sub[C148],
+      sub[C149],
+      sub[C150],
+      sub[C151],
+      sub[C152],
+      sub[C153],
+      sub[C154],
+      sub[C155],
+      sub[C156],
+      sub[C157],
+      sub[C158],
+      sub[C159],
+      sub[C160],
+      sub[C161],
+      sub[C162],
+      sub[C163],
+      sub[C164],
+      sub[C165],
+      sub[C166],
+      sub[C167],
+      sub[C168],
+      sub[C169],
+      sub[C170],
+      sub[C171],
+      sub[C172],
+      sub[C173],
+      sub[C174],
+      sub[C175],
+      sub[C176],
+      sub[C177],
+      sub[C178],
+      sub[C179],
+      sub[C180],
+      sub[C181],
+      sub[C182],
+      sub[C183],
+      sub[C184],
+      sub[C185],
+      sub[C186],
+      sub[C187],
+      sub[C188],
+      sub[C189],
+      sub[C190],
+      sub[C191],
+      sub[C192],
+      sub[C193],
+      sub[C194],
+      sub[C195],
+      sub[C196],
+      sub[C197],
+      sub[C198],
+      sub[C199],
+      sub[C200]
+    ))
 
-  private def subs2 = List(
-    sub[C26],
-    sub[C27],
-    sub[C28],
-    sub[C29],
-    sub[C30],
-    sub[C31],
-    sub[C32],
-    sub[C33],
-    sub[C34],
-    sub[C35],
-    sub[C36],
-    sub[C37],
-    sub[C38],
-    sub[C39],
-    sub[C40],
-    sub[C41],
-    sub[C42],
-    sub[C43],
-    sub[C44],
-    sub[C45],
-    sub[C46],
-    sub[C47],
-    sub[C48],
-    sub[C49],
-    sub[C50]
-  )
-
-  private def subs3 = List(
-    sub[C51],
-    sub[C52],
-    sub[C53],
-    sub[C54],
-    sub[C55],
-    sub[C56],
-    sub[C57],
-    sub[C58],
-    sub[C59],
-    sub[C60],
-    sub[C61],
-    sub[C62],
-    sub[C63],
-    sub[C64],
-    sub[C65],
-    sub[C66],
-    sub[C67],
-    sub[C68],
-    sub[C69],
-    sub[C70],
-    sub[C71],
-    sub[C72],
-    sub[C73],
-    sub[C74],
-    sub[C75]
-  )
-
-  private def subs4 = List(
-    sub[C76],
-    sub[C77],
-    sub[C78],
-    sub[C79],
-    sub[C80],
-    sub[C81],
-    sub[C82],
-    sub[C83],
-    sub[C84],
-    sub[C85],
-    sub[C86],
-    sub[C87],
-    sub[C88],
-    sub[C89],
-    sub[C90],
-    sub[C91],
-    sub[C92],
-    sub[C93],
-    sub[C94],
-    sub[C95],
-    sub[C96],
-    sub[C97],
-    sub[C98],
-    sub[C99],
-    sub[C100]
-  )
-
-  private def subs5 = List(
-    sub[C101],
-    sub[C102],
-    sub[C103],
-    sub[C104],
-    sub[C105],
-    sub[C106],
-    sub[C107],
-    sub[C108],
-    sub[C109],
-    sub[C110],
-    sub[C111],
-    sub[C112],
-    sub[C113],
-    sub[C114],
-    sub[C115],
-    sub[C116],
-    sub[C117],
-    sub[C118],
-    sub[C119],
-    sub[C120],
-    sub[C121],
-    sub[C122],
-    sub[C123],
-    sub[C124],
-    sub[C125]
-  )
-
-  private def subs6 = List(
-    sub[C126],
-    sub[C127],
-    sub[C128],
-    sub[C129],
-    sub[C130],
-    sub[C131],
-    sub[C132],
-    sub[C133],
-    sub[C134],
-    sub[C135],
-    sub[C136],
-    sub[C137],
-    sub[C138],
-    sub[C139],
-    sub[C140],
-    sub[C141],
-    sub[C142],
-    sub[C143],
-    sub[C144],
-    sub[C145],
-    sub[C146],
-    sub[C147],
-    sub[C148],
-    sub[C149],
-    sub[C150]
-  )
-
-  private def subs7 = List(
-    sub[C151],
-    sub[C152],
-    sub[C153],
-    sub[C154],
-    sub[C155],
-    sub[C156],
-    sub[C157],
-    sub[C158],
-    sub[C159],
-    sub[C160],
-    sub[C161],
-    sub[C162],
-    sub[C163],
-    sub[C164],
-    sub[C165],
-    sub[C166],
-    sub[C167],
-    sub[C168],
-    sub[C169],
-    sub[C170],
-    sub[C171],
-    sub[C172],
-    sub[C173],
-    sub[C174],
-    sub[C175]
-  )
-
-  private def subs8 = List(
-    sub[C176],
-    sub[C177],
-    sub[C178],
-    sub[C179],
-    sub[C180],
-    sub[C181],
-    sub[C182],
-    sub[C183],
-    sub[C184],
-    sub[C185],
-    sub[C186],
-    sub[C187],
-    sub[C188],
-    sub[C189],
-    sub[C190],
-    sub[C191],
-    sub[C192],
-    sub[C193],
-    sub[C194],
-    sub[C195],
-    sub[C196],
-    sub[C197],
-    sub[C198],
-    sub[C199],
-    sub[C200]
-  )
-
-  private def values1: List[Wide] = List(
+  val values: List[Wide] = List(
     C1(1),
     C2(2),
     C3(3),
@@ -686,10 +666,7 @@ object WideTypeSwitchSpec {
     C22(22),
     C23(23),
     C24(24),
-    C25(25)
-  )
-
-  private def values2: List[Wide] = List(
+    C25(25),
     C26(26),
     C27(27),
     C28(28),
@@ -714,10 +691,7 @@ object WideTypeSwitchSpec {
     C47(47),
     C48(48),
     C49(49),
-    C50(50)
-  )
-
-  private def values3: List[Wide] = List(
+    C50(50),
     C51(51),
     C52(52),
     C53(53),
@@ -742,10 +716,7 @@ object WideTypeSwitchSpec {
     C72(72),
     C73(73),
     C74(74),
-    C75(75)
-  )
-
-  private def values4: List[Wide] = List(
+    C75(75),
     C76(76),
     C77(77),
     C78(78),
@@ -770,10 +741,7 @@ object WideTypeSwitchSpec {
     C97(97),
     C98(98),
     C99(99),
-    C100(100)
-  )
-
-  private def values5: List[Wide] = List(
+    C100(100),
     C101(101),
     C102(102),
     C103(103),
@@ -798,10 +766,7 @@ object WideTypeSwitchSpec {
     C122(122),
     C123(123),
     C124(124),
-    C125(125)
-  )
-
-  private def values6: List[Wide] = List(
+    C125(125),
     C126(126),
     C127(127),
     C128(128),
@@ -826,10 +791,7 @@ object WideTypeSwitchSpec {
     C147(147),
     C148(148),
     C149(149),
-    C150(150)
-  )
-
-  private def values7: List[Wide] = List(
+    C150(150),
     C151(151),
     C152(152),
     C153(153),
@@ -854,10 +816,7 @@ object WideTypeSwitchSpec {
     C172(172),
     C173(173),
     C174(174),
-    C175(175)
-  )
-
-  private def values8: List[Wide] = List(
+    C175(175),
     C176(176),
     C177(177),
     C178(178),
@@ -884,12 +843,4 @@ object WideTypeSwitchSpec {
     C199(199),
     C200(200)
   )
-
-  val values: List[Wide] =
-    values1 ::: values2 ::: values3 ::: values4 ::: values5 ::: values6 ::: values7 ::: values8
-
-  val json: JSON[Wide] =
-    jsonTypeSwitch[Wide](
-      subs1 ::: subs2 ::: subs3 ::: subs4 ::: subs5 ::: subs6 ::: subs7 ::: subs8
-    )
 }

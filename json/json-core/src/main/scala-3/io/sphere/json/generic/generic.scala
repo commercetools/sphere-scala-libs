@@ -2,6 +2,7 @@ package io.sphere.json.generic
 
 import io.sphere.json.*
 import io.sphere.json.generic.JSONTypeSwitch.{FromFormatters, ToFormatters}
+import io.sphere.util.TraitMetaData
 import org.json4s.JsonAST.JValue
 
 import scala.compiletime.summonInline
@@ -40,49 +41,73 @@ trait TypeSelectorContainer {
   def typeSelectors: List[TypeSelector[?]]
 }
 
-/** Builds the selector for the subtype `A` of a `jsonTypeSwitch`. */
+/** Builds the selector for the subtype `A` of a `jsonTypeSwitch`.
+  *
+  * The three `sub*` methods are inline only to summon `A`'s instances and read its serialized name;
+  * all the work happens in the plain `*Selector` defs below. That keeps what a `sub[A]` adds to its
+  * call site down to a handful of instructions, so a list of hundreds of subtypes — or a `derived`
+  * for a sealed trait with hundreds of children — stays well under the JVM's 64KB method limit.
+  */
 inline def sub[A]: TypeSelector[A] =
-  TypeSelector(subTo[A].toFormatters, subFrom[A].fromFormatters)
+  selector(
+    AnnotationReader.readSerializedName[A],
+    summonInline[ClassTag[A]],
+    summonInline[ToJSON[A]],
+    summonInline[FromJSON[A]])
 
 /** Builds the write-side selector for the subtype `A` of a `toJsonTypeSwitch`. */
-inline def subTo[A]: TypeSelectorToJSON[A] = {
-  val traitMetaData = AnnotationReader.readTraitMetaData[A]
-  val formatter = summonInline[ToJSON[A]].asInstanceOf[ToJSON[Any]]
-
-  val (formatterByClass, serializedNamesByClass) =
-    if (traitMetaData.isTrait)
-      (formatter.toFormatters.formatterByClass, formatter.toFormatters.serializedNamesByClass)
-    else {
-      val clazz = summonInline[ClassTag[A]].runtimeClass
-      (Map(clazz -> formatter), Map(clazz -> traitMetaData.top.serializedName))
-    }
-
-  TypeSelectorToJSON(
-    ToFormatters(
-      serializedNamesByClass = serializedNamesByClass,
-      formatterByClass = formatterByClass,
-      typeDiscriminator = traitMetaData.typeDiscriminator
-    ))
-}
+inline def subTo[A]: TypeSelectorToJSON[A] =
+  toSelector(
+    AnnotationReader.readSerializedName[A],
+    summonInline[ClassTag[A]],
+    summonInline[ToJSON[A]])
 
 /** Builds the read-side selector for the subtype `A` of a `fromJsonTypeSwitch`. */
-inline def subFrom[A]: TypeSelectorFromJSON[A] = {
-  val traitMetaData = AnnotationReader.readTraitMetaData[A]
-  val formatter = summonInline[FromJSON[A]].asInstanceOf[FromJSON[Any]]
+inline def subFrom[A]: TypeSelectorFromJSON[A] =
+  fromSelector(AnnotationReader.readSerializedName[A], summonInline[FromJSON[A]])
 
-  val (formatterBySerializedName, serializedNames) =
-    if (traitMetaData.isTrait)
-      (formatter.fromFormatters.formatterBySerializedName, formatter.fromFormatters.serializedNames)
-    else
-      (Map(traitMetaData.top.serializedName -> formatter), Vector(traitMetaData.top.serializedName))
+private def selector[A](
+    serializedName: String,
+    classTag: ClassTag[A],
+    toJson: ToJSON[A],
+    fromJson: FromJSON[A]): TypeSelector[A] =
+  TypeSelector(
+    toSelector(serializedName, classTag, toJson).toFormatters,
+    fromSelector(serializedName, fromJson).fromFormatters)
 
+private def toSelector[A](
+    serializedName: String,
+    classTag: ClassTag[A],
+    formatter: ToJSON[A]): TypeSelectorToJSON[A] =
+  TypeSelectorToJSON(
+    // A non-null `toFormatters` means `A` is a trait: it brings its own switch's whole subtype
+    // table, and must not be added as a single class itself.
+    if (formatter.toFormatters != null) formatter.toFormatters
+    else {
+      val clazz = classTag.runtimeClass
+      ToFormatters(
+        serializedNamesByClass = Map(clazz -> serializedName),
+        formatterByClass = Map(clazz -> formatter.asInstanceOf[ToJSON[Any]]),
+        typeDiscriminator = overwrittenByTheSwitch
+      )
+    })
+
+private def fromSelector[A](
+    serializedName: String,
+    formatter: FromJSON[A]): TypeSelectorFromJSON[A] =
   TypeSelectorFromJSON(
-    FromFormatters(
-      serializedNames = serializedNames,
-      formatterBySerializedName = formatterBySerializedName,
-      typeDiscriminator = traitMetaData.typeDiscriminator
-    ))
-}
+    if (formatter.fromFormatters != null) formatter.fromFormatters
+    else
+      FromFormatters(
+        serializedNames = Vector(serializedName),
+        formatterBySerializedName = Map(serializedName -> formatter.asInstanceOf[FromJSON[Any]]),
+        typeDiscriminator = overwrittenByTheSwitch
+      ))
+
+/** A selector never decides the type discriminator — the switch stamps the top-level type's one on
+  * the merged formatters, so whatever a selector carries is dropped.
+  */
+private val overwrittenByTheSwitch = TraitMetaData.defaultTypeDiscriminatorName
 
 /** Creates a `JSON[T]` instance for some supertype `T`. The instance acts as a type-switch for the
   * given subtype selectors, delegating to their respective JSON instances based on a field that
@@ -91,7 +116,7 @@ inline def subFrom[A]: TypeSelectorFromJSON[A] = {
 inline def jsonTypeSwitch[T](
     selectors: List[TypeSelector[?]]): JSON[T] with TypeSelectorContainer = {
   require(selectors.nonEmpty, "jsonTypeSwitch needs at least one subtype")
-  val discriminator = AnnotationReader.readTraitMetaData[T].typeDiscriminator
+  val discriminator = AnnotationReader.readTypeDiscriminator[T]
   typeSwitchInstance[T](selectors, discriminator)
 }
 
@@ -119,13 +144,13 @@ private def typeSwitchInstance[T](
 
 inline def toJsonTypeSwitch[T](selectors: List[TypeSelectorToJSON[?]]): ToJSON[T] = {
   require(selectors.nonEmpty, "toJsonTypeSwitch needs at least one subtype")
-  val discriminator = AnnotationReader.readTraitMetaData[T].typeDiscriminator
+  val discriminator = AnnotationReader.readTypeDiscriminator[T]
   JSONTypeSwitch.toJsonTypeSwitch[T](mergeTo(selectors.map(_.toFormatters), discriminator))
 }
 
 inline def fromJsonTypeSwitch[T](selectors: List[TypeSelectorFromJSON[?]]): FromJSON[T] = {
   require(selectors.nonEmpty, "fromJsonTypeSwitch needs at least one subtype")
-  val discriminator = AnnotationReader.readTraitMetaData[T].typeDiscriminator
+  val discriminator = AnnotationReader.readTypeDiscriminator[T]
   JSONTypeSwitch.fromJsonTypeSwitch[T](mergeFrom(selectors.map(_.fromFormatters), discriminator))
 }
 
