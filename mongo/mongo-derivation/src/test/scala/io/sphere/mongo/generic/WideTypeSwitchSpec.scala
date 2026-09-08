@@ -5,14 +5,12 @@ import io.sphere.mongo.format.MongoFormat
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-/** A sealed trait far wider than `mongoTypeSwitch` used to support: the generated overloads capped
-  * it at ~125 subtypes via the JVM method-parameter limit. If that ceiling comes back, this stops
-  * compiling.
+/** A sealed trait far wider than `mongoTypeSwitch` used to support: Scala 2 was capped at ~125
+  * subtypes by the JVM method-parameter limit, Scala 3 at 8 by the generated overloads. If either
+  * ceiling comes back, this stops compiling.
   *
   * Each subtype's instance lives in its own companion, so the derivations land in 200 tiny class
   * initialisers instead of one huge one.
-  *
-  * scala-2 only until the scala 3 side takes a selector list too.
   */
 class WideTypeSwitchSpec extends AnyWordSpec with Matchers {
   import WideTypeSwitchSpec._
@@ -20,6 +18,11 @@ class WideTypeSwitchSpec extends AnyWordSpec with Matchers {
   "mongoTypeSwitch" must {
     s"round-trip all ${values.size} subtypes" in
       values.foreach(v => mongo.fromMongoValue(mongo.toMongoValue(v)) must be(v))
+  }
+
+  "deriveMongoFormat" must {
+    s"round-trip all ${values.size} subtypes" in
+      values.foreach(v => derived.fromMongoValue(derived.toMongoValue(v)) must be(v))
   }
 }
 
@@ -631,6 +634,8 @@ object WideTypeSwitchSpec {
       sub[C199],
       sub[C200]
     ))
+
+  val derived: MongoFormat[Wide] = deriveMongoFormat[Wide]
 
   val values: List[Wide] = List(
     C1(1),

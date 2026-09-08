@@ -1,20 +1,25 @@
 package io.sphere.mongo.generic
 
-import io.sphere.util.{AnnotationReader, TraitMetaData, TypeMetaData}
+import io.sphere.util.{AnnotationReader, TypeMetaData}
 
 import scala.quoted.{Expr, Quotes, Type}
 
 object MongoAnnotationReader {
 
-  inline def readTraitMetaData[T]: TraitMetaData = ${ readTraitMetaDataImpl[T] }
-
   inline def readTypeMetaData[T]: TypeMetaData = ${ readTypeMetaDataImpl[T] }
+
+  inline def readSerializedName[T]: String = ${ readSerializedNameImpl[T] }
+
+  inline def readTypeDiscriminator[T]: String = ${ readTypeDiscriminatorImpl[T] }
 
   private def readTypeMetaDataImpl[T: Type](using Quotes): Expr[TypeMetaData] =
     MongoAnnotationReader().readTypeMetaData[T]
 
-  private def readTraitMetaDataImpl[T: Type](using Quotes): Expr[TraitMetaData] =
-    MongoAnnotationReader().readTraitMetaData[T]
+  private def readSerializedNameImpl[T: Type](using Quotes): Expr[String] =
+    MongoAnnotationReader().readSerializedName[T]
+
+  private def readTypeDiscriminatorImpl[T: Type](using Quotes): Expr[String] =
+    MongoAnnotationReader().readTypeDiscriminator[T]
 }
 
 class MongoAnnotationReader(using q: Quotes) {
@@ -41,7 +46,8 @@ class MongoAnnotationReader(using q: Quotes) {
 
   private val annotationReader =
     new AnnotationReader(embeddedExists, ignoredExists, findKey, findTypeHint, findTypeHintField)
-  export annotationReader.readTraitMetaData
   export annotationReader.readTypeMetaData
+  export annotationReader.readSerializedName
+  export annotationReader.readTypeDiscriminator
 
 }

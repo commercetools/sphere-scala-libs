@@ -7,7 +7,6 @@ import org.bson.BSONObject
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-// scala-2 only until the scala 3 side takes a selector list too; then it moves back to src/test/scala.
 class MongoTypeSwitchSpec extends AnyWordSpec with Matchers {
   import MongoTypeSwitchSpec._
 
@@ -42,6 +41,14 @@ class MongoTypeSwitchSpec extends AnyWordSpec with Matchers {
 
     }
 
+    "honour a @MongoTypeHint on a subtype that is not a direct child" in {
+      val format = mongoTypeSwitch[Top](List(sub[Leaf]))
+
+      val bson = format.toMongoValue(Leaf(1)).asInstanceOf[BSONObject]
+      bson.get("type") must be("LeafHint")
+      format.fromMongoValue(bson) must be(Leaf(1))
+    }
+
     "throw a descriptive error when the type field is missing" in {
       val format = mongoTypeSwitch[A](List(sub[B], sub[C]))
       val bson = dbObj("int" -> 1)
@@ -72,5 +79,12 @@ object MongoTypeSwitchSpec {
   @MongoTypeHint("D2") case class D(int: Int) extends A
   object D {
     implicit val mongo: MongoFormat[D] = deriveMongoFormat
+  }
+
+  sealed trait Top
+  sealed trait Mid extends Top
+  @MongoTypeHint("LeafHint") case class Leaf(int: Int) extends Mid
+  object Leaf {
+    implicit val mongo: MongoFormat[Leaf] = deriveMongoFormat
   }
 }

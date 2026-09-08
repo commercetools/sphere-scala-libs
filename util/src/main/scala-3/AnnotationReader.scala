@@ -74,7 +74,12 @@ class AnnotationReader(using q: Quotes)(
 
   /** The `serializedName` of `T` alone — cheap enough to expand once per subtype of a switch. */
   def readSerializedName[T: Type]: Expr[String] = {
-    val sym = TypeRepr.of[T].typeSymbol
+    val tpe = TypeRepr.of[T]
+    // An enum value carries its annotations on the term symbol, as in `readTypeMetaData`.
+    val sym =
+      if (tpe.termSymbol.flags.is(Flags.Enum) && tpe.typeSymbol.flags.is(Flags.Enum))
+        tpe.termSymbol
+      else tpe.typeSymbol
     val name = Expr(scalaName(sym))
     sym.annotations.flatMap(findTypeHint).headOption match {
       case Some(hint) => '{ if ($hint.trim.isEmpty) $name else $hint }

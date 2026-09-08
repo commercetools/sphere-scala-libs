@@ -1,7 +1,7 @@
 package io.sphere.mongo.format
 
 import com.mongodb.BasicDBObject
-import io.sphere.mongo.generic.{MongoAnnotationReader, mongoTypeSwitch}
+import io.sphere.mongo.generic.{MongoAnnotationReader, TypeSelector, mongoTypeSwitch, subsOf}
 import io.sphere.util.Field
 import org.bson.BSONObject
 import org.bson.types.ObjectId
@@ -34,22 +34,7 @@ trait MongoFormat[A] extends Serializable {
   * easier
   */
 trait TraitMongoFormat[A] extends MongoFormat[A] {
-  val readFormatters: Map[String, MongoFormat[A]]
-  val writeFormatters: Map[Class[_], MongoFormat[A]]
-}
-
-object TraitMongoFormat {
-
-  def instance[A](
-      fromMongo: Any => A,
-      toMongo: A => Any,
-      readFormattersPassedToParent: Map[String, MongoFormat[A]],
-      writeFormattersPassedToParent: Map[Class[_], MongoFormat[A]]): TraitMongoFormat[A] = new {
-    override def toMongoValue(a: A): Any = toMongo(a)
-    override def fromMongoValue(mongoType: Any): A = fromMongo(mongoType)
-    override val readFormatters: Map[String, MongoFormat[A]] = readFormattersPassedToParent
-    override val writeFormatters: Map[Class[_], MongoFormat[A]] = writeFormattersPassedToParent
-  }
+  val typeSelector: TypeSelector[A]
 }
 
 object MongoFormat {
@@ -73,7 +58,7 @@ object MongoFormat {
 
     inline def derived[A](using m: Mirror.Of[A]): MongoFormat[A] =
       inline m match {
-        case s: Mirror.SumOf[A] => mongoTypeSwitch[A, s.MirroredElemTypes]
+        case s: Mirror.SumOf[A] => mongoTypeSwitch[A](subsOf[s.MirroredElemTypes])
         case p: Mirror.ProductOf[A] => deriveCaseClass(p)
       }
 
