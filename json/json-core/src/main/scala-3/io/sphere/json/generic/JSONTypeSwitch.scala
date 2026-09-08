@@ -55,8 +55,7 @@ object JSONTypeSwitch {
       typeDiscriminator: String
   )
   object ToFormatters {
-    // The type discriminator is not merged: the switch stamps the top-level type's one
-    // afterwards, because `reduce` skips `merge` entirely for a single subtype.
+    // The discriminator is not merged — the switch stamps `T`'s one afterwards.
     def merge(f1: ToFormatters, f2: ToFormatters): ToFormatters =
       ToFormatters(
         serializedNamesByClass = f1.serializedNamesByClass ++ f2.serializedNamesByClass,

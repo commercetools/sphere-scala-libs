@@ -302,9 +302,8 @@ package object generic extends Logging {
     }
   }
 
-  /** Creates a `ToJSON[T]` instance for some supertype `T`. The instance acts as a type-switch
-    * for the given subtype selectors, delegating to their respective JSON instances based
-    * on a field that acts as a type hint. */
+  /** Creates a `ToJSON[T]` that switches on a type-hint field, delegating to the given subtype
+    * selectors' instances. */
   def toJsonTypeSwitch[T: ClassTag](selectors: List[TypeSelectorToJSON[_]]): ToJSON[T] with TypeSelectorToJSONContainer = {
     require(selectors.nonEmpty, "toJsonTypeSwitch needs at least one subtype")
     val allSelectors = selectors.flatMap(s => s.serializer match {
@@ -320,8 +319,7 @@ package object generic extends Logging {
 
     val writeMap = writeMapBuilder.result()
 
-    // The type hint field name always comes from the top-level type, never from a subtype,
-    // so that it matches what fromJsonTypeSwitch reads.
+    // Always from the top-level type, so that it matches what fromJsonTypeSwitch reads.
     val typeField = typeFieldOf(classTag[T].runtimeClass)
 
     new ToJSON[T] with TypeSelectorToJSONContainer {
@@ -340,9 +338,8 @@ package object generic extends Logging {
     }
   }
 
-  /** Creates a `FromJSON[T]` instance for some supertype `T`. The instance acts as a type-switch
-    * for the subtypes `A1` and `A2`, delegating to their respective JSON instances based
-    * on a field that acts as a type hint. */
+  /** Creates a `FromJSON[T]` that switches on a type-hint field, delegating to the given subtype
+    * selectors' instances. */
   def fromJsonTypeSwitch[T: ClassTag](selectors: List[TypeSelectorFromJSON[_]]): FromJSON[T] with TypeSelectorFromJSONContainer = {
     require(selectors.nonEmpty, "fromJsonTypeSwitch needs at least one subtype")
     val allSelectors = selectors.flatMap(s => s.jsonr match {
@@ -376,9 +373,8 @@ package object generic extends Logging {
     }
   }
 
-  /** Creates a `JSON[T]` instance for some supertype `T`. The instance acts as a type-switch
-    * for the subtypes `A1` and `A2`, delegating to their respective JSON instances based
-    * on a field that acts as a type hint. */
+  /** Creates a `JSON[T]` that switches on a type-hint field, delegating to the given subtype
+    * selectors' instances. */
   def jsonTypeSwitch[T: ClassTag](selectors: List[TypeSelector[_]]): JSON[T] with TypeSelectorContainer = {
     require(selectors.nonEmpty, "jsonTypeSwitch needs at least one subtype")
     val allSelectors = selectors.flatMap(s => s.serializer match {

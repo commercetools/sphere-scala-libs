@@ -72,9 +72,7 @@ class AnnotationReader(using q: Quotes)(
     if (sym.flags.is(Flags.Case) && sym.flags.is(Flags.Module)) sym.name.stripSuffix("$")
     else sym.name
 
-  /** The `serializedName` of `T`, without building the rest of its metadata. Cheap enough to expand
-    * once per subtype of a type switch, which reading the whole `TraitMetaData` is not.
-    */
+  /** The `serializedName` of `T` alone — cheap enough to expand once per subtype of a switch. */
   def readSerializedName[T: Type]: Expr[String] = {
     val sym = TypeRepr.of[T].typeSymbol
     val name = Expr(scalaName(sym))

@@ -20,9 +20,8 @@ object Reflect extends Logging {
     CaseClassMeta(getCaseClassFieldMeta(clazz))
   })
 
-  /** Parsing a class's ScalaSignature is expensive, and for a class nested in an object it is the
-    * *enclosing* signature that has to be parsed — the same one for every sibling. Without this
-    * memo, N case classes in one object cost N full parses of an N-class signature.
+  /** For a class nested in an object it is the *enclosing* signature that gets parsed, the same one
+    * for every sibling — so without this memo N siblings cost N full parses.
     */
   private val parseScalaSig = new Memoizer[Class[_], Option[ScalaSig]](ScalaSigParser.parse)
 

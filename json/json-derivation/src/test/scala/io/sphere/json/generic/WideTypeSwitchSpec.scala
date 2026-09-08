@@ -6,16 +6,11 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 /** A sealed trait far wider than either version used to support: Scala 2 was capped at ~125
-  * subtypes by the JVM method-parameter limit (each subtype was a type parameter carrying two
-  * implicit params), Scala 3 at ~25 by `-Xmax-inlines` and then at ~52 by the JVM's 64KB method
-  * limit, because `sub` expanded its whole body into the calling method. Both caps went away - the
-  * subtypes moved from type parameters to a value-level selector list, and a Scala 3 `sub[A]` now
-  * expands to little more than the summons plus one call (~49 bytes, so ~1300 per method). This
-  * spec is what keeps them away: if either ceiling comes back, it stops compiling.
+  * subtypes by the JVM method-parameter limit, Scala 3 at ~25 by `-Xmax-inlines` and then at ~52 by
+  * the JVM's 64KB method limit. If any of those ceilings comes back, this stops compiling.
   *
-  * Each subtype's instance lives in its own companion, so the 200 `deriveJSON` expansions land in
-  * 200 tiny class initialisers instead of one huge one; Scala 2 needs those companions regardless,
-  * having no automatic derivation.
+  * Each subtype's instance lives in its own companion, so the derivations land in 200 tiny class
+  * initialisers instead of one huge one.
   */
 class WideTypeSwitchSpec extends AnyWordSpec with Matchers {
   import WideTypeSwitchSpec._

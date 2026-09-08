@@ -27,11 +27,9 @@ inline def fromJsonEnum(e: Enumeration): FromJSON[e.Value] = EnumerationInstance
 // This can be used instead of deriveJSON
 inline def jsonEnum(e: Enumeration): JSON[e.Value] = EnumerationInstances.jsonEnum(e)
 
-/** One subtype of a type switch: the formatters it contributes, already resolved.
-  *
-  * If `A` is itself a trait, the selector carries that trait's whole switch, so a parent switch
-  * cannot take it apart again — `TypeSelectorContainer.typeSelectors` therefore has one element per
-  * `sub`, not one per leaf subtype (this differs from Scala 2).
+/** One subtype of a type switch, its formatters already resolved. If `A` is itself a trait these
+  * are that trait's whole switch, so `typeSelectors` holds one entry per `sub`, not one per leaf
+  * subtype as on Scala 2.
   */
 final case class TypeSelector[A](toFormatters: ToFormatters, fromFormatters: FromFormatters)
 final case class TypeSelectorToJSON[A](toFormatters: ToFormatters)
@@ -41,12 +39,9 @@ trait TypeSelectorContainer {
   def typeSelectors: List[TypeSelector[?]]
 }
 
-/** Builds the selector for the subtype `A` of a `jsonTypeSwitch`.
-  *
-  * The three `sub*` methods are inline only to summon `A`'s instances and read its serialized name;
-  * all the work happens in the plain `*Selector` defs below. That keeps what a `sub[A]` adds to its
-  * call site down to a handful of instructions, so a list of hundreds of subtypes — or a `derived`
-  * for a sealed trait with hundreds of children — stays well under the JVM's 64KB method limit.
+/** Builds the selector for the subtype `A` of a `jsonTypeSwitch`. The `sub*` methods are inline
+  * only to summon and to read the name; the work is in the plain `*Selector` defs, which keeps a
+  * call site small enough that hundreds of subtypes fit in one method (the JVM caps it at 64KB).
   */
 inline def sub[A]: TypeSelector[A] =
   selector(
@@ -80,15 +75,14 @@ private def toSelector[A](
     classTag: ClassTag[A],
     formatter: ToJSON[A]): TypeSelectorToJSON[A] =
   TypeSelectorToJSON(
-    // A non-null `toFormatters` means `A` is a trait: it brings its own switch's whole subtype
-    // table, and must not be added as a single class itself.
+    // Non-null `toFormatters` means `A` is a trait: it brings its own subtype table.
     if (formatter.toFormatters != null) formatter.toFormatters
     else {
       val clazz = classTag.runtimeClass
       ToFormatters(
         serializedNamesByClass = Map(clazz -> serializedName),
         formatterByClass = Map(clazz -> formatter.asInstanceOf[ToJSON[Any]]),
-        typeDiscriminator = overwrittenByTheSwitch
+        typeDiscriminator = TraitMetaData.defaultTypeDiscriminatorName
       )
     })
 
@@ -101,17 +95,11 @@ private def fromSelector[A](
       FromFormatters(
         serializedNames = Vector(serializedName),
         formatterBySerializedName = Map(serializedName -> formatter.asInstanceOf[FromJSON[Any]]),
-        typeDiscriminator = overwrittenByTheSwitch
+        typeDiscriminator = TraitMetaData.defaultTypeDiscriminatorName
       ))
 
-/** A selector never decides the type discriminator — the switch stamps the top-level type's one on
-  * the merged formatters, so whatever a selector carries is dropped.
-  */
-private val overwrittenByTheSwitch = TraitMetaData.defaultTypeDiscriminatorName
-
-/** Creates a `JSON[T]` instance for some supertype `T`. The instance acts as a type-switch for the
-  * given subtype selectors, delegating to their respective JSON instances based on a field that
-  * acts as a type hint.
+/** Creates a `JSON[T]` that switches on a type-hint field, delegating to the given subtype
+  * selectors' instances.
   */
 inline def jsonTypeSwitch[T](
     selectors: List[TypeSelector[?]]): JSON[T] with TypeSelectorContainer = {
@@ -154,21 +142,16 @@ inline def fromJsonTypeSwitch[T](selectors: List[TypeSelectorFromJSON[?]]): From
   JSONTypeSwitch.fromJsonTypeSwitch[T](mergeFrom(selectors.map(_.fromFormatters), discriminator))
 }
 
-// The type discriminator field always comes from the top-level type, never from a subtype, so it
-// is stamped after the merge — `reduce` would skip `merge` for a single subtype.
+// Stamped after the merge: it always comes from `T`, and `reduce` skips `merge` for one element.
 private def mergeTo(formatters: List[ToFormatters], discriminator: String): ToFormatters =
   formatters.reduce(ToFormatters.merge).copy(typeDiscriminator = discriminator)
 
 private def mergeFrom(formatters: List[FromFormatters], discriminator: String): FromFormatters =
   formatters.reduce(FromFormatters.merge).copy(typeDiscriminator = discriminator)
 
-/** Bridges a `Mirror`'s `MirroredElemTypes` to the selector list the switches take. Only needed by
-  * `derived`; everything else passes a list directly.
-  *
-  * A macro rather than an inline recursion on purpose: recursing nests one expansion per subtype,
-  * so it exhausts `-Xmax-inlines` (default 32) at ~24 subtypes — and reports it as a bogus "No
-  * given instance of type FromJSON[C24]". Expanding the tuple here makes the `sub*` calls siblings,
-  * so depth stops growing with the number of subtypes.
+/** Bridges a `Mirror`'s `MirroredElemTypes` to the selector list the switches take; only `derived`
+  * needs it. A macro rather than an inline recursion, which would nest one expansion per subtype
+  * and exhaust `-Xmax-inlines` at ~24.
   */
 private[generic] inline def subsTo[T <: Tuple]: List[TypeSelectorToJSON[?]] =
   ${ subsToImpl[T] }
