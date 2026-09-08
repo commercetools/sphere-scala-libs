@@ -27,12 +27,14 @@ inline def jsonTypeSwitch[SuperType, SubTypes <: Tuple]: JSON[SuperType] =
   JSONTypeSwitch.jsonTypeSwitch[SuperType, SubTypes]
 
 inline def toJsonTypeSwitch[SuperType, SubTypes <: Tuple]: ToJSON[SuperType] = {
-  val f = JSONTypeSwitch.deriveToFormatters[SuperType, SubTypes]
+  val typeDiscriminator = AnnotationReader.readTraitMetaData[SuperType].typeDiscriminator
+  val f = JSONTypeSwitch.deriveToFormatters[SuperType, SubTypes](typeDiscriminator)
   JSONTypeSwitch.toJsonTypeSwitch[SuperType](f)
 }
 
 inline def fromJsonTypeSwitch[SuperType, SubTypes <: Tuple]: FromJSON[SuperType] = {
-  val f = JSONTypeSwitch.deriveFromFormatters[SuperType, SubTypes]
+  val typeDiscriminator = AnnotationReader.readTraitMetaData[SuperType].typeDiscriminator
+  val f = JSONTypeSwitch.deriveFromFormatters[SuperType, SubTypes](typeDiscriminator)
   JSONTypeSwitch.fromJsonTypeSwitch[SuperType](f)
 }
 

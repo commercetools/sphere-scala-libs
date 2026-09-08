@@ -11,19 +11,17 @@ object JSONTypeSwitch {
 
   // The type discriminator field always comes from the top-level type, never from a subtype.
   // `reduce` skips `merge` when there is only one subtype, so stamp it explicitly.
-  inline def deriveToFormatters[SuperType, SubTypes <: Tuple]: ToFormatters = {
-    val typeDiscriminator = AnnotationReader.readTraitMetaData[SuperType].typeDiscriminator
+  inline def deriveToFormatters[SuperType, SubTypes <: Tuple](
+      typeDiscriminator: String): ToFormatters =
     summonToFormatters[SubTypes]()
       .reduce(ToFormatters.merge(typeDiscriminator))
       .copy(typeDiscriminator = typeDiscriminator)
-  }
 
-  inline def deriveFromFormatters[SuperType, SubTypes <: Tuple]: FromFormatters = {
-    val typeDiscriminator = AnnotationReader.readTraitMetaData[SuperType].typeDiscriminator
+  inline def deriveFromFormatters[SuperType, SubTypes <: Tuple](
+      typeDiscriminator: String): FromFormatters =
     summonFromFormatters[SubTypes]()
       .reduce(FromFormatters.merge(typeDiscriminator))
       .copy(typeDiscriminator = typeDiscriminator)
-  }
 
   inline def toJsonTypeSwitch[SuperType](formatters: ToFormatters): ToJSON[SuperType] =
     ToJSON.instance(
@@ -69,9 +67,10 @@ object JSONTypeSwitch {
     )
 
   inline def jsonTypeSwitch[SuperType, SubTypes <: Tuple]: JSON[SuperType] = {
-    val fromFormatters = deriveFromFormatters[SuperType, SubTypes]
+    val typeDiscriminator = AnnotationReader.readTraitMetaData[SuperType].typeDiscriminator
+    val fromFormatters = deriveFromFormatters[SuperType, SubTypes](typeDiscriminator)
     val fromJson = fromJsonTypeSwitch[SuperType](fromFormatters)
-    val toFormatters = deriveToFormatters[SuperType, SubTypes]
+    val toFormatters = deriveToFormatters[SuperType, SubTypes](typeDiscriminator)
     val toJson = toJsonTypeSwitch[SuperType](toFormatters)
 
     JSON.instance(
@@ -146,13 +145,12 @@ object JSONTypeSwitch {
   )
   object ToFormatters {
     def merge(
-        typeDiscriminatorFromParent: String)(f1: ToFormatters, f2: ToFormatters): ToFormatters = {
+        typeDiscriminatorFromParent: String)(f1: ToFormatters, f2: ToFormatters): ToFormatters =
       ToFormatters(
         serializedNamesByClass = f1.serializedNamesByClass ++ f2.serializedNamesByClass,
         formatterByClass = f1.formatterByClass ++ f2.formatterByClass,
         typeDiscriminator = typeDiscriminatorFromParent
       )
-    }
   }
 
   case class FromFormatters(
@@ -164,13 +162,12 @@ object JSONTypeSwitch {
   object FromFormatters {
     def merge(typeDiscriminatorFromParent: String)(
         f1: FromFormatters,
-        f2: FromFormatters): FromFormatters = {
+        f2: FromFormatters): FromFormatters =
       FromFormatters(
         serializedNames = f1.serializedNames ++ f2.serializedNames,
         formatterBySerializedName = f1.formatterBySerializedName ++ f2.formatterBySerializedName,
         typeDiscriminator = typeDiscriminatorFromParent
       )
-    }
   }
 
 }
