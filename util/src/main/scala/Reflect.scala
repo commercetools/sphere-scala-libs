@@ -2,6 +2,8 @@ package io.sphere.util
 
 import org.json4s.scalap.scalasig._
 
+import scala.util.Random
+
 object Reflect extends Logging {
   case class CaseClassMeta(fields: IndexedSeq[CaseClassFieldMeta])
   case class CaseClassFieldMeta(name: String, default: Option[Any] = None)
@@ -20,8 +22,9 @@ object Reflect extends Logging {
     CaseClassMeta(getCaseClassFieldMeta(clazz))
   })
 
-  /** For a class nested in an object it is the *enclosing* signature that gets parsed, the same one
-    * for every sibling — so without this memo N siblings cost N full parses.
+  /** Memoized because for nested classes we parse the signature of the top-level class
+    * (see below), which is shared by all of its nested classes. Deriving a format for a sealed trait
+    * with N subtypes would otherwise parse that same signature N times.
     */
   private val parseScalaSig = new Memoizer[Class[_], Option[ScalaSig]](ScalaSigParser.parse)
 
