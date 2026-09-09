@@ -39,7 +39,7 @@ class JsonTypeSwitchSpec extends AnyWordSpec with Matchers {
       format.read(JObject("type" -> JString("Nope"), "int" -> JLong(1))).isInvalid must be(true)
     }
 
-    "derive a subset of a sealed trait with a mongoKey" in {
+    "derive a subset of a sealed trait with a JSONTypeHint" in {
       val format: JSON[A] = jsonTypeSwitch[A](List(sub[B], sub[D]))
 
       val d = D(123)
@@ -90,7 +90,8 @@ class JsonTypeSwitchSpec extends AnyWordSpec with Matchers {
         jsonTypeSwitch[SubTrait3](List(sub[SubTrait3.O5.type], sub[SubTrait3.O6.type]))
 
       val typeSelectors = formatSub2.typeSelectors ++ formatSub3.typeSelectors
-      val formatSuper: JSON[SuperTrait] = jsonTypeSwitch[SuperTrait](sub[SubTrait1] :: typeSelectors)
+      val formatSuper: JSON[SuperTrait] =
+        jsonTypeSwitch[SuperTrait](sub[SubTrait1] :: typeSelectors)
 
       val objs =
         List[SuperTrait](

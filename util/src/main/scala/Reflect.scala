@@ -22,9 +22,9 @@ object Reflect extends Logging {
     CaseClassMeta(getCaseClassFieldMeta(clazz))
   })
 
-  /** Memoized because for nested classes we parse the signature of the top-level class
-    * (see below), which is shared by all of its nested classes. Deriving a format for a sealed trait
-    * with N subtypes would otherwise parse that same signature N times.
+  /** Memoized because for nested classes we parse the signature of the top-level class (see below),
+    * which is shared by all of its nested classes. Deriving a format for a sealed trait with N
+    * subtypes would otherwise parse that same signature N times.
     */
   private val parseScalaSig = new Memoizer[Class[_], Option[ScalaSig]](ScalaSigParser.parse)
 
