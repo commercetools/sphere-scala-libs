@@ -1,16 +1,16 @@
 package io.sphere.json.generic
 
 import cats.data.Validated.Valid
-import cats.syntax.traverse._
+import cats.syntax.traverse.*
 import io.sphere.json.{JSON, JValidation, parseJSON}
-import io.sphere.util.test._
-import org.json4s._
+import io.sphere.util.test.*
+import org.json4s.*
 import org.json4s.DefaultReaders.StringReader
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 class JsonTypeSwitchSpec extends AnyWordSpec with Matchers {
-  import JsonTypeSwitchModels._
+  import JsonTypeSwitchModels.*
 
   "jsonTypeSwitch" must {
 
