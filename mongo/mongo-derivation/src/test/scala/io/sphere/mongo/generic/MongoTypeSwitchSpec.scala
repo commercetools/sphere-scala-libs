@@ -12,7 +12,7 @@ class MongoTypeSwitchSpec extends AnyWordSpec with Matchers {
 
   "mongoTypeSwitch" must {
     "derive a subset of a sealed trait" in {
-      val format = mongoTypeSwitch[A, B, C](Nil)
+      val format = mongoTypeSwitch[A](List(sub[B], sub[C]))
 
       val b = B(123)
       val bson = format.toMongoValue(b)
@@ -30,7 +30,7 @@ class MongoTypeSwitchSpec extends AnyWordSpec with Matchers {
     }
 
     "derive a subset of a sealed trait with a mongoKey" in {
-      val format = mongoTypeSwitch[A, B, D](Nil)
+      val format = mongoTypeSwitch[A](List(sub[B], sub[D]))
 
       val d = D(123)
       val bson = format.toMongoValue(d).asInstanceOf[BSONObject]
@@ -41,15 +41,23 @@ class MongoTypeSwitchSpec extends AnyWordSpec with Matchers {
 
     }
 
+    "honour a @MongoTypeHint on a subtype that is not a direct child" in {
+      val format = mongoTypeSwitch[Top](List(sub[Leaf]))
+
+      val bson = format.toMongoValue(Leaf(1)).asInstanceOf[BSONObject]
+      bson.get("type") must be("LeafHint")
+      format.fromMongoValue(bson) must be(Leaf(1))
+    }
+
     "throw a descriptive error when the type field is missing" in {
-      val format = mongoTypeSwitch[A, B, C](Nil)
+      val format = mongoTypeSwitch[A](List(sub[B], sub[C]))
       val bson = dbObj("int" -> 1)
       val ex = intercept[Exception](format.fromMongoValue(bson))
       ex.getMessage must be("""Missing type field 'type' in DBObject '{"int": 1}'.""")
     }
 
     "throw a descriptive error for an unknown type field value" in {
-      val format = mongoTypeSwitch[A, B, C](Nil)
+      val format = mongoTypeSwitch[A](List(sub[B], sub[C]))
       val bson = dbObj("int" -> 1, "type" -> "Nope")
       val ex = intercept[Exception](format.fromMongoValue(bson))
       ex.getMessage must be(
@@ -71,5 +79,12 @@ object MongoTypeSwitchSpec {
   @MongoTypeHint("D2") case class D(int: Int) extends A
   object D {
     implicit val mongo: MongoFormat[D] = deriveMongoFormat
+  }
+
+  sealed trait Top
+  sealed trait Mid extends Top
+  @MongoTypeHint("LeafHint") case class Leaf(int: Int) extends Mid
+  object Leaf {
+    implicit val mongo: MongoFormat[Leaf] = deriveMongoFormat
   }
 }

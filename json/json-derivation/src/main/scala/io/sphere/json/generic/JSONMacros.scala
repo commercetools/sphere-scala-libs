@@ -115,19 +115,13 @@ private[generic] object JSONMacros {
             }
         }.toList
 
+        val pkg = reify(io.sphere.json.generic.`package`).tree
+        val subs = idents.tail.map(i => q"$pkg.sub[$i]")
+
         c.Expr[JSON[A]](
           Block(
             instanceDefs,
-            Apply(
-              TypeApply(
-                Select(
-                  reify(io.sphere.json.generic.`package`).tree,
-                  TermName("jsonSingletonEnumSwitch")
-                ),
-                idents
-              ),
-              reify(Nil).tree :: Nil
-            )
+            q"$pkg.jsonSingletonEnumSwitch[${idents.head}](_root_.scala.List(..$subs))"
           )
         )
       }
@@ -259,19 +253,13 @@ private[generic] object JSONMacros {
               }
           }.toList
 
+          val pkg = reify(io.sphere.json.generic.`package`).tree
+          val subs = idents.tail.map(i => q"$pkg.sub[$i]")
+
           c.Expr[JSON[A]](
             Block(
               instanceDefs,
-              Apply(
-                TypeApply(
-                  Select(
-                    reify(io.sphere.json.generic.`package`).tree,
-                    TermName("jsonTypeSwitch")
-                  ),
-                  idents
-                ),
-                reify(Nil).tree :: Nil
-              )
+              q"$pkg.jsonTypeSwitch[${idents.head}](_root_.scala.List(..$subs))"
             )
           )
         }

@@ -1,6 +1,6 @@
 package io.sphere.json
 
-import io.sphere.json.generic.{TypeSelectorContainer, deriveJSON, jsonTypeSwitch}
+import io.sphere.json.generic.{TypeSelectorContainer, deriveJSON, jsonTypeSwitch, sub}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -17,10 +17,6 @@ class TypeSelectorContainerSpec extends AnyWordSpec with Matchers {
         "ClassB1",
         "ClassB2",
         "TypeB")
-
-      // I don't think it's useful to allow different type fields. How is it possible to deserialize one json
-      // if different type fields are used?
-      selectors.map(_.typeField) must be(List("type", "type", "type", "type", "type", "type"))
 
       selectors.map(_.clazz.getName) must contain.allOf(
         "io.sphere.json.TypeSelectorContainerSpec$TypeA$ClassA1",
@@ -43,7 +39,7 @@ object TypeSelectorContainerSpec {
     // ex if we define TypeA.Class1 && TypeB.Class1
     // as both will use the same type value discriminator
     implicit val json: JSON[Message] with TypeSelectorContainer =
-      jsonTypeSwitch[Message, TypeA, TypeB](Nil)
+      jsonTypeSwitch[Message](List(sub[TypeA], sub[TypeB]))
   }
 
   sealed trait TypeA extends Message

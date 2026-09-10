@@ -153,19 +153,13 @@ private[generic] object MongoFormatMacros {
             }
           }.toList
 
+          val pkg = reify(io.sphere.mongo.generic.`package`).tree
+          val subs = idents.tail.map(i => q"$pkg.sub[$i]")
+
           c.Expr[MongoFormat[A]](
             Block(
               instanceDefs,
-              Apply(
-                TypeApply(
-                  Select(
-                    reify(io.sphere.mongo.generic.`package`).tree,
-                    TermName("mongoTypeSwitch")
-                  ),
-                  idents
-                ),
-                q"$typeSelectors" :: Nil
-              )
+              q"$pkg.mongoTypeSwitch[${idents.head}](_root_.scala.List(..$subs) ::: $typeSelectors)"
             )
           )
         }

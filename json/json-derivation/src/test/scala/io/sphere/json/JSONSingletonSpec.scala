@@ -30,15 +30,15 @@ class JSONSingletonSpec extends AnyFunSpec with Matchers {
     implicit val toSingleBJSON: ToJSON[SingletonB.type] = toJsonSingleton(SingletonB)
     implicit val toSingleCJSON: ToJSON[SingletonC.type] = toJsonSingleton(SingletonC)
     implicit val toSingleEnumJSON: ToJSON[SingletonEnum] =
-      toJsonSingletonEnumSwitch[SingletonEnum, SingletonA.type, SingletonB.type, SingletonC.type](
-        Nil)
+      toJsonSingletonEnumSwitch[SingletonEnum](
+        List(subTo[SingletonA.type], subTo[SingletonB.type], subTo[SingletonC.type]))
     // FromJSON
     implicit val fromSingleAJSON: FromJSON[SingletonA.type] = fromJsonSingleton(SingletonA)
     implicit val fromSingleBJSON: FromJSON[SingletonB.type] = fromJsonSingleton(SingletonB)
     implicit val fromSingleCJSON: FromJSON[SingletonC.type] = fromJsonSingleton(SingletonC)
     implicit val fromSingleEnumJSON: FromJSON[SingletonEnum] =
-      fromJsonSingletonEnumSwitch[SingletonEnum, SingletonA.type, SingletonB.type, SingletonC.type](
-        Nil)
+      fromJsonSingletonEnumSwitch[SingletonEnum](
+        List(subFrom[SingletonA.type], subFrom[SingletonB.type], subFrom[SingletonC.type]))
 
     List(SingletonA, SingletonB, SingletonC).foreach { s: SingletonEnum =>
       fromJSON[SingletonEnum](toJSON(s)) must equal(Valid(s))
