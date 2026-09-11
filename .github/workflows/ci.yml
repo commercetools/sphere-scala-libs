@@ -24,7 +24,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        scala: [2.12.21, 2.13.18, 3.3.8]
+        scala: [2.13.18, 3.3.8]
         java: [temurin@21]
     runs-on: ${{ matrix.os }}
     steps:
@@ -50,13 +50,8 @@ jobs:
       - name: Check that workflows are up to date
         run: sbt '++ ${{ matrix.scala }}; githubWorkflowCheck'
 
-      - name: Build Scala 2 project
-        if: matrix.scala != '3.3.8'
+      - name: Build project
         run: sbt '++ ${{ matrix.scala }}; test'
-
-      - name: Build Scala 3 project
-        if: matrix.scala == '3.3.8'
-        run: sbt '++ ${{ matrix.scala }}; sphere-util/test; sphere-util-test/test; sphere-json-core/test; sphere-mongo-core/test'
 
   publish:
     name: Publish Artifacts
@@ -65,7 +60,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        scala: [2.13.18]
+        scala: [3.3.8]
         java: [temurin@21]
     runs-on: ${{ matrix.os }}
     steps:
