@@ -109,11 +109,14 @@ class DeriveSingletonJSONSpec extends AnyWordSpec with Matchers {
     }
   }
 
-  private def filter(jvalue: JValue): JValue =
+  private def filter(jvalue: JValue): JValue = {
+    import org.json4s.jvalue2monadic
     jvalue.removeField {
       case (_, JNothing) => true
       case _ => false
     }
+  }
+
 }
 
 sealed abstract class PictureSize(val weight: Int, val height: Int)
