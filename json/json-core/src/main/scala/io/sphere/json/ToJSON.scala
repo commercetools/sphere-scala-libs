@@ -167,9 +167,48 @@ object ToJSON extends ToJSONCatsInstances {
   }
 
   // Joda time
+
+  /** Equivalent to `ISODateTimeFormat.dateTime.print(dt.withZone(UTC))`, but writes the fixed
+    * `yyyy-MM-ddTHH:mm:ss.SSSZ` layout straight into a char array instead of going through joda's
+    * generic `Composite` printer. That printer accounted for ~13% of RUNNABLE samples in
+    * `ToJsonBenchmark`. Equality with joda is pinned by `IsoDateTimePrinterSpec`.
+    *
+    * ponytail: falls back to joda outside year 0..9999, where the ISO layout is not 4 digits.
+    */
+  private[json] def printIsoUtc(dt: DateTime): String = {
+    val utc = if (dt.getZone eq DateTimeZone.UTC) dt else dt.withZone(DateTimeZone.UTC)
+    val year = utc.getYear
+    if (year < 0 || year > 9999) ISODateTimeFormat.dateTime.print(utc)
+    else {
+      val b = new Array[Char](24)
+      put2(b, 0, year / 100)
+      put2(b, 2, year % 100)
+      b(4) = '-'
+      put2(b, 5, utc.getMonthOfYear)
+      b(7) = '-'
+      put2(b, 8, utc.getDayOfMonth)
+      b(10) = 'T'
+      put2(b, 11, utc.getHourOfDay)
+      b(13) = ':'
+      put2(b, 14, utc.getMinuteOfHour)
+      b(16) = ':'
+      put2(b, 17, utc.getSecondOfMinute)
+      b(19) = '.'
+      val ms = utc.getMillisOfSecond
+      b(20) = ('0' + ms / 100).toChar
+      put2(b, 21, ms % 100)
+      b(23) = 'Z'
+      new String(b)
+    }
+  }
+
+  private def put2(b: Array[Char], i: Int, v: Int): Unit = {
+    b(i) = ('0' + v / 10).toChar
+    b(i + 1) = ('0' + v % 10).toChar
+  }
+
   implicit val dateTimeWriter: ToJSON[DateTime] = new ToJSON[DateTime] {
-    def write(dt: DateTime): JValue = JString(
-      ISODateTimeFormat.dateTime.print(dt.withZone(DateTimeZone.UTC)))
+    def write(dt: DateTime): JValue = JString(printIsoUtc(dt))
   }
 
   implicit val timeWriter: ToJSON[LocalTime] = new ToJSON[LocalTime] {
