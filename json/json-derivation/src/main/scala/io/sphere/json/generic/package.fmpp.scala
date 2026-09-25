@@ -35,6 +35,8 @@ package object generic extends Logging {
   private def JSONofToAndFrom[A](toJSON: ToJSON[A], fromJSON: FromJSON[A]): JSON[A] = {
     new JSON[A] {
       def write(a: A): JValue = toJSON.write(a)
+      override def writeTo(a: A, sink: JsonSink): Unit = toJSON.writeTo(a, sink)
+      override def writesNothing(a: A): Boolean = toJSON.writesNothing(a)
       def read(jval: JValue): ValidatedNel[JSONError, A] = fromJSON.read(jval)
       override val fields: Set[String] = fromJSON.fields
     }
@@ -42,8 +44,9 @@ package object generic extends Logging {
 
   /** Creates a ToJSON instance for an Enumeration type that encodes the `toString`
     * representations of the enumeration values. */
-  def toJsonEnum(e: Enumeration): ToJSON[e.Value] = new ToJSON[e.Value] {
+  def toJsonEnum(e: Enumeration): ToJSON[e.Value] = new ToJSON.Always[e.Value] {
     def write(a: e.Value): JValue = JString(a.toString)
+    override def writeTo(a: e.Value, s: JsonSink): Unit = s.string(a.toString)
   }
 
   /** Creates a FromJSON instance for an Enumeration type that encodes the `toString`
@@ -78,8 +81,10 @@ package object generic extends Logging {
     * as a JSON string. */
   def toJsonSingleton[T](singleton: T): ToJSON[T] = {
     val typeValue = jsonSingletonTypeValue(singleton)
-    new ToJSON[T] {
+    val quoted = { val sk = JsonSink.buffer(); sk.string(typeValue); sk.result() }
+    new ToJSON.Always[T] {
       def write(t: T): JValue = JString(typeValue)
+      override def writeTo(t: T, s: JsonSink): Unit = s.raw(quoted)
     }
   }
 
@@ -109,8 +114,14 @@ package object generic extends Logging {
   /** Creates a ToJSON instance for a product type of arity 0 (case objects) that are part of a sum type. */
   def toJsonProduct0[T <: Product](singleton: T): ToJSON[T] = {
     val (typeField, typeValue) = jsonProduct0Type(singleton)
-    new ToJSON[T] {
+    val literal = {
+      val sk = JsonSink.buffer()
+      sk.ch('{'); sk.raw(JsonSink.fieldPrefix(typeField)); sk.string(typeValue); sk.ch('}')
+      sk.result()
+    }
+    new ToJSON.Always[T] {
       def write(t: T): JValue = JObject(JField(typeField, JString(typeValue)) :: Nil)
+      override def writeTo(t: T, s: JsonSink): Unit = s.raw(literal)
     }
   }
 
@@ -143,11 +154,21 @@ package object generic extends Logging {
   ): ToJSON[T] = {
     val jsonClass = getJSONClass(classTag[T].runtimeClass)
     val _fields = jsonClass.fields
+    // `"name":` quoted and escaped once, so the sink path can copy it verbatim. Re-escaping these
+    // per field per document was the single biggest item in the old profile.
+    val _prefixes: Array[String] = _fields.iterator.map(f => JsonSink.fieldPrefix(f.name)).toArray
     val hintField: JField = jsonClass.typeHint match {
       case Some(th) => JField(th.field, JString(th.value))
       case None => null  
     }
-    new ToJSON[T] {
+    val hintLiteral: String = jsonClass.typeHint match {
+      case Some(th) =>
+        val sk = JsonSink.buffer()
+        sk.raw(JsonSink.fieldPrefix(th.field)); sk.string(th.value)
+        sk.result()
+      case None => null
+    }
+    new ToJSON.Always[T] {
       def write(r: T): JValue = {
         val buf = new ListBuffer[JField]
         if (hintField != null) buf += hintField
@@ -155,6 +176,16 @@ package object generic extends Logging {
           writeField[A${j}](buf, _fields(${j-1}), r.productElement(${j-1}).asInstanceOf[A${j}])
         </#list>
         JObject(buf.toList)
+      }
+
+      override def writeTo(r: T, s: JsonSink): Unit = {
+        s.ch('{')
+        var wrote = false
+        if (hintLiteral != null) { s.raw(hintLiteral); wrote = true }
+        <#list 1..i as j>
+          wrote = writeFieldTo[A${j}](s, _fields(${j-1}), _prefixes(${j-1}), r.productElement(${j-1}).asInstanceOf[A${j}], wrote)
+        </#list>
+        s.ch('}')
       }
     }
   }
@@ -226,7 +257,10 @@ package object generic extends Logging {
     }
     val writeMap = writeMapBuilder.result()
 
-    new ToJSON[T] with TypeSelectorToJSONContainer {
+    // ponytail: still goes through a JValue. A sink version needs "write my fields without the
+    // braces" on ToJSON so the type-hint field can be spliced in, and that moves the hint from the
+    // end of the object to the front — a wire-order change worth doing on its own.
+    new ToJSON.Always[T] with TypeSelectorToJSONContainer {
       override def typeSelectors = allSelectors
 
       def write(t: T): JValue = writeMap.get(t.getClass) match {
@@ -296,6 +330,10 @@ package object generic extends Logging {
       def read(jval: JValue): ValidatedNel[JSONError, T] = fromJSON.read(jval)
 
       def write(t: T): JValue = toJSON.write(t)
+
+      override def writeTo(t: T, sink: JsonSink): Unit = toJSON.writeTo(t, sink)
+
+      override def writesNothing(t: T): Boolean = toJSON.writesNothing(t)
     }
   }
 
@@ -319,7 +357,10 @@ package object generic extends Logging {
     // Always from the top-level type, so that it matches what fromJsonTypeSwitch reads.
     val typeField = typeFieldOf(classTag[T].runtimeClass)
 
-    new ToJSON[T] with TypeSelectorToJSONContainer {
+    // ponytail: still goes through a JValue. A sink version needs "write my fields without the
+    // braces" on ToJSON so the type-hint field can be spliced in, and that moves the hint from the
+    // end of the object to the front — a wire-order change worth doing on its own.
+    new ToJSON.Always[T] with TypeSelectorToJSONContainer {
       override def typeSelectors: List[TypeSelectorToJSON[_]] = allSelectors
 
       def write(t: T): JValue = writeMap.get(t.getClass) match {
@@ -401,6 +442,10 @@ package object generic extends Logging {
       def read(jval: JValue): ValidatedNel[JSONError, T] = fromJSON.read(jval)
 
       def write(t: T): JValue = toJSON.write(t)
+
+      override def writeTo(t: T, sink: JsonSink): Unit = toJSON.writeTo(t, sink)
+
+      override def writesNothing(t: T): Boolean = toJSON.writesNothing(t)
     }
   }
 
@@ -546,6 +591,35 @@ package object generic extends Logging {
         buf += JField(field.name, toJValue(e))
     }
   }
+
+  /** Sink-side `writeField`. Returns whether anything has been written to the enclosing object yet,
+    * so the caller can decide about the separating comma: a field that writes nothing must not
+    * leave a dangling `,` behind, and a sink cannot take one back.
+    */
+  private def writeFieldTo[A](s: JsonSink, field: JSONFieldMeta, prefix: String, e: A, wrote: Boolean)(implicit w: ToJSON[A]): Boolean =
+    if (field.ignored) wrote
+    // ponytail: `@JSONEmbedded` still goes through a JValue. It has to splice someone else's
+    // object into ours, which the sink interface cannot express; it is also rare and not on the
+    // hot path. Give it a `writeFieldsTo` on ToJSON if that ever stops being true.
+    else if (field.embedded) toJValue(e) match {
+      case o: JObject =>
+        var w = wrote
+        o.obj.foreach { f =>
+          if (f._2 ne JNothing) {
+            if (w) s.ch(',') else w = true
+            s.string(f._1); s.ch(':'); s.jValue(f._2)
+          }
+        }
+        w
+      case _ => wrote
+    }
+    else if (w.writesNothing(e)) wrote
+    else {
+      if (wrote) s.ch(',')
+      s.raw(prefix)
+      w.writeTo(e, s)
+      true
+    }
 
   private def readField[A: FromJSON](f: JSONFieldMeta, o: JObject): JSONParseResult[A] = {
     def default = f.default.asInstanceOf[Option[A]]

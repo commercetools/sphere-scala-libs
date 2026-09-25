@@ -25,6 +25,8 @@ trait ToJSONCatsInstances {
 class JSONInvariant extends Invariant[JSON] {
   override def imap[A, B](fa: JSON[A])(f: A => B)(g: B => A): JSON[B] = new JSON[B] {
     override def write(b: B): JValue = fa.write(g(b))
+    override def writeTo(b: B, sink: JsonSink): Unit = fa.writeTo(g(b), sink)
+    override def writesNothing(b: B): Boolean = fa.writesNothing(g(b))
     override def read(jval: JValue): JValidation[B] = fa.read(jval).map(f)
     override val fields: Set[String] = fa.fields
   }
@@ -40,5 +42,7 @@ class FromJSONFunctor extends Functor[FromJSON] {
 class ToJSONContravariant extends Contravariant[ToJSON] {
   override def contramap[A, B](fa: ToJSON[A])(f: B => A): ToJSON[B] = new ToJSON[B] {
     override def write(b: B): JValue = fa.write(f(b))
+    override def writeTo(b: B, sink: JsonSink): Unit = fa.writeTo(f(b), sink)
+    override def writesNothing(b: B): Boolean = fa.writesNothing(f(b))
   }
 }
