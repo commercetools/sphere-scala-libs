@@ -20,25 +20,17 @@ class ToJsonBenchmark {
   `*ViaJValue` / `serializeCaseClassToWriter` are the pre-sink path, kept as in-run controls.
   Full write-up in docs/json-serialization-perf.md.
 
-Benchmark                                                    Mode  Cnt         Score    Error   Units
-ToJsonBenchmark.listWriter                                  thrpt   20      1517,382 ±  4,195   ops/s
-ToJsonBenchmark.listWriter:gc.alloc.rate.norm               thrpt   20   4775220,595 ±  0,013    B/op
-ToJsonBenchmark.listWriterViaJValue                         thrpt   20       975,423 ±  6,620   ops/s
-ToJsonBenchmark.listWriterViaJValue:gc.alloc.rate.norm      thrpt   20   7027103,140 ±  0,054    B/op
-ToJsonBenchmark.seqWriter                                   thrpt   20      1420,348 ±  4,287   ops/s
-ToJsonBenchmark.seqWriter:gc.alloc.rate.norm                thrpt   20   4775260,909 ±  0,024    B/op
-ToJsonBenchmark.seqWriterViaJValue                          thrpt   20       800,426 ± 42,928   ops/s
-ToJsonBenchmark.seqWriterViaJValue:gc.alloc.rate.norm       thrpt   20   8625121,856 ±  4,138    B/op
-ToJsonBenchmark.serializeCaseClassToString                  thrpt   20       437,194 ±  8,370   ops/s
-ToJsonBenchmark.serializeCaseClassToString:gc.alloc...norm  thrpt   20  19989824,040 ±  0,363    B/op
-ToJsonBenchmark.serializeCaseClassToWriter                  thrpt   20       205,240 ±  2,231   ops/s
-ToJsonBenchmark.serializeCaseClassToWriter:gc.alloc...norm  thrpt   20  13450441,854 ±  0,394    B/op
-ToJsonBenchmark.serializeCaseClassToWriterViaSink           thrpt   20       518,427 ±  6,610   ops/s
-ToJsonBenchmark...ToWriterViaSink:gc.alloc.rate.norm        thrpt   20    250325,471 ±  0,221    B/op
-ToJsonBenchmark.vectorWriter                                thrpt   20      1283,295 ±  7,132   ops/s
-ToJsonBenchmark.vectorWriter:gc.alloc.rate.norm             thrpt   20   4775301,432 ±  0,033    B/op
-ToJsonBenchmark.vectorWriterViaJValue                       thrpt   20       802,343 ± 25,237   ops/s
-ToJsonBenchmark.vectorWriterViaJValue:gc.alloc.rate.norm    thrpt   20   7027217,848 ±  3,374    B/op
+  serializeCaseClassToWriter       200,5 ± 2,6   ops/s   13 450 443 B/op   <- control
+  serializeCaseClassToWriterViaSink  513,6 ± 2,8 ops/s      250 326 B/op
+  serializeCaseClassToString       437,2 ± 8,4   ops/s   19 989 824 B/op
+  typeSwitchWriterViaJValue        122,2 ± 22,2  ops/s   33 730 755 B/op   <- control
+  typeSwitchWriter                 297,3 ± 10,1  ops/s   21 785 285 B/op
+  listWriterViaJValue              975,4 ± 6,6   ops/s    7 027 103 B/op   <- control
+  listWriter                      1517,4 ± 4,2   ops/s    4 775 221 B/op
+  seqWriterViaJValue               800,4 ± 42,9  ops/s    8 625 122 B/op   <- control
+  seqWriter                       1420,3 ± 4,3   ops/s    4 775 261 B/op
+  vectorWriterViaJValue            802,3 ± 25,2  ops/s    7 027 218 B/op   <- control
+  vectorWriter                    1283,3 ± 7,1   ops/s    4 775 301 B/op
    */
 
   @Benchmark
@@ -94,6 +86,17 @@ ToJsonBenchmark.vectorWriterViaJValue:gc.alloc.rate.norm    thrpt   20   7027217
   @Benchmark
   def seqWriter(): String =
     toJSON[Seq[Int]](JsonBenchmark.lotsOfIntsSeq)
+
+  /** A `jsonTypeSwitch` payload. Until `writeFieldsTo` existed these fell back to building a
+    * `JValue`, so they got none of the sink's gain.
+    */
+  @Benchmark
+  def typeSwitchWriter(): String =
+    toJSON[Vector[UpdateAction]](JsonBenchmark.lotsOfActions)
+
+  @Benchmark
+  def typeSwitchWriterViaJValue(): String =
+    JsonMethods.compact(toJValue[Vector[UpdateAction]](JsonBenchmark.lotsOfActions))
 
   // Controls: the pre-sink path (build a JValue, hand it to Jackson), measured in the same run so
   // the comparison is not against numbers from another JVM.

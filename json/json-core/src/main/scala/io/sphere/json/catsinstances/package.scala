@@ -27,6 +27,9 @@ class JSONInvariant extends Invariant[JSON] {
     override def write(b: B): JValue = fa.write(g(b))
     override def writeTo(b: B, sink: JsonSink): Unit = fa.writeTo(g(b), sink)
     override def writesNothing(b: B): Boolean = fa.writesNothing(g(b))
+    override def writeFieldsTo(b: B, sink: JsonSink, wrote: Boolean): Boolean =
+      fa.writeFieldsTo(g(b), sink, wrote)
+    override def typeHintFieldName: Option[String] = fa.typeHintFieldName
     override def read(jval: JValue): JValidation[B] = fa.read(jval).map(f)
     override val fields: Set[String] = fa.fields
   }
@@ -44,5 +47,8 @@ class ToJSONContravariant extends Contravariant[ToJSON] {
     override def write(b: B): JValue = fa.write(f(b))
     override def writeTo(b: B, sink: JsonSink): Unit = fa.writeTo(f(b), sink)
     override def writesNothing(b: B): Boolean = fa.writesNothing(f(b))
+    override def writeFieldsTo(b: B, sink: JsonSink, wrote: Boolean): Boolean =
+      fa.writeFieldsTo(f(b), sink, wrote)
+    override def typeHintFieldName: Option[String] = fa.typeHintFieldName
   }
 }

@@ -32,6 +32,41 @@ trait ToJSON[@specialized A] extends Serializable {
     * (or extend `ToJSON.Always`) to avoid that.
     */
   def writesNothing(value: A): Boolean = write(value) eq JNothing
+
+  /** Writes this value's object fields *without* the enclosing braces, so a caller can splice them
+    * into an object it is already building — `@JSONEmbedded` fields and `jsonTypeSwitch` both need
+    * this.
+    *
+    * `wrote` says whether the enclosing object already has a field; the return value says whether
+    * it does now, so the caller knows who owes the next comma. A value that is not a JSON object
+    * writes nothing and returns `wrote` unchanged, which is what the `JValue` path did.
+    *
+    * The default builds the tree and splices it; override it alongside `writeTo`.
+    */
+  def writeFieldsTo(value: A, sink: JsonSink, wrote: Boolean): Boolean =
+    write(value) match {
+      case JObject(fields) =>
+        var w = wrote
+        fields.foreach { f =>
+          if (f._2 ne JNothing) {
+            if (w) sink.ch(',') else w = true
+            sink.string(f._1)
+            sink.ch(':')
+            sink.jValue(f._2)
+          }
+        }
+        w
+      case _ => wrote
+    }
+
+  /** The type-hint field this instance writes itself, if any.
+    *
+    * `jsonTypeSwitch` consults this to decide whether to add its own hint. On the `JValue` path it
+    * could just look at the object it got back; a sink has no output to inspect, and may already
+    * have flushed. Only derived instances answer — a hand-written `ToJSON` that emits a hint field
+    * must override this, or the switch will write a second one.
+    */
+  def typeHintFieldName: Option[String] = None
 }
 
 class JSONWriteException(msg: String) extends JSONException(msg)
