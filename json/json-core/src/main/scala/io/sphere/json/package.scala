@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.JsonMappingException
 import io.sphere.util.Logging
 import org.json4s.JsonAST._
 import org.json4s.ParserUtil.ParseException
-import org.json4s.jackson.compactJson
 import org.json4s.{DefaultFormats, JsonInput, StringInput}
 
 import java.time.format.DateTimeFormatter
@@ -50,9 +49,21 @@ package object json extends Logging {
 
   private val jNothingStr = "{}"
 
-  def toJSON[A: ToJSON](a: A): String = toJValue(a) match {
-    case JNothing => jNothingStr
-    case jval => compactJson(jval)
+  def toJSON[A](a: A)(implicit w: ToJSON[A]): String =
+    if (w.writesNothing(a)) jNothingStr
+    else {
+      val sink = JsonSink.buffer()
+      w.writeTo(a, sink)
+      sink.result()
+    }
+
+  /** Streams `a` as JSON into `out`, without materializing the document as a String. This is the
+    * cheapest way to serialize: see `docs/json-serialization-perf.md`.
+    */
+  def writeJSON[A](a: A, out: java.io.Writer)(implicit w: ToJSON[A]): Unit = {
+    val sink = JsonSink(out)
+    if (w.writesNothing(a)) sink.raw(jNothingStr) else w.writeTo(a, sink)
+    sink.flush()
   }
 
   /** Parses a JSON string into a type A. Throws a [[JSONException]] on failure.

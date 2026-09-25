@@ -24,5 +24,10 @@ trait JSONLowPriorityImplicits {
     new JSON[A] {
       override def read(jval: JValue): JValidation[A] = fromJSON.read(jval)
       override def write(value: A): JValue = toJSON.write(value)
+      override def writeTo(value: A, sink: JsonSink): Unit = toJSON.writeTo(value, sink)
+      override def writesNothing(value: A): Boolean = toJSON.writesNothing(value)
+      override def writeFieldsTo(value: A, sink: JsonSink, wrote: Boolean): Boolean =
+        toJSON.writeFieldsTo(value, sink, wrote)
+      override def typeHintFieldName: Option[String] = toJSON.typeHintFieldName
     }
 }
