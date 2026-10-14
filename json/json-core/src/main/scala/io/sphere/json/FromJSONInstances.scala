@@ -19,25 +19,15 @@ import org.json4s.JsonAST._
 
 import java.time
 import java.util.{Locale, UUID}
-import scala.annotation.implicitNotFound
 import scala.collection.mutable.ListBuffer
 import scala.util.control.NonFatal
 
-/** Type class for types that can be read from JSON. */
-@implicitNotFound("Could not find an instance of FromJSON for ${A}")
-trait FromJSON[@specialized A] extends Serializable {
-  def read(jval: JValue): JValidation[A]
-  final protected def fail(msg: String) = jsonParseError(msg)
+/** [[FromJSON]] instances for standard scala/java types, shared by scala 2 and scala 3. */
+trait FromJSONInstances extends Logging {
 
-  /** needed JSON fields - ignored if empty */
-  val fields: Set[String] = FromJSON.emptyFieldsSet
-}
-
-object FromJSON extends FromJSONCatsInstances with Logging {
-
-  private[FromJSON] val emptyFieldsSet: Set[String] = Set.empty
-
-  @inline def apply[A](implicit instance: FromJSON[A]): FromJSON[A] = instance
+  // must stay before the instances below: they are initialized as part of this trait's
+  // constructor and read it through `FromJSON.emptyFieldsSet` (the `fields` default)
+  val emptyFieldsSet: Set[String] = Set.empty
 
   private val validNone = Valid(None)
   private val validNil = Valid(Nil)
@@ -45,6 +35,7 @@ object FromJSON extends FromJSONCatsInstances with Logging {
   private def validList[A]: Valid[List[A]] = validNil
   private def validEmptyVector[A]: Valid[Vector[A]] =
     validEmptyAnyVector.asInstanceOf[Valid[Vector[A]]]
+  private val validUnit = Valid(())
 
   implicit def optionMapReader[@specialized A](implicit
       c: FromJSON[A]): FromJSON[Option[Map[String, A]]] =
@@ -108,7 +99,7 @@ object FromJSON extends FromJSONCatsInstances with Logging {
       def read(jval: JValue): JValidation[Set[A]] = jval match {
         case JArray(l) =>
           if (l.isEmpty) Valid(Set.empty)
-          else listReader(r).read(jval).map(Set.apply(_: _*))
+          else listReader(r).read(jval).map(_.toSet)
         case _ => fail("JSON Array expected.")
       }
     }
@@ -288,6 +279,7 @@ object FromJSON extends FromJSONCatsInstances with Logging {
       case _ => fail("JSON object expected.")
     }
   }
+
   // This can probably be removed later, but we still need both because of the api-reference repo
   implicit val javaCurrencyReader: FromJSON[java.util.Currency] =
     new FromJSON[java.util.Currency] {
@@ -330,8 +322,6 @@ object FromJSON extends FromJSONCatsInstances with Logging {
       case _ => fail("JSON object expected")
     }
   }
-
-  private val validUnit = Valid(())
 
   implicit val unitReader: FromJSON[Unit] = new FromJSON[Unit] {
     def read(jval: JValue): JValidation[Unit] = jval match {

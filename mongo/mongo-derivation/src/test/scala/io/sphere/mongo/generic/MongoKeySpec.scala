@@ -6,7 +6,7 @@ import org.bson.BSONObject
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class MongoKeySpec extends AnyWordSpec with Matchers {
   import MongoKeySpec._
