@@ -53,7 +53,31 @@ object Product {
   implicit val mongoFormat: MongoFormat[Product] = deriveMongoFormat
 }
 
+/** A sum type behind `jsonTypeSwitch`, the shape the sink path gained last. */
+sealed trait UpdateAction
+case class SetName(name: String, locale: String) extends UpdateAction
+case class ChangePrice(variantId: Long, price: BaseMoney) extends UpdateAction
+case class AddReference(reference: Reference) extends UpdateAction
+case object Publish extends UpdateAction
+
+object UpdateAction {
+  implicit val json: JSON[UpdateAction] = deriveJSON
+}
+
 object JsonBenchmark {
+
+  val lotsOfActions: Vector[UpdateAction] = Vector.tabulate(50000) { i =>
+    i % 4 match {
+      case 0 => SetName(s"product name $i", "en-GB")
+      case 1 =>
+        ChangePrice(i.toLong, io.sphere.util.Money.fromCentAmount(i.toLong, currencyEUR))
+      case 2 => AddReference(Reference("product-type", zeroUuid))
+      case _ => Publish
+    }
+  }
+
+  private lazy val currencyEUR = io.sphere.util.Currency.getInstance("EUR")
+  private lazy val zeroUuid = UUID.fromString("5a4c142a-40b8-4b86-b944-2259d39ced22")
 
   val lotsOfIntsList = Range(1, 100000).toList
   val lotsOfIntsSeq = Range(1, 100000).toSeq
