@@ -35,6 +35,10 @@ package object generic extends Logging {
   private def JSONofToAndFrom[A](toJSON: ToJSON[A], fromJSON: FromJSON[A]): JSON[A] = {
     new JSON[A] {
       def write(a: A): JValue = toJSON.write(a)
+      override def writeTo(a: A, sink: JsonSink): Unit = toJSON.writeTo(a, sink)
+      override def writesNothing(a: A): Boolean = toJSON.writesNothing(a)
+      override def writeFieldsTo(a: A, sink: JsonSink, wrote: Boolean): Boolean = toJSON.writeFieldsTo(a, sink, wrote)
+      override def typeHintFieldName: Option[String] = toJSON.typeHintFieldName
       def read(jval: JValue): ValidatedNel[JSONError, A] = fromJSON.read(jval)
       override val fields: Set[String] = fromJSON.fields
     }
@@ -42,8 +46,9 @@ package object generic extends Logging {
 
   /** Creates a ToJSON instance for an Enumeration type that encodes the `toString`
     * representations of the enumeration values. */
-  def toJsonEnum(e: Enumeration): ToJSON[e.Value] = new ToJSON[e.Value] {
+  def toJsonEnum(e: Enumeration): ToJSON[e.Value] = new ToJSON.Always[e.Value] {
     def write(a: e.Value): JValue = JString(a.toString)
+    override def writeTo(a: e.Value, s: JsonSink): Unit = s.string(a.toString)
   }
 
   /** Creates a FromJSON instance for an Enumeration type that encodes the `toString`
@@ -78,8 +83,10 @@ package object generic extends Logging {
     * as a JSON string. */
   def toJsonSingleton[T](singleton: T): ToJSON[T] = {
     val typeValue = jsonSingletonTypeValue(singleton)
-    new ToJSON[T] {
+    val quoted = { val sk = JsonSink.buffer(); sk.string(typeValue); sk.result() }
+    new ToJSON.Always[T] {
       def write(t: T): JValue = JString(typeValue)
+      override def writeTo(t: T, s: JsonSink): Unit = s.raw(quoted)
     }
   }
 
@@ -109,8 +116,23 @@ package object generic extends Logging {
   /** Creates a ToJSON instance for a product type of arity 0 (case objects) that are part of a sum type. */
   def toJsonProduct0[T <: Product](singleton: T): ToJSON[T] = {
     val (typeField, typeValue) = jsonProduct0Type(singleton)
-    new ToJSON[T] {
+    val inner = {
+      val sk = JsonSink.buffer()
+      sk.raw(JsonSink.fieldPrefix(typeField)); sk.string(typeValue)
+      sk.result()
+    }
+    val literal = "{" + inner + "}"
+    new ToJSON.Always[T] {
       def write(t: T): JValue = JObject(JField(typeField, JString(typeValue)) :: Nil)
+      override def writeTo(t: T, s: JsonSink): Unit = s.raw(literal)
+      override def writeFieldsTo(t: T, s: JsonSink, wrote: Boolean): Boolean = {
+        if (wrote) s.ch(',')
+        s.raw(inner)
+        true
+      }
+      // note: written even when the class carries no annotation, since `jsonProduct0Type` falls
+      // back to the default field name. A type switch must not add a second one.
+      override val typeHintFieldName: Option[String] = Some(typeField)
     }
   }
 
@@ -143,11 +165,21 @@ package object generic extends Logging {
   ): ToJSON[T] = {
     val jsonClass = getJSONClass(classTag[T].runtimeClass)
     val _fields = jsonClass.fields
+    // `"name":` quoted and escaped once, so the sink path can copy it verbatim. Re-escaping these
+    // per field per document was the single biggest item in the old profile.
+    val _prefixes: Array[String] = _fields.iterator.map(f => JsonSink.fieldPrefix(f.name)).toArray
     val hintField: JField = jsonClass.typeHint match {
       case Some(th) => JField(th.field, JString(th.value))
       case None => null  
     }
-    new ToJSON[T] {
+    val hintLiteral: String = jsonClass.typeHint match {
+      case Some(th) =>
+        val sk = JsonSink.buffer()
+        sk.raw(JsonSink.fieldPrefix(th.field)); sk.string(th.value)
+        sk.result()
+      case None => null
+    }
+    new ToJSON.Always[T] {
       def write(r: T): JValue = {
         val buf = new ListBuffer[JField]
         if (hintField != null) buf += hintField
@@ -156,6 +188,23 @@ package object generic extends Logging {
         </#list>
         JObject(buf.toList)
       }
+
+      override def writeTo(r: T, s: JsonSink): Unit = {
+        s.ch('{')
+        writeFieldsTo(r, s, false)
+        s.ch('}')
+      }
+
+      override def writeFieldsTo(r: T, s: JsonSink, wrote: Boolean): Boolean = {
+        var w = wrote
+        if (hintLiteral != null) { if (w) s.ch(','); s.raw(hintLiteral); w = true }
+        <#list 1..i as j>
+          w = writeFieldTo[A${j}](s, _fields(${j-1}), _prefixes(${j-1}), r.productElement(${j-1}).asInstanceOf[A${j}], w)
+        </#list>
+        w
+      }
+
+      override val typeHintFieldName: Option[String] = jsonClass.typeHint.map(_.field)
     }
   }
   </#list>
@@ -226,7 +275,10 @@ package object generic extends Logging {
     }
     val writeMap = writeMapBuilder.result()
 
-    new ToJSON[T] with TypeSelectorToJSONContainer {
+    // ponytail: still goes through a JValue. A sink version needs "write my fields without the
+    // braces" on ToJSON so the type-hint field can be spliced in, and that moves the hint from the
+    // end of the object to the front — a wire-order change worth doing on its own.
+    new ToJSON.Always[T] with TypeSelectorToJSONContainer {
       override def typeSelectors = allSelectors
 
       def write(t: T): JValue = writeMap.get(t.getClass) match {
@@ -296,6 +348,15 @@ package object generic extends Logging {
       def read(jval: JValue): ValidatedNel[JSONError, T] = fromJSON.read(jval)
 
       def write(t: T): JValue = toJSON.write(t)
+
+      override def writeTo(t: T, sink: JsonSink): Unit = toJSON.writeTo(t, sink)
+
+      override def writesNothing(t: T): Boolean = toJSON.writesNothing(t)
+
+      override def writeFieldsTo(t: T, sink: JsonSink, wrote: Boolean): Boolean =
+        toJSON.writeFieldsTo(t, sink, wrote)
+
+      override def typeHintFieldName: Option[String] = toJSON.typeHintFieldName
     }
   }
 
@@ -308,31 +369,69 @@ package object generic extends Logging {
       case _ => s :: Nil
     })
 
-    val writeMapBuilder = Map.newBuilder[Class[_], TypeSelectorToJSON[_]]
+    // Always from the top-level type, so that it matches what fromJsonTypeSwitch reads.
+    val typeField = typeFieldOf(classTag[T].runtimeClass)
+
+    val writeMapBuilder = Map.newBuilder[Class[_], TypeSwitchEntry]
 
     allSelectors.foreach { s =>
-      writeMapBuilder += (s.clazz -> s)
+      writeMapBuilder += (s.clazz -> new TypeSwitchEntry(s, typeField))
     }
 
     val writeMap = writeMapBuilder.result()
 
-    // Always from the top-level type, so that it matches what fromJsonTypeSwitch reads.
-    val typeField = typeFieldOf(classTag[T].runtimeClass)
-
-    new ToJSON[T] with TypeSelectorToJSONContainer {
+    new ToJSON.Always[T] with TypeSelectorToJSONContainer {
       override def typeSelectors: List[TypeSelectorToJSON[_]] = allSelectors
 
-      def write(t: T): JValue = writeMap.get(t.getClass) match {
-        case Some(ts) =>
-          ts.write(t) match {
-            case o @ JObject(obj) if obj.exists(_._1 == typeField) => o
-            case j: JObject => j ~ JField(typeField, JString(ts.typeValue))
-            case j => throw new IllegalStateException("The json is not an object but a " + j.getClass)
-          }
-
+      private def entryFor(t: T): TypeSwitchEntry = writeMap.get(t.getClass) match {
+        case Some(e) => e
         case None => throw new IllegalStateException("Can't find a serializer for a class " + t.getClass)
       }
+
+      def write(t: T): JValue = {
+        val ts = entryFor(t).selector
+        ts.write(t) match {
+          case o @ JObject(obj) if obj.exists(_._1 == typeField) => o
+          case j: JObject => j ~ JField(typeField, JString(ts.typeValue))
+          case j => throw new IllegalStateException("The json is not an object but a " + j.getClass)
+        }
+      }
+
+      override def writeTo(t: T, s: JsonSink): Unit = {
+        s.ch('{')
+        writeFieldsTo(t, s, false)
+        s.ch('}')
+      }
+
+      override def writeFieldsTo(t: T, s: JsonSink, wrote: Boolean): Boolean = {
+        val e = entryFor(t)
+        var w = e.selector.writeFieldsTo(t, s, wrote)
+        // appended last, matching `~` on the JValue path
+        if (e.hintLiteral != null) {
+          if (w) s.ch(',')
+          s.raw(e.hintLiteral)
+          w = true
+        }
+        w
+      }
+
+      override val typeHintFieldName: Option[String] = Some(typeField)
     }
+  }
+
+  /** Per-subtype state for a `toJsonTypeSwitch`'s sink path: the selector, plus the pre-quoted
+    * `"type":"value"` literal to append — or null when the subtype already writes that field
+    * itself, which is the static counterpart of the `obj.exists(_._1 == typeField)` check the
+    * JValue path can afford to make.
+    */
+  private final class TypeSwitchEntry(val selector: TypeSelectorToJSON[_], typeField: String) {
+    val hintLiteral: String =
+      if (selector.serializer.typeHintFieldName.contains(typeField)) null
+      else {
+        val sk = JsonSink.buffer()
+        sk.raw(JsonSink.fieldPrefix(typeField)); sk.string(selector.typeValue)
+        sk.result()
+      }
   }
 
   /** Creates a `FromJSON[T]` that switches on a type-hint field, delegating to the given subtype
@@ -401,6 +500,15 @@ package object generic extends Logging {
       def read(jval: JValue): ValidatedNel[JSONError, T] = fromJSON.read(jval)
 
       def write(t: T): JValue = toJSON.write(t)
+
+      override def writeTo(t: T, sink: JsonSink): Unit = toJSON.writeTo(t, sink)
+
+      override def writesNothing(t: T): Boolean = toJSON.writesNothing(t)
+
+      override def writeFieldsTo(t: T, sink: JsonSink, wrote: Boolean): Boolean =
+        toJSON.writeFieldsTo(t, sink, wrote)
+
+      override def typeHintFieldName: Option[String] = toJSON.typeHintFieldName
     }
   }
 
@@ -416,6 +524,11 @@ package object generic extends Logging {
   trait TypeSelectorToJSON[A] extends TypeSelectorBase {
     def write(a: Any): JValue
     def serializer: ToJSON[A]
+
+    /** Sink counterpart of `write`: the subtype's fields, without the enclosing braces, so the
+      * switch can add its type hint inside them. */
+    def writeFieldsTo(a: Any, s: JsonSink, wrote: Boolean): Boolean =
+      serializer.writeFieldsTo(a.asInstanceOf[A], s, wrote)
   }
 
   final class TypeSelectorToJSONImpl[A] private[generic](val typeValue: String, val clazz: Class[_])(implicit val serializer: ToJSON[A]) extends TypeSelectorToJSON[A] {
@@ -546,6 +659,21 @@ package object generic extends Logging {
         buf += JField(field.name, toJValue(e))
     }
   }
+
+  /** Sink-side `writeField`. Returns whether anything has been written to the enclosing object yet,
+    * so the caller can decide about the separating comma: a field that writes nothing must not
+    * leave a dangling `,` behind, and a sink cannot take one back.
+    */
+  private def writeFieldTo[A](s: JsonSink, field: JSONFieldMeta, prefix: String, e: A, wrote: Boolean)(implicit w: ToJSON[A]): Boolean =
+    if (field.ignored) wrote
+    else if (field.embedded) w.writeFieldsTo(e, s, wrote)
+    else if (w.writesNothing(e)) wrote
+    else {
+      if (wrote) s.ch(',')
+      s.raw(prefix)
+      w.writeTo(e, s)
+      true
+    }
 
   private def readField[A: FromJSON](f: JSONFieldMeta, o: JObject): JSONParseResult[A] = {
     def default = f.default.asInstanceOf[Option[A]]
