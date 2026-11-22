@@ -2,7 +2,7 @@
 addSbtPlugin("com.github.sbt" % "sbt-boilerplate" % "0.8.1")
 
 // https://github.com/ktoso/sbt-jmh/releases
-addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.8")
+addSbtPlugin("com.github.sbt" % "sbt-jmh" % "0.4.9")
 
 // https://github.com/djspiewak/sbt-github-actions/releases
 addSbtPlugin("com.github.sbt" % "sbt-github-actions" % "0.32.2")
